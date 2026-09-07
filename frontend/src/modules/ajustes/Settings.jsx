@@ -8,6 +8,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { Settings as SettingsIcon, Save, Bell, Building2, ShieldAlert, Smartphone, Users, DollarSign, MessageSquare, MapPin, Package, Headphones, Server, RefreshCw, Wifi, Calendar, Wrench, Send, Mail, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
+import StaffManagement from "./staff/StaffManagement";
 
 const SECTIONS = [
   { id: "general", label: "General", icon: SettingsIcon, description: "Empresa, cobros y corte" },
@@ -182,7 +183,7 @@ export default function Settings() {
         })}
       </div>
 
-      {activeSection === "general" ? <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+      {activeSection === "staff" ? <StaffManagement /> : activeSection === "general" ? <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
         {/* Company Info Box */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2">
