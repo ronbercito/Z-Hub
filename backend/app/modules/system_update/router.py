@@ -1,8 +1,8 @@
-"""
-Módulo aislado de actualizaciones del panel MikroHub.
-
-Consulta la rama remota main, compara el commit instalado con el remoto y ejecuta
-run_update.sh en segundo plano. El script conserva rollback automático si falla.
+"""Archivo: backend/app/modules/system_update/router.py
+Actualización: 2026-09-07 — expone progreso seguro de instalación sin revelar el registro técnico.
+Función: consulta la rama remota, compara versiones y ejecuta run_update.sh.
+Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
+Entrega: estado, fase y porcentaje mediante /api/system-update para el centro de actualizaciones.
 """
 from __future__ import annotations
 
