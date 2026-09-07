@@ -71,6 +71,7 @@ export default function Layout() {
   useEffect(() => { document.title = `Panel · ${companyName}`; }, [companyName]);
 
   const renderContent = () => {
+    if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
     switch (activeTab) {
       case "inicio":
         return <Dashboard setActiveTab={setActiveTab} />;
