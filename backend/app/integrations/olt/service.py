@@ -38,6 +38,10 @@ from app.integrations.olt.vsol import (
     parse_key_values,
     parse_table,
 )
+from app.integrations.olt.vsol_web import (
+    OltWebError,
+    get_vsol_web_basic_information,
+)
 from app.models.router import Router
 
 
@@ -464,6 +468,28 @@ async def run_action(
             "raw": "",
             "commands": [],
         }
+
+    # El resumen de la VSOL V1600G1-B se obtiene desde su interfaz web.
+    # En este firmware la CLI no expone CPU, memoria ni versión del sistema.
+    if action in ("system", "version") and profile_name == "vsol_gpon":
+        try:
+            result = await get_vsol_web_basic_information(router)
+        except OltWebError as exc:
+            error = str(exc)
+            return {
+                "ok": False,
+                "error": error,
+                "message": error,
+                "rows": [],
+                "info": {},
+                "raw": "",
+                "commands": ["HTTPS POST /action/main.html"],
+                "log": [],
+                "source": "vsol_web",
+            }
+
+        _mark_online(router)
+        return result
 
     supported = {
         "system",
