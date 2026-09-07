@@ -27,7 +27,7 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 _ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 _CURSOR_RE = re.compile(r"(?:12|27|41|56)C")
 _CONFIG_DESCRIPTION_RE = re.compile(
-    r"^onu\\s+(\\d{1,3})\\s+(?:desc|description|name)\\s*(?:=\\s*)?(.+?)\\s*$", re.I
+    r"^onu\s+(\d{1,3})\s+(?:desc|description|name)\s*(?:=\s*)?(.+?)\s*$", re.I
 )
 _BAD_RE = re.compile(
     r"(?:%\s*(?:unknown|invalid|incomplete|ambiguous)\s+command|"
