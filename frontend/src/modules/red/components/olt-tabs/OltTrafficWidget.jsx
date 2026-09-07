@@ -59,4 +59,5 @@ export default function OltTrafficWidget({ router }) {
       </div>
       {sample.message && <p className="mt-1 text-[10px] normal-case tracking-normal text-slate-500">{sample.message}</p>}
     </div>
+  );
 }
