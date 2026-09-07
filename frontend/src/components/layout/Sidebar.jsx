@@ -6,7 +6,7 @@ import { Home, Server, Zap, Users, Wifi, Calendar, DollarSign, Package, Headphon
 
 const menuItems = [
   { id:"inicio", label:"Inicio", icon:Home, testId:TEST_IDS.NAV_INICIO },
-  { id:"red", label:"Gestión de Red", icon:Server, testId:TEST_IDS.NAV_RED, children:[{id:"routers_olts",label:"Routers | OLTs",icon:Server},{id:"red_ipv4",label:"Redes IPv4",icon:Network},{id:"nap_boxes",label:"Cajas NAP",icon:Box},{id:"monitoring",label:"Monitoreo",icon:Radio}] },
+  { id:"red", label:"Gestión de Red", icon:Server, testId:TEST_IDS.NAV_RED, children:[{id:"routers",label:"Routers",icon:Server},{id:"olts",label:"OLTs",icon:Radio},{id:"red_ipv4",label:"Redes IPv4",icon:Network},{id:"nap_boxes",label:"Cajas NAP",icon:Box},{id:"monitoring",label:"Monitoreo",icon:Radio}] },
   { id:"servicios",label:"Servicios / Planes",icon:Zap,testId:TEST_IDS.NAV_SERVICIOS },
   { id:"clientes",label:"Clientes",icon:Users,testId:TEST_IDS.NAV_CLIENTES,children:[{id:"client_users",label:"Usuarios",icon:Users},{id:"client_zones",label:"Zonas",icon:MapPin},{id:"client_map",label:"Mapa clientes",icon:Map}] },
   { id:"facturacion",label:"Finanzas / Facturación",icon:DollarSign,testId:TEST_IDS.NAV_FACTURACION },
