@@ -1,9 +1,17 @@
 {
-  "version": "2026.09.07.1",
-  "title": "Centro de actualizaciones",
+  "version": "1.0.0",
   "changes": [
-    {"type": "nueva herramienta", "text": "Botón de actualización desde el panel para administradores."},
-    {"type": "mejora", "text": "Consulta versión remota y changelog antes de instalar."},
-    {"type": "mejora", "text": "El módulo OLT de tráfico queda separado del conector principal."}
+    {
+      "type": "Nueva herramienta",
+      "text": "Centro de actualizaciones con changelog y despliegue desde el panel."
+    },
+    {
+      "type": "Mejora",
+      "text": "La versión del panel se muestra al pie."
+    },
+    {
+      "type": "Mejora",
+      "text": "El diálogo se superpone y se cierra al pulsar fuera."
+    }
   ]
 }
