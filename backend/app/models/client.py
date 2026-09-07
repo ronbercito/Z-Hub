@@ -69,4 +69,5 @@ class Client(Base):
     is_online: Mapped[bool] = mapped_column(Boolean, default=False)
     last_connection_time: Mapped[str] = mapped_column(String(40), default="")
     mikrotik_status: Mapped[str] = mapped_column(Text, default="")
+    created_by_user_id: Mapped[str] = mapped_column(String(36), default="", index=True)
     created_at: Mapped[str] = mapped_column(String(40), default=now_iso)
