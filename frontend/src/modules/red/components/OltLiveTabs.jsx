@@ -80,45 +80,32 @@ export default function OltLiveTabs({ router, routers = [] }) {
   }, [load]);
 
 
-  // El tablero usa el endpoint ligero de resumen: solo ejecuta `show onu state`
-  // por PON, evitando inventario, descripciones y óptica que retrasaban la pantalla.
+  // El tablero consulta cada PON con el endpoint ONUs v2, fuente real para los conteos.
   useEffect(() => {
     if (tab !== "system") return undefined;
     let active = true;
     const loadSummaryOnus = async () => {
       setSummaryOnusLoading(true);
       setSummaryOnuCounts(null);
-      const totals = { total: 0, online: 0, offline: 0, unknown: 0, lowSignal: "—", loadedPons: 0, failedPons: 0 };
-      const ports = Array.from({ length: router.pon_ports || 8 }, (_, index) => index + 1);
-
-      for (const port of ports) {
-        try {
+      const totals = { total: 0, online: 0, offline: 0, unknown: 0 };
+      try {
+        const ports = Array.from({ length: router.pon_ports || 8 }, (_, index) => index + 1);
+        for (const port of ports) {
           const response = await axios.get(
-            `${API}/routers/${router.id}/olt/onu-summary?pon=${port}`,
-            { headers, timeout: 15000 },
+            `${API}/routers/${router.id}/olt/onus-v2?pon=${port}`,
+            { headers },
           );
-          const data = response.data || {};
-          if (data.ok) {
-            totals.total += Number(data.total) || 0;
-            totals.online += Number(data.online) || 0;
-            totals.offline += Number(data.offline) || 0;
-            totals.loadedPons += 1;
-          } else {
-            totals.failedPons += 1;
-          }
-        } catch (error) {
-          totals.failedPons += 1;
+          const counts = response.data?.counts || {};
+          totals.total += Number(counts.total) || 0;
+          totals.online += Number(counts.online) || 0;
+          totals.offline += Number(counts.offline) || 0;
+          totals.unknown += Number(counts.unknown) || 0;
         }
-        if (!active) return;
-      }
-
-      if (active) {
-        setSummaryOnuCounts(
-          totals.loadedPons
-            ? totals
-            : { total: "—", online: "—", offline: "—", unknown: "—", lowSignal: "—", loadedPons: 0, failedPons: ports.length },
-        );
-        setSummaryOnusLoading(false);
+        if (active) setSummaryOnuCounts(totals);
+      } catch (error) {
+        if (active) setSummaryOnuCounts({ total: "—", online: "—", offline: "—", unknown: "—" });
+      } finally {
+        if (active) setSummaryOnusLoading(false);
       }
     };
     loadSummaryOnus();
