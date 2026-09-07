@@ -9,6 +9,8 @@ PERMISSION_CATALOG = {
     "plans": ["view", "create", "edit", "delete", "operate"],
     "billing": ["view", "create", "edit", "delete", "pay", "report"],
     "network": ["view", "create", "edit", "delete", "operate"],
+    # Solo controla la visibilidad del submenú Routers; no limita IPv4, NAP ni clientes.
+    "router_menu": ["view"],
     "olt": ["view", "create", "edit", "delete", "operate"],
     "monitoring": ["view", "create", "edit", "delete", "operate"],
     "tickets": ["view", "create", "edit", "delete"], "inventory": ["view", "create", "edit", "delete"],
