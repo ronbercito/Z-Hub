@@ -31,8 +31,6 @@ export default function Network({ focus = "mikrotik" }) {
   const moduleForFocus = focus === "olt" ? "olt" : "network";
   const canCreateFocus = canPermission(user, moduleForFocus, "create");
   const canOperateNetwork = canPermission(user, "network", "operate");
-  const selectedModule = selected?.device_type === "olt" ? "olt" : "network";
-  const canSelected = (action) => Boolean(selected) && canPermission(user, selectedModule, action);
   const headers = { Authorization: `Bearer ${token}` };
   const [routers, setRouters] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -41,6 +39,8 @@ export default function Network({ focus = "mikrotik" }) {
   const [pingResult, setPingResult] = useState(null);
   const [formRouter, setFormRouter] = useState(null); // null = cerrado, {} = nuevo, {...} = editar
   const [mapRouter, setMapRouter] = useState(null);
+  const selectedModule = selected?.device_type === "olt" ? "olt" : "network";
+  const canSelected = (action) => Boolean(selected) && canPermission(user, selectedModule, action);
 
   const fetchRouters = useCallback(async () => {
     try {
