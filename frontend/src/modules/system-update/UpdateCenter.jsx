@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-07 — vuelve a comprobar actualizaciones cada minuto para pruebas.
+ * Actualización: 2026-09-07 — separa el resultado anterior de una nueva actualización.
  * Función: consulta, presenta e inicia actualizaciones del panel sin exponer datos técnicos.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito al 100 %.
@@ -60,6 +60,8 @@ export default function UpdateCenter() {
   const installation = status?.installation;
   const progress = Math.min(100, Math.max(0, installation?.progress || (installing ? 5 : 0)));
   const failed = ["rolled_back", "rollback_failed"].includes(installation?.state);
+  const showProgress = installing || (installation?.state === "success" && startedHere.current) || failed;
+  const previousSuccess = installation?.state === "success" && !startedHere.current;
 
   const confirmation = confirmOpen ? createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
@@ -81,7 +83,8 @@ export default function UpdateCenter() {
         {loading && <p className="mt-5 text-sm text-slate-300">Comprobando actualizaciones…</p>}
         {error && <p className="mt-5 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">{error}</p>}
         {!loading && status && <><div className="mt-5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">{status.available ? <><p className="text-sm font-semibold text-cyan-200">Nueva versión {status.remote.version} disponible</p><p className="mt-1 text-xs text-slate-300">Instalada: versión {status.current.version}</p></> : <p className="text-sm text-emerald-200">El panel ya está actualizado: versión {status.current.version}.</p>}</div>{status.available && <><p className="mt-5 text-xs uppercase tracking-wider text-slate-500">Cambios de la nueva versión</p><div className="mt-2 space-y-2"><Changelog items={status.remote.changelog} /></div></>}
-        {(installing || installation?.state === "success" || failed) && <div className="mt-5 rounded-xl border border-cyan-500/30 bg-slate-950/70 p-4"><div className="flex justify-between text-xs text-slate-200"><span>{failed ? "No se pudo completar la actualización" : installation?.phase || "Preparando actualización"}</span><b>{progress}%</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700"><div className={"h-full rounded-full transition-all duration-500 " + (failed ? "bg-rose-500" : "bg-cyan-400")} style={{ width: progress + "%" }} /></div>{installation?.state === "success" && <p className="mt-3 text-xs text-emerald-200"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización finalizada. Cerrando sesión…</p>}{failed && <p className="mt-3 text-xs text-rose-200"><AlertTriangle className="mr-1 inline w-4 h-4" />Se restauró la versión anterior.</p>}</div>}</>}
+        {previousSuccess && <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-100"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización versión {status.current.version} instalada correctamente.</div>}
+        {showProgress && <div className="mt-5 rounded-xl border border-cyan-500/30 bg-slate-950/70 p-4"><div className="flex justify-between text-xs text-slate-200"><span>{failed ? "No se pudo completar la actualización" : installation?.phase || "Preparando actualización"}</span><b>{progress}%</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700"><div className={"h-full rounded-full transition-all duration-500 " + (failed ? "bg-rose-500" : "bg-cyan-400")} style={{ width: progress + "%" }} /></div>{installation?.state === "success" && <p className="mt-3 text-xs text-emerald-200"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización finalizada. Cerrando sesión…</p>}{failed && <p className="mt-3 text-xs text-rose-200"><AlertTriangle className="mr-1 inline w-4 h-4" />Se restauró la versión anterior.</p>}</div>}</>}
         <div className="mt-5 flex gap-3"><button onClick={check} disabled={loading || installing} className="rounded-xl border border-slate-600 px-4 py-2.5 text-sm text-slate-200 disabled:opacity-50"><RefreshCw className="mr-1 inline w-4 h-4" />Comprobar</button><button onClick={() => setConfirmOpen(true)} disabled={!status?.available || installing} className="flex-1 rounded-xl bg-cyan-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">{installing ? "Actualizando…" : "Actualizar"}</button></div>
       </section>
     </div>, document.body
