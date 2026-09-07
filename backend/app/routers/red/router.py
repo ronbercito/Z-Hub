@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.permissions import allowed, ensure_allowed, require_router_access
 from app.core.utils import apply_updates, get_or_404
 from app.integrations.mikrotik import service as mt
 from app.integrations.mikrotik.client import MikroTikError, tcp_latency_ms
@@ -38,7 +39,7 @@ from app.models.router import Router
 from app.models.setting import Setting
 from app.routers.red.schemas import AddressListIn, OltCommandIn, OltOnuIn, RouterIn
 
-router = APIRouter(prefix="/routers", tags=["Red / MikroTik"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/routers", tags=["Red / MikroTik"], dependencies=[Depends(get_current_user), Depends(require_router_access)])
 
 
 async def _router(db: AsyncSession, router_id: str) -> Router:
@@ -73,9 +74,9 @@ async def _live(db: AsyncSession, router_id: str, reader):
 
 # ---------- CRUD ----------
 @router.get("")
-async def list_routers(db: AsyncSession = Depends(get_db)):
+async def list_routers(current: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(Router).order_by(Router.name))).scalars().all()
-    return [r.public_dict() for r in rows]
+    return [r.public_dict() for r in rows if allowed(current, "olt" if r.device_type == "olt" else "network", "view")]
 
 
 def _normalize_olt(r: Router):
@@ -85,7 +86,8 @@ def _normalize_olt(r: Router):
 
 
 @router.post("")
-async def create_router(data: RouterIn, check: bool = True, db: AsyncSession = Depends(get_db)):
+async def create_router(data: RouterIn, check: bool = True, current: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    ensure_allowed(current, "olt" if data.device_type == "olt" else "network", "create")
     r = Router(**data.model_dump())
     _normalize_olt(r)
     db.add(r)
