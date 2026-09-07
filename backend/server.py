@@ -33,6 +33,7 @@ from app.routers.red.olt_onu_inventory import router as olt_onu_inventory_router
 from app.routers.red.olt_onu_power import router as olt_onu_power_router
 from app.routers.red.olt_onu_v2 import router as olt_onu_v2_router
 from app.routers.red.olt_onu_descriptions import router as olt_onu_descriptions_router
+from app.routers.red.olt_traffic import router as olt_traffic_router
 from app.routers.tareas.router import router as tareas_router
 from app.routers.tickets.router import router as tickets_router
 
@@ -50,7 +51,7 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials
 api = APIRouter(prefix="/api")
 
 # OLT: rutas específicas antes de /routers genérico.
-for router in (olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
+for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
 
 # Públicas o de sesión; no pasan por control de módulo.
