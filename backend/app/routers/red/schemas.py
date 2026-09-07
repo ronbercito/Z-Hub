@@ -16,6 +16,9 @@ class RouterIn(BaseModel):
     use_ssl: bool = False
     username: str = "admin"
     password: str = ""
+    web_username: str = ""
+    web_password: str = ""
+    web_port: int = 443
     model: str = ""
     location: str = ""
     latitude: float = 0.0
