@@ -48,7 +48,7 @@ export default function OltTrafficWidget({ router }) {
         <span>Tráfico actual</span>
         <span className="normal-case tracking-normal text-slate-400">{sample.ports?.length ? `Uplink: ${sample.ports.join(", ")}` : sample.message}</span>
       </div>
-      <div className="mt-2 rounded-lg bg-slate-950/40 px-3 py-2">
+      <div className="mt-2 rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_10px_24px_rgba(0,0,0,0.30)]">
         <div className="mb-1 flex justify-end gap-4 text-[11px] font-mono">
           <span className="flex items-center gap-1 text-indigo-300"><ArrowDown className="w-3.5 h-3.5" />{fmt(sample.rxMbps)}</span>
           <span className="flex items-center gap-1 text-cyan-300"><ArrowUp className="w-3.5 h-3.5" />{fmt(sample.txMbps)}</span>
