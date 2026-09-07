@@ -15,6 +15,8 @@ from .monitoring_equipment import MonitoringEquipment
 from .client_activity import ClientActivity
 from .invoice import Invoice
 from .ticket import Ticket
+from .client_communication import ClientCommunication
+from .client_document import ClientDocument
 from .inventory import InventoryItem
 from .hotspot import HotspotVoucher
 from .task import Task
@@ -22,5 +24,5 @@ from .setting import Setting
 
 __all__ = [
     "User", "Plan", "Router", "Client", "Invoice", "Ticket",
-    "InventoryItem", "HotspotVoucher", "Task", "Setting", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
+    "InventoryItem", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
 ]
