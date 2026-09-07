@@ -1,11 +1,11 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-07 — oculta identificadores Git técnicos de la interfaz.
+ * Actualización: 2026-09-07 — evita recargas repetidas tras una instalación ya finalizada.
  * Función: consulta, presenta e inicia las actualizaciones del panel.
  * Recibe: API y token desde AuthContext; estado y registro desde /api/system-update.
  * Entrega: interfaz de actualización al Layout; no expone commits ni datos internos.
  */
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import axios from "axios";
 import { Download, X, Sparkles, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -27,6 +27,9 @@ export default function UpdateCenter() {
   const [loading, setLoading] = useState(true);
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState("");
+  // Solo una instalación iniciada desde esta sesión puede solicitar la recarga final.
+  const installationStartedHere = useRef(false);
+  const reloadQueued = useRef(false);
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -36,7 +39,9 @@ export default function UpdateCenter() {
       const next = response.data;
       setStatus(next);
       setError("");
-      if (next.installation?.state === "success") {
+      if (next.installation?.state === "success" && installationStartedHere.current && !reloadQueued.current) {
+        reloadQueued.current = true;
+        setInstalling(false);
         window.setTimeout(() => window.location.reload(), 1200);
       }
     } catch (err) {
@@ -54,11 +59,13 @@ export default function UpdateCenter() {
 
   const install = async () => {
     setInstalling(true);
+    installationStartedHere.current = true;
     setError("");
     try {
       await axios.post(`${API}/system-update/install`, {}, { headers, withCredentials: true });
       await loadStatus();
     } catch (err) {
+      installationStartedHere.current = false;
       setInstalling(false);
       setError(err.response?.data?.detail || "No se pudo iniciar la actualización.");
     }
