@@ -28,6 +28,9 @@ export default function Network({ focus = "mikrotik" }) {
   const canViewRouter = canPermission(user, "network", "view");
   const canViewOlt = canPermission(user, "olt", "view");
   const allowedTypes = { mikrotik: canViewRouter, olt: canViewOlt };
+  const moduleForFocus = focus === "olt" ? "olt" : "network";
+  const canCreateFocus = canPermission(user, moduleForFocus, "create");
+  const canOperateNetwork = canPermission(user, "network", "operate");
   const headers = { Authorization: `Bearer ${token}` };
   const [routers, setRouters] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -112,21 +115,21 @@ export default function Network({ focus = "mikrotik" }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <Server className="w-6 h-6 text-cyan-400" /> Gestión de Red · ${focus === "olt" ? "OLT" : "Routers MikroTik"}
+            <Server className="w-6 h-6 text-cyan-400" /> Gestión de Red · {focus === "olt" ? "OLT" : "Routers MikroTik"}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Lectura en vivo vía API RouterOS (v6/v7): interfaces, PPPoE, colas, DHCP, address-list y hotspot
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button data-testid={TEST_IDS.BTN_SYNC_CUTS} onClick={syncCuts} disabled={busy === "cuts"}
+          {focus === "mikrotik" && canOperateNetwork && <button data-testid={TEST_IDS.BTN_SYNC_CUTS} onClick={syncCuts} disabled={busy === "cuts"}
             className="px-3 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-300 border border-rose-800/50 text-xs font-semibold rounded-xl flex items-center gap-2 transition">
             <ShieldOff className="w-4 h-4" /> {busy === "cuts" ? "Aplicando..." : "Cortar morosos"}
-          </button>
-          <button data-testid={TEST_IDS.BTN_NEW_ROUTER} onClick={() => setFormRouter({})}
+          </button>}
+          {canCreateFocus && <button data-testid={TEST_IDS.BTN_NEW_ROUTER} onClick={() => setFormRouter({})}
             className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-600/20">
-            <Plus className="w-4 h-4" /> Agregar ${focus === "olt" ? "OLT" : "Router"}
-          </button>
+            <Plus className="w-4 h-4" /> Agregar {focus === "olt" ? "OLT" : "Router"}
+          </button>}
         </div>
       </div>
 
