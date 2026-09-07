@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Settings as SettingsIcon, Save, Bell, Building2, ShieldAlert, Smartphone, Users, DollarSign, MessageSquare, MapPin, Package, Headphones, Server, RefreshCw, Wifi, Calendar, Wrench, Send, Mail, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import StaffManagement from "./staff/StaffManagement";
+import TechnicianClientVisibility from "./access/TechnicianClientVisibility";
 
 const SECTIONS = [
   { id: "general", label: "General", icon: SettingsIcon, description: "Empresa, cobros y corte" },
@@ -74,7 +75,8 @@ export default function Settings({ section = "general" }) {
     google_maps_api_key: "",
     system_alert_emails: [],
     system_alert_phones: [],
-    payment_report_emails: []
+    payment_report_emails: [],
+    technician_client_visibility_minutes: 720
   });
 
   useEffect(() => {
@@ -358,6 +360,11 @@ export default function Settings({ section = "general" }) {
             </div>
           </div>
         </div>
+
+        <TechnicianClientVisibility
+          minutes={settings.technician_client_visibility_minutes}
+          onChange={(minutes) => setSettings({ ...settings, technician_client_visibility_minutes: minutes })}
+        />
 
         <div className="flex justify-end">
           <button
