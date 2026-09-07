@@ -36,6 +36,7 @@ from app.routers.red.olt_onu_descriptions import router as olt_onu_descriptions_
 from app.routers.red.olt_traffic import router as olt_traffic_router
 from app.routers.tareas.router import router as tareas_router
 from app.routers.tickets.router import router as tickets_router
+from app.modules.system_update.router import router as system_update_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -55,7 +56,7 @@ for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
 
 # Públicas o de sesión; no pasan por control de módulo.
-for router in (ajustes_public_router, auth_router):
+for router in (ajustes_public_router, auth_router, system_update_router):
     api.include_router(router)
 
 # Cada grupo aplica autorización real antes de ejecutar sus endpoints.
