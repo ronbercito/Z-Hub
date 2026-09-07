@@ -19,11 +19,6 @@ export function isAdministrator(user) {
 export function canPermission(user, module, action = "view") {
   if (isAdministrator(user)) return true;
   const permissions = permissionsFor(user);
-  // Compatibilidad: los operadores existentes conservan el menú hasta que se
-  // desmarque explícitamente “Menú Routers” en Gestión personal.
-  if (module === "router_menu" && !Object.prototype.hasOwnProperty.call(permissions, "router_menu")) {
-    return Boolean((permissions.network || []).includes(action));
-  }
   return Boolean((permissions[module] || []).includes(action));
 }
 export function canViewTab(user, tab) {
