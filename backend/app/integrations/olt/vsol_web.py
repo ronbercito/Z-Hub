@@ -106,6 +106,7 @@ def _fetch_vsol_basic_information(
     base_url = f"https://{endpoint}"
     login_url = f"{base_url}/action/login.html"
     main_url = f"{base_url}/action/main.html"
+    system_url = f"{base_url}/action/systeminfo.html"
     payload = urlencode(
         {
             "user": username,
@@ -142,7 +143,19 @@ def _fetch_vsol_basic_information(
             },
             method="POST",
         )
-        with opener.open(request, timeout=TIMEOUT + 3) as response:
+        # main.html es solo la estructura del panel. systeminfo.html contiene
+        # Device Basic Information y reutiliza la cookie obtenida arriba.
+        opener.open(request, timeout=TIMEOUT + 3).read()
+        with opener.open(
+            Request(
+                system_url,
+                headers={
+                    **headers,
+                    "Referer": main_url,
+                },
+            ),
+            timeout=TIMEOUT + 3,
+        ) as response:
             page = response.read().decode("utf-8", errors="replace")
     except Exception as exc:
         raise OltWebError(f"No se pudo consultar la web de la OLT: {exc}") from exc
