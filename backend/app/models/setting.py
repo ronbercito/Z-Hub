@@ -31,6 +31,16 @@ DEFAULT_SETTINGS = {
     "system_alert_emails": [],
     "system_alert_phones": [],
     "payment_report_emails": [],
+    "smtp_host": "",
+    "smtp_port": 465,
+    "smtp_security": "ssl",
+    "smtp_authentication": True,
+    "smtp_username": "",
+    "smtp_daily_limit": 1000,
+    "smtp_logo_url": "",
+    "smtp_signature_html": "",
+    "smtp_sent_date": "",
+    "smtp_sent_count": 0,
 }
 
 
