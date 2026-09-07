@@ -105,38 +105,38 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
                 <span className={`w-2 h-2 rounded-full ${online ? "bg-emerald-400" : "bg-rose-400"}`} />
                 <b className="text-slate-200 min-w-28">{item.name}</b>
                 <span className={`px-2 py-0.5 rounded-full border text-[10px] ${online ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-rose-500/30 text-rose-300 bg-rose-500/10"}`}>{online ? "En línea" : "Fuera de línea"}</span>
-                <span className="ml-auto text-slate-400 font-mono">CPU {item.cpu_usage_pct ?? "—"}% · {item.ping_ms ? `${item.ping_ms} ms` : "sin ping"}</span>
+                {(() => {
+                  const selectedRow = item.id === router?.id;
+                  const rowCpu = selectedRow ? percent(cpu) : percent(item.cpu_usage_pct);
+                  const rowTemperature = selectedRow ? temperature : (item.temperature || "—");
+                  const rowUptime = selectedRow ? uptime : (item.uptime || "—");
+                  return (
+                    <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 font-mono">
+                      <span className="flex items-center gap-1">CPU
+                        <span className="w-14 h-1.5 rounded-full bg-slate-800 overflow-hidden"><span className="block h-full bg-indigo-400 rounded-full" style={{ width: `${rowCpu ?? 0}%` }} /></span>
+                        <b className="text-slate-300">{rowCpu === null ? "—" : `${rowCpu}%`}</b>
+                      </span>
+                      <span>{rowTemperature === "—" ? "Temp. —" : `${rowTemperature}`}</span>
+                      <span>{rowUptime === "—" ? "sin uptime" : rowUptime}</span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
         </div>
       </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-        <section className="xl:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-4">Salud de la OLT seleccionada</p>
-          <div className="space-y-3">
-            <Bar label="Uso de CPU" value={cpu} suffix="%" tone="bg-cyan-400" />
-            <Bar label="Uso de memoria" value={memory} suffix="%" tone="bg-violet-400" />
-            <Bar label="Temperatura" value={temperature} suffix=" °C" tone="bg-amber-400" />
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-slate-400">
-            <span><Activity className="inline w-3.5 h-3.5 text-cyan-300 mr-1" />Tiempo activa: <b className="text-slate-200 font-mono">{uptime}</b></span>
-            <span><Radio className="inline w-3.5 h-3.5 text-violet-300 mr-1" />PON: <b className="text-slate-200 font-mono">{router?.pon_ports || "—"} {router?.pon_type || "PON"}</b></span>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Actividad reciente</p>
-          <div className="space-y-3 text-[11px]">
-            <p className="flex gap-2 text-slate-300"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />Sistema: {info["System Name"] || router?.name || "—"}</p>
-            <p className="flex gap-2 text-slate-300"><Cpu className="w-3.5 h-3.5 text-cyan-400 shrink-0" />Firmware: {info["Software Version"] || router?.ros_version || "—"}</p>
-            <p className="flex gap-2 text-slate-300"><Thermometer className="w-3.5 h-3.5 text-amber-400 shrink-0" />Temperatura: {temperature}</p>
-            <p className="flex gap-2 text-slate-300"><Users className="w-3.5 h-3.5 text-violet-400 shrink-0" />ONUs: {onusLoading ? "consultando…" : `${counts.online} en línea / ${counts.offline} fuera de línea`}</p>
-            {router?.last_error && <p className="flex gap-2 text-rose-300"><AlertTriangle className="w-3.5 h-3.5 shrink-0" />{router.last_error}</p>}
-          </div>
-        </section>
-      </div>
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Actividad reciente</p>
+        <div className="space-y-3 text-[11px]">
+          <p className="flex gap-2 text-slate-300"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />Sistema: {info["System Name"] || router?.name || "—"}</p>
+          <p className="flex gap-2 text-slate-300"><Cpu className="w-3.5 h-3.5 text-cyan-400 shrink-0" />Firmware: {info["Software Version"] || router?.ros_version || "—"}</p>
+          <p className="flex gap-2 text-slate-300"><Thermometer className="w-3.5 h-3.5 text-amber-400 shrink-0" />Temperatura: {temperature}</p>
+          <p className="flex gap-2 text-slate-300"><Users className="w-3.5 h-3.5 text-violet-400 shrink-0" />ONUs: {onusLoading ? "consultando…" : `${counts.online} en línea / ${counts.offline} fuera de línea`}</p>
+          {router?.last_error && <p className="flex gap-2 text-rose-300"><AlertTriangle className="w-3.5 h-3.5 shrink-0" />{router.last_error}</p>}
+        </div>
+      </section>
     </div>
   );
 }
