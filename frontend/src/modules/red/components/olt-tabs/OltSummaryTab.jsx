@@ -1,13 +1,12 @@
 /**
  * Archivo: frontend/src/modules/red/components/olt-tabs/OltSummaryTab.jsx
  * Pertenece a: Red > OLT > pestaña "Resumen".
- * Función: Tablero operativo de la OLT seleccionada con métricas reales de sistema,
- *          ONUs por PON y el estado de las OLTs registradas.
- * Regla: No inventa disponibilidad, tráfico ni alarmas: usa "—" hasta que el
- *          equipo responda y clasifica como alerta las ONUs fuera de línea.
+ * Función: Tablero operativo: primero salud de red y estado de OLTs; después
+ *          salud técnica de la OLT seleccionada.
+ * Regla: Las métricas sin fuente real se muestran como no disponibles.
  */
 import React from "react";
-import { Activity, AlertTriangle, CheckCircle2, Cpu, HardDrive, Radio, Thermometer, Users } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Cpu, Radio, Thermometer, Users } from "lucide-react";
 
 function infoFromRaw(raw) {
   const info = {};
@@ -31,13 +30,14 @@ const Metric = ({ label, value, hint, tone = "text-slate-100" }) => (
   </div>
 );
 
-const Bar = ({ label, value, suffix = "", tone = "bg-emerald-400" }) => {
+const Bar = ({ label, value, suffix = "", tone = "bg-emerald-400", max = 100 }) => {
   const amount = percent(value);
+  const width = amount === null ? 0 : Math.min(100, (amount / max) * 100);
   return (
-    <div className="grid grid-cols-[100px_1fr_auto] items-center gap-3 text-xs">
+    <div className="grid grid-cols-[112px_1fr_auto] items-center gap-3 text-xs">
       <span className="text-slate-400">{label}</span>
       <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${amount ?? 0}%` }} />
+        <div className={`h-full rounded-full ${tone}`} style={{ width: `${width}%` }} />
       </div>
       <span className="font-mono font-semibold text-slate-200">{amount === null ? "—" : `${amount}${suffix}`}</span>
     </div>
@@ -49,7 +49,8 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
   const info = Object.keys(rawInfo).length ? rawInfo : (res?.info || {});
   const onlineOlts = routers.filter((item) => item.status === "online").length;
   const oltTotal = routers.length || 1;
-  const counts = onuCounts || { total: "—", online: "—", offline: "—", unknown: "—" };
+  const counts = onuCounts || { total: "—", online: "—", offline: "—", unknown: "—", lowSignal: "—" };
+  const onlinePercent = Number(counts.total) ? Math.round((Number(counts.online) / Number(counts.total)) * 100) : null;
   const isOnline = router?.status === "online";
   const temperature = info.Temperature || "—";
   const cpu = info["CPU Usage"] || "—";
@@ -67,15 +68,20 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         <section className="xl:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-4">Salud de la OLT seleccionada</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-4">Salud de la red</p>
           <div className="space-y-3">
-            <Bar label="Uso de CPU" value={cpu} suffix="%" tone="bg-cyan-400" />
-            <Bar label="Uso de memoria" value={memory} suffix="%" tone="bg-violet-400" />
-            <Bar label="Temperatura" value={temperature} suffix=" °C" tone="bg-amber-400" />
+            <Bar label="ONUs en línea" value={onlinePercent} suffix="%" tone="bg-emerald-400" />
+            <Bar label="Con señal baja" value={counts.lowSignal} tone="bg-amber-400" max={Math.max(Number(counts.total) || 1, 1)} />
+            <Bar label="Fuera de línea" value={counts.offline} tone="bg-rose-400" max={Math.max(Number(counts.total) || 1, 1)} />
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-slate-400">
-            <span><Activity className="inline w-3.5 h-3.5 text-cyan-300 mr-1" />Tiempo activa: <b className="text-slate-200 font-mono">{uptime}</b></span>
-            <span><Radio className="inline w-3.5 h-3.5 text-violet-300 mr-1" />PON: <b className="text-slate-200 font-mono">{router?.pon_ports || "—"} {router?.pon_type || "PON"}</b></span>
+          <div className="mt-4 pt-3 border-t border-slate-800">
+            <div className="flex flex-wrap justify-between gap-2 text-[10px] uppercase tracking-wider text-slate-500">
+              <span>Tráfico actual</span>
+              <span className="normal-case tracking-normal text-slate-400">Disponible al integrar contadores PON</span>
+            </div>
+            <div className="mt-2 h-10 rounded-lg border border-dashed border-slate-800 bg-slate-950/40 flex items-center justify-center text-[11px] text-slate-500">
+              Sin lectura de tráfico agregado de la OLT
+            </div>
           </div>
         </section>
 
@@ -89,21 +95,34 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
         </section>
       </div>
 
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Estado de OLTs</p>
+        <div className="space-y-2">
+          {(routers.length ? routers : [router]).filter(Boolean).map((item) => {
+            const online = item.status === "online";
+            return (
+              <div key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs">
+                <span className={`w-2 h-2 rounded-full ${online ? "bg-emerald-400" : "bg-rose-400"}`} />
+                <b className="text-slate-200 min-w-28">{item.name}</b>
+                <span className={`px-2 py-0.5 rounded-full border text-[10px] ${online ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-rose-500/30 text-rose-300 bg-rose-500/10"}`}>{online ? "En línea" : "Fuera de línea"}</span>
+                <span className="ml-auto text-slate-400 font-mono">CPU {item.cpu_usage_pct ?? "—"}% · {item.ping_ms ? `${item.ping_ms} ms` : "sin ping"}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         <section className="xl:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Estado de OLTs</p>
-          <div className="space-y-2">
-            {(routers.length ? routers : [router]).filter(Boolean).map((item) => {
-              const online = item.status === "online";
-              return (
-                <div key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs">
-                  <span className={`w-2 h-2 rounded-full ${online ? "bg-emerald-400" : "bg-rose-400"}`} />
-                  <b className="text-slate-200 min-w-28">{item.name}</b>
-                  <span className={`px-2 py-0.5 rounded-full border text-[10px] ${online ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-rose-500/30 text-rose-300 bg-rose-500/10"}`}>{online ? "En línea" : "Fuera de línea"}</span>
-                  <span className="ml-auto text-slate-400 font-mono">CPU {item.cpu_usage_pct ?? "—"}% · {item.ping_ms ? `${item.ping_ms} ms` : "sin ping"}</span>
-                </div>
-              );
-            })}
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-4">Salud de la OLT seleccionada</p>
+          <div className="space-y-3">
+            <Bar label="Uso de CPU" value={cpu} suffix="%" tone="bg-cyan-400" />
+            <Bar label="Uso de memoria" value={memory} suffix="%" tone="bg-violet-400" />
+            <Bar label="Temperatura" value={temperature} suffix=" °C" tone="bg-amber-400" />
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-slate-400">
+            <span><Activity className="inline w-3.5 h-3.5 text-cyan-300 mr-1" />Tiempo activa: <b className="text-slate-200 font-mono">{uptime}</b></span>
+            <span><Radio className="inline w-3.5 h-3.5 text-violet-300 mr-1" />PON: <b className="text-slate-200 font-mono">{router?.pon_ports || "—"} {router?.pon_type || "PON"}</b></span>
           </div>
         </section>
 
