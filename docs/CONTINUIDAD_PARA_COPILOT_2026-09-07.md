@@ -1,6 +1,6 @@
 <!--
 Archivo: docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md
-Actualización: 2026-09-07 — agrega configuración local, checklist de despliegue e incidencias recientes para Copilot.
+Actualización: 2026-09-07 — agrega ejecución de pruebas y troubleshooting post-despliegue para Copilot.
 Función: entrega a Copilot el contexto técnico para localizar errores en su módulo propietario y aplicar correcciones verificables.
 Recibe de: estructura actual del repositorio, cambios publicados en main y evidencias de la interfaz del panel.
 Entrega a: mantenedores/IA de GitHub una guía de intervención; no ejecuta ni modifica el despliegue.
@@ -323,3 +323,63 @@ Ejecutar y comprobar en orden; no marcar una actualización como correcta solo p
 ### Patrón de prevención
 
 Cada fallo debe registrarse con: síntoma visible, módulo dueño, evidencia (consola/API/log), corrección aplicada, prueba realizada y versión que lo contiene. Así Copilot no repetirá correcciones visuales que oculten la causa real.
+
+
+### 9.1 Ejecutar pruebas
+
+Ejecutar pruebas antes de publicar cambios. Si una prueba depende de servicios externos (MariaDB, API, MikroTik u OLT), configurar el entorno o marcarla claramente como integración; no interpretar una falta de conectividad como defecto del componente React.
+
+**Backend (pytest):**
+
+```bash
+cd backend
+./venv/bin/pytest -v --tb=short
+```
+
+Si `pytest` no está instalado en el entorno virtual, agregarlo como dependencia de desarrollo antes de usarlo; no modificar `requirements.txt` de producción sin justificarlo.
+
+**Frontend (Jest/CRACO):**
+
+```bash
+cd frontend
+yarn test --passWithNoTests
+```
+
+Además del test, cualquier cambio React debe pasar:
+
+```bash
+yarn build
+```
+
+El build detecta errores de importación, JSX y dependencias que pueden provocar una pantalla en blanco incluso si no existen pruebas automatizadas.
+
+### 10.1 Troubleshooting posterior al despliegue
+
+Si una actualización finaliza pero el panel no funciona o muestra una versión antigua, recopilar evidencia del contenedor afectado antes de cambiar código:
+
+```bash
+# Backend no responde o falla al iniciar
+tail -n 50 /var/log/mikrosmart_backend.err.log
+systemctl status supervisor --no-pager
+curl -fs http://127.0.0.1:8001/api/health
+
+# Nginx o frontend con fallo de publicación
+grep -i error /var/log/nginx/error.log | tail -n 50
+nginx -t
+curl -I http://localhost/index.html
+
+# Build y versión entregados
+cd /var/www/mikrohub
+grep PANEL_VERSION frontend/src/modules/system-update/version.js
+ls -lah /var/www/mikrosmart_web
+```
+
+Interpretación:
+
+- Error en `mikrosmart_backend.err.log`: revisar `backend/server.py`, el router/módulo dueño y sus dependencias.
+- Error de Nginx: revisar `deploy/nginx/mikrosmart.conf.template`, validar con `nginx -t` antes de reiniciar.
+- `/api/health` falla pero Nginx responde: el problema es backend/Supervisor, no React.
+- Cabeceras de `index.html` permiten caché y la versión visual es antigua: aplicar la corrección de caché descrita en la sección 6, liberar nueva versión y volver a probar.
+- Código fuente nuevo pero `/var/www/mikrosmart_web` no cambia: revisar `yarn build` y la copia realizada por `deploy/setup_debian.sh`.
+
+No borrar el directorio web, la base de datos ni configuraciones de red como primera respuesta. Primero identificar el error con los comandos anteriores.
