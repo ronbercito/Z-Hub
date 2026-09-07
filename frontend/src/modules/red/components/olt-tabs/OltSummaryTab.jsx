@@ -6,8 +6,20 @@
  */
 import React from "react";
 
+function infoFromRaw(raw) {
+  const info = {};
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const match = line.match(/^\s*([^:]+):\s*(.+?)\s*$/);
+    if (match) info[match[1].trim()] = match[2].trim();
+  }
+  return info;
+}
+
 export default function OltSummaryTab({ res }) {
-  const info = res?.info || {};
+  // La página VSOL entrega la fuente de verdad en texto. Preferirla evita
+  // que una clave parseada de una respuesta anterior quede visible en tarjetas.
+  const rawInfo = infoFromRaw(res?.raw);
+  const info = Object.keys(rawInfo).length ? rawInfo : (res?.info || {});
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
