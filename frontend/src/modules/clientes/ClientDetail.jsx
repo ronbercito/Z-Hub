@@ -193,11 +193,11 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     }
 
     if (activeTab === "messages") {
-      return <EmptyState title="Sin comunicaciones registradas" description="Los correos y SMS enviados al cliente se centralizarán aquí cuando se registren desde el módulo de mensajería." />;
+      return <ClientCommunications api={api} token={token} clientId={clientId} client={client} />;
     }
 
     if (activeTab === "documents") {
-      return <EmptyState title="Sin documentos registrados" description="Aquí se mostrarán contratos, PDFs, evidencias de instalación y notas adjuntas del cliente." />;
+      return <ClientDocuments api={api} token={token} clientId={clientId} />;
     }
 
     if (activeTab === "stats") {
