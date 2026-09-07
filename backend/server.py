@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.core.database import init_db
 from app.core import database
-from app.core.permissions import require_permission
+from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
 from app.routers.ajustes.staff.router import router as staff_router
@@ -58,10 +58,12 @@ for router in (ajustes_public_router, auth_router):
     api.include_router(router)
 
 # Cada grupo aplica autorización real antes de ejecutar sus endpoints.
+api.include_router(red_router, dependencies=[Depends(require_router_access)])
+
 for router, module in (
     (inicio_router, "dashboard"), (clientes_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
-    (monitoring_router, "monitoring"), (red_router, "network"), (facturacion_router, "billing"),
+    (monitoring_router, "monitoring"), (facturacion_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
     (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"),
     (staff_router, "staff"),
