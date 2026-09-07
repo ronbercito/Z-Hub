@@ -71,8 +71,16 @@ def _log_state() -> tuple[str, str, bool]:
     return ("running" if running else "idle"), log, running
 
 
-def _tail(text: str, lines: int = 80) -> str:
-    return "\n".join(text.splitlines()[-lines:])
+def _progress_from_log(log: str, state: str) -> tuple[int, str]:
+    if state == "success":
+        return 100, "Actualización terminada"
+    matches = re.findall(r"PROGRESS:(\d{1,3}):(.*)", log)
+    if matches:
+        percent, phase = matches[-1]
+        return min(100, max(0, int(percent))), phase.strip()
+    if state in {"rolled_back", "rollback_failed"}:
+        return 100, "No se pudo instalar la actualización"
+    return 0, "Esperando actualización"
 
 
 @router.get("/status", dependencies=[Depends(require_role("admin"))])
@@ -83,11 +91,12 @@ async def update_status():
     current_version, current_changelog = _version_and_changelog(_source_for("HEAD"))
     remote_version, remote_changelog = _version_and_changelog(_source_for("origin/main"))
     state, log, running = _log_state()
+    progress, phase = _progress_from_log(log, state)
     return {
         "available": current_commit != remote_commit,
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
         "remote": {"version": remote_version, "commit": remote_commit[:12], "changelog": remote_changelog},
-        "installation": {"state": state, "running": running, "log": _tail(log)},
+        "installation": {"state": state, "running": running, "progress": progress, "phase": phase},
     }
 
 
