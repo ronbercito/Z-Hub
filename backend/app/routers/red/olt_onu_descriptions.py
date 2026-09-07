@@ -9,7 +9,7 @@ Regla: Este archivo SOLO resuelve descripciones. No modifica el inventario, esta
 Estrategia:
 1) Recibe los ONU ID ya validados por ONUs v2.
 2) Hace una sola lectura `show running-config` dentro del PON y extrae líneas
-   `onu <id> desc <texto>`. Este firmware no usa la palabra `description`.
+   `onu <id> desc <texto>`. Este firmware puede devolver `desc`, `description` o `name` según revisión.
 """
 
 import re
@@ -26,6 +26,9 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 
 _ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 _CURSOR_RE = re.compile(r"(?:12|27|41|56)C")
+_CONFIG_DESCRIPTION_RE = re.compile(
+    r"^onu\\s+(\\d{1,3})\\s+(?:desc|description|name)\\s*(?:=\\s*)?(.+?)\\s*$", re.I
+)
 _BAD_RE = re.compile(
     r"(?:%\s*(?:unknown|invalid|incomplete|ambiguous)\s+command|"
     r"unknown\s+command|invalid\s+command|command\s+not\s+found)",
@@ -68,7 +71,8 @@ def _parse_running_config(raw: str, allowed: set[int], pon: int = 1) -> dict[int
             continue
         if not selected:
             continue
-        match = re.match(r"^onu\s+(\d{1,3})\s+desc\s+(.+?)\s*$", line, re.I)
+        # VSOL cambia el nombre del campo según firmware: desc, description o name.
+        match = _CONFIG_DESCRIPTION_RE.match(line)
         if match and int(match[1]) in allowed:
             # No borrar secuencias como 12C dentro de un nombre legítimo.
             result[int(match[1])] = match[2].strip().strip('"').strip("'")
