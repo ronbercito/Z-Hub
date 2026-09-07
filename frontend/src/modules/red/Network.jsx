@@ -96,7 +96,7 @@ export default function Network({ focus = "mikrotik" }) {
     } catch (e) { toast.error(errMsg(e, "Error al ejecutar cortes")); }
   });
 
-  const visibleRouters = routers.filter((item) => item.device_type === focus && allowedTypes[item.device_type] && !(selected?.device_type === "olt" && item.id === selected.id));
+  const visibleRouters = routers.filter((item) => item.device_type === focus && allowedTypes[item.device_type]);
 
   useEffect(() => {
     if (selected && selected.device_type !== focus) setSelected(visibleRouters[0] || null);
@@ -151,20 +151,7 @@ export default function Network({ focus = "mikrotik" }) {
 
       {selected && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
-          <div className="flex flex-col xl:flex-row gap-4 pb-4 border-b border-slate-800">
-            {selected.device_type === "olt" && (
-              <div className="w-full xl:w-[370px] shrink-0">
-                <RouterCard
-                  router={selected}
-                  selected
-                  onSelect={() => {}}
-                  onCoordinates={setMapRouter}
-                />
-              </div>
-            )}
-
-            <div className="flex-1 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-lg font-bold text-slate-100" data-testid="router-detail-name">{selected.name}</h3>
@@ -200,7 +187,6 @@ export default function Network({ focus = "mikrotik" }) {
               </button>}
             </div>
             </div>
-          </div>
           {selected.device_type === "olt" ? (
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs" data-testid="olt-operational-summary">
               <Stat
