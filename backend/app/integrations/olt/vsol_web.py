@@ -22,17 +22,22 @@ class OltWebError(Exception):
     """La lectura web de la OLT no pudo completarse."""
 
 
-class _TableCellParser(HTMLParser):
-    """Extrae textos de celdas HTML sin depender de librerías externas."""
+class _TableRowParser(HTMLParser):
+    """Extrae filas de tablas HTML sin depender de librerías externas."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
+        self._in_row = False
         self._in_cell = False
         self._parts: list[str] = []
-        self.cells: list[str] = []
+        self._row: list[str] = []
+        self.rows: list[list[str]] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]):
-        if tag in ("td", "th"):
+        if tag == "tr":
+            self._in_row = True
+            self._row = []
+        elif tag in ("td", "th") and self._in_row:
             self._in_cell = True
             self._parts = []
         elif tag == "input" and self._in_cell:
@@ -47,15 +52,21 @@ class _TableCellParser(HTMLParser):
     def handle_endtag(self, tag: str):
         if tag in ("td", "th") and self._in_cell:
             value = re.sub(r"\s+", " ", " ".join(self._parts)).strip()
-            self.cells.append(html.unescape(value))
+            self._row.append(html.unescape(value))
             self._in_cell = False
             self._parts = []
+        elif tag == "tr" and self._in_row:
+            if self._row:
+                self.rows.append(self._row)
+            self._in_row = False
+            self._row = []
 
 
 def parse_vsol_basic_information(page: str) -> dict[str, str]:
     """
-    Convierte la tabla Device Basic Information de VSOL en pares clave/valor.
-    Solo acepta la página autenticada correcta; evita mostrar datos falsos.
+    Lee exclusivamente las etiquetas conocidas de Device Basic Information.
+    La página también contiene iconos PON/GE; por eso no se mezclan sus
+    celdas con las métricas del sistema.
     """
 
     if "Device Basic Information" not in (page or ""):
@@ -64,28 +75,44 @@ def parse_vsol_basic_information(page: str) -> dict[str, str]:
             "verifica las credenciales web o la sesión."
         )
 
-    parser = _TableCellParser()
+    parser = _TableRowParser()
     parser.feed(page)
     parser.close()
 
-    cells = [cell for cell in parser.cells if cell]
+    expected = {
+        "System Name",
+        "Serial Number",
+        "Hardware Version",
+        "Software Version",
+        "MAC Address",
+        "Temperature",
+        "System Time",
+        "Running Time",
+        "CPU Usage",
+        "Memory Usage",
+        "License Limit",
+        "License Time",
+        "Software Created Time",
+        "Device Model",
+        "Startup Time",
+    }
     info: dict[str, str] = {}
 
-    # La página VSOL muestra dos pares por fila: etiqueta, valor, etiqueta, valor.
-    for index in range(0, len(cells) - 1, 2):
-        key = cells[index].rstrip(":").strip()
-        value = cells[index + 1].strip()
-        if key and value and len(key) <= 80:
-            info[key] = value
+    for row in parser.rows:
+        for index, cell in enumerate(row[:-1]):
+            key = cell.rstrip(":").strip()
+            if key in expected:
+                value = row[index + 1].strip()
+                if value:
+                    info[key] = value
 
     required = {"CPU Usage", "Memory Usage", "Device Model"}
-    if not required.intersection(info):
+    if not required.issubset(info):
         raise OltWebError(
             "No se pudieron reconocer las métricas de la tabla web VSOL."
         )
 
     return info
-
 
 def _fetch_vsol_basic_information(
     host: str,
