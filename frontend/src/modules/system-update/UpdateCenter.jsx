@@ -21,5 +21,5 @@ export default function UpdateCenter(){
       </section>
     </div>,document.body
   ) : null;
-  return <><button onClick={()=>setOpen(true)} title="Actualizaciones" className="p-2 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"><Download className="w-4 h-4"/></button>{modal}</>;
+  return <><button onClick={()=>setOpen(true)} title={status?.available ? "Nueva actualización disponible" : "Actualizaciones"} className={status?.available ? "flex items-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-3 py-2 text-xs font-bold text-white shadow-lg animate-pulse" : "p-2 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"}><Download className="w-4 h-4"/>{status?.available && <span>Nueva actualización</span>}</button>{modal}</>;
 }
