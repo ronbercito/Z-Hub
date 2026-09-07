@@ -5,7 +5,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../../../context/AuthContext";
 
 const fmt = (value) => value === null || value === undefined ? "—" : value >= 1000 ? `${(value / 1000).toFixed(2)} Gbps` : `${value.toFixed(1)} Mbps`;
 
