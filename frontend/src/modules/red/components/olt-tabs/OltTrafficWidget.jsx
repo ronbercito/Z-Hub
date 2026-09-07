@@ -27,13 +27,14 @@ export default function OltTrafficWidget({ router }) {
         const rxMbps = seconds > 0 ? Math.max(0, ((Number(info.rx_bytes) - old.rx) * 8) / seconds / 1000000) : null;
         const txMbps = seconds > 0 ? Math.max(0, ((Number(info.tx_bytes) - old.tx) * 8) / seconds / 1000000) : null;
         prior.current = { rx: Number(info.rx_bytes), tx: Number(info.tx_bytes), at: now };
-        setSample((current) => ({ history: [...current.history, { rxMbps, txMbps }].slice(-24), rxMbps, txMbps, ports: info.active_ports || [], message: seconds ? "" : "Tomando segunda muestra para calcular velocidad…" }));
+        setSample((current) => ({ history: [...current.history, { rxMbps, txMbps }].slice(-24), rxMbps, txMbps, ports: info.active_ports || [], message: seconds ? "" : "Tomando segunda muestra para calcular velocidad (actualiza cada minuto)…" }));
       } catch {
         if (active) setSample((current) => ({ ...current, message: current.history.length ? "Última lectura conservada" : "Sin lectura de tráfico disponible" }));
       }
     };
     read();
-    const timer = window.setInterval(read, 5000);
+    // Una sesión HTTPS de la OLT puede elevar su CPU: muestra cada minuto, no cada 5 s.
+    const timer = window.setInterval(read, 60000);
     return () => { active = false; window.clearInterval(timer); };
   }, [API, token, router.id]);
 
