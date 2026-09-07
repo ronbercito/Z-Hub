@@ -23,6 +23,10 @@ class Router(Base):
     use_ssl: Mapped[bool] = mapped_column(Boolean, default=False)
     username: Mapped[str] = mapped_column(String(80), default="admin")
     password: Mapped[str] = mapped_column(String(255), default="")
+    # Solo OLT: acceso separado a la interfaz web (CPU, memoria y temperatura).
+    web_username: Mapped[str] = mapped_column(String(80), default="")
+    web_password: Mapped[str] = mapped_column(String(255), default="")
+    web_port: Mapped[int] = mapped_column(Integer, default=443)
     model: Mapped[str] = mapped_column(String(120), default="")
     location: Mapped[str] = mapped_column(String(150), default="")
     latitude: Mapped[float] = mapped_column(Float, default=0.0)
@@ -64,7 +68,8 @@ class Router(Base):
     last_error: Mapped[str] = mapped_column(String(255), default="")
 
     def public_dict(self) -> dict:
-        d = self.to_dict(exclude=("password", "enable_password"))
+        d = self.to_dict(exclude=("password", "enable_password", "web_password"))
         d["has_password"] = bool(self.password)
         d["has_enable_password"] = bool(self.enable_password)
+        d["has_web_password"] = bool(self.web_password)
         return d
