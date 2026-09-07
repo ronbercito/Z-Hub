@@ -42,15 +42,17 @@ const SECTIONS = [
   { id: "license", label: "Licencia", icon: ShieldAlert, description: "Información de licencia" },
 ];
 
-export default function Settings() {
+export default function Settings({ section = "general" }) {
   const { API, token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState("general");
+  const [activeSection, setActiveSection] = useState(section);
   const [mailSaving, setMailSaving] = useState(false);
   const [mailTesting, setMailTesting] = useState(false);
   const [testRecipient, setTestRecipient] = useState("");
   const [mailConfig, setMailConfig] = useState({ host: "", port: 465, security: "ssl", authentication: true, username: "", password: "", password_set: false, daily_limit: 1000, sent_today: 0, logo_url: "", signature_html: "" });
+
+  useEffect(() => { setActiveSection(section); }, [section]);
 
   const [settings, setSettings] = useState({
     company_name: "",
@@ -170,17 +172,8 @@ export default function Settings() {
         <p className="text-xs text-slate-400 mt-0.5">Selecciona una categoría para administrar la configuración del sistema.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          const active = activeSection === section.id;
-          return <button key={section.id} type="button" onClick={() => setActiveSection(section.id)}
-            className={`group min-h-28 rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 ${active ? "border-cyan-400 bg-cyan-500/15 shadow-lg shadow-cyan-950/40" : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800"}`}>
-            <span className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-cyan-500 text-white" : "bg-slate-800 text-cyan-300 group-hover:bg-slate-700"}`}><Icon className="h-5 w-5" /></span>
-            <span className="block text-xs font-bold text-slate-100">{section.label}</span>
-            <span className="mt-1 block text-[10px] leading-tight text-slate-500">{section.description}</span>
-          </button>;
-        })}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-xs text-slate-400">
+        Configurando: <span className="font-bold text-cyan-300">{SECTIONS.find((item) => item.id === activeSection)?.label || "General"}</span>
       </div>
 
       {activeSection === "staff" ? <StaffManagement /> : activeSection === "general" ? <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
