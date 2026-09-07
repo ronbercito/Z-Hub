@@ -1,6 +1,6 @@
 <!--
 Archivo: docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md
-Actualización: 2026-09-07 — inventario de módulos, responsabilidades y diagnóstico reciente de actualizaciones.
+Actualización: 2026-09-07 — agrega configuración local, checklist de despliegue e incidencias recientes para Copilot.
 Función: entrega a Copilot el contexto técnico para localizar errores en su módulo propietario y aplicar correcciones verificables.
 Recibe de: estructura actual del repositorio, cambios publicados en main y evidencias de la interfaz del panel.
 Entrega a: mantenedores/IA de GitHub una guía de intervención; no ejecuta ni modifica el despliegue.
@@ -235,3 +235,91 @@ Cualquier corrección de Nginx/despliegue debe ser una nueva versión (por ejemp
 - No reactivar Email/SMS o Documentos sin pruebas de compilación y navegación.
 - No decir que una actualización está instalada solo porque Git avanzó: confirmar build React y versión visual.
 - No subir cambios funcionales sin versión visible en `version.js`.
+
+
+## 9. Configuración de desarrollo local
+
+> Esta sección describe el estado actual del repositorio. No se debe subir `backend/.env` ni contraseñas reales a GitHub.
+
+### Requisitos
+
+- Python 3 con `venv`.
+- Node.js y Yarn 1.x (el proyecto declara Yarn 1.22.22).
+- MariaDB/MySQL para un entorno igual al servidor.
+- Git.
+
+### Variables del backend
+
+El ejemplo existente es `deploy/env/backend.env.example`. Copiarlo a `backend/.env` y reemplazar sus valores de ejemplo:
+
+| Variable | Función |
+|---|---|
+| `DATABASE_URL` | URL de conexión SQLAlchemy a MariaDB/MySQL. |
+| `JWT_SECRET` | Clave privada usada para firmar tokens JWT. Debe ser única y no compartirse. |
+| `ADMIN_EMAIL` | Cuenta administrativa inicial. |
+| `ADMIN_PASSWORD` | Clave de la cuenta administrativa inicial; cambiarla antes de operar. |
+| `CORS_ORIGINS` | Orígenes permitidos para el frontend. En desarrollo puede necesitar incluir la URL del dev server. |
+| `MIKROTIK_TIMEOUT` y `MIKROTIK_CUT_LIST` | Parámetros de integración MikroTik, cuando correspondan. |
+
+### Arranque backend
+
+```bash
+cd backend
+cp ../deploy/env/backend.env.example .env
+python3 -m venv venv
+./venv/bin/pip install -r requirements.txt
+./venv/bin/uvicorn server:app --reload --host 0.0.0.0 --port 8000
+```
+
+La API se sirve bajo el prefijo `/api`; comprobar `http://localhost:8000/api/health`.
+
+### Arranque frontend
+
+```bash
+cd frontend
+printf 'REACT_APP_BACKEND_URL=http://localhost:8000\n' > .env
+yarn install
+yarn start
+```
+
+`AuthContext.js` arma la URL como `REACT_APP_BACKEND_URL + /api`. El `craco.config.js` actual **no define un proxy API explícito**; por ello, en desarrollo debe usarse `REACT_APP_BACKEND_URL=http://localhost:8000` o configurar un proxy de forma consciente sin afectar producción.
+
+### Pruebas
+
+- Backend: existen pruebas bajo `backend/tests/`; algunas requieren `REACT_APP_BACKEND_URL` porque prueban contra una API accesible. Revisar cada prueba antes de ejecutarla como si fuera un test unitario aislado.
+- Frontend: el proyecto tiene `yarn test` (CRACO/Jest). Si se agregan componentes nuevos, crear pruebas de renderizado/navegación o compilar como mínimo antes de publicar.
+- Compilación obligatoria antes de una entrega frontend:
+
+```bash
+cd frontend
+yarn build
+```
+
+## 10. Checklist de despliegue posterior a una actualización
+
+Ejecutar y comprobar en orden; no marcar una actualización como correcta solo por ver que Git avanzó.
+
+- [ ] `git log --oneline -n 5` confirma el commit esperado.
+- [ ] `grep PANEL_VERSION frontend/src/modules/system-update/version.js` coincide con la intención de la entrega.
+- [ ] `yarn build` terminó correctamente. Tratar errores como bloqueantes; revisar warnings relevantes antes de publicar.
+- [ ] `/var/www/mikrosmart_web` contiene el build nuevo y sus fechas/tamaños cambiaron.
+- [ ] `nginx -t` pasó.
+- [ ] Se reinició Nginx sin error: `systemctl restart nginx`.
+- [ ] El backend responde: `curl -fs http://127.0.0.1:8001/api/health` en el despliegue actual (Supervisor/Nginx usan 8001).
+- [ ] Navegador: cerrar sesión, recarga forzada con **Ctrl+Shift+R** o **Ctrl+F5**, volver a iniciar y verificar la versión del pie.
+- [ ] El módulo Actualizaciones muestra versión instalada/pendiente coherente con el pie y con `version.js`.
+- [ ] Si hubo cambios de Cliente/Red/Facturación, probar el flujo funcional afectado sin perder datos.
+
+## 11. Incidencias recientes y patrones
+
+| Fecha | Síntoma | Contenedor probable | Estado / acción correcta |
+|---|---|---|---|
+| 2026-09-07 | Pie del panel mostraba 1.0.13 mientras el centro de actualizaciones reportaba 1.0.14. | Despliegue frontend/Nginx y caché; no el comparador Git del backend. | Pendiente de validación final: recarga forzada; comprobar build copiado y aplicar política no-cache para `index.html` si persiste. No afirmar causa definitiva sin evidencia del servidor. |
+| 2026-09-07 | Se publicó 1.0.15 para comprobar detección, instalación y cierre de sesión. | `modules/system-update/`. | Publicado en `main`; después de instalar debe probarse que la versión visual también cambia. |
+| 2026-09-07 | Abrir Email/SMS o Documentos dejó React en pantalla negra. | `modules/clientes/editor/` y su integración en `ClientDetail.jsx`. | Recuperado temporalmente: las pestañas muestran “módulo en revisión”. Requiere corregir y probar los componentes antes de reactivarlos. |
+| Recurrente | Cambio visual sin efecto real en datos/red. | Frontend con validación backend ausente o API incorrecta. | Seguir vista → API → router → modelo/integración; no resolver solo alterando JSX. |
+| Recurrente | Un cambio Git aparece en API pero no en la web. | Proceso de build/copia estática o caché. | Validar `yarn build`, `/var/www/mikrosmart_web`, Nginx y recarga forzada. |
+
+### Patrón de prevención
+
+Cada fallo debe registrarse con: síntoma visible, módulo dueño, evidencia (consola/API/log), corrección aplicada, prueba realizada y versión que lo contiene. Así Copilot no repetirá correcciones visuales que oculten la causa real.
