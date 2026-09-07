@@ -4,7 +4,7 @@ export const roleDefaults = {
   cobrador: { dashboard:["view"], clients:["view"], billing:["view"], messaging:["view"], tickets:["view"] },
 };
 export const permissionsByTab = {
-  inicio:"dashboard", red:"network", routers:"network", olts:"olt", red_ipv4:"network",
+  inicio:"dashboard", red:"network", routers:"router_menu", olts:"olt", red_ipv4:"network",
   nap_boxes:"network", monitoring:"monitoring", servicios:"plans", clientes:"clients",
   client_users:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing",
   hotspot:"hotspot", tareas:"tasks", almacen:"inventory", tickets:"tickets",
@@ -17,7 +17,14 @@ export function isAdministrator(user) {
   return ["admin", "administrador", "administrator"].includes(String(user?.role || "").trim().toLowerCase());
 }
 export function canPermission(user, module, action = "view") {
-  return isAdministrator(user) || Boolean((permissionsFor(user)[module] || []).includes(action));
+  if (isAdministrator(user)) return true;
+  const permissions = permissionsFor(user);
+  // Compatibilidad: los operadores existentes conservan el menú hasta que se
+  // desmarque explícitamente “Menú Routers” en Gestión personal.
+  if (module === "router_menu" && !Object.prototype.hasOwnProperty.call(permissions, "router_menu")) {
+    return Boolean((permissions.network || []).includes(action));
+  }
+  return Boolean((permissions[module] || []).includes(action));
 }
 export function canViewTab(user, tab) {
   return canPermission(user, permissionsByTab[tab], "view");
