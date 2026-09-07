@@ -1,7 +1,10 @@
 /**
  * Archivo: frontend/src/modules/facturacion/Billing.jsx
- * Función: Módulo Facturación: listado de facturas con filtros, emisión individual y masiva, registro de pagos (Yape, Plin, BCP, BBVA, Efectivo), impresión de comprobantes térmico/A4 y reactivación automática del servicio al pagar.
- * Trabaja con: backend/app/routers/facturacion/router.py (/api/invoices, /api/payments), modules/clientes/Clients.jsx
+ * Actualización: 2026-09-07 — reemplazo de tabla con componente mejorado, pagos inline y filtros.
+ * Función: módulo de facturación global con listado de todas las facturas, filtros por estado,
+ *          registro de pagos inline, impresión de recibos y facturación/corte masivo.
+ * Recibe de: backend /api/invoices (listado), /api/payments (registro), /api/routers/sync-cuts.
+ * Entrega a: administrador una interfaz limpia para cobranza y auditoría de pagos.
  */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -10,7 +13,7 @@ import { TEST_IDS } from "../../constants/testIds";
 import { 
   DollarSign, FileText, CheckCircle2, Clock, AlertTriangle, 
   Printer, QrCode, ShieldAlert, Sparkles, Plus, Search, 
-  CreditCard, Smartphone, Building2, User, Phone, MapPin
+  CreditCard, Smartphone, Building2, User, Phone, MapPin, Loader, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,26 +23,20 @@ export default function Billing() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  
+  // Payment form inline
+  const [payingInvoiceId, setPayingInvoiceId] = useState(null);
+  const [payData, setPayData] = useState({ method: "Yape", amount: 0, reference: "" });
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  // Payment Modal
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [payData, setPayData] = useState({
-    payment_method: "Yape",
-    amount: 0,
-    operation_reference: "",
-    notes: ""
-  });
-
-  // Printable Receipt Modal
-  const [receiptToPrint, setReceiptToPrint] = useState(null);
-  const [printFormat, setPrintFormat] = useState("thermal"); // thermal (80mm) or standard (A4)
+  // Receipt preview
+  const [viewingReceipt, setViewingReceipt] = useState(null);
 
   const fetchInvoices = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/invoices`, {
-        params: { status: statusFilter, search },
+        params: { status: statusFilter !== "all" ? statusFilter : undefined, search },
         headers: { Authorization: `Bearer ${token}` }
       });
       setInvoices(res.data);
@@ -55,36 +52,33 @@ export default function Billing() {
     fetchInvoices();
   }, [statusFilter, search]);
 
-  const handleOpenPayModal = (inv) => {
-    setSelectedInvoice(inv);
-    setPayData({
-      payment_method: "Yape",
-      amount: inv.amount,
-      operation_reference: `OP-${Math.floor(100000 + Math.random() * 900000)}`,
-      notes: ""
-    });
-    setShowPayModal(true);
-  };
-
-  const handleProcessPayment = async (e) => {
-    e.preventDefault();
+  const handlePayment = async (invoiceId) => {
+    if (!payData.amount || payData.amount <= 0) {
+      toast.error("Ingresa un monto válido");
+      return;
+    }
+    
+    setPaymentProcessing(true);
     try {
-      const res = await axios.post(`${API}/payments`, {
-        invoice_id: selectedInvoice.id,
-        amount: parseFloat(payData.amount),
-        payment_method: payData.payment_method,
-        operation_reference: payData.operation_reference,
-        notes: payData.notes
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("¡Pago registrado con éxito! Recibo emitido.");
-      setShowPayModal(false);
+      const res = await axios.post(
+        `${API}/payments`,
+        {
+          invoice_id: invoiceId,
+          amount: parseFloat(payData.amount),
+          payment_method: payData.method,
+          operation_reference: payData.reference || `OP-${Math.floor(100000 + Math.random() * 900000)}`
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success("¡Pago registrado!");
+      setPayingInvoiceId(null);
       fetchInvoices();
-      // Auto open printable receipt
-      setReceiptToPrint(res.data.invoice);
+      setViewingReceipt(res.data.invoice);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Error al registrar pago");
+    } finally {
+      setPaymentProcessing(false);
     }
   };
 
@@ -114,10 +108,28 @@ export default function Billing() {
     }
   };
 
-  // Metrics summary
+  // Metrics
   const totalInvoiced = invoices.reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const totalPaid = invoices.filter(i => i.status === "paid").reduce((acc, curr) => acc + (curr.paid_amount || curr.amount || 0), 0);
   const totalUnpaid = invoices.filter(i => i.status !== "paid").reduce((acc, curr) => acc + (curr.amount || 0), 0);
+
+  const getStatusBadge = (status) => {
+    const configs = {
+      paid: { bg: "bg-emerald-500/20", border: "border-emerald-500/40", text: "text-emerald-400", icon: CheckCircle2, label: "PAGADO" },
+      unpaid: { bg: "bg-amber-500/20", border: "border-amber-500/40", text: "text-amber-400", icon: Clock, label: "PENDIENTE" },
+      overdue: { bg: "bg-rose-500/20", border: "border-rose-500/40", text: "text-rose-400", icon: AlertTriangle, label: "VENCIDO" },
+      canceled: { bg: "bg-slate-500/20", border: "border-slate-500/40", text: "text-slate-400", icon: Eye, label: "ANULADO" }
+    };
+    
+    const cfg = configs[status] || configs.unpaid;
+    const Icon = cfg.icon;
+    
+    return (
+      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${cfg.bg} ${cfg.border} border ${cfg.text}`}>
+        <Icon className="w-3.5 h-3.5" /> {cfg.label}
+      </span>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -151,7 +163,7 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* Financial Summary KPI Strip */}
+      {/* KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Facturado</p>
@@ -172,153 +184,164 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* Filter & Search */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+        <div className="relative flex-1 sm:flex-none">
+          <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-slate-500" />
           <input
             type="text"
-            placeholder="Buscar por N° Recibo, cliente o DNI/RUC..."
+            placeholder="Buscar recibo, cliente o DNI/RUC..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            className="pl-9 pr-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-full"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              statusFilter === "all" ? "bg-cyan-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => setStatusFilter("paid")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              statusFilter === "paid" ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
-          >
-            Pagados
-          </button>
-          <button
-            onClick={() => setStatusFilter("unpaid")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              statusFilter === "unpaid" ? "bg-amber-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
-          >
-            Pendientes
-          </button>
-          <button
-            onClick={() => setStatusFilter("overdue")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              statusFilter === "overdue" ? "bg-rose-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
-          >
-            Vencidos
-          </button>
+        <div className="flex gap-1 flex-wrap">
+          {["all", "paid", "unpaid", "overdue"].map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                statusFilter === s
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
+              }`}
+            >
+              {s === "all" ? "Todos" : s === "paid" ? "Pagados" : s === "unpaid" ? "Pendientes" : "Vencidos"}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Invoices Table */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+      {/* Table */}
+      <div className="bg-slate-900/60 rounded-lg border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
               <tr>
-                <th className="py-3 px-4">N° Recibo / Periodo</th>
-                <th className="py-3 px-4">Abonado / DNI-RUC</th>
-                <th className="py-3 px-4">Plan / Concepto</th>
-                <th className="py-3 px-4">Monto (S/.)</th>
-                <th className="py-3 px-4">Vencimiento</th>
-                <th className="py-3 px-4">Estado</th>
-                <th className="py-3 px-4 text-center">Acciones</th>
+                <th className="px-3 py-2.5 font-semibold">Recibo</th>
+                <th className="px-3 py-2.5 font-semibold">Cliente / DNI-RUC</th>
+                <th className="px-3 py-2.5 font-semibold">Período</th>
+                <th className="px-3 py-2.5 font-semibold text-right">Monto (S/.)</th>
+                <th className="px-3 py-2.5 font-semibold">Vencimiento</th>
+                <th className="px-3 py-2.5 font-semibold">Estado</th>
+                <th className="px-3 py-2.5 font-semibold text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+            <tbody className="divide-y divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-slate-500">
-                    Cargando facturas y recibos...
+                  <td colSpan="7" className="py-6 text-center text-slate-500">
+                    <Loader className="w-4 h-4 animate-spin inline" /> Cargando...
                   </td>
                 </tr>
               ) : invoices.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-slate-500">
-                    No hay comprobantes para mostrar.
+                  <td colSpan="7" className="py-6 text-center text-slate-500">
+                    No hay facturas.
                   </td>
                 </tr>
               ) : (
                 invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-800/40 transition">
-                    <td className="py-3 px-4">
-                      <div className="font-mono font-bold text-slate-100">{inv.invoice_number}</div>
-                      <div className="text-[11px] text-cyan-400">{inv.month_period}</div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-200">{inv.client_name}</div>
-                      <div className="text-[11px] text-slate-400">DNI/RUC: {inv.client_dni_ruc}</div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="text-slate-300">{inv.plan_name}</div>
-                      <div className="text-[10px] text-slate-500">{inv.notes || "Servicio mensual"}</div>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-100 text-sm">
-                        S/. {Number(inv.amount).toFixed(2)}
-                      </div>
-                      {inv.status === "paid" && (
-                        <div className="text-[10px] text-emerald-400">
-                          {inv.payment_method} ({inv.operation_reference || "OK"})
+                  <React.Fragment key={inv.id}>
+                    <tr className="hover:bg-slate-800/30 transition">
+                      <td className="px-3 py-2.5 font-mono font-bold text-slate-100">{inv.invoice_number}</td>
+                      <td className="px-3 py-2.5">
+                        <div className="font-semibold text-slate-200">{inv.client_name}</div>
+                        <div className="text-[10px] text-slate-400">{inv.client_dni_ruc}</div>
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-300">{inv.month_period}</td>
+                      <td className="px-3 py-2.5 text-right font-bold text-slate-100">S/. {Number(inv.amount).toFixed(2)}</td>
+                      <td className="px-3 py-2.5 text-slate-300 text-[10px]">{inv.due_date}</td>
+                      <td className="px-3 py-2.5">{getStatusBadge(inv.status)}</td>
+                      <td className="px-3 py-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {inv.status !== "paid" ? (
+                            <button
+                              onClick={() => {
+                                setPayingInvoiceId(inv.id);
+                                setPayData({ method: "Yape", amount: inv.amount, reference: "" });
+                              }}
+                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded transition flex items-center gap-1"
+                            >
+                              <DollarSign className="w-3 h-3" /> Pagar
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setViewingReceipt(inv)}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[10px] font-bold rounded transition flex items-center gap-1 border border-slate-700"
+                            >
+                              <Printer className="w-3 h-3" /> Ver
+                            </button>
+                          )}
                         </div>
-                      )}
-                    </td>
+                      </td>
+                    </tr>
 
-                    <td className="py-3 px-4">
-                      <div className="text-slate-300">{inv.due_date}</div>
-                      <div className="text-[10px] text-slate-500">Emisión: {inv.issue_date}</div>
-                    </td>
+                    {/* Inline Payment Form */}
+                    {payingInvoiceId === inv.id && (
+                      <tr className="bg-slate-950/80 border-t-2 border-cyan-500/50">
+                        <td colSpan="7" className="px-4 py-3">
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold text-slate-300">Registrar pago para {inv.invoice_number}</p>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                              {["Yape", "Plin", "Efectivo", "BCP", "BBVA"].map((m) => (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  onClick={() => setPayData({ ...payData, method: m })}
+                                  className={`px-2 py-1.5 rounded text-[10px] font-bold transition border ${
+                                    payData.method === m
+                                      ? "bg-cyan-500/20 border-cyan-500 text-cyan-300"
+                                      : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600"
+                                  }`}
+                                >
+                                  {m}
+                                </button>
+                              ))}
+                            </div>
 
-                    <td className="py-3 px-4">
-                      {inv.status === "paid" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px] border border-emerald-500/30">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> PAGADO
-                        </span>
-                      ) : inv.status === "overdue" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold text-[11px] border border-rose-500/30">
-                          <AlertTriangle className="w-3.5 h-3.5" /> VENCIDO
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold text-[11px] border border-amber-500/30">
-                          <Clock className="w-3.5 h-3.5" /> PENDIENTE
-                        </span>
-                      )}
-                    </td>
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                type="number"
+                                step="0.10"
+                                placeholder="Monto"
+                                value={payData.amount}
+                                onChange={(e) => setPayData({ ...payData, amount: e.target.value })}
+                                className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-emerald-400 font-bold placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Referencia (ej: OP-123456)"
+                                value={payData.reference}
+                                onChange={(e) => setPayData({ ...payData, reference: e.target.value })}
+                                className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-slate-200 font-mono placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                              />
+                            </div>
 
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {inv.status !== "paid" ? (
-                          <button
-                            onClick={() => handleOpenPayModal(inv)}
-                            className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-lg shadow-sm flex items-center gap-1 text-[11px] transition"
-                          >
-                            <DollarSign className="w-3.5 h-3.5" /> Cobrar S/.
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setReceiptToPrint(inv)}
-                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-medium rounded-lg flex items-center gap-1 text-[11px] transition"
-                          >
-                            <Printer className="w-3.5 h-3.5" /> Ver Recibo
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => setPayingInvoiceId(null)}
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded border border-slate-700"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                onClick={() => handlePayment(inv.id)}
+                                disabled={paymentProcessing}
+                                className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white text-xs font-bold rounded shadow-lg flex items-center gap-1"
+                              >
+                                {paymentProcessing ? <Loader className="w-3 h-3 animate-spin" /> : <DollarSign className="w-3 h-3" />}
+                                Confirmar Pago
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -326,234 +349,48 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* Payment Processing Modal */}
-      {showPayModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-emerald-400" /> Registrar Cobro de Recibo
+      {/* Receipt Preview Modal */}
+      {viewingReceipt && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-4 shadow-2xl my-8">
+            <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <Printer className="w-4 h-4 text-cyan-400" /> Recibo
               </h3>
-              <button onClick={() => setShowPayModal(false)} className="text-slate-400 hover:text-slate-200">
-                ✕
-              </button>
+              <button onClick={() => setViewingReceipt(null)} className="text-slate-400 hover:text-slate-200 font-bold">✕</button>
             </div>
 
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Abonado:</span>
-                <span className="font-semibold text-slate-100">{selectedInvoice.client_name}</span>
+            {/* Simple Receipt Preview */}
+            <div className="bg-white text-slate-900 p-4 rounded font-mono text-xs text-center space-y-1 mb-3 select-all">
+              <p className="font-bold">FIBRAZ PERÚ S.A.C.</p>
+              <p className="text-[10px]">RUC: 20608934521 | Teléfono: +51 987 654 321</p>
+              <div className="border-b border-dashed border-slate-400 my-1"></div>
+              
+              <p className="font-bold">RECIBO DE PAGO</p>
+              <p className="font-bold text-lg">{viewingReceipt.invoice_number}</p>
+              <p className="text-[11px]">Fecha: {viewingReceipt.payment_date ? viewingReceipt.payment_date.split("T")[0] : viewingReceipt.issue_date}</p>
+              
+              <div className="border-b border-dashed border-slate-400 my-1"></div>
+              <div className="text-left space-y-0.5 text-[11px]">
+                <p><span className="font-bold">Cliente:</span> {viewingReceipt.client_name}</p>
+                <p><span className="font-bold">Período:</span> {viewingReceipt.month_period}</p>
+                <p><span className="font-bold">Plan:</span> {viewingReceipt.plan_name}</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Comprobante:</span>
-                <span className="font-mono text-cyan-400">{selectedInvoice.invoice_number}</span>
+              
+              <div className="border-b border-dashed border-slate-400 my-1"></div>
+              <div className="text-right font-bold text-sm">
+                TOTAL: S/. {Number(viewingReceipt.paid_amount || viewingReceipt.amount).toFixed(2)}
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Periodo:</span>
-                <span className="text-slate-200">{selectedInvoice.month_period}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold pt-2 border-t border-slate-800">
-                <span className="text-slate-300">Total a Pagar:</span>
-                <span className="text-emerald-400">S/. {Number(selectedInvoice.amount).toFixed(2)}</span>
-              </div>
+              <p className="text-[10px]">Medio: {viewingReceipt.payment_method || "Efectivo"}</p>
+              <p className="text-[10px] font-bold">¡Gracias por su pago!</p>
             </div>
 
-            <form onSubmit={handleProcessPayment} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Método de Pago *</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {["Yape", "Plin", "Efectivo", "Transferencia BCP", "Transferencia BBVA", "Interbank"].map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPayData({ ...payData, payment_method: m })}
-                      className={`p-2 rounded-xl border text-center font-medium transition ${
-                        payData.payment_method === m
-                          ? "bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Monto Recibido (S/.) *</label>
-                <input
-                  type="number"
-                  step="0.10"
-                  required
-                  value={payData.amount}
-                  onChange={(e) => setPayData({ ...payData, amount: e.target.value })}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 font-bold text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">N° Operación / Referencia</label>
-                <input
-                  type="text"
-                  value={payData.operation_reference}
-                  onChange={(e) => setPayData({ ...payData, operation_reference: e.target.value })}
-                  placeholder="Ej. OP-449102 o N° de Yape"
-                  className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowPayModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg"
-                >
-                  Confirmar Pago y Emitir Recibo
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Printable Receipt Preview Modal */}
-      {receiptToPrint && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 my-8">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <Printer className="w-5 h-5 text-cyan-400" /> Vista Previa del Recibo
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPrintFormat(printFormat === "thermal" ? "standard" : "thermal")}
-                  className="px-2 py-1 bg-slate-800 text-[11px] text-cyan-300 rounded border border-slate-700"
-                >
-                  Formato: {printFormat === "thermal" ? "Ticket 80mm" : "Estándar A4"}
-                </button>
-                <button onClick={() => setReceiptToPrint(null)} className="text-slate-400 hover:text-slate-200">
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Receipt Content Container styled for paper print */}
-            <div className="bg-white text-slate-900 p-6 rounded-xl font-mono text-xs shadow-inner select-all">
-              {printFormat === "thermal" ? (
-                /* 80mm Thermal Receipt Format */
-                <div className="max-w-[300px] mx-auto text-center space-y-2 leading-tight">
-                  <h2 className="text-lg font-black tracking-wider">FIBRAZ PERÚ S.A.C.</h2>
-                  <p className="text-[10px]">RUC: 20608934521</p>
-                  <p className="text-[10px]">Av. Las Palmeras 1450, Los Olivos</p>
-                  <p className="text-[10px]">Central: +51 987 654 321</p>
-                  <div className="border-b border-dashed border-slate-400 my-2"></div>
-                  
-                  <p className="font-bold text-sm">RECIBO DE SERVICIO</p>
-                  <p className="font-bold">{receiptToPrint.invoice_number}</p>
-                  <p className="text-[11px]">Fecha: {receiptToPrint.payment_date ? receiptToPrint.payment_date.split("T")[0] : receiptToPrint.issue_date}</p>
-                  <div className="border-b border-dashed border-slate-400 my-2"></div>
-
-                  <div className="text-left space-y-1 text-[11px]">
-                    <p><span className="font-bold">Cliente:</span> {receiptToPrint.client_name}</p>
-                    <p><span className="font-bold">DNI/RUC:</span> {receiptToPrint.client_dni_ruc}</p>
-                    <p><span className="font-bold">Dirección:</span> {receiptToPrint.client_address}</p>
-                    <p><span className="font-bold">Periodo:</span> {receiptToPrint.month_period}</p>
-                  </div>
-                  <div className="border-b border-dashed border-slate-400 my-2"></div>
-
-                  <div className="text-left space-y-1 text-[11px]">
-                    <div className="flex justify-between font-bold">
-                      <span>Concepto</span>
-                      <span>Total</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{receiptToPrint.plan_name}</span>
-                      <span>S/. {Number(receiptToPrint.amount).toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="border-b border-dashed border-slate-400 my-2"></div>
-
-                  <div className="flex justify-between text-sm font-black py-1">
-                    <span>TOTAL COBRADO:</span>
-                    <span>S/. {Number(receiptToPrint.paid_amount || receiptToPrint.amount).toFixed(2)}</span>
-                  </div>
-                  <p className="text-left text-[10px]">Medio: {receiptToPrint.payment_method || "Efectivo"} ({receiptToPrint.operation_reference || "CONFORME"})</p>
-                  <p className="text-left text-[10px]">Atendido por: {receiptToPrint.operator_name || user?.name || "Administración"}</p>
-
-                  <div className="pt-3 flex flex-col items-center">
-                    <div className="w-20 h-20 bg-slate-100 border border-slate-300 rounded flex items-center justify-center">
-                      <QrCode className="w-16 h-16 text-slate-800" />
-                    </div>
-                    <p className="text-[9px] mt-1 text-slate-500">Comprobante de Pago Electrónico FibraZ</p>
-                    <p className="text-[9px] font-bold mt-1">¡Gracias por su preferencia!</p>
-                  </div>
-                </div>
-              ) : (
-                /* Standard A4 Receipt Format */
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start border-b border-slate-300 pb-3">
-                    <div>
-                      <h2 className="text-xl font-extrabold text-cyan-800">FIBRAZ PERÚ S.A.C.</h2>
-                      <p className="text-xs text-slate-600">Servicios de Telecomunicaciones e Internet de Alta Velocidad</p>
-                      <p className="text-xs text-slate-600">RUC: 20608934521 | Tel: +51 987 654 321</p>
-                    </div>
-                    <div className="text-right border border-cyan-800 p-2 rounded bg-cyan-50">
-                      <p className="text-xs font-bold text-cyan-900 uppercase">RECIBO DE CAJA</p>
-                      <p className="text-sm font-black text-cyan-950">{receiptToPrint.invoice_number}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <p><span className="font-bold">Abonado:</span> {receiptToPrint.client_name}</p>
-                      <p><span className="font-bold">DNI/RUC:</span> {receiptToPrint.client_dni_ruc}</p>
-                      <p><span className="font-bold">Dirección:</span> {receiptToPrint.client_address}</p>
-                    </div>
-                    <div>
-                      <p><span className="font-bold">Periodo facturado:</span> {receiptToPrint.month_period}</p>
-                      <p><span className="font-bold">Fecha de pago:</span> {receiptToPrint.payment_date ? receiptToPrint.payment_date.split("T")[0] : receiptToPrint.issue_date}</p>
-                      <p><span className="font-bold">Método:</span> {receiptToPrint.payment_method || "Efectivo"}</p>
-                    </div>
-                  </div>
-
-                  <table className="w-full text-left text-xs border border-slate-300 mt-2">
-                    <thead className="bg-slate-100 font-bold border-b border-slate-300">
-                      <tr>
-                        <th className="p-2">Descripción del Servicio</th>
-                        <th className="p-2 text-right">Importe</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="p-2">Servicio de Internet Fibra Óptica - {receiptToPrint.plan_name}</td>
-                        <td className="p-2 text-right font-bold">S/. {Number(receiptToPrint.amount).toFixed(2)}</td>
-                      </tr>
-                    </tbody>
-                    <tfoot className="border-t border-slate-300 bg-slate-50">
-                      <tr>
-                        <td className="p-2 font-black text-right">TOTAL PAGADO:</td>
-                        <td className="p-2 text-right font-black text-emerald-700">S/. {Number(receiptToPrint.paid_amount || receiptToPrint.amount).toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-lg"
-              >
-                <Printer className="w-4 h-4" /> Imprimir Comprobante
-              </button>
-            </div>
+            <button
+              onClick={() => window.print()}
+              className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded flex items-center justify-center gap-2"
+            >
+              <Printer className="w-3.5 h-3.5" /> Imprimir
+            </button>
           </div>
         </div>
       )}
