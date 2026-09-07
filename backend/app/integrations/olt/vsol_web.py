@@ -111,7 +111,11 @@ def _fetch_vsol_basic_information(
     ).encode("utf-8")
 
     jar = CookieJar()
-    opener = build_opener(HTTPCookieProcessor(jar))
+    context = ssl._create_unverified_context()
+    opener = build_opener(
+        HTTPCookieProcessor(jar),
+        HTTPSHandler(context=context),
+    )
     request = Request(
         url,
         data=payload,
@@ -123,12 +127,8 @@ def _fetch_vsol_basic_information(
         method="POST",
     )
 
-    # La VSOL utiliza un certificado local/autofirmado. La conexión sigue
-    # limitada a la IP configurada para esa OLT y no se registra la clave.
-    context = ssl._create_unverified_context()
-
     try:
-        with opener.open(request, timeout=TIMEOUT + 3, context=context) as response:
+        with opener.open(request, timeout=TIMEOUT + 3) as response:
             page = response.read().decode("utf-8", errors="replace")
     except Exception as exc:
         raise OltWebError(f"No se pudo consultar la web de la OLT: {exc}") from exc
