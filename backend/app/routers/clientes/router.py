@@ -18,7 +18,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, now_iso
-from app.core.security import get_current_user
+from app.core.security import get_current_user, is_admin_role
 from app.core.utils import apply_updates, correlative, current_period, get_or_404
 from app.integrations.mikrotik import service as mt
 from app.integrations.olt import service as olt
@@ -45,6 +45,34 @@ def _activity(db: AsyncSession, client_id: str, action: str, detail: str):
 async def _cut_list(db: AsyncSession) -> str:
     s = await db.get(Setting, "system_config")
     return (s.data or {}).get("mikrotik_cut_list") or "morosos"
+
+async def _technician_visibility_minutes(db: AsyncSession) -> int:
+    setting = await db.get(Setting, "system_config")
+    value = (setting.data or {}).get("technician_client_visibility_minutes", 720) if setting else 720
+    try:
+        return max(30, min(720, int(value)))
+    except (TypeError, ValueError):
+        return 720
+
+def _can_view_client(client: Client, user: dict, visibility_minutes: int) -> bool:
+    if is_admin_role(user.get("role")) or user.get("role") != "tecnico":
+        return True
+    if client.created_by_user_id != user.get("id"):
+        return False
+    try:
+        created_at = datetime.fromisoformat(client.created_at.replace("Z", "+00:00"))
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+    except (AttributeError, ValueError):
+        return False
+    return datetime.now(timezone.utc) <= created_at + timedelta(minutes=visibility_minutes)
+
+async def _get_visible_client(db: AsyncSession, client_id: str, user: dict) -> Client:
+    client = await get_or_404(db, Client, client_id, "Cliente")
+    if not _can_view_client(client, user, await _technician_visibility_minutes(db)):
+        # Respondemos 404 para no revelar registros ajenos al técnico.
+        raise HTTPException(status_code=404, detail="Cliente no disponible")
+    return client
 
 
 async def _attach_plan_router(db: AsyncSession, c: Client):
@@ -151,7 +179,7 @@ async def _attach_plan_router(db: AsyncSession, c: Client):
 
 
 @router.get("")
-async def list_clients(search: Optional[str] = None, status: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+async def list_clients(search: Optional[str] = None, status: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     q = select(Client)
     if status and status != "all":
         q = q.where(Client.status == status)
@@ -160,12 +188,13 @@ async def list_clients(search: Optional[str] = None, status: Optional[str] = Non
         q = q.where(or_(Client.full_name.ilike(like), Client.dni_ruc.ilike(like), Client.ip_address.ilike(like),
                         Client.phone.ilike(like), Client.address.ilike(like), Client.pppoe_user.ilike(like)))
     rows = (await db.execute(q.order_by(Client.created_at.desc()))).scalars().all()
-    return [c.to_dict() for c in rows]
+    minutes = await _technician_visibility_minutes(db)
+    return [c.to_dict() for c in rows if _can_view_client(c, current_user, minutes)]
 
 
 @router.get("/{client_id}")
-async def get_client(client_id: str, db: AsyncSession = Depends(get_db)):
-    c = await get_or_404(db, Client, client_id, "Cliente")
+async def get_client(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    c = await _get_visible_client(db, client_id, current_user)
     invoices = (await db.execute(select(Invoice).where(Invoice.client_id == client_id).order_by(Invoice.issue_date.desc()))).scalars().all()
     tickets = (await db.execute(select(Ticket).where(Ticket.client_id == client_id).order_by(Ticket.created_at.desc()))).scalars().all()
     data = c.to_dict()
@@ -177,8 +206,8 @@ async def get_client(client_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{client_id}/onu-status")
-async def onu_status(client_id: str, db: AsyncSession = Depends(get_db)):
-    c = await get_or_404(db, Client, client_id, "Cliente")
+async def onu_status(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    c = await _get_visible_client(db, client_id, current_user)
     if not c.onu_sn:
         raise HTTPException(status_code=400, detail="El cliente no tiene ONU SN registrado")
     olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
@@ -197,8 +226,9 @@ async def onu_status(client_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("")
-async def create_client(data: ClientIn, db: AsyncSession = Depends(get_db)):
+async def create_client(data: ClientIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     c = Client(**data.model_dump(exclude={"create_first_invoice"}))
+    c.created_by_user_id = current_user["id"]
     c.last_connection_time = ""
     plan, rtr = await _attach_plan_router(db, c)
     db.add(c)
@@ -224,8 +254,8 @@ async def create_client(data: ClientIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/{client_id}")
-async def update_client(client_id: str, data: ClientIn, db: AsyncSession = Depends(get_db)):
-    c = await get_or_404(db, Client, client_id, "Cliente")
+async def update_client(client_id: str, data: ClientIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    c = await _get_visible_client(db, client_id, current_user)
     apply_updates(c, data.model_dump(exclude={"create_first_invoice"}))
     plan, rtr = await _attach_plan_router(db, c)
     result = await mt.provision_client(c, rtr, plan)
@@ -238,8 +268,8 @@ async def update_client(client_id: str, data: ClientIn, db: AsyncSession = Depen
 
 
 @router.delete("/{client_id}")
-async def delete_client(client_id: str, db: AsyncSession = Depends(get_db)):
-    c = await get_or_404(db, Client, client_id, "Cliente")
+async def delete_client(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    c = await _get_visible_client(db, client_id, current_user)
     rtr = await db.get(Router, c.router_id) if c.router_id else None
     result = await mt.remove_client(c, rtr, await _cut_list(db))
     _activity(db, c.id, "Cliente eliminado", f"Cliente eliminado del sistema. {result.get('message', '')}")
@@ -249,8 +279,8 @@ async def delete_client(client_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/{client_id}/toggle-status")
-async def toggle_status(client_id: str, db: AsyncSession = Depends(get_db)):
-    c = await get_or_404(db, Client, client_id, "Cliente")
+async def toggle_status(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    c = await _get_visible_client(db, client_id, current_user)
     rtr = await db.get(Router, c.router_id) if c.router_id else None
     cut_list = await _cut_list(db)
     if c.status == "active":
