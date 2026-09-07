@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
+import { canPermission } from "../ajustes/staff/permissions";
 import { TEST_IDS } from "../../constants/testIds";
 import { Server, Plus, Activity, RefreshCw, Zap, ShieldOff, Cpu, HardDrive, Clock, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,8 +23,11 @@ import EquipmentMapModal from "./components/EquipmentMapModal";
 
 const errMsg = (e, fallback) => e?.response?.data?.detail || fallback;
 
-export default function Network() {
-  const { API, token } = useAuth();
+export default function Network({ focus = "mikrotik" }) {
+  const { API, token, user } = useAuth();
+  const canViewRouter = canPermission(user, "network", "view");
+  const canViewOlt = canPermission(user, "olt", "view");
+  const allowedTypes = { mikrotik: canViewRouter, olt: canViewOlt };
   const headers = { Authorization: `Bearer ${token}` };
   const [routers, setRouters] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -87,6 +91,12 @@ export default function Network() {
     } catch (e) { toast.error(errMsg(e, "Error al ejecutar cortes")); }
   });
 
+  const visibleRouters = routers.filter((item) => item.device_type === focus && allowedTypes[item.device_type]);
+
+  useEffect(() => {
+    if (selected && selected.device_type !== focus) setSelected(visibleRouters[0] || null);
+  }, [focus, routers]);
+
   const removeRouter = async (r) => {
     if (!window.confirm(`¿Eliminar el equipo "${r.name}"?`)) return;
     try {
@@ -102,7 +112,7 @@ export default function Network() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <Server className="w-6 h-6 text-cyan-400" /> Gestión de Red, MikroTik y OLT
+            <Server className="w-6 h-6 text-cyan-400" /> Gestión de Red · ${focus === "olt" ? "OLT" : "Routers MikroTik"}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Lectura en vivo vía API RouterOS (v6/v7): interfaces, PPPoE, colas, DHCP, address-list y hotspot
@@ -115,20 +125,20 @@ export default function Network() {
           </button>
           <button data-testid={TEST_IDS.BTN_NEW_ROUTER} onClick={() => setFormRouter({})}
             className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-600/20">
-            <Plus className="w-4 h-4" /> Agregar Router / OLT
+            <Plus className="w-4 h-4" /> Agregar ${focus === "olt" ? "OLT" : "Router"}
           </button>
         </div>
       </div>
 
       {loading ? (
         <p className="text-xs text-slate-400">Cargando equipos...</p>
-      ) : routers.length === 0 ? (
+      ) : visibleRouters.length === 0 ? (
         <div data-testid="routers-empty" className="p-10 border border-dashed border-slate-800 rounded-2xl text-center text-sm text-slate-400">
-          Aún no hay equipos registrados. Agrega tu MikroTik con la IP, puerto API (8728) y credenciales para comenzar a leerlo.
+          No hay equipos autorizados para esta sección.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {routers.map((r) => (
+          {visibleRouters.map((r) => (
             <RouterCard key={r.id} router={r} selected={selected?.id === r.id} onSelect={() => { setSelected(r); setPingResult(null); }} onCoordinates={setMapRouter} />
           ))}
         </div>
@@ -220,7 +230,7 @@ export default function Network() {
 
       {formRouter !== null && (
         <RouterForm
-          initial={formRouter}
+          initial={formRouter && { ...formRouter, device_type: formRouter.id ? formRouter.device_type : focus }}
           onClose={() => setFormRouter(null)}
           onSaved={() => { setFormRouter(null); fetchRouters(); }}
         />
