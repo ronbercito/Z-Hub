@@ -1,6 +1,6 @@
 // Política visual del módulo Gestión personal. Sidebar solo consume esta configuración.
 export const roleDefaults = {
-  tecnico: { dashboard:["view"], clients:["view"], plans:["view"], network:["view"], monitoring:["view"], tickets:["view"], tasks:["view"] },
+  tecnico: { dashboard:["view"], clients:["view"], plans:["view"], monitoring:["view"], tickets:["view"], tasks:["view"] },
   cobrador: { dashboard:["view"], clients:["view"], billing:["view"], messaging:["view"], tickets:["view"] },
 };
 
