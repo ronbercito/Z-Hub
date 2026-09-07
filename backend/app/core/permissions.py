@@ -2,7 +2,7 @@
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, is_admin_role
 
 PERMISSION_CATALOG = {
     "dashboard": ["view"], "clients": ["view", "create", "edit", "delete", "suspend"],
@@ -26,7 +26,7 @@ def normalized_permissions(user: dict) -> dict:
     return saved if saved else ROLE_DEFAULTS.get(user.get("role"), {})
 
 def allowed(user: dict, module: str, action: str = "view") -> bool:
-    return user.get("role") == "admin" or action in normalized_permissions(user).get(module, [])
+    return is_admin_role(user.get("role")) or action in normalized_permissions(user).get(module, [])
 
 def ensure_allowed(user: dict, module: str, action: str) -> None:
     if not allowed(user, module, action):
