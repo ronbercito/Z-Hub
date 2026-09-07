@@ -144,7 +144,18 @@ export default function Clients({ onSelectClient }) {
 
   const handleSaveClient = async (e) => {
     e.preventDefault();
-    const payload = { ...formData, optical_power_dbm: formData.optical_power_dbm === "" ? null : formData.optical_power_dbm, latitude: formData.latitude === "" || formData.latitude == null ? 0 : Number(formData.latitude), longitude: formData.longitude === "" || formData.longitude == null ? 0 : Number(formData.longitude) };
+    const isWireless = formData.technology === "wireless";
+    const payload = {
+      ...formData,
+      // Los campos de fibra no deben viajar como cadena vacía al registrar un
+      // enlace inalámbrico: Pydantic espera nap_port como número o null.
+      nap_box_id: isWireless ? "" : formData.nap_box_id,
+      nap_box: isWireless ? "" : formData.nap_box,
+      nap_port: isWireless || formData.nap_port === "" || formData.nap_port == null ? null : Number(formData.nap_port),
+      optical_power_dbm: formData.optical_power_dbm === "" ? null : formData.optical_power_dbm,
+      latitude: formData.latitude === "" || formData.latitude == null ? 0 : Number(formData.latitude),
+      longitude: formData.longitude === "" || formData.longitude == null ? 0 : Number(formData.longitude)
+    };
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const res = selectedClient
