@@ -1,5 +1,9 @@
 /**
- * Centro de actualizaciones conectado al módulo backend system_update.
+ * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
+ * Actualización: 2026-09-07 — oculta identificadores Git técnicos de la interfaz.
+ * Función: consulta, presenta e inicia las actualizaciones del panel.
+ * Recibe: API y token desde AuthContext; estado y registro desde /api/system-update.
+ * Entrega: interfaz de actualización al Layout; no expone commits ni datos internos.
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -84,7 +88,7 @@ export default function UpdateCenter() {
               <>
                 <div className="mt-5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
                   <p className="text-sm font-semibold text-cyan-200">Nueva versión {status.remote.version} disponible</p>
-                  <p className="mt-1 text-xs text-slate-300">Instalada: {status.current.version} · Git {status.current.commit}</p>
+                  <p className="mt-1 text-xs text-slate-300">Instalada: versión {status.current.version}</p>
                 </div>
                 <p className="mt-5 text-xs uppercase tracking-wider text-slate-500">Cambios de la nueva versión</p>
                 <div className="mt-2 space-y-2">{changelog(status.remote.changelog)}</div>
