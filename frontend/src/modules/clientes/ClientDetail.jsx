@@ -6,6 +6,8 @@
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import ClientCommunications from "./editor/ClientCommunications";
+import ClientDocuments from "./editor/ClientDocuments";
 import {
   Activity, BarChart3, CreditCard, FileText, Mail, MessageSquare,
   Radio, ReceiptText, Ticket, UserRound, Wifi, X
