@@ -27,6 +27,7 @@ DEFAULT_SETTINGS = {
     "bcp_account": "",
     "bbva_account": "",
     "mikrotik_cut_list": "morosos",
+    "technician_client_visibility_minutes": 720,
     "google_maps_api_key": "",
     "system_alert_emails": [],
     "system_alert_phones": [],
