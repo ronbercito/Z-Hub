@@ -259,7 +259,7 @@ async def _olt(db: AsyncSession, router_id: str) -> Router:
 
 @router.get("/{router_id}/olt/{action}")
 async def olt_read(router_id: str, action: str, pon: int = 1, onu: int = 0, db: AsyncSession = Depends(get_db)):
-    if action not in ("system", "pon_optical", "pon_stats", "onu_list", "onu_autofind", "onu_optical", "onu_detail"):
+    if action not in ("system", "traffic", "pon_optical", "pon_stats", "onu_list", "onu_autofind", "onu_optical", "onu_detail"):
         raise HTTPException(status_code=400, detail="Acción de lectura no válida")
     r = await _olt(db, router_id)
     res = await olt.run_action(r, action, pon=pon, onu=onu)
