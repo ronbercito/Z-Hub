@@ -209,7 +209,7 @@ export default function Network({ focus = "mikrotik" }) {
             </div>
           )}
 
-          {selected.device_type === "mikrotik" ? <RouterLiveTabs router={selected} /> : <OltLiveTabs router={selected} />}
+          {selected.device_type === "mikrotik" ? <RouterLiveTabs router={selected} /> : <OltLiveTabs router={selected} routers={routers.filter((item) => item.device_type === "olt")} />}
         </div>
       )}
 
