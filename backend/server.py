@@ -28,6 +28,7 @@ from app.core.database import init_db
 from app.core import database
 from app.core.seed import seed_initial_data
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
+from app.routers.ajustes.staff.router import router as staff_router
 from app.routers.almacen.router import router as almacen_router
 from app.routers.auth.router import router as auth_router
 from app.routers.clientes.router import router as clientes_router
@@ -80,7 +81,7 @@ api.include_router(olt_onu_summary_router, prefix="/routers", tags=["Red / OLT /
 api.include_router(olt_onu_inventory_router, prefix="/routers", tags=["Red / OLT / ONUs"])
 
 for r in (ajustes_public_router, auth_router, inicio_router, clientes_router, zones_router, planes_router, ipv4_networks_router, nap_boxes_router, monitoring_router, red_router, facturacion_router,
-          tickets_router, almacen_router, hotspot_router, tareas_router, mensajeria_router, ajustes_router):
+          tickets_router, almacen_router, hotspot_router, tareas_router, mensajeria_router, ajustes_router, staff_router):
     api.include_router(r)
 
 
