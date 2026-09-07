@@ -144,49 +144,50 @@ export default function Network({ focus = "mikrotik" }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {visibleRouters.map((r) => (
-            <RouterCard key={r.id} router={r} selected={selected?.id === r.id} onSelect={() => { setSelected(r); setPingResult(null); }} onCoordinates={setMapRouter} />
+            <RouterCard
+              key={r.id}
+              router={r}
+              selected={selected?.id === r.id}
+              onSelect={() => { setSelected(r); setPingResult(null); }}
+              onCoordinates={setMapRouter}
+            >
+              {r.device_type === "olt" && selected?.id === r.id && (
+                <>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {r.ros_version && <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-violet-200 font-mono">Firmware {r.ros_version}</span>}
+                    {r.board_name && <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 font-mono">{r.board_name}</span>}
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-2 font-mono break-words">
+                    {r.ip_address}:{r.port} ({(r.protocol || "telnet").toUpperCase()} · {r.olt_model || r.pon_type} · {r.pon_type} v{r.software_version}) · usuario {r.username}
+                    {r.private_ip && ` · IP privada ${r.private_ip}`}
+                    {r.location && ` · ${r.location}`}
+                  </p>
+                  {r.last_error && <p className="text-[10px] text-rose-400 mt-1">Último error: {r.last_error}</p>}
+                  <div className="flex items-center gap-2 flex-wrap mt-3">
+                    {canSelected("operate") && <button data-testid="btn-test-connection" onClick={() => testConnection(r)} disabled={busy === "test"}
+                      className="px-2.5 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-700/50 text-[11px] font-semibold rounded-lg flex items-center gap-1 transition disabled:opacity-40">
+                      <RefreshCw className={`w-3.5 h-3.5 ${busy === "test" ? "animate-spin" : ""}`} /> Probar conexión CLI
+                    </button>}
+                    {canSelected("operate") && <button data-testid="btn-ping-router" onClick={() => ping(r)} disabled={busy === "ping"}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-semibold rounded-lg flex items-center gap-1 transition">
+                      <Activity className={`w-3.5 h-3.5 ${busy === "ping" ? "animate-spin text-cyan-400" : ""}`} /> Ping
+                    </button>}
+                    {canSelected("edit") && <button data-testid="btn-edit-router" onClick={() => setFormRouter(r)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg" title="Editar">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>}
+                    {canSelected("delete") && <button data-testid="btn-delete-router" onClick={() => removeRouter(r)} className="p-1.5 bg-slate-800 hover:bg-rose-900/40 text-rose-400 border border-slate-700 rounded-lg" title="Eliminar">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>}
+                  </div>
+                </>
+              )}
+            </RouterCard>
           ))}
         </div>
       )}
 
       {selected && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-bold text-slate-100" data-testid="router-detail-name">{selected.name}</h3>
-                {selected.identity && <span className="px-2 py-0.5 rounded bg-slate-800 text-[11px] text-cyan-300 font-mono">{selected.identity}</span>}
-                {selected.ros_version && <span className="px-2 py-0.5 rounded bg-slate-800 text-[11px] text-slate-300 font-mono">{selected.device_type === "olt" ? "Firmware" : "RouterOS"} {selected.ros_version}</span>}
-                {selected.board_name && <span className="px-2 py-0.5 rounded bg-slate-800 text-[11px] text-slate-300 font-mono">{selected.board_name}</span>}
-              </div>
-              <p className="text-xs text-slate-400 mt-1 font-mono">
-                {selected.ip_address}:{selected.port} {selected.device_type === "olt" ? `(${(selected.protocol || "telnet").toUpperCase()} · ${selected.olt_model || selected.pon_type} · ${selected.pon_type} v${selected.software_version})` : selected.use_ssl ? "(API-SSL)" : "(API)"} · usuario {selected.username}
-                {selected.private_ip && ` · IP privada ${selected.private_ip}`}
-                {selected.location && ` · ${selected.location}`}
-              </p>
-              {selected.last_error && <p className="text-[11px] text-rose-400 mt-1" data-testid="router-last-error">Último error: {selected.last_error}</p>}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {canSelected("operate") && <button data-testid="btn-test-connection" onClick={() => testConnection(selected)} disabled={busy === "test"}
-                className="px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-700/50 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition disabled:opacity-40">
-                <RefreshCw className={`w-3.5 h-3.5 ${busy === "test" ? "animate-spin" : ""}`} /> {selected.device_type === "olt" ? "Probar conexión CLI" : "Probar conexión API"}
-              </button>}
-              {canSelected("operate") && <button data-testid="btn-ping-router" onClick={() => ping(selected)} disabled={busy === "ping"}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">
-                <Activity className={`w-3.5 h-3.5 ${busy === "ping" ? "animate-spin text-cyan-400" : ""}`} /> Ping
-              </button>}
-              {selected.device_type === "mikrotik" && canSelected("operate") && <button data-testid="btn-sync-plans" onClick={() => syncPlans(selected)} disabled={busy === "plans"}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition disabled:opacity-40">
-                <Zap className="w-3.5 h-3.5" /> Sincronizar planes (PPP profiles)
-              </button>}
-              {canSelected("edit") && <button data-testid="btn-edit-router" onClick={() => setFormRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg" title="Editar">
-                <Pencil className="w-3.5 h-3.5" />
-              </button>}
-              {canSelected("delete") && <button data-testid="btn-delete-router" onClick={() => removeRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-rose-900/40 text-rose-400 border border-slate-700 rounded-lg" title="Eliminar">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>}
-            </div>
-            </div>
           {selected.device_type === "olt" ? (
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs" data-testid="olt-operational-summary">
               <Stat
