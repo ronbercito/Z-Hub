@@ -107,6 +107,8 @@ async def update_router(router_id: str, data: RouterIn, check: bool = False, db:
         payload.pop("password")
     if not payload.get("enable_password"):
         payload.pop("enable_password")
+    if not payload.get("web_password"):
+        payload.pop("web_password")
     apply_updates(r, payload)
     _normalize_olt(r)
     result = None
