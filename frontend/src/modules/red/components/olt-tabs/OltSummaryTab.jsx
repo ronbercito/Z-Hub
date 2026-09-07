@@ -6,7 +6,8 @@
  * Regla: Las métricas sin fuente real se muestran como no disponibles.
  */
 import React from "react";
-import { Activity, AlertTriangle, CheckCircle2, Cpu, Radio, Thermometer, Users } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Cpu, Thermometer, Users } from "lucide-react";
+import OltTrafficWidget from "./OltTrafficWidget";
 
 function infoFromRaw(raw) {
   const info = {};
@@ -74,15 +75,7 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
             <Bar label="Con señal baja" value={counts.lowSignal} tone="bg-amber-400" max={Math.max(Number(counts.total) || 1, 1)} />
             <Bar label="Fuera de línea" value={counts.offline} tone="bg-rose-400" max={Math.max(Number(counts.total) || 1, 1)} />
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-800">
-            <div className="flex flex-wrap justify-between gap-2 text-[10px] uppercase tracking-wider text-slate-500">
-              <span>Tráfico actual</span>
-              <span className="normal-case tracking-normal text-slate-400">Disponible al integrar contadores PON</span>
-            </div>
-            <div className="mt-2 h-10 rounded-lg border border-dashed border-slate-800 bg-slate-950/40 flex items-center justify-center text-[11px] text-slate-500">
-              Sin lectura de tráfico agregado de la OLT
-            </div>
-          </div>
+          <OltTrafficWidget router={router} />
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 flex flex-col items-center justify-center text-center">
