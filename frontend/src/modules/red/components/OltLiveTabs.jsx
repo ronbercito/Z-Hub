@@ -31,7 +31,7 @@ const TABS = [
 
 const PON_TABS = ["pon_optical", "onu_list", "onu_autofind", "onu_optical"];
 
-export default function OltLiveTabs({ router }) {
+export default function OltLiveTabs({ router, routers = [] }) {
   const { API, token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -43,6 +43,8 @@ export default function OltLiveTabs({ router }) {
   const [cmd, setCmd] = useState("show version");
   const [auth, setAuth] = useState({ onu: "", sn: "", profile: "default" });
   const [onuRefreshSeq, setOnuRefreshSeq] = useState(0);
+  const [summaryOnuCounts, setSummaryOnuCounts] = useState(null);
+  const [summaryOnusLoading, setSummaryOnusLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (tab === "console") return;
@@ -76,6 +78,39 @@ export default function OltLiveTabs({ router }) {
     setRes(null);
     load();
   }, [load]);
+
+
+  // El tablero consulta cada PON con el endpoint ONUs v2, fuente real para los conteos.
+  useEffect(() => {
+    if (tab !== "system") return undefined;
+    let active = true;
+    const loadSummaryOnus = async () => {
+      setSummaryOnusLoading(true);
+      setSummaryOnuCounts(null);
+      const totals = { total: 0, online: 0, offline: 0, unknown: 0 };
+      try {
+        const ports = Array.from({ length: router.pon_ports || 8 }, (_, index) => index + 1);
+        for (const port of ports) {
+          const response = await axios.get(
+            `${API}/routers/${router.id}/olt/onus-v2?pon=${port}`,
+            { headers },
+          );
+          const counts = response.data?.counts || {};
+          totals.total += Number(counts.total) || 0;
+          totals.online += Number(counts.online) || 0;
+          totals.offline += Number(counts.offline) || 0;
+          totals.unknown += Number(counts.unknown) || 0;
+        }
+        if (active) setSummaryOnuCounts(totals);
+      } catch (error) {
+        if (active) setSummaryOnuCounts({ total: "—", online: "—", offline: "—", unknown: "—" });
+      } finally {
+        if (active) setSummaryOnusLoading(false);
+      }
+    };
+    loadSummaryOnus();
+    return () => { active = false; };
+  }, [API, token, router.id, router.pon_ports, tab]);
 
   const runConsole = async (event) => {
     event.preventDefault();
@@ -192,7 +227,7 @@ export default function OltLiveTabs({ router }) {
         </div>
       )}
 
-      {res?.ok && tab === "system" && <OltSummaryTab res={res} />}
+      {res?.ok && tab === "system" && <OltSummaryTab res={res} router={router} routers={routers} onuCounts={summaryOnuCounts} onusLoading={summaryOnusLoading} />}
 
       {res?.ok && tab === "pon_optical" && (
         <OltPonPortsTab res={res} pon={pon} loading={loading} />
