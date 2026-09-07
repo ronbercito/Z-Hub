@@ -1,13 +1,15 @@
 """
-Archivo: backend/app/routers/clientes/router.py
+Archivo: backend/app/routers/clientes/router.py (actualizado 2026-09-07)
+Actualización: agrega endpoint GET /clients/{client_id}/invoices para listar facturas del cliente.
 Función: CRUD de abonados (/api/clients): listar con búsqueda y filtro, detalle con
          facturas y tickets, crear (aprovisiona PPPoE/cola en el MikroTik y emite la
          primera factura), editar (re-aprovisiona), eliminar (limpia el MikroTik) y
          corte / reactivación de servicio real vía API RouterOS. GET /{id}/onu-status busca la ONU
          del abonado (onu_sn) en las OLT VSOL registradas y devuelve estado y potencia óptica.
+         GET /{id}/invoices lista todas las facturas del cliente con filtros opcionales.
 Trabaja con: backend/app/models/client.py, plan.py, router.py, invoice.py, ticket.py,
              backend/app/integrations/mikrotik/service.py, backend/app/routers/ajustes/router.py,
-             frontend/src/modules/clientes/Clients.jsx
+             frontend/src/modules/clientes/Clients.jsx, frontend/src/modules/clientes/editor/ClientBilling.jsx
 """
 from datetime import datetime, timedelta, timezone
 import ipaddress
@@ -203,6 +205,20 @@ async def get_client(client_id: str, db: AsyncSession = Depends(get_db), current
     activities = (await db.execute(select(ClientActivity).where(ClientActivity.client_id == client_id).order_by(ClientActivity.created_at.desc()))).scalars().all()
     data["activities"] = [item.to_dict() for item in activities]
     return data
+
+
+@router.get("/{client_id}/invoices")
+async def get_client_invoices(client_id: str, status: Optional[str] = None, search: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Lista facturas del cliente con filtros opcionales (estado, búsqueda)."""
+    c = await _get_visible_client(db, client_id, current_user)
+    q = select(Invoice).where(Invoice.client_id == client_id)
+    if status and status != "all":
+        q = q.where(Invoice.status == status)
+    if search:
+        like = f"%{search}%"
+        q = q.where(or_(Invoice.invoice_number.ilike(like), Invoice.month_period.ilike(like)))
+    rows = (await db.execute(q.order_by(Invoice.issue_date.desc()))).scalars().all()
+    return [i.to_dict() for i in rows]
 
 
 @router.get("/{client_id}/onu-status")
