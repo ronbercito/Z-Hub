@@ -33,6 +33,14 @@ export default function NapBoxes() {
   };
   useEffect(() => { load(); }, []);
   const rows = useMemo(() => boxes.filter((box) => (!zoneFilter || box.zone_id === zoneFilter) && [box.name, box.location, box.details, box.zone_name].join(" ").toLowerCase().includes(search.toLowerCase())), [boxes, search, zoneFilter]);
+  const zoneCapacity = useMemo(() => {
+    const zoneBoxes = boxes.filter((box) => !zoneFilter || box.zone_id === zoneFilter);
+    return zoneBoxes.reduce((total, box) => ({
+      boxes: total.boxes + 1,
+      used: total.used + Number(box.used_ports ?? Object.keys(box.assigned_ports || {}).length),
+      ports: total.ports + Number(box.ports || 0),
+    }), { boxes: 0, used: 0, ports: 0 });
+  }, [boxes, zoneFilter]);
   const close = () => { setOpen(false); setEditing(null); setForm(EMPTY); };
   const save = async (event) => {
     event.preventDefault();
@@ -56,7 +64,7 @@ export default function NapBoxes() {
       <button onClick={() => { setForm(EMPTY); setEditing(null); setOpen(true); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold rounded-xl flex gap-2 items-center"><Plus className="w-4 h-4" /> Nueva caja NAP</button>
     </div>
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-visible shadow-xl">
-      <div className="p-4 border-b border-slate-800"><div className="relative max-w-md"><Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar caja, ubicación o detalle..." className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100" /></div><select value={zoneFilter} onChange={e=>setZoneFilter(e.target.value)} className="mt-3 w-full max-w-md p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100"><option value="">Todas las zonas</option>{zones.map(zone=><option key={zone.id} value={zone.id}>{zone.name}</option>)}</select></div>
+      <div className="p-4 border-b border-slate-800"><div className="relative max-w-md"><Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar caja, ubicación o detalle..." className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100" /></div><div className="mt-3 flex flex-wrap items-center gap-3"><select value={zoneFilter} onChange={e=>setZoneFilter(e.target.value)} className="w-full max-w-md p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100"><option value="">Todas las zonas</option>{zones.map(zone=><option key={zone.id} value={zone.id}>{zone.name}</option>)}</select><span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-2 text-[11px] font-semibold text-amber-200"><Cable className="h-3.5 w-3.5" />{zoneCapacity.used} puerto{zoneCapacity.used === 1 ? "" : "s"} ocupado{zoneCapacity.used === 1 ? "" : "s"} de {zoneCapacity.ports} · {zoneCapacity.boxes} caja{zoneCapacity.boxes === 1 ? "" : "s"} NAP</span></div></div>
       {rows.length === 0 ? <div className="p-10 text-center text-sm text-slate-500">Aún no hay cajas NAP registradas.</div> :
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">{rows.map(box => <div key={box.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
           <div className="flex justify-between gap-3"><div><h3 className="font-bold text-slate-100">{box.name}</h3><p className="text-xs text-slate-400 mt-1 flex gap-1"><MapPin className="w-3.5 h-3.5" /> {box.zone_name || "Sin zona"} · {box.location || "Ubicación sin registrar"}</p></div><div className="flex h-fit gap-1"><button onClick={() => { setEditing(box); setForm({ name: box.name, location: box.location, latitude: box.latitude ?? "", longitude: box.longitude ?? "", ports: box.ports, details: box.details, zone_id: box.zone_id || "" }); setOpen(true); }} className="p-1.5 rounded-lg bg-slate-800 text-slate-300"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => remove(box)} className="p-1.5 rounded-lg bg-slate-800 text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button></div></div>
