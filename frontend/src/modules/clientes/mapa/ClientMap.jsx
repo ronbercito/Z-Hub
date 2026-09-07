@@ -49,8 +49,8 @@ const userIcon = (maps, technology) => markerIcon(maps, `<svg xmlns="http://www.
 
 const wirelessBaseIcon = (maps) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
   <path d="M26 46c7-8 15-16 15-27a15 15 0 1 0-30 0c0 11 8 19 15 27Z" fill="#0f766e" stroke="#fff" stroke-width="2"/>
-  <path d="M16 22c6-7 14-7 20 0M19 18c4-4 10-4 14 0M23 14c2-2 4-2 6 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="26" cy="25" r="2" fill="#fbbf24"/>
+  <path d="M26 10 17 31h18L26 10Zm0 6 4 11h-8l4-11ZM20 34h12M23 31l-4 8m10-8 4 8" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M15 14c3-4 6-6 11-6m11 6c-3-4-6-6-11-6M12 19c4-5 8-7 14-7m14 7c-4-5-8-7-14-7" fill="none" stroke="#a3e635" stroke-width="1.6" stroke-linecap="round"/>
 </svg>`);
 
 const napIcon = (maps) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
