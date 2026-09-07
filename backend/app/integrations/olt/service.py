@@ -41,7 +41,6 @@ from app.integrations.olt.vsol import (
 from app.integrations.olt.vsol_web import (
     OltWebError,
     get_vsol_web_basic_information,
-    get_vsol_web_uplink_traffic,
 )
 from app.models.router import Router
 
@@ -472,13 +471,9 @@ async def run_action(
 
     # El resumen de la VSOL V1600G1-B se obtiene desde su interfaz web.
     # En este firmware la CLI no expone CPU, memoria ni versión del sistema.
-    if action in ("system", "version", "traffic") and profile_name == "vsol_gpon":
+    if action in ("system", "version") and profile_name == "vsol_gpon":
         try:
-            result = (
-                await get_vsol_web_uplink_traffic(router)
-                if action == "traffic"
-                else await get_vsol_web_basic_information(router)
-            )
+            result = await get_vsol_web_basic_information(router)
         except OltWebError as exc:
             error = str(exc)
             return {
