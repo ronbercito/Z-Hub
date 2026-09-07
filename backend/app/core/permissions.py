@@ -22,9 +22,8 @@ PERMISSION_CATALOG = {
 ROLE_DEFAULTS = {
     "admin": {module: list(actions) for module, actions in PERMISSION_CATALOG.items()},
     "tecnico": {
-        "dashboard": ["view"], "clients": ["view", "create", "edit", "suspend"],
-        "plans": ["view"], "network": ["view", "create", "edit", "operate"],
-        "olt": ["view", "operate"], "monitoring": ["view", "create", "edit", "delete", "operate"],
+        "dashboard": ["view"], "clients": ["view", "create", "edit"],
+        "plans": ["view"], "monitoring": ["view"],
         "tickets": ["view", "create", "edit"], "tasks": ["view", "create", "edit"],
     },
     "cobrador": {
