@@ -57,16 +57,21 @@ def _parse_ids(ids: str) -> list[int]:
 def _parse_running_config(raw: str, allowed: set[int], pon: int = 1) -> dict[int, str]:
     """Lee desc exclusivamente del bloque GPON seleccionado, sin consultas por ONU."""
     text = _clean(raw)
-    # Sin cabeceras, la respuesta está limitada al contexto PON de run_pon.
-    has_interfaces = bool(re.search(r"^\s*interface\s+", text, re.M | re.I))
-    selected = not has_interfaces
+    # Solo un encabezado GPON delimita una sección ONU. En algunos firmwares
+    # aparecen otras interfaces globales; no deben ocultar los desc del PON actual.
+    has_gpon_sections = bool(re.search(r"^\s*interface\s+gpon\s+0\s*/\s*\d+\b", text, re.M | re.I))
+    selected = not has_gpon_sections
     result: dict[int, str] = {}
     for original in text.splitlines():
         line = original.strip()
-        if re.match(r"^interface\s+", line, re.I):
-            selected = bool(re.fullmatch(rf"interface\s+gpon\s+0/{int(pon)}", line, re.I))
+        interface = re.match(r"^interface\s+gpon\s+0\s*/\s*(\d+)\b", line, re.I)
+        if interface:
+            selected = int(interface.group(1)) == int(pon)
             continue
-        if has_interfaces and line.lower() in {"exit", "end", "!"}:
+        if has_gpon_sections and re.match(r"^interface\s+", line, re.I):
+            selected = False
+            continue
+        if has_gpon_sections and line.lower() in {"exit", "end", "!"}:
             selected = False
             continue
         if not selected:
