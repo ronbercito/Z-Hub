@@ -91,6 +91,7 @@ def _fetch_vsol_basic_information(
     host: str,
     username: str,
     password: str,
+    web_port: int = 443,
 ) -> dict[str, str]:
     """
     VSOL V1600G1-B V1.4.x autentica con POST a /action/main.html.
@@ -100,7 +101,9 @@ def _fetch_vsol_basic_information(
     if not host or not username:
         raise OltWebError("Falta la IP o el usuario web de la OLT.")
 
-    url = f"https://{host}/action/main.html"
+    port = int(web_port or 443)
+    endpoint = host if port == 443 else f"{host}:{port}"
+    url = f"https://{endpoint}/action/main.html"
     payload = urlencode(
         {
             "user": username,
@@ -142,8 +145,9 @@ async def get_vsol_web_basic_information(router: Any) -> dict[str, Any]:
     info = await asyncio.to_thread(
         _fetch_vsol_basic_information,
         str(getattr(router, "ip_address", "") or "").strip(),
-        str(getattr(router, "username", "") or "").strip(),
-        str(getattr(router, "password", "") or ""),
+        str(getattr(router, "web_username", "") or "").strip(),
+        str(getattr(router, "web_password", "") or ""),
+        int(getattr(router, "web_port", 443) or 443),
     )
 
     raw = "\n".join(f"{key}: {value}" for key, value in info.items())
