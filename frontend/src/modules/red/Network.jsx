@@ -31,6 +31,8 @@ export default function Network({ focus = "mikrotik" }) {
   const moduleForFocus = focus === "olt" ? "olt" : "network";
   const canCreateFocus = canPermission(user, moduleForFocus, "create");
   const canOperateNetwork = canPermission(user, "network", "operate");
+  const selectedModule = selected?.device_type === "olt" ? "olt" : "network";
+  const canSelected = (action) => Boolean(selected) && canPermission(user, selectedModule, action);
   const headers = { Authorization: `Bearer ${token}` };
   const [routers, setRouters] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -165,24 +167,24 @@ export default function Network({ focus = "mikrotik" }) {
               {selected.last_error && <p className="text-[11px] text-rose-400 mt-1" data-testid="router-last-error">Último error: {selected.last_error}</p>}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <button data-testid="btn-test-connection" onClick={() => testConnection(selected)} disabled={busy === "test"}
+              {canSelected("operate") && <button data-testid="btn-test-connection" onClick={() => testConnection(selected)} disabled={busy === "test"}
                 className="px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-700/50 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition disabled:opacity-40">
                 <RefreshCw className={`w-3.5 h-3.5 ${busy === "test" ? "animate-spin" : ""}`} /> {selected.device_type === "olt" ? "Probar conexión CLI" : "Probar conexión API"}
-              </button>
-              <button data-testid="btn-ping-router" onClick={() => ping(selected)} disabled={busy === "ping"}
+              </button>}
+              {canSelected("operate") && <button data-testid="btn-ping-router" onClick={() => ping(selected)} disabled={busy === "ping"}
                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">
                 <Activity className={`w-3.5 h-3.5 ${busy === "ping" ? "animate-spin text-cyan-400" : ""}`} /> Ping
-              </button>
-              <button data-testid="btn-sync-plans" onClick={() => syncPlans(selected)} disabled={busy === "plans" || selected.device_type !== "mikrotik"}
+              </button>}
+              {selected.device_type === "mikrotik" && canSelected("operate") && <button data-testid="btn-sync-plans" onClick={() => syncPlans(selected)} disabled={busy === "plans"}
                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition disabled:opacity-40">
                 <Zap className="w-3.5 h-3.5" /> Sincronizar planes (PPP profiles)
-              </button>
-              <button data-testid="btn-edit-router" onClick={() => setFormRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg" title="Editar">
+              </button>}
+              {canSelected("edit") && <button data-testid="btn-edit-router" onClick={() => setFormRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg" title="Editar">
                 <Pencil className="w-3.5 h-3.5" />
-              </button>
-              <button data-testid="btn-delete-router" onClick={() => removeRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-rose-900/40 text-rose-400 border border-slate-700 rounded-lg" title="Eliminar">
+              </button>}
+              {canSelected("delete") && <button data-testid="btn-delete-router" onClick={() => removeRouter(selected)} className="p-1.5 bg-slate-800 hover:bg-rose-900/40 text-rose-400 border border-slate-700 rounded-lg" title="Eliminar">
                 <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              </button>}
             </div>
           </div>
 
