@@ -16,7 +16,7 @@ const STATUS = {
   unknown: { label: "SIN PROBAR", cls: "bg-slate-700/40 text-slate-300 border-slate-600/40", dot: "bg-slate-400" },
 };
 
-export default function RouterCard({ router, selected, onSelect, onCoordinates }) {
+export default function RouterCard({ router, selected, onSelect, onCoordinates, children }) {
   const st = STATUS[router.status] || STATUS.unknown;
   const isOlt = router.device_type === "olt";
   const Icon = isOlt ? Radio : Server;
@@ -53,6 +53,12 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates }
       <p className="text-[11px] text-slate-400 mb-3 truncate">
         {router.identity ? `${router.identity} · ` : ""}{router.board_name || router.model || (isOlt ? "OLT GPON" : "MikroTik RouterOS")}
       </p>
+
+      {children && (
+        <div onClick={(event) => event.stopPropagation()} className="mt-4 pt-4 border-t border-violet-500/30">
+          {children}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-slate-800">
         {isOlt ? (
