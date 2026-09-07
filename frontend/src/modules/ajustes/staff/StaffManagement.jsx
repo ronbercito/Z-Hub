@@ -5,7 +5,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { toast } from "sonner";
 
 const empty = { name: "", email: "", phone: "", role: "tecnico", password: "", is_active: true, permissions: {}, access_schedule: {} };
-const labels = { dashboard:"Inicio", clients:"Clientes", plans:"Servicios / Planes", billing:"Facturación", network:"Gestión de Red (Routers, IPv4 y NAP)", olt:"Operaciones OLT", monitoring:"Monitoreo", tickets:"Tickets", inventory:"Almacén", messaging:"Mensajería", hotspot:"Hotspot", tasks:"Tareas", settings:"Ajustes", staff:"Gestión personal" };
+const labels = { dashboard:"Inicio", clients:"Clientes", plans:"Servicios / Planes", billing:"Facturación", network:"Gestión de Red (IPv4 y NAP)", router_menu:"Menú Routers", olt:"Operaciones OLT", monitoring:"Monitoreo", tickets:"Tickets", inventory:"Almacén", messaging:"Mensajería", hotspot:"Hotspot", tasks:"Tareas", settings:"Ajustes", staff:"Gestión personal" };
 const actionLabels = { view:"Ver", create:"Crear", edit:"Editar", delete:"Eliminar", suspend:"Suspender", operate:"Operar", pay:"Cobrar", report:"Reportes", send:"Enviar", manage:"Administrar" };
 
 export default function StaffManagement() {
