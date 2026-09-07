@@ -13,8 +13,11 @@ export const permissionsByTab = {
 export function permissionsFor(user) {
   return Object.keys(user?.permissions || {}).length ? user.permissions : (roleDefaults[user?.role] || {});
 }
+export function isAdministrator(user) {
+  return ["admin", "administrador", "administrator"].includes(String(user?.role || "").trim().toLowerCase());
+}
 export function canPermission(user, module, action = "view") {
-  return user?.role === "admin" || Boolean((permissionsFor(user)[module] || []).includes(action));
+  return isAdministrator(user) || Boolean((permissionsFor(user)[module] || []).includes(action));
 }
 export function canViewTab(user, tab) {
   return canPermission(user, permissionsByTab[tab], "view");
