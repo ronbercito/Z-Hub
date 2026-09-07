@@ -19,6 +19,11 @@ from app.core.database import get_db
 from app.models.user import User
 
 
+def is_admin_role(role: str | None) -> bool:
+    """Acepta el identificador interno y variantes históricas de administrador."""
+    return str(role or "").strip().lower() in {"admin", "administrador", "administrator"}
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -66,7 +71,7 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
 
 def require_role(*roles: str):
     async def checker(user: dict = Depends(get_current_user)) -> dict:
-        if user["role"] not in roles:
+        if not (is_admin_role(user.get("role")) or user["role"] in roles):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sin permisos para esta acción")
         return user
 
