@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-07 — integración del editor de servicio en la pestaña service.
- * Función: ficha operativa del cliente con pestañas completamente editables: Resumen y Servicio.
+ * Actualización: 2026-09-07 — integración de ClientBilling para pestaña Facturación con tabla mejorada.
+ * Función: ficha operativa del cliente con pestañas completamente editables: Resumen, Servicio, Facturación.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
- * Entrega a: Clients.jsx y al operador una ficha editable para datos personales y servicio.
+ * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio y facturas.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -12,6 +12,7 @@ import {
   Radio, ReceiptText, Ticket, UserRound, Wifi, X, AlertCircle, CheckCircle2, Loader, Save
 } from "lucide-react";
 import ClientServiceEditor from "./editor/ClientServiceEditor";
+import ClientBilling from "./editor/ClientBilling";
 
 const tabs = [
   { id: "summary", label: "Resumen", icon: UserRound },
@@ -201,6 +202,20 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
   };
 
   const handleServiceSaveSuccess = () => {
+    const reload = async () => {
+      try {
+        const response = await axios.get(`${api}/clients/${clientId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setClient(response.data);
+      } catch (err) {
+        console.error("Error recargando cliente:", err);
+      }
+    };
+    reload();
+  };
+
+  const handleBalanceUpdate = () => {
     const reload = async () => {
       try {
         const response = await axios.get(`${api}/clients/${clientId}`, {
@@ -413,26 +428,12 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     }
 
     if (activeTab === "billing") {
-      const invoices = client.invoices || [];
-      return invoices.length ? (
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-950 text-xs uppercase tracking-wide text-slate-500">
-              <tr><th className="px-4 py-3">Factura</th><th className="px-4 py-3">Periodo</th><th className="px-4 py-3">Emisión</th><th className="px-4 py-3">Vencimiento</th><th className="px-4 py-3">Monto</th><th className="px-4 py-3">Estado</th></tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {invoices.map((invoice) => <tr key={invoice.id} className="text-slate-300">
-                <td className="px-4 py-3 font-mono text-cyan-300">{invoice.invoice_number}</td>
-                <td className="px-4 py-3">{invoice.month_period || "—"}</td>
-                <td className="px-4 py-3">{date(invoice.issue_date)}</td>
-                <td className="px-4 py-3">{date(invoice.due_date)}</td>
-                <td className="px-4 py-3">{money(invoice.amount)}</td>
-                <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-bold ${invoice.status === "paid" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>{invoice.status === "paid" ? "Pagada" : "Pendiente"}</span></td>
-              </tr>)}
-            </tbody>
-          </table>
-        </div>
-      ) : <EmptyState title="Sin facturas registradas" description="Las facturas creadas para este cliente aparecerán aquí." />;
+      return (
+        <ClientBilling
+          clientId={clientId}
+          onBalanceUpdate={handleBalanceUpdate}
+        />
+      );
     }
 
     if (activeTab === "tickets") {
@@ -509,7 +510,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
-            return <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${active ? "border-cyan-500 text-cyan-300" : "border-transparent text-slate-400 hover:text-slate-300"}`}>
+            return <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${active ? "border-cyan-500 text-cyan-400" : "border-transparent text-slate-400 hover:text-slate-300"}`}>
               <Icon className="h-4 w-4" />{tab.label}
             </button>;
           })}
