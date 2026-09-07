@@ -1,6 +1,6 @@
 <!--
 Archivo: docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md
-Actualización: 2026-09-07 — agrega ejecución de pruebas y troubleshooting post-despliegue para Copilot.
+Actualización: 2026-09-07 — agrega comprobación de entrega estática Nginx para Copilot.
 Función: entrega a Copilot el contexto técnico para localizar errores en su módulo propietario y aplicar correcciones verificables.
 Recibe de: estructura actual del repositorio, cambios publicados en main y evidencias de la interfaz del panel.
 Entrega a: mantenedores/IA de GitHub una guía de intervención; no ejecuta ni modifica el despliegue.
@@ -367,6 +367,8 @@ curl -fs http://127.0.0.1:8001/api/health
 grep -i error /var/log/nginx/error.log | tail -n 50
 nginx -t
 curl -I http://localhost/index.html
+# Verifica que Nginx entrega el documento HTML inicial del panel
+curl -s http://localhost/ | grep -o '<meta name="description"' | head -1
 
 # Build y versión entregados
 cd /var/www/mikrohub
@@ -379,6 +381,7 @@ Interpretación:
 - Error en `mikrosmart_backend.err.log`: revisar `backend/server.py`, el router/módulo dueño y sus dependencias.
 - Error de Nginx: revisar `deploy/nginx/mikrosmart.conf.template`, validar con `nginx -t` antes de reiniciar.
 - `/api/health` falla pero Nginx responde: el problema es backend/Supervisor, no React.
+- La comprobación HTML no devuelve la meta esperada: revisar que Nginx sirva el `index.html` de `/var/www/mikrosmart_web` y no un sitio por defecto u otro virtual host.
 - Cabeceras de `index.html` permiten caché y la versión visual es antigua: aplicar la corrección de caché descrita en la sección 6, liberar nueva versión y volver a probar.
 - Código fuente nuevo pero `/var/www/mikrosmart_web` no cambia: revisar `yarn build` y la copia realizada por `deploy/setup_debian.sh`.
 
