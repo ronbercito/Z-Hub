@@ -1,15 +1,15 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-07 — se desactivan temporalmente los editores de comunicaciones y documentos para evitar que un error deje el panel en blanco.
- * Función: ficha operativa del cliente organizada en pestañas de consulta.
+ * Actualización: 2026-09-07 — pestaña Resumen completamente editable; desactivados temporalmente los editores de comunicaciones y documentos.
+ * Función: ficha operativa del cliente organizada en pestañas; Resumen permite editar datos personales, contacto, dirección, zona, coordenadas y fecha.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
- * Entrega a: Clients.jsx y al operador una ficha estable; no modifica los datos del cliente.
+ * Entrega a: Clients.jsx y al operador una ficha con capacidad de editar el resumen directamente.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Activity, BarChart3, CreditCard, FileText, Mail, MessageSquare,
-  Radio, ReceiptText, Ticket, UserRound, Wifi, X
+  Radio, ReceiptText, Ticket, UserRound, Wifi, X, AlertCircle, CheckCircle2, Loader, Save
 } from "lucide-react";
 
 const tabs = [
@@ -50,17 +50,60 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Estado del formulario de edición
+  const [formData, setFormData] = useState({
+    full_name: "",
+    dni_ruc: "",
+    phone: "",
+    email: "",
+    address: "",
+    reference: "",
+    installation_date: "",
+    zone_id: "",
+    latitude: "",
+    longitude: ""
+  });
+  const [zones, setZones] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
+  // Cargar cliente, zonas y llenar formulario
   useEffect(() => {
     let alive = true;
     const load = async () => {
       setLoading(true);
       setError("");
       try {
-        const response = await axios.get(`${api}/clients/${clientId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (alive) setClient(response.data);
+        const [clientRes, zonesRes] = await Promise.all([
+          axios.get(`${api}/clients/${clientId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${api}/zones`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        
+        if (alive) {
+          const clientData = clientRes.data;
+          setClient(clientData);
+          setZones(zonesRes.data || []);
+          
+          // Llenar formulario con datos del cliente
+          setFormData({
+            full_name: clientData.full_name || "",
+            dni_ruc: clientData.dni_ruc || "",
+            phone: clientData.phone || "",
+            email: clientData.email || "",
+            address: clientData.address || "",
+            reference: clientData.reference || "",
+            installation_date: clientData.installation_date || "",
+            zone_id: clientData.zone_id || "",
+            latitude: clientData.latitude ? String(clientData.latitude) : "",
+            longitude: clientData.longitude ? String(clientData.longitude) : ""
+          });
+        }
       } catch (err) {
         if (alive) setError(err.response?.data?.detail || "No se pudo cargar la ficha del cliente.");
       } finally {
@@ -71,6 +114,91 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     return () => { alive = false; };
   }, [api, clientId, token]);
 
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveResumen = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setFormError("");
+    setFormSuccess("");
+    
+    try {
+      // Validaciones básicas
+      if (!formData.full_name.trim()) {
+        throw new Error("El nombre del cliente es obligatorio.");
+      }
+      if (!formData.dni_ruc.trim()) {
+        throw new Error("El DNI/RUC es obligatorio.");
+      }
+      
+      // Validar coordenadas si se ingresan
+      if (formData.latitude || formData.longitude) {
+        const lat = parseFloat(formData.latitude);
+        const lng = parseFloat(formData.longitude);
+        if (isNaN(lat) || isNaN(lng)) {
+          throw new Error("Latitud y longitud deben ser números válidos.");
+        }
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          throw new Error("Coordenadas fuera de rango válido.");
+        }
+      }
+
+      const payload = {
+        full_name: formData.full_name.trim(),
+        dni_ruc: formData.dni_ruc.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim(),
+        reference: formData.reference.trim(),
+        installation_date: formData.installation_date || null,
+        zone_id: formData.zone_id || null,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null
+      };
+
+      await axios.put(`${api}/clients/${clientId}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setFormSuccess("Datos del cliente actualizados correctamente.");
+      
+      // Recargar datos después de 1.5 segundos
+      setTimeout(() => {
+        const reload = async () => {
+          try {
+            const response = await axios.get(`${api}/clients/${clientId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setClient(response.data);
+            setFormData({
+              full_name: response.data.full_name || "",
+              dni_ruc: response.data.dni_ruc || "",
+              phone: response.data.phone || "",
+              email: response.data.email || "",
+              address: response.data.address || "",
+              reference: response.data.reference || "",
+              installation_date: response.data.installation_date || "",
+              zone_id: response.data.zone_id || "",
+              latitude: response.data.latitude ? String(response.data.latitude) : "",
+              longitude: response.data.longitude ? String(response.data.longitude) : ""
+            });
+          } catch (err) {
+            console.error("Error recargando cliente:", err);
+          }
+        };
+        reload();
+      }, 1500);
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.message || "Error al guardar los cambios.";
+      setFormError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const content = () => {
     if (loading) return <div className="py-16 text-center text-slate-400">Cargando información del cliente…</div>;
     if (error) return <div className="py-16 text-center text-rose-400">{error}</div>;
@@ -79,20 +207,167 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     if (activeTab === "summary") {
       return (
         <div className="grid gap-5 lg:grid-cols-3">
-          <section className="space-y-3 lg:col-span-2">
-            <h3 className="text-base font-bold text-white">Datos del cliente</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Value label="Nombre / razón social">{client.full_name}</Value>
-              <Value label="DNI / RUC">{client.dni_ruc}</Value>
-              <Value label="Celular / WhatsApp">{client.phone}</Value>
-              <Value label="Correo electrónico">{client.email}</Value>
-              <div className="sm:col-span-2"><Value label="Dirección de instalación">{client.address}</Value></div>
-              <Value label="Referencia">{client.reference}</Value>
-              <Value label="Fecha de instalación">{date(client.installation_date)}</Value>
-              <Value label="Zona">{client.zone_name}</Value>
-              <Value label="Coordenadas">{client.latitude && client.longitude ? `${client.latitude}, ${client.longitude}` : "Sin registrar"}</Value>
-            </div>
+          <section className="space-y-5 lg:col-span-2">
+            {formError && (
+              <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+                <AlertCircle className="h-5 w-5 shrink-0 text-rose-300" />
+                <p className="text-sm text-rose-300">{formError}</p>
+              </div>
+            )}
+            
+            {formSuccess && (
+              <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
+                <p className="text-sm text-emerald-300">{formSuccess}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveResumen} className="space-y-5">
+              {/* Identidad */}
+              <div>
+                <h3 className="mb-3 text-base font-bold text-white">Datos de identidad</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    name="full_name"
+                    value={formData.full_name}
+                    onChange={handleFormChange}
+                    placeholder="Nombre completo o razón social"
+                    required
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    name="dni_ruc"
+                    value={formData.dni_ruc}
+                    onChange={handleFormChange}
+                    placeholder="DNI / RUC"
+                    required
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Contacto */}
+              <div>
+                <h3 className="mb-3 text-base font-bold text-white">Contacto</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleFormChange}
+                    placeholder="Celular / WhatsApp"
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    placeholder="Correo electrónico"
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Dirección */}
+              <div>
+                <h3 className="mb-3 text-base font-bold text-white">Ubicación</h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleFormChange}
+                    placeholder="Dirección de instalación"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    name="reference"
+                    value={formData.reference}
+                    onChange={handleFormChange}
+                    placeholder="Referencia (ej: frente a la tienda, después de la casa roja)"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  <select
+                    name="zone_id"
+                    value={formData.zone_id}
+                    onChange={handleFormChange}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
+                  >
+                    <option value="">-- Selecciona una zona --</option>
+                    {zones.map(zone => (
+                      <option key={zone.id} value={zone.id}>{zone.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Coordenadas */}
+              <div>
+                <h3 className="mb-3 text-base font-bold text-white">Coordenadas GPS</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    type="number"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleFormChange}
+                    placeholder="Latitud (-90 a 90)"
+                    step="0.000001"
+                    min="-90"
+                    max="90"
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleFormChange}
+                    placeholder="Longitud (-180 a 180)"
+                    step="0.000001"
+                    min="-180"
+                    max="180"
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Fecha de instalación */}
+              <div>
+                <h3 className="mb-3 text-base font-bold text-white">Instalación</h3>
+                <input
+                  type="date"
+                  name="installation_date"
+                  value={formData.installation_date}
+                  onChange={handleFormChange}
+                  className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Botón guardar */}
+              <div className="flex justify-end pt-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" /> Guardando…
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" /> Guardar cambios
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </section>
+
+          {/* Panel de estado de cuenta - solo lectura */}
           <section className="rounded-2xl border border-slate-800 bg-slate-950/55 p-5">
             <h3 className="text-base font-bold text-white">Estado de cuenta</h3>
             <div className="mt-4 space-y-3">
@@ -160,7 +435,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
         <div className="overflow-x-auto rounded-xl border border-slate-800">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-950 text-xs uppercase tracking-wide text-slate-500">
-              <tr><th className="px-4 py-3">Factura</th><th className="px-4 py-3">Periodo</th><th className="px-4 py-3">Emisión</th><th className="px-4 py-3">Vencimiento</th><th className="px-4 py-3">Total</th><th className="px-4 py-3">Estado</th></tr>
+              <tr><th className="px-4 py-3">Factura</th><th className="px-4 py-3">Periodo</th><th className="px-4 py-3">Emisión</th><th className="px-4 py-3">Vencimiento</th><th className="px-4 py-3">Monto</th><th className="px-4 py-3">Estado</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {invoices.map((invoice) => <tr key={invoice.id} className="text-slate-300">
@@ -251,7 +526,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
-            return <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${active ? "border-cyan-400 text-cyan-300" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+            return <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${active ? "border-cyan-500 text-cyan-300" : "border-transparent text-slate-400 hover:text-slate-300"}`}>
               <Icon className="h-4 w-4" />{tab.label}
             </button>;
           })}
