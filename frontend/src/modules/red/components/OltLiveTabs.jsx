@@ -7,7 +7,7 @@
  *          pestaña o submenú debe vivir en su propio archivo con comentario de propósito.
  * Trabaja con: ./olt-tabs/*.jsx y backend /api/routers/{id}/olt/*.
  */
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../../context/AuthContext";
 import { RefreshCw } from "lucide-react";
@@ -45,8 +45,6 @@ export default function OltLiveTabs({ router, routers = [] }) {
   const [onuRefreshSeq, setOnuRefreshSeq] = useState(0);
   const [summaryOnuCounts, setSummaryOnuCounts] = useState(null);
   const [summaryOnusLoading, setSummaryOnusLoading] = useState(false);
-  const [traffic, setTraffic] = useState(null);
-  const trafficTimerRef = useRef(null);
 
   const load = useCallback(async () => {
     if (tab === "console") return;
@@ -114,36 +112,6 @@ export default function OltLiveTabs({ router, routers = [] }) {
     return () => { active = false; };
   }, [API, token, router.id, router.pon_ports, tab]);
 
-
-  // Dos contadores acumulados permiten calcular Mbps reales; no se estiman datos.
-  useEffect(() => {
-    if (tab !== "system") return undefined;
-    let active = true;
-    const sampleTraffic = async () => {
-      try {
-        const response = await axios.get(`${API}/routers/${router.id}/olt/traffic`, { headers });
-        const next = response.data?.info;
-        if (!active || !next) return;
-        const now = Date.now();
-        setTraffic((previous) => {
-          const elapsed = previous?.sampledAt ? (now - previous.sampledAt) / 1000 : 0;
-          const rxMbps = elapsed > 0 ? Math.max(0, ((Number(next.rx_bytes) - Number(previous.rx_bytes)) * 8) / elapsed / 1000000) : null;
-          const txMbps = elapsed > 0 ? Math.max(0, ((Number(next.tx_bytes) - Number(previous.tx_bytes)) * 8) / elapsed / 1000000) : null;
-          const history = [...(previous?.history || []), { rxMbps, txMbps }].slice(-18);
-          return { ...next, sampledAt: now, rxMbps, txMbps, history };
-        });
-      } catch (error) {
-        if (active) setTraffic((previous) => previous ? { ...previous, error: "Sin lectura actual" } : { error: "Sin lectura actual", history: [] });
-      }
-    };
-    sampleTraffic();
-    trafficTimerRef.current = window.setInterval(sampleTraffic, 5000);
-    return () => {
-      active = false;
-      window.clearInterval(trafficTimerRef.current);
-      trafficTimerRef.current = null;
-    };
-  }, [API, token, router.id, tab]);
 
   const runConsole = async (event) => {
     event.preventDefault();
@@ -260,7 +228,7 @@ export default function OltLiveTabs({ router, routers = [] }) {
         </div>
       )}
 
-      {res?.ok && tab === "system" && <OltSummaryTab res={res} router={router} routers={routers} onuCounts={summaryOnuCounts} onusLoading={summaryOnusLoading} traffic={traffic} />}
+      {res?.ok && tab === "system" && <OltSummaryTab res={res} router={router} routers={routers} onuCounts={summaryOnuCounts} onusLoading={summaryOnusLoading} />}
 
       {res?.ok && tab === "pon_optical" && (
         <OltPonPortsTab res={res} pon={pon} loading={loading} />
