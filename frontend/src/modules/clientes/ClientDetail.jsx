@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-07 — pestaña Resumen completamente editable; desactivados temporalmente los editores de comunicaciones y documentos.
- * Función: ficha operativa del cliente organizada en pestañas; Resumen permite editar datos personales, contacto, dirección, zona, coordenadas y fecha.
+ * Actualización: 2026-09-07 — integración del editor de servicio en la pestaña service.
+ * Función: ficha operativa del cliente con pestañas completamente editables: Resumen y Servicio.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
- * Entrega a: Clients.jsx y al operador una ficha con capacidad de editar el resumen directamente.
+ * Entrega a: Clients.jsx y al operador una ficha editable para datos personales y servicio.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -11,6 +11,7 @@ import {
   Activity, BarChart3, CreditCard, FileText, Mail, MessageSquare,
   Radio, ReceiptText, Ticket, UserRound, Wifi, X, AlertCircle, CheckCircle2, Loader, Save
 } from "lucide-react";
+import ClientServiceEditor from "./editor/ClientServiceEditor";
 
 const tabs = [
   { id: "summary", label: "Resumen", icon: UserRound },
@@ -51,8 +52,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Estado del formulario de edición
-  const [formData, setFormData] = useState({
+  // Estado del formulario de resumen
+  const [summaryFormData, setSummaryFormData] = useState({
     full_name: "",
     dni_ruc: "",
     phone: "",
@@ -65,15 +66,17 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     longitude: ""
   });
   const [zones, setZones] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summarySaving, setSummarySaving] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
+  const [summarySuccess, setSummarySuccess] = useState("");
 
   // Cargar cliente, zonas y llenar formulario
   useEffect(() => {
     let alive = true;
     const load = async () => {
       setLoading(true);
+      setSummaryLoading(true);
       setError("");
       try {
         const [clientRes, zonesRes] = await Promise.all([
@@ -90,8 +93,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
           setClient(clientData);
           setZones(zonesRes.data || []);
           
-          // Llenar formulario con datos del cliente
-          setFormData({
+          setSummaryFormData({
             full_name: clientData.full_name || "",
             dni_ruc: clientData.dni_ruc || "",
             phone: clientData.phone || "",
@@ -107,37 +109,38 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
       } catch (err) {
         if (alive) setError(err.response?.data?.detail || "No se pudo cargar la ficha del cliente.");
       } finally {
-        if (alive) setLoading(false);
+        if (alive) {
+          setLoading(false);
+          setSummaryLoading(false);
+        }
       }
     };
     load();
     return () => { alive = false; };
   }, [api, clientId, token]);
 
-  const handleFormChange = (e) => {
+  const handleSummaryFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setSummaryFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveResumen = async (e) => {
+  const handleSaveSummary = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    setFormError("");
-    setFormSuccess("");
+    setSummarySaving(true);
+    setSummaryError("");
+    setSummarySuccess("");
     
     try {
-      // Validaciones básicas
-      if (!formData.full_name.trim()) {
+      if (!summaryFormData.full_name.trim()) {
         throw new Error("El nombre del cliente es obligatorio.");
       }
-      if (!formData.dni_ruc.trim()) {
+      if (!summaryFormData.dni_ruc.trim()) {
         throw new Error("El DNI/RUC es obligatorio.");
       }
       
-      // Validar coordenadas si se ingresan
-      if (formData.latitude || formData.longitude) {
-        const lat = parseFloat(formData.latitude);
-        const lng = parseFloat(formData.longitude);
+      if (summaryFormData.latitude || summaryFormData.longitude) {
+        const lat = parseFloat(summaryFormData.latitude);
+        const lng = parseFloat(summaryFormData.longitude);
         if (isNaN(lat) || isNaN(lng)) {
           throw new Error("Latitud y longitud deben ser números válidos.");
         }
@@ -147,25 +150,23 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
       }
 
       const payload = {
-        full_name: formData.full_name.trim(),
-        dni_ruc: formData.dni_ruc.trim(),
-        phone: formData.phone.trim(),
-        email: formData.email.trim(),
-        address: formData.address.trim(),
-        reference: formData.reference.trim(),
-        installation_date: formData.installation_date || null,
-        zone_id: formData.zone_id || null,
-        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        longitude: formData.longitude ? parseFloat(formData.longitude) : null
+        full_name: summaryFormData.full_name.trim(),
+        dni_ruc: summaryFormData.dni_ruc.trim(),
+        phone: summaryFormData.phone.trim(),
+        email: summaryFormData.email.trim(),
+        address: summaryFormData.address.trim(),
+        reference: summaryFormData.reference.trim(),
+        installation_date: summaryFormData.installation_date || null,
+        zone_id: summaryFormData.zone_id || null,
+        latitude: summaryFormData.latitude ? parseFloat(summaryFormData.latitude) : null,
+        longitude: summaryFormData.longitude ? parseFloat(summaryFormData.longitude) : null
       };
 
       await axios.put(`${api}/clients/${clientId}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setFormSuccess("Datos del cliente actualizados correctamente.");
-      
-      // Recargar datos después de 1.5 segundos
+      setSummarySuccess("Datos del cliente actualizados correctamente.");
       setTimeout(() => {
         const reload = async () => {
           try {
@@ -173,7 +174,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
               headers: { Authorization: `Bearer ${token}` }
             });
             setClient(response.data);
-            setFormData({
+            setSummaryFormData({
               full_name: response.data.full_name || "",
               dni_ruc: response.data.dni_ruc || "",
               phone: response.data.phone || "",
@@ -193,10 +194,24 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
       }, 1500);
     } catch (err) {
       const msg = err.response?.data?.detail || err.message || "Error al guardar los cambios.";
-      setFormError(msg);
+      setSummaryError(msg);
     } finally {
-      setSaving(false);
+      setSummarySaving(false);
     }
+  };
+
+  const handleServiceSaveSuccess = () => {
+    const reload = async () => {
+      try {
+        const response = await axios.get(`${api}/clients/${clientId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setClient(response.data);
+      } catch (err) {
+        console.error("Error recargando cliente:", err);
+      }
+    };
+    reload();
   };
 
   const content = () => {
@@ -208,21 +223,21 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
       return (
         <div className="grid gap-5 lg:grid-cols-3">
           <section className="space-y-5 lg:col-span-2">
-            {formError && (
+            {summaryError && (
               <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
                 <AlertCircle className="h-5 w-5 shrink-0 text-rose-300" />
-                <p className="text-sm text-rose-300">{formError}</p>
+                <p className="text-sm text-rose-300">{summaryError}</p>
               </div>
             )}
             
-            {formSuccess && (
+            {summarySuccess && (
               <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
-                <p className="text-sm text-emerald-300">{formSuccess}</p>
+                <p className="text-sm text-emerald-300">{summarySuccess}</p>
               </div>
             )}
 
-            <form onSubmit={handleSaveResumen} className="space-y-5">
+            <form onSubmit={handleSaveSummary} className="space-y-5">
               {/* Identidad */}
               <div>
                 <h3 className="mb-3 text-base font-bold text-white">Datos de identidad</h3>
@@ -230,8 +245,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="text"
                     name="full_name"
-                    value={formData.full_name}
-                    onChange={handleFormChange}
+                    value={summaryFormData.full_name}
+                    onChange={handleSummaryFormChange}
                     placeholder="Nombre completo o razón social"
                     required
                     className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
@@ -239,8 +254,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="text"
                     name="dni_ruc"
-                    value={formData.dni_ruc}
-                    onChange={handleFormChange}
+                    value={summaryFormData.dni_ruc}
+                    onChange={handleSummaryFormChange}
                     placeholder="DNI / RUC"
                     required
                     className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
@@ -255,16 +270,16 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="tel"
                     name="phone"
-                    value={formData.phone}
-                    onChange={handleFormChange}
+                    value={summaryFormData.phone}
+                    onChange={handleSummaryFormChange}
                     placeholder="Celular / WhatsApp"
                     className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
                   />
                   <input
                     type="email"
                     name="email"
-                    value={formData.email}
-                    onChange={handleFormChange}
+                    value={summaryFormData.email}
+                    onChange={handleSummaryFormChange}
                     placeholder="Correo electrónico"
                     className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
                   />
@@ -278,23 +293,23 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="text"
                     name="address"
-                    value={formData.address}
-                    onChange={handleFormChange}
+                    value={summaryFormData.address}
+                    onChange={handleSummaryFormChange}
                     placeholder="Dirección de instalación"
                     className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
                   />
                   <input
                     type="text"
                     name="reference"
-                    value={formData.reference}
-                    onChange={handleFormChange}
+                    value={summaryFormData.reference}
+                    onChange={handleSummaryFormChange}
                     placeholder="Referencia (ej: frente a la tienda, después de la casa roja)"
                     className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
                   />
                   <select
                     name="zone_id"
-                    value={formData.zone_id}
-                    onChange={handleFormChange}
+                    value={summaryFormData.zone_id}
+                    onChange={handleSummaryFormChange}
                     className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
                   >
                     <option value="">-- Selecciona una zona --</option>
@@ -312,8 +327,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="number"
                     name="latitude"
-                    value={formData.latitude}
-                    onChange={handleFormChange}
+                    value={summaryFormData.latitude}
+                    onChange={handleSummaryFormChange}
                     placeholder="Latitud (-90 a 90)"
                     step="0.000001"
                     min="-90"
@@ -323,8 +338,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                   <input
                     type="number"
                     name="longitude"
-                    value={formData.longitude}
-                    onChange={handleFormChange}
+                    value={summaryFormData.longitude}
+                    onChange={handleSummaryFormChange}
                     placeholder="Longitud (-180 a 180)"
                     step="0.000001"
                     min="-180"
@@ -340,8 +355,8 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
                 <input
                   type="date"
                   name="installation_date"
-                  value={formData.installation_date}
-                  onChange={handleFormChange}
+                  value={summaryFormData.installation_date}
+                  onChange={handleSummaryFormChange}
                   className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
                 />
               </div>
@@ -350,10 +365,10 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
               <div className="flex justify-end pt-4">
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={summarySaving}
                   className="flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50"
                 >
-                  {saving ? (
+                  {summarySaving ? (
                     <>
                       <Loader className="h-4 w-4 animate-spin" /> Guardando…
                     </>
@@ -386,46 +401,14 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     }
 
     if (activeTab === "service") {
-      const fiber = client.technology !== "wireless";
       return (
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-            <div>
-              <p className="text-sm font-semibold text-cyan-300">{fiber ? "Fibra óptica" : "Servicio inalámbrico"}</p>
-              <p className="mt-1 text-sm text-slate-400">Configuración técnica y aprovisionamiento del cliente.</p>
-            </div>
-            <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-slate-300">{client.connection_type || "Sin conexión"}</span>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Value label="MikroTik">{client.router_name}</Value>
-            <Value label="Plan">{client.plan_name}</Value>
-            <Value label="Red IPv4">{client.ipv4_network_name || client.ipv4_network_id}</Value>
-            <Value label="IP del cliente">{client.ip_address}</Value>
-            {client.connection_type === "PPPoE" && <Value label="Usuario PPPoE">{client.pppoe_user}</Value>}
-            {client.connection_type === "PPPoE" && <Value label="Clave PPPoE">{client.pppoe_password ? "Configurada" : "Sin registrar"}</Value>}
-          </div>
-          {fiber ? (
-            <>
-              <h3 className="pt-2 text-base font-bold text-white">Instalación de fibra</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Value label="Zona">{client.zone_name}</Value>
-                <Value label="Caja NAP">{client.nap_box}</Value>
-                <Value label="Puerto NAP">{client.nap_port ? `Puerto ${client.nap_port}` : "Sin registrar"}</Value>
-                <Value label="Serie ONU">{client.onu_sn}</Value>
-                <Value label="Potencia ONU">{client.optical_power_dbm !== null && client.optical_power_dbm !== undefined ? `${client.optical_power_dbm} dBm` : "Sin registrar"}</Value>
-              </div>
-            </>
-          ) : (
-            <>
-              <h3 className="pt-2 text-base font-bold text-white">Instalación inalámbrica</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Value label="Conectado a">{client.monitoring_equipment_name}</Value>
-                <Value label="Tipo de antena">{client.antenna_type}</Value>
-                <Value label="IP administración">{client.management_ip}</Value>
-              </div>
-            </>
-          )}
-        </div>
+        <ClientServiceEditor
+          clientId={clientId}
+          api={api}
+          token={token}
+          onSave={handleServiceSaveSuccess}
+          onCancel={() => {}}
+        />
       );
     }
 
