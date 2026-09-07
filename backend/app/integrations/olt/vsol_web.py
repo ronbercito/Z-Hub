@@ -103,7 +103,9 @@ def _fetch_vsol_basic_information(
 
     port = int(web_port or 443)
     endpoint = host if port == 443 else f"{host}:{port}"
-    url = f"https://{endpoint}/action/main.html"
+    base_url = f"https://{endpoint}"
+    login_url = f"{base_url}/action/login.html"
+    main_url = f"{base_url}/action/main.html"
     payload = urlencode(
         {
             "user": username,
@@ -119,24 +121,41 @@ def _fetch_vsol_basic_information(
         HTTPCookieProcessor(jar),
         HTTPSHandler(context=context),
     )
-    request = Request(
-        url,
-        data=payload,
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "text/html,application/xhtml+xml",
-            "User-Agent": "MikroHub-OLT-Monitor/1.0",
-        },
-        method="POST",
-    )
+    headers = {
+        "Accept": "text/html,application/xhtml+xml",
+        "User-Agent": "MikroHub-OLT-Monitor/1.0",
+    }
 
     try:
+        # La web VSOL crea/corrige la sesión al abrir login.html. Se realiza
+        # primero esta lectura y el CookieJar conserva la sesión para el POST.
+        opener.open(Request(login_url, headers=headers), timeout=TIMEOUT + 3).read()
+
+        request = Request(
+            main_url,
+            data=payload,
+            headers={
+                **headers,
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Origin": base_url,
+                "Referer": login_url,
+            },
+            method="POST",
+        )
         with opener.open(request, timeout=TIMEOUT + 3) as response:
             page = response.read().decode("utf-8", errors="replace")
     except Exception as exc:
         raise OltWebError(f"No se pudo consultar la web de la OLT: {exc}") from exc
 
-    return parse_vsol_basic_information(page)
+    try:
+        return parse_vsol_basic_information(page)
+    except OltWebError as exc:
+        # No se devuelven el HTML ni credenciales; solo una pista segura.
+        title = re.search(r"<title[^>]*>\s*(.*?)\s*</title>", page, re.I | re.S)
+        hint = re.sub(r"\s+", " ", title.group(1)).strip() if title else "página no identificada"
+        raise OltWebError(
+            f"La sesión web fue rechazada o cambió de página ({hint})."
+        ) from exc
 
 
 async def get_vsol_web_basic_information(router: Any) -> dict[str, Any]:
