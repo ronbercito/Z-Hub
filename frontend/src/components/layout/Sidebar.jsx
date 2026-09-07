@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { TEST_IDS } from "../../constants/testIds";
+import { canViewTab } from "../../modules/ajustes/staff/permissions";
 import { Home, Server, Zap, Users, Wifi, Calendar, DollarSign, Package, Headphones, MessageSquare, Settings, ChevronRight, LogOut, ShieldCheck, ChevronLeft, Network, Box, ChevronDown, Radio, MapPin, Map } from "lucide-react";
 
-const roleDefaults = { tecnico:{dashboard:["view"],clients:["view"],plans:["view"],network:["view"],monitoring:["view"],tickets:["view"],tasks:["view"]}, cobrador:{dashboard:["view"],clients:["view"],billing:["view"],messaging:["view"],tickets:["view"]} };
-const permissionsByTab = { inicio:"dashboard", red:"network", routers_olts:"network", red_ipv4:"network", nap_boxes:"network", monitoring:"monitoring", servicios:"plans", clientes:"clients", client_users:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing", hotspot:"hotspot", tareas:"tasks", almacen:"inventory", tickets:"tickets", mensajeria:"messaging", ajustes:"settings" };
 const menuItems = [
   { id:"inicio", label:"Inicio", icon:Home, testId:TEST_IDS.NAV_INICIO },
   { id:"red", label:"Gestión de Red", icon:Server, testId:TEST_IDS.NAV_RED, children:[{id:"routers_olts",label:"Routers | OLTs",icon:Server},{id:"red_ipv4",label:"Redes IPv4",icon:Network},{id:"nap_boxes",label:"Cajas NAP",icon:Box},{id:"monitoring",label:"Monitoreo",icon:Radio}] },
@@ -21,7 +20,7 @@ const menuItems = [
 
 export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, companyName="MikroHub", logoData="" }) {
   const { user, logout } = useAuth();
-  const canView = (tab) => { const permissions = Object.keys(user?.permissions || {}).length ? user.permissions : (roleDefaults[user?.role] || {}); return user?.role === "admin" || Boolean((permissions[permissionsByTab[tab]] || []).includes("view")); };
+  const canView = (tab) => canViewTab(user, tab);
   const visibleItems = menuItems.map(item => ({...item, children:item.children?.filter(child => canView(child.id))})).filter(item => canView(item.id) || item.children?.length);
   const groupForTab = tab => { const parent=visibleItems.find(item=>item.id===tab||item.children?.some(child=>child.id===tab)); return parent?.children ? parent.id : null; };
   const [openGroup,setOpenGroup]=useState(()=>groupForTab(activeTab));
