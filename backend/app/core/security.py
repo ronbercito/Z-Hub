@@ -59,6 +59,8 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
         user = (await db.execute(select(User).where(User.email == payload["email"]))).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sesión no válida, vuelva a iniciar sesión")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cuenta desactivada")
     return user.to_dict(exclude=("password_hash",))
 
 
