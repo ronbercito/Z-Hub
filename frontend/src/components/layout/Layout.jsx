@@ -27,6 +27,7 @@ import Inventory from "../../modules/almacen/Inventory";
 import Tickets from "../../modules/tickets/Tickets";
 import Messaging from "../../modules/mensajeria/Messaging";
 import Settings from "../../modules/ajustes/Settings";
+import { PANEL_VERSION } from "../../modules/system-update/version";
 
 export default function Layout() {
   const { API, token } = useAuth();
@@ -131,6 +132,7 @@ export default function Layout() {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {renderContent()}
         </main>
+        <footer className="px-6 pb-4 text-right text-[10px] text-slate-600">Panel Fibra Z · v{PANEL_VERSION}</footer>
       </div>
     </div>
   );
