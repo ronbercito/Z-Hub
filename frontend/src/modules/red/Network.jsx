@@ -188,26 +188,7 @@ export default function Network({ focus = "mikrotik" }) {
 
       {selected && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
-          {selected.device_type === "olt" ? (
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs" data-testid="olt-operational-summary">
-              <Stat
-                icon={Activity}
-                label="Estado CLI"
-                value={selected.status === "online" ? "ONLINE" : selected.status === "offline" ? "OFFLINE" : "SIN PROBAR"}
-                valueClass={selected.status === "online" ? "text-emerald-300" : selected.status === "offline" ? "text-rose-300" : "text-slate-300"}
-              />
-              <Stat icon={Server} label="Modelo" value={selected.board_name || selected.olt_model || "—"} />
-              <Stat icon={Zap} label="Firmware" value={selected.ros_version || selected.software_version || "—"} />
-              <Stat icon={Zap} label="Puertos PON" value={`${selected.pon_ports || "—"} ${selected.pon_type || "PON"}`} />
-              <Stat icon={Activity} label="Latencia CLI" value={selected.ping_ms ? `${selected.ping_ms} ms` : "—"} />
-              <Stat
-                icon={ShieldOff}
-                label="Salud"
-                value={selected.last_error ? "REVISAR ERROR" : "SIN ERRORES"}
-                valueClass={selected.last_error ? "text-rose-300" : "text-emerald-300"}
-              />
-            </div>
-          ) : (
+          {selected.device_type === "mikrotik" && (
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
               <Stat icon={Cpu} label="CPU" value={`${selected.cpu_usage_pct}%`} />
               <Stat icon={HardDrive} label="Memoria" value={`${selected.memory_usage_pct}%`} />
@@ -216,6 +197,7 @@ export default function Network({ focus = "mikrotik" }) {
               <Stat icon={Zap} label="PPPoE activos" value={selected.active_pppoe_count} />
               <Stat icon={Server} label="Colas" value={selected.active_queues_count} />
             </div>
+
           )}
 
           {pingResult && (
