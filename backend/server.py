@@ -37,6 +37,7 @@ from app.routers.red.olt_traffic import router as olt_traffic_router
 from app.routers.tareas.router import router as tareas_router
 from app.routers.tickets.router import router as tickets_router
 from app.modules.system_update.router import router as system_update_router
+from app.modules.client_workspace.router import router as client_workspace_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -61,6 +62,7 @@ for router in (ajustes_public_router, auth_router, system_update_router):
 
 # Cada grupo aplica autorización real antes de ejecutar sus endpoints.
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
+api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
 for router, module in (
     (inicio_router, "dashboard"), (clientes_router, "clients"), (zones_router, "clients"),
