@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-import { Settings as SettingsIcon, Save, Bell, Building2, ShieldAlert, Smartphone, Users, DollarSign, MessageSquare, MapPin, Package, Headphones, Server, RefreshCw, Wifi, Calendar, Wrench } from "lucide-react";
+import { Settings as SettingsIcon, Save, Bell, Building2, ShieldAlert, Smartphone, Users, DollarSign, MessageSquare, MapPin, Package, Headphones, Server, RefreshCw, Wifi, Calendar, Wrench, Send, Mail, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
 const SECTIONS = [
@@ -46,6 +46,10 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState("general");
+  const [mailSaving, setMailSaving] = useState(false);
+  const [mailTesting, setMailTesting] = useState(false);
+  const [testRecipient, setTestRecipient] = useState("");
+  const [mailConfig, setMailConfig] = useState({ host: "", port: 465, security: "ssl", authentication: true, username: "", password: "", password_set: false, daily_limit: 1000, sent_today: 0, logo_url: "", signature_html: "" });
 
   const [settings, setSettings] = useState({
     company_name: "",
@@ -77,6 +81,13 @@ export default function Settings() {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSettings(res.data);
+        try {
+          const mail = await axios.get(`${API}/settings/mail-server`, { headers: { Authorization: `Bearer ${token}` } });
+          setMailConfig((current) => ({ ...current, ...mail.data, password: "" }));
+          setTestRecipient(mail.data.username || res.data.email || "");
+        } catch (_) {
+          // Los datos SMTP solo son visibles para administradores.
+        }
       } catch (e) {
         toast.error("Error al cargar ajustes");
       } finally {
@@ -115,6 +126,37 @@ export default function Settings() {
       toast.error("Error al guardar ajustes");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleMailSubmit = async (event) => {
+    event.preventDefault();
+    setMailSaving(true);
+    try {
+      const response = await axios.put(`${API}/settings/mail-server`, mailConfig, { headers: { Authorization: `Bearer ${token}` } });
+      setMailConfig((current) => ({ ...current, ...response.data, password: "" }));
+      toast.success("Servidor de correo guardado");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo guardar la configuración SMTP");
+    } finally {
+      setMailSaving(false);
+    }
+  };
+
+  const testMail = async () => {
+    if (!testRecipient.trim()) {
+      toast.error("Indica el correo que recibirá la prueba");
+      return;
+    }
+    setMailTesting(true);
+    try {
+      const response = await axios.post(`${API}/settings/mail-server/test`, { recipient: testRecipient.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+      setMailConfig((current) => ({ ...current, sent_today: response.data.sent_today }));
+      toast.success(response.data.message);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo probar el servidor SMTP");
+    } finally {
+      setMailTesting(false);
     }
   };
 
@@ -333,6 +375,27 @@ export default function Settings() {
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </div>
+      </form> : activeSection === "mail" ? <form onSubmit={handleMailSubmit} className="max-w-5xl space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><Mail className="h-5 w-5" /></span>
+          <div><h3 className="font-bold text-slate-100">Servidor de correo</h3><p className="text-xs text-slate-500">Configuración SMTP para alertas y reportes del sistema.</p></div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 text-xs">
+          <Field label="Host / servidor SMTP"><input required value={mailConfig.host} onChange={(e) => setMailConfig({ ...mailConfig, host: e.target.value })} placeholder="smtp.gmail.com" className="field" /></Field>
+          <Field label="Puerto"><input required type="number" min="1" max="65535" value={mailConfig.port} onChange={(e) => setMailConfig({ ...mailConfig, port: Number(e.target.value) })} className="field" /></Field>
+          <Field label="Tipo de autenticación"><select value={mailConfig.authentication ? "user_password" : "none"} onChange={(e) => setMailConfig({ ...mailConfig, authentication: e.target.value === "user_password" })} className="field"><option value="user_password">Usuario y contraseña</option><option value="none">Sin autenticación</option></select></Field>
+          <Field label="Seguridad"><select value={mailConfig.security} onChange={(e) => setMailConfig({ ...mailConfig, security: e.target.value })} className="field"><option value="ssl">SSL/TLS (puerto usual 465)</option><option value="starttls">STARTTLS (puerto usual 587)</option><option value="none">Sin cifrado</option></select></Field>
+          <Field label="Usuario / correo"><input disabled={!mailConfig.authentication} type="email" value={mailConfig.username} onChange={(e) => setMailConfig({ ...mailConfig, username: e.target.value })} placeholder="correo@empresa.com" className="field disabled:opacity-50" /></Field>
+          <Field label={mailConfig.password_set ? "Contraseña de aplicación (dejar vacío para conservar)" : "Contraseña de aplicación"}><div className="relative"><LockKeyhole className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" /><input disabled={!mailConfig.authentication} autoComplete="new-password" type="password" value={mailConfig.password} onChange={(e) => setMailConfig({ ...mailConfig, password: e.target.value })} placeholder={mailConfig.password_set ? "Contraseña guardada" : "Contraseña o clave de aplicación"} className="field pl-9 disabled:opacity-50" /></div></Field>
+          <Field label="Límite de correos por día"><input required type="number" min="1" value={mailConfig.daily_limit} onChange={(e) => setMailConfig({ ...mailConfig, daily_limit: Number(e.target.value) })} className="field" /><p className="mt-1 text-[10px] text-amber-300">Enviados hoy: {mailConfig.sent_today || 0} de {mailConfig.daily_limit || 0}</p></Field>
+          <Field label="Logo del correo (URL opcional)"><input type="url" value={mailConfig.logo_url} onChange={(e) => setMailConfig({ ...mailConfig, logo_url: e.target.value })} placeholder="https://.../logo.png" className="field" /></Field>
+          <div className="md:col-span-2"><label className="mb-1 block font-semibold text-slate-300">Firma HTML del correo</label><textarea rows="6" value={mailConfig.signature_html} onChange={(e) => setMailConfig({ ...mailConfig, signature_html: e.target.value })} placeholder="Atentamente,<br><b>Mi Empresa</b>" className="field resize-y font-mono" /><p className="mt-1 text-[10px] text-slate-500">La firma se añadirá debajo de los correos enviados por MikroHub.</p></div>
+        </div>
+        <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-[11px] text-slate-400">Para Gmail usa una contraseña de aplicación. La contraseña SMTP queda cifrada en el servidor y nunca vuelve al navegador.</div>
+        <div className="flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="w-full sm:max-w-sm"><label className="mb-1 block text-xs font-semibold text-slate-300">Correo para la prueba</label><input type="email" value={testRecipient} onChange={(e) => setTestRecipient(e.target.value)} placeholder="administracion@empresa.com" className="field" /></div>
+          <div className="flex gap-2"><button type="button" disabled={mailTesting || mailSaving} onClick={testMail} className="flex items-center gap-2 rounded-xl border border-cyan-500 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"><Send className="h-4 w-4" />{mailTesting ? "Probando…" : "Probar configuración"}</button><button type="submit" disabled={mailSaving || mailTesting} className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400 disabled:opacity-50"><Save className="h-4 w-4" />{mailSaving ? "Guardando…" : "Guardar cambios"}</button></div>
+        </div>
       </form> : activeSection === "google" ? <form onSubmit={handleSubmit} className="max-w-4xl space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
         <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><MapPin className="h-5 w-5" /></span>
@@ -379,4 +442,8 @@ function RecipientField({ label, values, onChange, placeholder, type }) {
       <input type={type} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={add} onKeyDown={(event) => { if (event.key === "Enter" || event.key === ",") { event.preventDefault(); add(); } }} placeholder={recipients.length ? "Agregar otro…" : placeholder} className="min-w-40 flex-1 bg-transparent px-1 py-1 text-slate-100 outline-none placeholder:text-slate-600" />
     </div>
   </label>;
+}
+
+function Field({ label, children }) {
+  return <label className="block text-slate-300 font-semibold"><span className="mb-1 block">{label}</span>{children}</label>;
 }
