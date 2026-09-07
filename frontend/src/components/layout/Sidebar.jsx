@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { TEST_IDS } from "../../constants/testIds";
 import { canViewTab } from "../../modules/ajustes/staff/permissions";
+import { SETTINGS_SECTIONS } from "../../modules/ajustes/navigation/settingsSections";
 import { Home, Server, Zap, Users, Wifi, Calendar, DollarSign, Package, Headphones, MessageSquare, Settings, ChevronRight, LogOut, ShieldCheck, ChevronLeft, Network, Box, ChevronDown, Radio, MapPin, Map } from "lucide-react";
 
 const menuItems = [
@@ -15,7 +16,7 @@ const menuItems = [
   { id:"almacen",label:"Almacén",icon:Package,testId:TEST_IDS.NAV_ALMACEN },
   { id:"tickets",label:"Tickets",icon:Headphones,testId:TEST_IDS.NAV_TICKETS },
   { id:"mensajeria",label:"Mensajería",icon:MessageSquare,testId:TEST_IDS.NAV_MENSAJERIA },
-  { id:"ajustes",label:"Ajustes",icon:Settings,testId:TEST_IDS.NAV_AJUSTES },
+  { id:"ajustes",label:"Ajustes",icon:Settings,testId:TEST_IDS.NAV_AJUSTES,children:SETTINGS_SECTIONS.map((section) => ({ id:`settings_${section.id}`, label:section.label, icon:Settings })) },
 ];
 
 export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, companyName="MikroHub", logoData="" }) {
