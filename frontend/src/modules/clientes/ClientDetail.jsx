@@ -1,13 +1,12 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Función: Ficha operativa del cliente organizada en pestañas: resumen, servicio,
- * facturación, tickets, comunicaciones, documentos, estadísticas y bitácora.
- * Trabaja con: backend/app/routers/clientes/router.py (GET /api/clients/{id}).
+ * Actualización: 2026-09-07 — se desactivan temporalmente los editores de comunicaciones y documentos para evitar que un error deje el panel en blanco.
+ * Función: ficha operativa del cliente organizada en pestañas de consulta.
+ * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
+ * Entrega a: Clients.jsx y al operador una ficha estable; no modifica los datos del cliente.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import ClientCommunications from "./editor/ClientCommunications";
-import ClientDocuments from "./editor/ClientDocuments";
 import {
   Activity, BarChart3, CreditCard, FileText, Mail, MessageSquare,
   Radio, ReceiptText, Ticket, UserRound, Wifi, X
@@ -195,11 +194,11 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     }
 
     if (activeTab === "messages") {
-      return <ClientCommunications api={api} token={token} clientId={clientId} client={client} />;
+      return <EmptyState title="Módulo de comunicaciones en revisión" description="El editor de Email y SMS se habilitará nuevamente después de validar su compatibilidad con el panel." />;
     }
 
     if (activeTab === "documents") {
-      return <ClientDocuments api={api} token={token} clientId={clientId} />;
+      return <EmptyState title="Módulo de documentos en revisión" description="La gestión de documentos se habilitará nuevamente después de validar su compatibilidad con el panel." />;
     }
 
     if (activeTab === "stats") {
