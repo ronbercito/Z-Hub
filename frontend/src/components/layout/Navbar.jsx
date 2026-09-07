@@ -7,6 +7,7 @@ import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { TEST_IDS } from "../../constants/testIds";
 import { Search, Bell, Shield, DollarSign, Wifi, Globe, User } from "lucide-react";
+import UpdateCenter from "../../modules/system-update/UpdateCenter";
 
 export default function Navbar({ setActiveTab }) {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function Navbar({ setActiveTab }) {
 
       {/* Right Controls */}
       <div className="flex items-center gap-3">
+        <UpdateCenter />
         <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-cyan-400 font-mono font-semibold">
           <Globe className="w-3.5 h-3.5 text-cyan-400" /> Moneda: Soles (S/.)
         </div>
