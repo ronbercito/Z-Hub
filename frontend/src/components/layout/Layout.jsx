@@ -75,8 +75,10 @@ export default function Layout() {
       case "inicio":
         return <Dashboard setActiveTab={setActiveTab} />;
       case "red":
-      case "routers_olts":
-        return <Network />;
+      case "routers":
+        return <Network focus="mikrotik" />;
+      case "olts":
+        return <Network focus="olt" />;
       case "red_ipv4":
         return <IPv4Networks />;
       case "nap_boxes":
