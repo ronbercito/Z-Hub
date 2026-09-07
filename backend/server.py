@@ -1,31 +1,17 @@
 """
-Archivo: backend/server.py
-Área: Backend / montaje de rutas del panel.
-Alcance del cambio: monta el endpoint RX independiente antes de Red.
-No modifica lógica de inventario, estados ni configuración de equipos.
-Función: Punto de entrada del backend FastAPI (uvicorn server:app). Configura CORS,
-         monta todas las rutas de los módulos bajo /api, crea las tablas en MariaDB y
-         siembra el administrador inicial al arrancar.
-Trabaja con: backend/app/core/config.py, database.py, seed.py,
-             backend/app/routers/<modulo>/router.py (auth, inicio, clientes, planes, red,
-             facturacion, tickets, almacen, hotspot, tareas, mensajeria, ajustes)
-
-Regla de rutas OLT:
-- Las rutas específicas de submódulos OLT deben montarse ANTES del router genérico
-  de Red, porque Red contiene /routers/{router_id}/olt/{action}. FastAPI resuelve
-  rutas por orden; si el genérico va primero, una ruta como /olt/onus-v2 queda
-  capturada como action y nunca llega a su archivo independiente.
+Punto de entrada FastAPI. Monta rutas bajo /api y aplica permisos por módulo.
+Las rutas OLT específicas se registran antes del router genérico de red.
 """
-from app.core.config import CORS_ORIGINS  # carga .env primero
-
+from app.core.config import CORS_ORIGINS
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from app.core.database import init_db
 from app.core import database
+from app.core.permissions import require_permission
 from app.core.seed import seed_initial_data
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
 from app.routers.ajustes.staff.router import router as staff_router
@@ -52,7 +38,6 @@ from app.routers.tickets.router import router as tickets_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
@@ -60,34 +45,31 @@ async def lifespan(_: FastAPI):
     yield
     await database.engine.dispose()
 
-
 app = FastAPI(title="FibraZ / MikroSmart ISP API", version="3.0.0", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials="*" not in CORS_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials="*" not in CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 api = APIRouter(prefix="/api")
 
-# IMPORTANTE: estas rutas específicas deben ir antes de red_router.
-api.include_router(olt_onu_power_router, prefix="/routers", tags=["Red / OLT / RX"])
-api.include_router(olt_onu_v2_router, prefix="/routers", tags=["Red / OLT / ONUs v2"])
-api.include_router(olt_onu_descriptions_router, prefix="/routers", tags=["Red / OLT / ONUs v2"])
-api.include_router(olt_onu_summary_router, prefix="/routers", tags=["Red / OLT / ONUs"])
-api.include_router(olt_onu_inventory_router, prefix="/routers", tags=["Red / OLT / ONUs"])
+# OLT: rutas específicas antes de /routers genérico.
+for router in (olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
+    api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
 
-for r in (ajustes_public_router, auth_router, inicio_router, clientes_router, zones_router, planes_router, ipv4_networks_router, nap_boxes_router, monitoring_router, red_router, facturacion_router,
-          tickets_router, almacen_router, hotspot_router, tareas_router, mensajeria_router, ajustes_router, staff_router):
-    api.include_router(r)
+# Públicas o de sesión; no pasan por control de módulo.
+for router in (ajustes_public_router, auth_router):
+    api.include_router(router)
 
+# Cada grupo aplica autorización real antes de ejecutar sus endpoints.
+for router, module in (
+    (inicio_router, "dashboard"), (clientes_router, "clients"), (zones_router, "clients"),
+    (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
+    (monitoring_router, "monitoring"), (red_router, "network"), (facturacion_router, "billing"),
+    (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
+    (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"),
+    (staff_router, "staff"),
+):
+    api.include_router(router, dependencies=[Depends(require_permission(module))])
 
 @api.get("/health")
 async def health():
     return {"status": "ok"}
-
 
 app.include_router(api)
