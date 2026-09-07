@@ -42,9 +42,15 @@ const markerIcon = (maps, svg) => ({
   anchor: new maps.Point(26, 46),
 });
 
-const userIcon = (maps) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
-  <path d="M26 46c7-8 15-16 15-27a15 15 0 1 0-30 0c0 11 8 19 15 27Z" fill="#22c55e" stroke="#fff" stroke-width="2"/>
+const userIcon = (maps, technology) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
+  <path d="M26 46c7-8 15-16 15-27a15 15 0 1 0-30 0c0 11 8 19 15 27Z" fill="${technology === "wireless" ? "#166534" : "#22c55e"}" stroke="#fff" stroke-width="2"/>
   <circle cx="26" cy="15" r="5" fill="#fff"/><path d="M17 29c1-5 4-8 9-8s8 3 9 8" fill="#fff"/>
+</svg>`);
+
+const wirelessBaseIcon = (maps) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
+  <path d="M26 46c7-8 15-16 15-27a15 15 0 1 0-30 0c0 11 8 19 15 27Z" fill="#0f766e" stroke="#fff" stroke-width="2"/>
+  <path d="M16 22c6-7 14-7 20 0M19 18c4-4 10-4 14 0M23 14c2-2 4-2 6 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="26" cy="25" r="2" fill="#fbbf24"/>
 </svg>`);
 
 const napIcon = (maps) => markerIcon(maps, `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="48" viewBox="0 0 52 48">
@@ -79,11 +85,12 @@ export default function ClientMap() {
     let cancelled = false;
     const setup = async () => {
       try {
-        const [settingsResponse, clientsResponse, routersResponse, napsResponse] = await Promise.all([
+        const [settingsResponse, clientsResponse, routersResponse, napsResponse, equipmentResponse] = await Promise.all([
           axios.get(`${API}/settings`, { headers }),
           axios.get(`${API}/clients`, { headers }),
           axios.get(`${API}/routers`, { headers }),
           axios.get(`${API}/nap-boxes`, { headers }),
+          axios.get(`${API}/monitoring-equipment`, { headers }),
         ]);
         const apiKey = settingsResponse.data?.google_maps_api_key?.trim();
         if (!apiKey) {
@@ -94,13 +101,14 @@ export default function ClientMap() {
         const clients = (clientsResponse.data || []).filter(hasCoordinates);
         const bases = (routersResponse.data || []).filter(hasCoordinates);
         const naps = (napsResponse.data || []).filter(hasCoordinates);
+        const wirelessBases = (equipmentResponse.data || []).filter(hasCoordinates);
         if (cancelled || !mapRef.current) return;
 
         const maps = await loadGoogleMaps(apiKey);
         if (cancelled || !mapRef.current) return;
 
-        const firstPoint = clients[0] || naps[0] || bases[0];
-        const pointCount = clients.length + naps.length + bases.length;
+        const firstPoint = clients[0] || naps[0] || wirelessBases[0] || bases[0];
+        const pointCount = clients.length + naps.length + wirelessBases.length + bases.length;
         const center = firstPoint ? { lat: Number(firstPoint.latitude), lng: Number(firstPoint.longitude) } : { lat: -9.19, lng: -75.0152 };
         const map = new maps.Map(mapRef.current, {
           center, zoom: pointCount === 1 ? 16 : pointCount ? 12 : 5,
@@ -108,6 +116,7 @@ export default function ClientMap() {
         });
         const bounds = new maps.LatLngBounds();
         const napPositions = new Map();
+        const wirelessBasePositions = new Map();
 
         naps.forEach((nap) => {
           const position = { lat: Number(nap.latitude), lng: Number(nap.longitude) };
@@ -120,9 +129,20 @@ export default function ClientMap() {
           bounds.extend(position);
         });
 
+        wirelessBases.forEach((base) => {
+          const position = { lat: Number(base.latitude), lng: Number(base.longitude) };
+          wirelessBasePositions.set(base.id, position);
+          const marker = new maps.Marker({ map, position, title: `Base inalámbrica · ${base.name || "Equipo"}`, icon: wirelessBaseIcon(maps), zIndex: 9 });
+          const info = new maps.InfoWindow({
+            content: `<div style="min-width:180px;color:#172033"><strong>Base inalámbrica · ${safeText(base.name || "Equipo")}</strong><br/>${safeText(base.location || base.ip_address || "Sin ubicación")}</div>`,
+          });
+          marker.addListener("click", () => info.open({ map, anchor: marker }));
+          bounds.extend(position);
+        });
+
         clients.forEach((client) => {
           const position = { lat: Number(client.latitude), lng: Number(client.longitude) };
-          const marker = new maps.Marker({ map, position, title: client.full_name || "Cliente", icon: userIcon(maps), zIndex: 6 });
+          const marker = new maps.Marker({ map, position, title: client.full_name || "Cliente", icon: userIcon(maps, client.technology), zIndex: 6 });
           const status = client.status === "active" ? "Activo" : "Suspendido";
           const info = new maps.InfoWindow({
             content: `<div style="min-width:180px;color:#172033"><strong>${safeText(client.full_name || "Cliente")}</strong><br/>${safeText(client.address || "Sin dirección")}<br/><small>${status}${client.nap_box ? ` · NAP: ${safeText(client.nap_box)}` : ""}</small></div>`,
@@ -133,6 +153,14 @@ export default function ClientMap() {
             new maps.Polyline({
               map, path: [position, napPosition], geodesic: true,
               strokeColor: "#38bdf8", strokeOpacity: 0.8, strokeWeight: 2, zIndex: 2,
+            });
+          }
+          const wirelessBasePosition = client.technology === "wireless" && client.monitoring_equipment_id
+            ? wirelessBasePositions.get(client.monitoring_equipment_id) : null;
+          if (wirelessBasePosition) {
+            new maps.Polyline({
+              map, path: [position, wirelessBasePosition], geodesic: true,
+              strokeColor: "#a3e635", strokeOpacity: 0.9, strokeWeight: 2.5, zIndex: 3,
             });
           }
           bounds.extend(position);
@@ -156,7 +184,7 @@ export default function ClientMap() {
         if (pointCount > 1) map.fitBounds(bounds, 48);
         setClientTotal(clients.length);
         setNapTotal(naps.length);
-        setBaseTotal(bases.length);
+        setBaseTotal(bases.length + wirelessBases.length);
         setMessage(pointCount ? "" : "No hay clientes, NAP ni bases con coordenadas registradas.");
       } catch {
         if (!cancelled) {
@@ -193,10 +221,10 @@ export default function ClientMap() {
       </section>
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-        <span className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-400" /> Cliente: usuario verde.</span>
+        <span className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-400" /> Cliente fibra: usuario verde; inalámbrico: verde oscuro.</span>
         <span className="flex items-center gap-2"><Box className="h-4 w-4 text-amber-400" /> NAP: caja naranja.</span>
         <span className="flex items-center gap-2"><Server className="h-4 w-4 text-violet-400" /> Base: CCR celeste u OLT VSOL violeta.</span>
-        <span className="flex items-center gap-2 text-cyan-300">— Línea celeste: cliente conectado a su Caja NAP.</span>
+        <span className="flex items-center gap-2 text-cyan-300">— Línea celeste: cliente conectado a su Caja NAP.</span><span className="flex items-center gap-2 text-lime-300">— Línea verde lima: cliente inalámbrico conectado a su base.</span>
       </div>
     </div>
   );
