@@ -44,7 +44,7 @@ const Bar = ({ label, value, suffix = "", tone = "bg-emerald-400", max = 100 }) 
   );
 };
 
-export default function OltSummaryTab({ res, router, routers = [], onuCounts, onusLoading = false, traffic = null }) {
+export default function OltSummaryTab({ res, router, routers = [], onuCounts, onusLoading = false }) {
   const rawInfo = infoFromRaw(res?.raw);
   const info = Object.keys(rawInfo).length ? rawInfo : (res?.info || {});
   const onlineOlts = routers.filter((item) => item.status === "online").length;
@@ -76,12 +76,12 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800">
             <div className="flex flex-wrap justify-between gap-2 text-[10px] uppercase tracking-wider text-slate-500">
-              <span>Tráfico en vivo {traffic?.port ? `· ${traffic.port}` : ""}</span>
-              <span className="normal-case tracking-normal text-slate-400 font-mono">
-                {traffic?.rxMbps == null ? "Tomando segunda muestra…" : `↓ RX ${traffic.rxMbps.toFixed(2)} Mbps · ↑ TX ${traffic.txMbps.toFixed(2)} Mbps`}
-              </span>
+              <span>Tráfico actual</span>
+              <span className="normal-case tracking-normal text-slate-400">Disponible al integrar contadores PON</span>
             </div>
-            <TrafficChart traffic={traffic} />
+            <div className="mt-2 h-10 rounded-lg border border-dashed border-slate-800 bg-slate-950/40 flex items-center justify-center text-[11px] text-slate-500">
+              Sin lectura de tráfico agregado de la OLT
+            </div>
           </div>
         </section>
 
@@ -139,31 +139,6 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
           </div>
       </section>
       </div>
-    </div>
-  );
-}
-
-
-function TrafficChart({ traffic }) {
-  const history = (traffic?.history || []).filter((sample) => sample.rxMbps !== null && sample.txMbps !== null);
-  if (traffic?.error) {
-    return <div className="mt-2 h-10 rounded-lg border border-rose-900/50 bg-rose-950/20 flex items-center justify-center text-[11px] text-rose-300">{traffic.error}</div>;
-  }
-  if (!history.length) {
-    return <div className="mt-2 h-10 rounded-lg border border-dashed border-slate-800 bg-slate-950/40 flex items-center justify-center text-[11px] text-slate-500">Tomando dos lecturas de {traffic?.port || "uplink"} para calcular Mbps…</div>;
-  }
-  const max = Math.max(1, ...history.flatMap((sample) => [sample.rxMbps, sample.txMbps]));
-  const points = (key) => history.map((sample, index) => {
-    const x = history.length === 1 ? 0 : (index / (history.length - 1)) * 100;
-    const y = 92 - (sample[key] / max) * 82;
-    return `${x},${y}`;
-  }).join(" ");
-  return (
-    <div className="mt-2 h-14 rounded-lg border border-indigo-900/40 bg-indigo-950/20 px-1 py-1">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full" aria-label="Tráfico en vivo">
-        <polyline points={points("rxMbps")} fill="none" stroke="#38bdf8" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-        <polyline points={points("txMbps")} fill="none" stroke="#818cf8" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-      </svg>
     </div>
   );
 }
