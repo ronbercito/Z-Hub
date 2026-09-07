@@ -126,9 +126,6 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
               );
             })}
           </div>
-      </section>
-
-
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
