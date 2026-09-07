@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-07 — consulta actualizaciones solo al iniciar o recargar el panel.
+ * Actualización: 2026-09-07 — vuelve a comprobar actualizaciones cada minuto para pruebas.
  * Función: consulta, presenta e inicia actualizaciones del panel sin exponer datos técnicos.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito al 100 %.
@@ -41,9 +41,8 @@ export default function UpdateCenter() {
 
   useEffect(() => {
     check();
-    // Solo durante una instalación se consulta cada pocos segundos para actualizar la barra.
-    if (!installing) return undefined;
-    const timer = window.setInterval(check, 3500);
+    // En operación normal revisa cada minuto; durante la instalación actualiza la barra más rápido.
+    const timer = window.setInterval(check, installing ? 3500 : 60000);
     return () => window.clearInterval(timer);
   }, [check, installing]);
 
