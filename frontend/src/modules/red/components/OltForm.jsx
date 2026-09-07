@@ -31,6 +31,7 @@ export const OLT_EMPTY = {
   name: "", device_type: "olt", ip_address: "", private_ip: "", olt_model: "Vsol-V1600G-B", software_version: "1.x",
   pon_type: "GPON", pon_ports: 8, protocol: "telnet", ssh_port: 22, telnet_port: 23, snmp_port: 161,
   snmp_community: "public", snmp_community_rw: "private", username: "admin", password: "", enable_password: "",
+  web_username: "", web_password: "", web_port: 443,
   model: "", location: "", latitude: "", longitude: "", port: 23, use_ssl: false, olt_profile: "vsol_gpon",
 };
 
@@ -46,8 +47,9 @@ const Row = ({ label, help, children }) => (
 export default function OltForm({ initial, onClose, onSaved, onSwitchType }) {
   const { API, token } = useAuth();
   const isEdit = Boolean(initial?.id);
-  const [form, setForm] = useState({ ...OLT_EMPTY, ...initial, password: "", enable_password: "" });
+  const [form, setForm] = useState({ ...OLT_EMPTY, ...initial, password: "", enable_password: "", web_password: "" });
   const [showPass, setShowPass] = useState(false);
+  const [showWebPass, setShowWebPass] = useState(false);
   const [saving, setSaving] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -152,6 +154,23 @@ export default function OltForm({ initial, onClose, onSaved, onSwitchType }) {
           </div>
           <Row label="Clave enable" help="Clave del modo privilegiado (#). Si se deja vacía se usa la misma contraseña.">
             <input data-testid="olt-enable-password-input" type={showPass ? "text" : "password"} value={form.enable_password} onChange={(e) => set("enable_password", e.target.value)} placeholder={isEdit ? "(vacío = mantener)" : "igual a la contraseña"} className={`${input} font-mono`} />
+          </Row>
+          <div className="border-t border-slate-800 pt-3" />
+          <p className="text-xs font-bold text-cyan-300">Acceso web de la OLT</p>
+          <p className="text-[11px] text-slate-500 -mt-2">Solo para leer CPU, memoria, temperatura y uptime. Puede ser diferente al acceso CLI.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-[190px_1fr_auto_1fr] gap-1 sm:gap-4 items-center">
+            <label className="text-xs text-slate-300 font-semibold">Usuario web</label>
+            <input data-testid="olt-web-user-input" value={form.web_username} onChange={(e) => set("web_username", e.target.value)} placeholder="Usuario del panel web" className={`${input} font-mono`} />
+            <label className="text-xs text-slate-300 font-semibold">Contraseña web</label>
+            <div className="flex">
+              <input data-testid="olt-web-password-input" type={showWebPass ? "text" : "password"} value={form.web_password} onChange={(e) => set("web_password", e.target.value)} placeholder={isEdit ? "(vacío = mantener)" : ""} className={`${input} font-mono rounded-r-none`} />
+              <button type="button" onClick={() => setShowWebPass(!showWebPass)} className="px-3 bg-slate-800 border border-l-0 border-slate-700 rounded-r-xl text-slate-300" data-testid="olt-toggle-web-pass">
+                {showWebPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <Row label="Puerto web">
+            <input data-testid="olt-web-port-input" type="number" min="1" max="65535" value={form.web_port} onChange={(e) => set("web_port", parseInt(e.target.value) || 443)} placeholder="443" className={`${input} font-mono`} />
           </Row>
           <Row label="Ubicación / Nodo">
             <input data-testid="olt-location-input" value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Nodo Central" className={input} />
