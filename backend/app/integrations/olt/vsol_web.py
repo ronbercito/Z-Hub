@@ -13,7 +13,7 @@ from html.parser import HTMLParser
 from http.cookiejar import CookieJar
 from typing import Any
 from urllib.parse import urlencode
-from urllib.request import HTTPCookieProcessor, Request, build_opener
+from urllib.request import HTTPSHandler, HTTPCookieProcessor, Request, build_opener
 
 from app.core.config import MIKROTIK_TIMEOUT as TIMEOUT
 
