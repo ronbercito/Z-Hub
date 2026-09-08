@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx
- * Actualización: 2026-09-08 — edición segura de movimientos de Saldos.
- * Función: muestra saldo a favor/deuda, historial y permite registrar o corregir movimientos.
+ * Actualización: 2026-09-08 — límite seguro para editar movimientos nuevos de Saldos.
+ * Función: muestra saldo a favor/deuda, historial y permite registrar o corregir movimientos sin alterar saldos ya aplicados.
  * Recibe de: ClientBilling.jsx.
- * Entrega a: API /clients/{client_id}/balances; los movimientos ya aplicados conservan su monto por trazabilidad.
+ * Entrega a: API /clients/{client_id}/balances; los movimientos aplicados conservan su importe por trazabilidad.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Pencil, Plus, Search, Wallet, X } from "lucide-react";
@@ -14,6 +14,10 @@ const INPUT_CLASS = "w-full rounded-xl border border-slate-700 bg-slate-950 px-3
 
 function money(value) {
   return `S/. ${Number(value || 0).toFixed(2)}`;
+}
+
+function isAmountLocked(row) {
+  return Boolean(row?.parent_id) || Math.abs(Number(row?.remaining_amount || 0) - Number(row?.amount || 0)) >= 0.005;
 }
 
 export default function ClientBillingBalances({ clientId, API, headers, onBalanceUpdate }) {
@@ -70,8 +74,20 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
   const save = async event => {
     event.preventDefault();
     const amount = Number(form.amount);
-    if (!Number.isFinite(amount) || amount === 0) return toast.error("El monto debe ser distinto de cero");
+    if (!Number.isFinite(amount)) return toast.error("Ingresa un monto válido");
+    if (!editing && amount === 0) return toast.error("El monto debe ser distinto de cero");
     if (!form.description.trim()) return toast.error("Ingresa una descripción");
+
+    if (editing && !isAmountLocked(editing)) {
+      const original = Number(editing.amount || 0);
+      const maxEditable = Math.abs(original);
+      const sameSign = amount === 0 || (original > 0 ? amount > 0 : amount < 0);
+      if (!sameSign) return toast.error(`No puedes cambiar el tipo de saldo. Conserva ${original > 0 ? "saldo a favor" : "deuda"}.`);
+      if (Math.abs(amount) > maxEditable + 0.005) {
+        return toast.error(`No es posible. El monto máximo a editar es ${money(maxEditable)}.`);
+      }
+    }
+
     setSaving(true);
     try {
       const response = editing
@@ -151,7 +167,8 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
                 <tr><td colSpan="8" className="p-8 text-center text-slate-500">Cargando saldos...</td></tr>
               ) : data.rows.length ? data.rows.map(row => {
                 const positive = Number(row.amount || 0) >= 0;
-                const amountLocked = Boolean(row.parent_id) || Math.abs(Number(row.remaining_amount || 0) - Number(row.amount || 0)) >= 0.005;
+                const amountLocked = isAmountLocked(row);
+                const maxEditable = Math.abs(Number(row.amount || 0));
                 return (
                   <tr key={row.id} className="hover:bg-slate-900/60">
                     <td className="p-3 font-mono text-slate-500">{row.id.slice(0, 8)}</td>
@@ -164,7 +181,7 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
                     <td className="p-3 max-w-[280px]">{row.description || "—"}</td>
                     <td className="p-3"><span className="px-2 py-1 rounded-full bg-slate-800 text-[10px] font-bold">{row.status}</span></td>
                     <td className="p-3 text-center">
-                      <button type="button" onClick={() => openEdit(row)} title={amountLocked ? "Editar descripción" : "Editar saldo"} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/50 text-slate-200 hover:text-cyan-300 text-[10px] font-bold">
+                      <button type="button" onClick={() => openEdit(row)} title={amountLocked ? "Editar descripción" : `Editar saldo (máximo ${money(maxEditable)})`} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/50 text-slate-200 hover:text-cyan-300 text-[10px] font-bold">
                         <Pencil className="w-3.5 h-3.5" /> Editar
                       </button>
                     </td>
@@ -190,15 +207,18 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
             </div>
             <div className="p-5 space-y-4">
               <p className="text-[11px] text-slate-400">Monto positivo = saldo a favor del cliente (ej. <b>500</b>). Monto negativo = deuda del cliente (ej. <b>-100</b>).</p>
-              {editing && (Boolean(editing.parent_id) || Math.abs(Number(editing.remaining_amount || 0) - Number(editing.amount || 0)) >= 0.005) && (
+              {editing && isAmountLocked(editing) && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-900/10 p-3 text-[10px] text-amber-300">Este movimiento ya fue aplicado a una factura. El monto queda bloqueado para no alterar la trazabilidad; puedes corregir la descripción.</div>
+              )}
+              {editing && !isAmountLocked(editing) && (
+                <div className="rounded-xl border border-cyan-500/30 bg-cyan-900/10 p-3 text-[10px] text-cyan-300">Puedes reducir o eliminar este movimiento. El monto máximo que puedes conservar es <b>{money(Math.abs(Number(editing.amount || 0)))}</b>. Si colocas 0, el movimiento deja de aportar al saldo y se conserva en el historial.</div>
               )}
               <label className="block text-xs text-slate-300">
                 <span className="font-semibold">Monto</span>
-                <input autoFocus={!editing || !Boolean(editing.parent_id)} required type="number" step="0.01" disabled={editing && (Boolean(editing.parent_id) || Math.abs(Number(editing.remaining_amount || 0) - Number(editing.amount || 0)) >= 0.005)} value={form.amount} onChange={event => setForm(value => ({ ...value, amount: event.target.value }))} className={`${INPUT_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`} />
+                <input autoFocus={!editing || !isAmountLocked(editing)} required={!(editing && !isAmountLocked(editing))} type="number" step="0.01" min={editing && !isAmountLocked(editing) ? (Number(editing.amount || 0) < 0 ? -Math.abs(Number(editing.amount || 0)) : 0) : undefined} max={editing && !isAmountLocked(editing) ? (Number(editing.amount || 0) > 0 ? Math.abs(Number(editing.amount || 0)) : 0) : undefined} disabled={editing && isAmountLocked(editing)} value={form.amount} onChange={event => setForm(value => ({ ...value, amount: event.target.value }))} className={`${INPUT_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`} />
               </label>
               <label className="block text-xs text-slate-300"><span className="font-semibold">Descripción</span><textarea required rows="3" value={form.description} onChange={event => setForm(value => ({ ...value, description: event.target.value }))} placeholder="Abono del cliente, deuda pendiente, ajuste..." className={INPUT_CLASS} /></label>
-              <p className="text-[10px] text-slate-500">Los movimientos aplicados no cambian su importe histórico. Solo se permite corregir su descripción.</p>
+              <p className="text-[10px] text-slate-500">Un movimiento ya aplicado no puede cambiar de importe. Un movimiento nuevo/no aplicado solo puede reducirse hasta 0 y no puede superar su importe original.</p>
             </div>
             <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-800">
               <button type="button" onClick={closeModal} disabled={saving} className="px-4 py-2 rounded-xl bg-slate-800 text-xs">Cancelar</button>
