@@ -1,7 +1,7 @@
 """
 Punto de entrada FastAPI. Monta rutas bajo /api y aplica permisos por módulo.
 Las rutas OLT específicas se registran antes del router genérico de red.
-Actualización: 2026-09-08 — registra acciones de facturas, resumen seguro y API aislada de saldos.
+Actualización: 2026-09-08 — registra acciones de facturas, resumen seguro, API aislada de saldos y auditoría detallada de servicios.
 """
 from app.core.config import CORS_ORIGINS
 import logging
@@ -22,6 +22,7 @@ from app.routers.almacen.router import router as almacen_router
 from app.routers.auth.router import router as auth_router
 from app.routers.clientes.router import router as clientes_router
 from app.routers.clientes.services import router as client_services_router
+from app.routers.clientes.service_delete_audit import router as client_service_delete_audit_router
 from app.routers.clientes.deletion_summary import router as client_deletion_summary_router
 from app.routers.clientes.identity_sync import sync_client_identity
 from app.routers.clientes.zones import router as zones_router
@@ -94,7 +95,7 @@ api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
 for router, module in (
-    (inicio_router, "dashboard"), (clientes_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
+    (inicio_router, "dashboard"), (clientes_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
