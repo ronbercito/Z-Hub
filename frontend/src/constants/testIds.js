@@ -5,6 +5,7 @@
  * Trabaja con: todos los modules/* y components/layout/*; navegación IP y guardia de eliminación.
  */
 import "./clientDeleteGuard";
+import "./clientDeleteSummaryFix";
 
 const IPV4_RE = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
