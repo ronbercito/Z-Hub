@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/facturacion/router.py
-Actualización: 2026-09-08 — auditoría detallada de creación de facturas, pagos y facturación automática.
+Actualización: 2026-09-08 — la facturación mensual y el estado vencido respetan las reglas guardadas en cada abonado.
 Función: Facturación y cobros: listar/crear facturas, facturación masiva mensual, marcar vencidas y pagos,
          manteniendo cada recibo asociado al cliente y aplicando créditos/deudas del libro mayor.
 Trabaja con: invoice.py, client.py, client_service.py, client_balance.py, client_activity.py,
@@ -43,6 +43,20 @@ def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: 
     account = user.get("email") or user.get("username") or name
     role = user.get("role") or "sin rol"
     db.add(ClientActivity(client_id=client_id, action=action, detail=f"{detail} | Cuenta: {account} | Rol: {role}", operator_name=name))
+
+
+def _billing_dates(client: Client, now: datetime) -> tuple[str, str, str]:
+    """Calcula emisión y vencimiento usando el día de pago y anticipación del cliente."""
+    billing_day = min(max(int(client.billing_day or 5), 1), 28)
+    due = now.replace(day=billing_day, hour=0, minute=0, second=0, microsecond=0)
+    if due < now.replace(hour=0, minute=0, second=0, microsecond=0):
+        if due.month == 12:
+            due = due.replace(year=due.year + 1, month=1)
+        else:
+            due = due.replace(month=due.month + 1)
+    lead = max(int(client.invoice_lead_days or 0), 0)
+    issue = due - timedelta(days=lead)
+    return issue.strftime("%Y-%m-%d"), due.strftime("%Y-%m-%d"), due.strftime("%Y-%m")
 
 
 async def _service_labels(db: AsyncSession, client_ids: set[str]) -> dict[tuple[str, str], str]:
@@ -88,7 +102,8 @@ async def create_invoice(data: InvoiceIn, current_user: dict = Depends(get_curre
         if not service or service.client_id != c.id:
             raise HTTPException(status_code=422, detail="El servicio seleccionado no pertenece al cliente.")
     now = datetime.now(timezone.utc)
-    inv = Invoice(invoice_number=data.invoice_number or correlative("REC"), client_id=c.id, service_id=service.id if service else None, client_name=c.full_name, client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone, plan_name=data.plan_name or (service.plan_name if service else c.plan_name), amount=data.amount if data.amount is not None else (service.plan_price if service else c.plan_price), month_period=data.month_period or current_period(), issue_date=data.issue_date or now.strftime("%Y-%m-%d"), due_date=data.due_date or (now + timedelta(days=10)).strftime("%Y-%m-%d"), status=data.status, notes=data.notes)
+    default_issue, default_due, _ = _billing_dates(c, now)
+    inv = Invoice(invoice_number=data.invoice_number or correlative("REC"), client_id=c.id, service_id=service.id if service else None, client_name=c.full_name, client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone, plan_name=data.plan_name or (service.plan_name if service else c.plan_name), amount=data.amount if data.amount is not None else (service.plan_price if service else c.plan_price), month_period=data.month_period or current_period(), issue_date=data.issue_date or default_issue, due_date=data.due_date or default_due, status=data.status, notes=data.notes)
     db.add(inv)
     await db.flush()
     operator = current_user.get("name") or current_user.get("username") or "Sistema"
@@ -160,17 +175,17 @@ async def register_payment(data: PaymentIn, current_user: dict = Depends(get_cur
 
 @router.post("/invoices/mass-generate")
 async def mass_generate(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    period = current_period()
     now = datetime.now(timezone.utc)
     clients = (await db.execute(select(Client).where(Client.status != "canceled"))).scalars().all()
     count = 0
     auto_paid = 0
+    periods = []
     for c in clients:
+        issue_date, due_date, period = _billing_dates(c, now)
         exists = (await db.execute(select(func.count()).select_from(Invoice).where(Invoice.client_id == c.id, Invoice.month_period == period, Invoice.service_id.is_(None)))).scalar()
         if exists or not c.plan_price:
             continue
-        due = now.replace(day=min(max(c.billing_day, 1), 28)) + timedelta(days=5)
-        inv = Invoice(invoice_number=correlative("REC"), client_id=c.id, service_id=None, client_name=c.full_name, client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone, plan_name=c.plan_name, amount=c.plan_price, month_period=period, issue_date=now.strftime("%Y-%m-%d"), due_date=due.strftime("%Y-%m-%d"), status="unpaid", notes=f"Factura mensual periodo {period} - Servicio 1")
+        inv = Invoice(invoice_number=correlative("REC"), client_id=c.id, service_id=None, client_name=c.full_name, client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone, plan_name=c.plan_name, amount=c.plan_price, month_period=period, issue_date=issue_date, due_date=due_date, status="unpaid", notes=f"Factura mensual periodo {period} - Servicio 1")
         db.add(inv)
         await db.flush()
         applied = await apply_balances_to_invoice(db, inv, operator_name="Sistema")
@@ -182,26 +197,38 @@ async def mass_generate(db: AsyncSession = Depends(get_db), current_user: dict =
             inv.notes = f"{inv.notes} | Pago automático con saldo a favor."
             auto_paid += 1
         await _refresh_balance(db, c)
-        detail = f"Se generó automáticamente la factura mensual {inv.invoice_number}. Período: {period}. Monto base: S/. {float(c.plan_price or 0):.2f}. Vencimiento: {inv.due_date}."
+        detail = f"Se generó automáticamente la factura mensual {inv.invoice_number}. Período: {period}. Monto base: S/. {float(c.plan_price or 0):.2f}. Emisión: {inv.issue_date}. Vencimiento: {inv.due_date}. Anticipación configurada: {int(c.invoice_lead_days or 0)} día(s)."
         if applied["credit_applied"] > 0:
             detail += f" Saldo a favor aplicado: S/. {float(applied['credit_applied']):.2f}."
         if applied["debt_added"] > 0:
             detail += f" Deuda trasladada: S/. {float(applied['debt_added']):.2f}."
         _activity(db, c.id, "Factura mensual generada", detail, current_user)
         count += 1
+        periods.append(period)
     await db.commit()
-    return {"message": f"Se han generado {count} facturas para el periodo {period}", "period": period, "count": count, "auto_paid": auto_paid}
+    period_label = periods[0] if periods and len(set(periods)) == 1 else current_period()
+    return {"message": f"Se han generado {count} facturas para el periodo {period_label}", "period": period_label, "count": count, "auto_paid": auto_paid}
 
 
 @router.post("/invoices/mark-overdue")
 async def mark_overdue(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    s = await db.get(Setting, "system_config")
-    data = (s.data or {}) if s else {}
-    grace = int(data.get("billing_grace_days", data.get("grace_days", 3)) or 0)
-    limit = (datetime.now(timezone.utc) - timedelta(days=grace)).strftime("%Y-%m-%d")
-    rows = (await db.execute(select(Invoice).where(Invoice.status == "unpaid", Invoice.due_date < limit))).scalars().all()
-    for i in rows:
-        i.status = "overdue"
-        _activity(db, i.client_id, "Factura vencida", f"La factura {i.invoice_number} pasó a estado VENCIDA. Monto pendiente: S/. {max(0.0, float(i.amount or 0) - float(i.paid_amount or 0)):.2f}. Fecha de vencimiento: {i.due_date}. Días de gracia configurados: {grace}.", current_user)
+    rows = (await db.execute(select(Invoice).where(Invoice.status == "unpaid"))).scalars().all()
+    today_value = datetime.now(timezone.utc).date()
+    affected = 0
+    grace_values = []
+    for invoice in rows:
+        client = await db.get(Client, invoice.client_id)
+        grace = max(0, int(client.grace_days or 0)) if client else 0
+        try:
+            due = datetime.strptime(invoice.due_date, "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            continue
+        overdue_limit = due + timedelta(days=grace)
+        if today_value <= overdue_limit:
+            continue
+        invoice.status = "overdue"
+        affected += 1
+        grace_values.append(grace)
+        _activity(db, invoice.client_id, "Factura vencida", f"La factura {invoice.invoice_number} pasó a estado VENCIDA. Monto pendiente: S/. {max(0.0, float(invoice.amount or 0) - float(invoice.paid_amount or 0)):.2f}. Fecha de vencimiento: {invoice.due_date}. Días de gracia configurados para el abonado: {grace}.", current_user)
     await db.commit()
-    return {"message": f"{len(rows)} facturas marcadas como vencidas (gracia {grace} días)", "count": len(rows)}
+    return {"message": f"{affected} facturas marcadas como vencidas respetando la gracia configurada por abonado", "count": affected, "grace_days_used": sorted(set(grace_values))}
