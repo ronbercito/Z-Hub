@@ -4,37 +4,37 @@
 
 ## Versión funcional
 
-**1.0.64**
+**1.0.65**
 
-## Cambio realizado
+## Historial de 1.0.64
 
 Se igualó la pestaña **Facturación dentro de la ficha del cliente** con las acciones disponibles en la sección global **Facturación → Facturas**.
 
-### Archivo principal modificado
+### Archivo principal
 
 `frontend/src/modules/clientes/editor/ClientBilling.jsx`
 
-### Acciones agregadas por factura
+### Acciones por factura
 
 - Editar.
 - Ver factura/documento.
 - Eliminar.
 - Anular.
 - Enviar.
-- Pagar, manteniendo el flujo que ya existía.
+- Pagar, manteniendo el flujo existente.
 
 ### Enviar
 
-La ventana de envío ofrece las mismas dos alternativas del módulo principal:
+La ventana ofrece:
 
 - **Correo** → solicita el correo y abre `mailto:` con el mensaje preparado.
 - **WhatsApp** → usa el teléfono disponible o permite introducirlo y abre `wa.me` con el mensaje preparado.
 
-El backend utilizado es el mismo:
+Backend utilizado:
 
 `backend/app/routers/facturacion/invoice_actions.py`
 
-Endpoints relevantes:
+Endpoints:
 
 ```text
 PUT  /api/invoices/{invoice_id}
@@ -44,60 +44,93 @@ GET  /api/invoices/{invoice_id}/pdf
 POST /api/invoices/{invoice_id}/send?channel=email|whatsapp
 ```
 
-## Protección
-
-Se mantiene la regla definida anteriormente:
+### Protección
 
 - factura pagada → no editar, eliminar ni anular;
 - factura con pagos registrados → protegida contra acciones destructivas;
 - factura pendiente → puede gestionarse según la acción;
-- factura anulada → no se trata como factura activa.
+- factura anulada → no se trata como activa.
 
-## Interfaz
-
-Las acciones se muestran como botones compactos dentro de la columna **Acciones**, para mantener el espacio reducido de la ficha del cliente y conservar la información de servicio, período, monto, vencimiento y estado.
-
-## Archivos relacionados
-
-- `frontend/src/modules/clientes/editor/ClientBilling.jsx`
-- `frontend/src/modules/facturacion/Billing.jsx`
-- `backend/app/routers/facturacion/invoice_actions.py`
-- `backend/server.py`
-- `frontend/src/modules/system-update/version.js`
-
-## Versión
-
-`frontend/src/modules/system-update/version.js` → **1.0.64**
-
-## Commit funcional de la ficha del cliente
+### Commit funcional
 
 `2cde1d2bcd20b4affc272585ea749e3ad41cb203`
 
-## Commit de versión
+## Incidencia detectada al actualizar a 1.0.64
 
-`288e838a2e760d55cd03285316466041ca72a3ce`
+El servidor recibió la oferta de actualización **1.0.64**, pero el instalador falló durante `setup_debian.sh` y el sistema realizó rollback automático a **1.0.63**.
 
-## Pruebas / verificación pendiente
+La interfaz solo mostraba:
 
-El código fue publicado en `main`. Falta realizar en el servidor el build/deploy y probar visualmente las cinco acciones dentro de una ficha real de cliente:
+```text
+error Command failed with exit code 1
+```
 
-1. Editar una factura pendiente.
-2. Abrir documento.
-3. Eliminar una factura pendiente.
-4. Anular una factura pendiente.
-5. Enviar por Correo y WhatsApp.
-6. Confirmar que una factura pagada queda protegida.
+Esto no permitía saber si el fallo estaba en dependencias, frontend, backend, Supervisor, Nginx u otro paso.
 
-## Nota técnica existente
+## Corrección 1.0.65
 
-La ruta `/api/invoices/{invoice_id}/pdf` actualmente genera un **HTML imprimible**, no un PDF binario real. Si posteriormente se exige un PDF real, debe implementarse generación `application/pdf` en backend.
+Se mejoró el mecanismo interno de actualización para registrar el motivo real del fallo antes del rollback.
+
+### `backend/app/modules/system_update/run_update.sh`
+
+Ahora registra:
+
+- paso actual;
+- comando que falló;
+- código de salida;
+- últimas 80 líneas del log.
+
+También conserva el rollback sin resincronizar `origin/main` durante la restauración.
+
+### `deploy/setup_debian.sh`
+
+Ahora registra mediante `ERROR_SETUP`:
+
+```text
+paso=<paso>
+linea=<línea>
+comando=<comando>
+codigo=<código>
+```
+
+Esto permite que una próxima falla pueda identificarse directamente desde el Centro de Actualizaciones.
+
+El build frontend se ejecuta con `CI=` para evitar que advertencias heredadas del entorno conviertan innecesariamente el build en un fallo.
+
+### Versión
+
+`frontend/src/modules/system-update/version.js` → **1.0.65**
+
+### Changelog 1.0.65
+
+- Mejora del diagnóstico del actualizador.
+- Registro del paso/comando/código exactos ante errores.
+- Mayor detalle para fallos de backend, frontend, dependencias y servicios.
+
+## Verificación pendiente en servidor
+
+La siguiente instalación debe comprobar:
+
+1. que el servidor pase de 1.0.63 a 1.0.65;
+2. que el build frontend termine correctamente;
+3. que Supervisor y Nginx queden activos;
+4. que el Centro de Actualizaciones muestre 1.0.65;
+5. que la ficha del cliente muestre las acciones de facturación;
+6. que las acciones Editar, Ver, Eliminar, Anular, Enviar y Pagar funcionen;
+7. que las facturas pagadas sigan protegidas.
+
+Si vuelve a fallar, **no asumir la causa**: leer primero el detalle `ERROR_SETUP`/`ERROR en paso` generado por el nuevo actualizador.
+
+## Nota técnica de PDF
+
+`/api/invoices/{invoice_id}/pdf` actualmente genera un **HTML imprimible**, no un PDF binario real. Si posteriormente se exige un PDF real, implementar generación `application/pdf` en backend.
 
 ## Regla para futuras sesiones
 
-Antes de continuar con Facturación, leer:
+Antes de continuar con Facturación o Actualizaciones, leer:
 
 1. `README.md`
 2. `docs/CONTINUIDAD_MIKROHUB.md`
-3. este documento de continuidad fechado cuando se necesite conocer el detalle del cambio 1.0.64.
+3. este documento para el historial detallado del 08-09-2026.
 
-Este documento es documentación interna y no incrementa la versión por sí mismo; la versión 1.0.64 existe porque el cambio sí modifica funcionalidad del panel.
+Este documento es documentación interna y no debe entrar en el build público.
