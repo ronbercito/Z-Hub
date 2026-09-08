@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/red/ipv4_networks.py
-Actualización: 2026-09-08 — corrige el cálculo de disponibilidad IPv4 para que el inventario y el selector de Servicio usen el mismo criterio de hosts asignables y contemplen servicios adicionales.
+Actualización: 2026-09-08 — el inventario IPv4 ignora servicios huérfanos de clientes eliminados y valida clientes + servicios.
 Función: API de inventario IPv4 (/api/ipv4-networks): crea, lista, edita y elimina
          redes vinculadas a MikroTiks, y calcula los clientes registrados por red.
 Alcance: administra planificación y validación de direcciones; no altera /ip address,
@@ -72,14 +72,16 @@ async def _public_rows(db: AsyncSession):
         select(Client.ipv4_network_id, func.count(Client.id)).where(Client.ipv4_network_id != "").group_by(Client.ipv4_network_id)
     )).all())
     service_counts = dict((await db.execute(
-        select(ClientService.ipv4_network_id, func.count(ClientService.id)).where(ClientService.ipv4_network_id != "").group_by(ClientService.ipv4_network_id)
+        select(ClientService.ipv4_network_id, func.count(ClientService.id))
+        .join(Client, Client.id == ClientService.client_id)
+        .where(ClientService.ipv4_network_id != "")
+        .group_by(ClientService.ipv4_network_id)
     )).all())
     rows = (await db.execute(select(IPv4Network).order_by(IPv4Network.router_name, IPv4Network.network_address))).scalars().all()
     result = []
     for row in rows:
         network = ipaddress.ip_network(row.cidr)
         used = (counts.get(row.id, 0) or 0) + (service_counts.get(row.id, 0) or 0)
-        # Se reservan red, broadcast y el primer host (.1) como gateway del MikroTik.
         assignable_hosts = max(network.num_addresses - 3, 0)
         available_ips = max(assignable_hosts - used, 0)
         result.append({**row.to_dict(), "usable_hosts": assignable_hosts, "used_ips": used,
@@ -105,14 +107,13 @@ async def list_available_addresses(
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
     network = ipaddress.ip_network(row.cidr)
 
-    # Para un selector de alta/edición, una IP ocupada sigue siendo ocupada aunque
-    # pertenezca al mismo cliente. El formulario conserva explícitamente la IP actual
-    # al editar, por lo que no hace falta excluir al cliente de este inventario.
     assigned_clients = select(Client.ip_address).where(
         Client.ipv4_network_id == row.id,
         Client.ip_address != "",
     )
-    assigned_services = select(ClientService.ip_address).where(
+    assigned_services = select(ClientService.ip_address).join(
+        Client, Client.id == ClientService.client_id
+    ).where(
         ClientService.ipv4_network_id == row.id,
         ClientService.ip_address != "",
     )
@@ -150,7 +151,9 @@ async def create_ipv4_network(data: IPv4NetworkIn, db: AsyncSession = Depends(ge
 async def update_ipv4_network(network_id: str, data: IPv4NetworkIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
     assigned_clients = await db.scalar(select(func.count(Client.id)).where(Client.ipv4_network_id == row.id)) or 0
-    assigned_services = await db.scalar(select(func.count(ClientService.id)).where(ClientService.ipv4_network_id == row.id)) or 0
+    assigned_services = await db.scalar(
+        select(func.count(ClientService.id)).join(Client, Client.id == ClientService.client_id).where(ClientService.ipv4_network_id == row.id)
+    ) or 0
     assigned = assigned_clients + assigned_services
     value = _network(data)
     rtr = await _router(db, data.router_id)
@@ -172,7 +175,9 @@ async def update_ipv4_network(network_id: str, data: IPv4NetworkIn, db: AsyncSes
 async def delete_ipv4_network(network_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
     assigned_clients = await db.scalar(select(func.count(Client.id)).where(Client.ipv4_network_id == row.id)) or 0
-    assigned_services = await db.scalar(select(func.count(ClientService.id)).where(ClientService.ipv4_network_id == row.id)) or 0
+    assigned_services = await db.scalar(
+        select(func.count(ClientService.id)).join(Client, Client.id == ClientService.client_id).where(ClientService.ipv4_network_id == row.id)
+    ) or 0
     assigned = assigned_clients + assigned_services
     if assigned:
         raise HTTPException(status_code=409, detail=f"No puedes eliminar la red: tiene {assigned} asignación(es).")
