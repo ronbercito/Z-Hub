@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/red/nap_boxes.py
-Actualización: 2026-09-08 — los puertos ocupados por clientes y servicios adicionales ahora se reflejan en los selectores de NAP.
+Actualización: 2026-09-08 — los puertos ocupados por clientes y servicios adicionales vinculados a clientes existentes se reflejan en el inventario.
 Función: API de Cajas NAP (/api/nap-boxes): administra el inventario físico y muestra
          ocupación por puerto usando los clientes vinculados y sus servicios adicionales.
 Alcance: no ejecuta comandos en OLT o MikroTik.
@@ -39,14 +39,13 @@ async def _rows(db: AsyncSession):
     boxes = (await db.execute(select(NapBox))).scalars().all()
     boxes.sort(key=lambda box: ((box.zone_name or "").casefold(), (box.display_name or box.name).casefold()))
 
-    # Una NAP puede estar ocupada por el servicio principal histórico o por un
-    # servicio adicional del mismo/otro cliente. Ambos deben bloquear el puerto.
     client_rows = (await db.execute(
         select(Client.nap_box_id, Client.nap_port, Client.id, Client.full_name)
         .where(Client.nap_box_id != "", Client.nap_port.is_not(None))
     )).all()
     service_rows = (await db.execute(
         select(ClientService.nap_box_id, ClientService.nap_port, ClientService.id, ClientService.client_id)
+        .join(Client, Client.id == ClientService.client_id)
         .where(ClientService.nap_box_id != "", ClientService.nap_port.is_not(None))
     )).all()
 
@@ -54,8 +53,6 @@ async def _rows(db: AsyncSession):
     for box_id, port, client_id, name in client_rows:
         assigned.setdefault(box_id, {})[port] = {"client_id": client_id, "client_name": name, "source": "client"}
     for box_id, port, service_id, client_id in service_rows:
-        # La validación de servicios impide duplicados; este guard evita que un
-        # dato histórico inconsistente reemplace la primera asignación mostrada.
         assigned.setdefault(box_id, {}).setdefault(port, {
             "client_id": client_id,
             "service_id": service_id,
@@ -96,7 +93,9 @@ async def create_nap_box(data: NapBoxIn, db: AsyncSession = Depends(get_db)):
 async def update_nap_box(box_id: str, data: NapBoxIn, db: AsyncSession = Depends(get_db)):
     box = await get_or_404(db, NapBox, box_id, "Caja NAP")
     client_used = await db.scalar(select(func.count(Client.id)).where(Client.nap_box_id == box.id, Client.nap_port.is_not(None))) or 0
-    service_used = await db.scalar(select(func.count(ClientService.id)).where(ClientService.nap_box_id == box.id, ClientService.nap_port.is_not(None))) or 0
+    service_used = await db.scalar(
+        select(func.count(ClientService.id)).join(Client, Client.id == ClientService.client_id).where(ClientService.nap_box_id == box.id, ClientService.nap_port.is_not(None))
+    ) or 0
     used = client_used + service_used
     if used and data.ports < used:
         raise HTTPException(status_code=422, detail=f"No puedes reducir los puertos: hay {used} asignación(es) en esta NAP.")
@@ -120,7 +119,9 @@ async def update_nap_box(box_id: str, data: NapBoxIn, db: AsyncSession = Depends
 async def delete_nap_box(box_id: str, db: AsyncSession = Depends(get_db)):
     box = await get_or_404(db, NapBox, box_id, "Caja NAP")
     client_used = await db.scalar(select(func.count(Client.id)).where(Client.nap_box_id == box.id, Client.nap_port.is_not(None))) or 0
-    service_used = await db.scalar(select(func.count(ClientService.id)).where(ClientService.nap_box_id == box.id, ClientService.nap_port.is_not(None))) or 0
+    service_used = await db.scalar(
+        select(func.count(ClientService.id)).join(Client, Client.id == ClientService.client_id).where(ClientService.nap_box_id == box.id, ClientService.nap_port.is_not(None))
+    ) or 0
     used = client_used + service_used
     if used:
         raise HTTPException(status_code=409, detail=f"No puedes eliminar la NAP: tiene {used} asignación(es).")
