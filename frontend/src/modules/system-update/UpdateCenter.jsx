@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-07 — separa el resultado anterior de una nueva actualización.
+ * Actualización: 2026-09-08 — fuerza una consulta nueva y evita reutilizar estado cacheado.
  * Función: consulta, presenta e inicia actualizaciones del panel sin exponer datos técnicos.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito al 100 %.
@@ -27,7 +27,11 @@ export default function UpdateCenter() {
 
   const check = useCallback(async () => {
     try {
-      const response = await axios.get(API + "/system-update/status", { headers, withCredentials: true });
+      const response = await axios.get(API + "/system-update/status", {
+        headers: { ...headers, "Cache-Control": "no-cache" },
+        params: { checked_at: Date.now() },
+        withCredentials: true
+      });
       const next = response.data;
       setStatus(next); setError("");
       if (next.installation?.state === "success" && startedHere.current && !logoutQueued.current) {
