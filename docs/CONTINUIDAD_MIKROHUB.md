@@ -75,7 +75,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.0.95**, en validación posterior a la refactorización de Facturación del cliente.
+- Versión funcional actual: **1.0.98**, correspondiente a la mejora visual de navegación de Facturación.
 
 ---
 
@@ -375,7 +375,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.0.95
+PANEL_VERSION = 1.0.98
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -765,3 +765,139 @@ Los errores de renderizado de Facturación quedan contenidos por `ClientBillingE
 
 ### Estado
 **Preparado para validación mediante el Actualizador del panel. No declarar final hasta que el build y el flujo real sean verificados.**
+
+---
+
+## 18. Registro de continuidad — 2026-09-08 — Paneles 1.0.96 y 1.0.97
+
+**Tipo:** Funcionalidad / corrección de Facturación → Saldos.
+
+Se incorporó un libro mayor de movimientos firmados para registrar abonos positivos y deudas negativas, con aplicación automática a facturas futuras.
+
+### Archivos principales
+
+- `backend/app/models/client_balance.py` — modelo ORM de movimientos de saldo.
+- `backend/app/routers/facturacion/balances.py` — motor de aplicación automática de crédito/deuda.
+- `backend/app/routers/facturacion/client_balances.py` — API aislada de Saldos.
+- `backend/app/routers/facturacion/router.py` — integración con facturas manuales/mensuales, pendiente y pagos parciales.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — interfaz aislada de Saldos.
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — integración del submódulo.
+- `frontend/src/modules/system-update/version.js` — versiones y changelog.
+
+### Regla definitiva
+
+- monto positivo = saldo a favor;
+- monto negativo = deuda;
+- el crédito positivo se aplica a la siguiente factura hasta cubrirla;
+- el excedente queda disponible;
+- la deuda negativa se suma completa a la siguiente factura, aunque supere el monto base;
+- los movimientos de aplicación conservan factura origen/destino y trazabilidad.
+
+### Corrección 1.0.97
+
+Se corrigió el caso en que una deuda se limitaba al pendiente de la factura nueva. La regla correcta es:
+
+```text
+-100 + factura base 50 = factura final 150
+```
+
+La deuda completa se traslada y consume, sin limitarla al importe base.
+
+### Validación pendiente
+
+No se ha ejecutado `yarn build` ni una prueba contra la base de producción desde este entorno. Debe validarse en el panel:
+
+```text
+500 → factura 50 → factura final 50 → pagada → saldo 450
+-100 → factura 50 → factura final 150 → deuda consumida 100
+```
+
+También revisar Facturas, Transacciones, Saldos, Configuración y las demás pestañas del cliente.
+
+---
+
+## 19. Registro de continuidad — 2026-09-08 — Panel 1.0.98
+
+**Tipo:** Mejora visual / UX.
+
+### Objetivo
+Hacer más visible la navegación interna de Facturación del cliente para que el administrador pueda localizar rápidamente la sección abierta.
+
+### Solución
+Se modificó `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` para reemplazar la barra discreta por cuatro pestañas destacadas:
+
+- **Facturas** — documento.
+- **Transacciones** — intercambio.
+- **Saldos** — cartera/saldo.
+- **Configuración** — ajustes.
+
+La pestaña activa utiliza fondo cian translúcido, borde luminoso, icono resaltado, línea inferior brillante y glow suave. Las inactivas conservan contraste y efecto hover. La distribución es responsive.
+
+También se reforzó el encabezado del módulo con el rótulo **Facturación** y la descripción de navegación.
+
+### Archivos modificados
+
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — propietario de la navegación y composición visual.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.98 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB.md` — esta entrada de continuidad maestra.
+- `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md` — registro complementario actualizado.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — continuidad diaria consolidada.
+
+### Backup
+
+Antes de modificar `main` se creó:
+
+`backup/pre-facturacion-tabs-resaltadas-2026-09-08`
+
+Se mantiene el backup hasta completar la validación en servidor.
+
+### Base de datos/API
+
+Sin cambios.
+
+### Flujo
+
+```text
+Ficha del cliente
+  ↓
+Facturación
+  ↓
+Pestañas destacadas
+  ├── Facturas
+  ├── Transacciones
+  ├── Saldos
+  └── Configuración
+```
+
+### Pruebas
+
+- [x] backup creado antes de modificar `main`;
+- [x] propietario real identificado en `billing/ClientBilling.jsx`;
+- [x] cambio visual limitado al módulo de Facturación del cliente;
+- [x] versión 1.0.98 y CHANGELOG actualizados;
+- [x] base de datos y endpoints sin cambios deliberados;
+- [ ] `yarn build` — no ejecutado desde este entorno;
+- [ ] validación visual en navegador/servidor;
+- [ ] prueba de las cuatro pestañas después de instalar 1.0.98;
+- [ ] prueba de Factura libre y aplicación de Saldos después del despliegue.
+
+### Resultado
+
+El cambio visual y la documentación están publicados en `main`. La versión 1.0.98 queda pendiente de validación real mediante build y revisión del panel desplegado.
+
+### Riesgos / pendientes
+
+- Un error de compilación React solo puede descartarse ejecutando el build real.
+- El backup debe conservarse hasta validar 1.0.98.
+- No realizar cambios en base de datos para resolver problemas de interfaz.
+
+### Commits
+
+- Cambio visual: `7ddae5b12235f5b9dce43a0ce6154ffefb3a5590`
+- Versión 1.0.98: `f2d098facf6aea953df195eb768e3dc56ad1ae3d`
+- Continuidad Saldos: `2a76212a080c52b6814dbffc74a4014ca67d4bdd`
+- Continuidad diaria: `7f7c9b203c25e3315038ae8e60d56c24d029740f`
+
+## Estado de cierre
+
+**1.0.98 está publicada en `main` con backup y continuidad documentados. Falta únicamente la validación de build/servidor antes de declararla completamente validada.**
