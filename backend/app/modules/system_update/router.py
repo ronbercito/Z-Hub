@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-08 — evita respuestas cacheadas y bloquea avisos cuando la versión publicada es la misma.
+Actualización: 2026-09-08 — la detección depende del commit remoto; la versión es informativa.
 Función: consulta la rama remota, compara versiones y ejecuta run_update.sh con manejo de errores.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
 Entrega: estado, fase, porcentaje y errores mediante /api/system-update para el centro de actualizaciones.
@@ -56,7 +56,7 @@ def _log_state() -> tuple[str, str, str, bool]:
     """Retorna: (estado, log_progreso, log_error, is_running)"""
     log = LOG_FILE.read_text(errors="replace") if LOG_FILE.exists() else ""
     error_log = ERROR_LOG_FILE.read_text(errors="replace") if ERROR_LOG_FILE.exists() else ""
-    
+
     if "SUCCESS:" in log:
         return "success", log, error_log, False
     if "ROLLBACK_FAILED:" in log:
@@ -93,15 +93,12 @@ def _extract_error_message(error_log: str) -> str:
     """Extrae mensaje de error legible del log de errores"""
     if not error_log.strip():
         return "Error desconocido. Revisa los logs del servidor."
-    
-    lines = error_log.strip().split('\n')
-    # Buscar línea con ERROR
+
+    lines = error_log.strip().split("\n")
     for line in lines:
         if "ERROR en paso" in line:
             return line.strip()
-    
-    # Si no hay ERROR explícito, devolver últimas líneas
-    return '\n'.join(lines[-3:]).strip()
+    return "\n".join(lines[-3:]).strip()
 
 
 @router.get("/status", dependencies=[Depends(require_role("admin"))])
@@ -124,13 +121,14 @@ async def update_status(response: Response):
     state, log, error_log, running = _log_state()
     progress, phase = _progress_from_log(log, state)
 
-    # Agregar info de error si existe
     error_message = ""
     if state in {"rolled_back", "rollback_failed"}:
         error_message = _extract_error_message(error_log)
 
     return {
-        "available": current_commit != remote_commit and current_version != remote_version,
+        # El commit es la fuente de verdad: cualquier cambio publicado en main
+        # debe aparecer como actualización aunque version.js no haya cambiado.
+        "available": current_commit != remote_commit,
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
         "remote": {"version": remote_version, "commit": remote_commit[:12], "changelog": remote_changelog},
         "installation": {
@@ -161,10 +159,9 @@ async def install_update():
     if current_commit == remote_commit:
         raise HTTPException(status_code=409, detail="El panel ya está en la versión más reciente")
 
-    # Limpiar logs anteriores
     LOG_FILE.write_text("")
     ERROR_LOG_FILE.write_text("")
-    
+
     process = subprocess.Popen(
         ["bash", str(UPDATE_SCRIPT)],
         cwd=str(ROOT),
