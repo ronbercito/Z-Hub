@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar, nombres por DNI y actualización de la cola existente al editar.
+Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar, nombres por DNI, actualización de la cola existente al editar e identificación por número de servicio.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
 Trabaja con: backend/app/models/client_service.py, clientes/router.py, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
@@ -44,8 +44,22 @@ def _clean_dni(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "", (value or "").strip()) or "SIN-DNI"
 
 
-def _queue_comment(temp: Client, row: ClientService) -> str:
-    return f"{temp.full_name} | {temp.dni_ruc} | {row.plan_name}"
+async def _service_number(db: AsyncSession, client_id: str, service_id: Optional[str] = None) -> int:
+    """Devuelve 2 para el primer servicio adicional, 3 para el segundo, etc.; el principal es el servicio 1."""
+    rows = (await db.execute(
+        select(ClientService)
+        .where(ClientService.client_id == client_id)
+        .order_by(ClientService.created_at.asc(), ClientService.id.asc())
+    )).scalars().all()
+    if service_id:
+        for index, row in enumerate(rows, start=2):
+            if row.id == service_id:
+                return index
+    return len(rows) + 2
+
+
+def _queue_comment(temp: Client, row: ClientService, service_number: int) -> str:
+    return f"{temp.full_name} | {temp.dni_ruc} | serv {service_number}"
 
 
 def _queue_matches_service(queue: dict, dni: str, old_ip: str | None = None) -> bool:
@@ -98,13 +112,13 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     return temp
 
 
-async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan: Optional[Plan], previous_ip: Optional[str] = None, updating: bool = False) -> dict:
+async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan: Optional[Plan], service_number: int, previous_ip: Optional[str] = None, updating: bool = False) -> dict:
     """Aprovisiona el servicio y, al editar, modifica la cola existente en vez de crear otra."""
     if not router_obj or router_obj.device_type != "mikrotik" or not router_obj.password:
         return {"ok": False, "message": "El servicio fue validado, pero el MikroTik no tiene credenciales API configuradas."}
     try:
         async with mt.connect(router_obj) as mikrotik:
-            comment = _queue_comment(temp, row)
+            comment = _queue_comment(temp, row, service_number)
             if row.connection_type == "PPPoE" and row.pppoe_user:
                 profile = mt.plan_profile_name(plan) if plan else "default"
                 if plan:
@@ -202,7 +216,8 @@ async def create_client_service(client_id: str, payload: ClientServiceUpdate, db
     db.add(row); await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
     plan = await db.get(Plan, row.plan_id) if row.plan_id else None
-    result = await _provision_service(row, temp, router_obj, plan)
+    service_number = await _service_number(db, client_id, row.id)
+    result = await _provision_service(row, temp, router_obj, plan, service_number)
     if not result["ok"]:
         await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo crear el servicio en MikroTik: {result['message']}")
     await db.commit(); await db.refresh(row)
@@ -225,7 +240,8 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
     await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
     plan = await db.get(Plan, row.plan_id) if row.plan_id else None
-    result = await _provision_service(row, temp, router_obj, plan, previous_ip=old_ip_address, updating=True)
+    service_number = await _service_number(db, client_id, row.id)
+    result = await _provision_service(row, temp, router_obj, plan, service_number, previous_ip=old_ip_address, updating=True)
     if not result["ok"]:
         await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo actualizar el servicio en MikroTik: {result['message']}")
     if old_router_id != row.router_id or old_connection_type != row.connection_type or old_pppoe_user != row.pppoe_user:
