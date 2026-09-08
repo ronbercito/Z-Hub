@@ -4,7 +4,7 @@
 
 ## Versión funcional
 
-**1.1.0**
+**1.1.1**
 
 ## Registro 1.0.98 — Navegación de Facturación
 
@@ -20,117 +20,106 @@ Se añadió el botón **Editar** en cada fila y el endpoint `PUT /api/clients/{c
 
 **Tipo:** Corrección / protección de saldo.
 
+Se resolvió el caso saldo anterior S/. 30.00 + nuevo movimiento S/. 100.00 = S/. 130.00. El movimiento nuevo puede reducirse hasta cero, no superar su importe original ni cambiar de signo; los movimientos anteriores/aplicados permanecen protegidos. El backend también valida el límite.
+
+### Backup
+
+`backup/pre-editar-saldos-2026-09-08`
+
+### Pruebas pendientes heredadas
+
+- [ ] `yarn build`;
+- [ ] 30 + 100 = 130;
+- [ ] editar 100 → 0 y confirmar saldo 30;
+- [ ] intentar 100 → 101 y confirmar advertencia;
+- [ ] validar Factura libre y aplicación automática de saldos.
+
+## Registro 1.1.0 — Transición de versionado
+
+Al alcanzar 1.0.99, el siguiente ciclo pasa a 1.1.0. Se creó `backup/pre-version-1.1.0-2026-09-08` y se dejó la regla explícita en `frontend/src/modules/system-update/version.js`.
+
+## Registro 1.1.1 — Log operativo y auditoría del cliente
+
+**Tipo:** Funcionalidad / auditoría operativa.
+
 ### Objetivo
 
-Resolver el caso en que el cliente ya tiene un saldo anterior y se agrega otro movimiento. Ejemplo: saldo anterior S/. 30.00 + nuevo saldo S/. 100.00 = S/. 130.00. El administrador debe poder editar únicamente el movimiento nuevo, sin alterar los S/. 30.00 anteriores.
+La pestaña **Log** de la ficha del cliente deja de mostrar un estado vacío y presenta el historial persistente de acciones realizadas sobre ese cliente. Cada evento muestra acción, detalle, fecha/hora y la cuenta que ejecutó la operación.
 
-### Regla implementada
+### Regla de cuenta
 
-Para un movimiento nuevo o completamente disponible:
+Las nuevas actividades registradas por el editor toman la cuenta autenticada desde el backend (`get_current_user`). El frontend no puede indicar manualmente otro operador. El detalle incluye correo de la cuenta y rol cuando están disponibles, para distinguir administradores y técnicos.
 
-- se puede reducir el monto hasta S/. 0.00;
-- no se puede aumentar por encima del monto original;
-- no se puede cambiar saldo a favor por deuda ni deuda por saldo a favor;
-- si el original fue S/. 100.00 y se intenta guardar S/. 101.00, el sistema rechaza la operación y muestra: **“No es posible. El monto máximo a editar es S/. 100.00.”**;
-- si se guarda S/. 0.00, ese movimiento deja de aportar al saldo neto, pero permanece en el historial para conservar el registro de la corrección.
+### Acciones cubiertas
 
-Los movimientos ya aplicados o parcialmente consumidos mantienen el monto bloqueado.
+- edición de datos de Resumen;
+- edición de Servicio;
+- operaciones de Facturación y Saldos realizadas desde la ficha;
+- comunicaciones Email/SMS ya registradas por el módulo de cliente;
+- documentos adjuntados/eliminados ya registrados por el módulo de cliente.
+
+Las pestañas Tickets y Estadísticas continúan sin operaciones persistentes propias en la ficha actual, por lo que no generan eventos hasta que tengan funciones reales.
 
 ### Archivos modificados
 
-- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — validación visual, límites `min/max`, advertencia y edición a cero para movimientos disponibles.
-- `backend/app/routers/facturacion/client_balances.py` — validación servidor del importe máximo, signo del movimiento y edición a cero.
-- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.100 y CHANGELOG.
+- `backend/app/modules/client_workspace/router.py` — endpoint `POST /api/clients/{client_id}/activity`, registra la cuenta autenticada y rol sin aceptar operador desde frontend.
+- `frontend/src/modules/clientes/ClientActivityLog.jsx` — nueva vista visual del historial.
+- `frontend/src/modules/clientes/ClientDetail.jsx` — integración del Log y registro de acciones de Resumen, Servicio y Facturación.
+- `frontend/src/modules/system-update/version.js` — versión 1.1.1 y CHANGELOG.
 - `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta entrada.
 
 ### Flujo
 
 ```text
-Saldo anterior 30
-  +
-Nuevo movimiento 100
-  ↓
-Saldo mostrado 130
-  ↓
-Editar movimiento nuevo
-  ├─ 0 a 100 → permitido
-  ├─ 101 → rechazado con advertencia
-  └─ -100 → rechazado por cambio de tipo
+Administrador / Técnico
+        ↓
+realiza una acción en la ficha
+        ↓
+acción operativa exitosa
+        ↓
+POST /clients/{id}/activity
+        ↓
+backend toma usuario autenticado
+        ↓
+ClientActivity(operator_name, acción, detalle, fecha)
+        ↓
+GET /clients/{id}
+        ↓
+pestaña Log muestra historial
 ```
 
-### Base de datos
+### Protección
 
-No se crean tablas nuevas ni se eliminan datos. Se reutilizan `amount` y `remaining_amount` de `client_balances`.
+No se almacenan contraseñas, tokens ni credenciales. El operador se obtiene de la sesión autenticada. El registro de actividad no modifica la operación principal si el endpoint de auditoría falla; en ese caso la acción funcional permanece y se registra el error técnico en consola.
 
 ### Backup
 
-Antes de esta corrección se creó:
+Se creó antes de la modificación:
 
-`backup/pre-editar-saldos-2026-09-08`
-
-Debe conservarse hasta validar la actualización en el panel.
+`backup/pre-log-cliente-2026-09-08`
 
 ### Pruebas
 
-- [x] backup creado;
-- [x] validación frontend del máximo original;
-- [x] validación backend del máximo original;
-- [x] protección contra cambio de signo;
-- [x] edición a S/. 0.00 para retirar el aporte del movimiento nuevo;
-- [x] movimientos aplicados permanecen bloqueados;
-- [x] versión 1.0.100 y CHANGELOG actualizados;
+- [x] backup creado antes del cambio;
+- [x] endpoint de actividad protegido por autenticación;
+- [x] operador obtenido del usuario autenticado;
+- [x] rol/cuenta incluidos en el detalle cuando existe correo;
+- [x] Log visual conectado a `client.activities`;
+- [x] Resumen registra edición;
+- [x] Servicio registra edición;
+- [x] Facturación/Saldos registra actividad mediante callback de actualización;
+- [x] Comunicaciones y documentos ya tenían auditoría con operador;
 - [ ] `yarn build` — no ejecutado desde este entorno;
-- [ ] prueba real: 30 + 100 = 130;
-- [ ] editar 100 → 0 y confirmar saldo 30;
-- [ ] intentar 100 → 101 y confirmar advertencia;
-- [ ] validar que el movimiento anterior de 30 no cambia;
-- [ ] validar Factura libre y aplicación automática de saldos.
+- [ ] prueba real con cuenta administrador;
+- [ ] prueba real con cuenta técnico;
+- [ ] editar Resumen y confirmar cuenta, fecha, hora y detalle;
+- [ ] editar Servicio y confirmar cuenta;
+- [ ] agregar/editar saldo y confirmar evento en Log;
+- [ ] crear factura/pago/anular y confirmar evento en Log.
 
 ### Resultado
 
-La corrección está publicada en `main`. Falta validación de build y del flujo real en el panel antes de declarar 1.0.100 completamente validada.
-
-## Registro de continuidad — 2026-09-08 — Panel 1.1.0
-
-**Tipo:** Gestión de versiones / transición de ciclo.
-
-### Regla solicitada
-
-Al alcanzar **1.0.99**, el siguiente ciclo de versión debe pasar a **1.1.0**, en lugar de continuar con 1.0.100.
-
-### Aplicación
-
-Se actualizó `frontend/src/modules/system-update/version.js` para que la versión funcional vigente sea **1.1.0** y se añadió el cambio al CHANGELOG visible del panel.
-
-La transición mantiene intactas las funciones de Saldos y edición implementadas previamente; únicamente se corrige el esquema de numeración para iniciar el ciclo 1.1.x.
-
-### Backup
-
-Se creó:
-
-`backup/pre-version-1.1.0-2026-09-08`
-
-Este backup conserva el estado anterior a la transición de numeración.
-
-### Archivos
-
-- `frontend/src/modules/system-update/version.js` — nueva versión 1.1.0 y regla de transición.
-- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — registro de esta transición.
-- `docs/BACKUP_VERSION_1.0.100_TO_1.1.0.md` — referencia documental de la transición.
-
-### Pruebas
-
-- [x] backup creado antes de la modificación de versión;
-- [x] `PANEL_VERSION` actualizado a 1.1.0;
-- [x] CHANGELOG actualizado;
-- [x] continuidad diaria actualizada;
-- [ ] `yarn build`;
-- [ ] instalación mediante Centro de Actualizaciones;
-- [ ] confirmar versión visible 1.1.0 después de iniciar sesión.
-
-### Resultado
-
-**1.1.0 está publicada en `main`.** La numeración queda establecida para que después de 1.0.99 el ciclo continúe como 1.1.x.
+**1.1.1 está publicada en `main`**, con backup y continuidad diaria actualizada. Falta ejecutar build y validación funcional en el panel antes de declarar la versión completamente validada.
 
 ## Despliegue
 
@@ -156,3 +145,4 @@ No borrar la base de datos ni datos existentes para solucionar problemas visuale
 - Backup de navegación: `backup/pre-facturacion-tabs-resaltadas-2026-09-08`
 - Backup de edición: `backup/pre-editar-saldos-2026-09-08`
 - Backup de transición de versión: `backup/pre-version-1.1.0-2026-09-08`
+- Backup de Log: `backup/pre-log-cliente-2026-09-08`
