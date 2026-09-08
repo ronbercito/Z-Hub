@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-07 — integración de ClientBilling para pestaña Facturación con tabla mejorada.
- * Función: ficha operativa del cliente con pestañas completamente editables: Resumen, Servicio, Facturación.
+ * Actualización: 2026-09-08 — integración de ClientCommunications en pestaña Email y SMS.
+ * Función: ficha operativa del cliente con pestañas completamente editables: Resumen, Servicio, Facturación, Email y SMS.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
- * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio y facturas.
+ * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio, facturas y comunicaciones.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import ClientServiceEditor from "./editor/ClientServiceEditor";
 import ClientBilling from "./editor/ClientBilling";
+import ClientCommunications from "./editor/ClientCommunications";
 
 const tabs = [
   { id: "summary", label: "Resumen", icon: UserRound },
@@ -453,7 +454,14 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
     }
 
     if (activeTab === "messages") {
-      return <EmptyState title="Módulo de comunicaciones en revisión" description="El editor de Email y SMS se habilitará nuevamente después de validar su compatibilidad con el panel." />;
+      return (
+        <ClientCommunications
+          clientId={clientId}
+          api={api}
+          token={token}
+          client={client}
+        />
+      );
     }
 
     if (activeTab === "documents") {
