@@ -1,16 +1,8 @@
 """
 Archivo: backend/app/integrations/mikrotik/service.py
-Función: Capa de negocio MikroTik: traduce acciones del panel a comandos RouterOS.
-         - snapshot_router: lee recursos/sesiones del equipo y actualiza la tabla routers.
-         - provision_client: crea/actualiza el PPP secret o la cola simple del abonado.
-         - cut_client / restore_client: corte y reactivación según tipo de conexión
-           (PPPoE => deshabilita secret y cierra sesión; IP Estática/DHCP => address-list de morosos).
-         - sync_plans: crea/actualiza los PPP profiles con rate-limit de cada plan.
-         Todas las funciones devuelven un dict {ok, message} y nunca lanzan excepción,
-         para que la operación en base de datos se complete aunque el router esté apagado.
-Trabaja con: backend/app/integrations/mikrotik/client.py, backend/app/models/router.py,
-             backend/app/models/client.py, backend/app/models/plan.py,
-             backend/app/routers/clientes/router.py, backend/app/routers/red/router.py
+Actualización: 2026-09-08 — las colas de servicios adicionales se identifican por DNI, sin exponer la IP en el nombre.
+Función: Capa de negocio MikroTik para aprovisionamiento, corte, restauración y limpieza.
+Trabaja con: backend/app/integrations/mikrotik/client.py, modelos de clientes/servicios/planes/routers.
 """
 import logging
 import re
@@ -31,11 +23,10 @@ def connect(router: Router) -> MikroTikClient:
     return MikroTikClient(router.ip_address, router.username, router.password, router.port, router.use_ssl)
 
 
-def service_queue_name(dni_ruc: str, ip_address: str) -> str:
-    """Genera un nombre legible para las colas de servicios adicionales."""
+def service_queue_name(dni_ruc: str) -> str:
+    """Genera un nombre visible por DNI para las colas de servicios adicionales."""
     dni = re.sub(r"[^A-Za-z0-9_-]", "", (dni_ruc or "").strip()) or "SIN-DNI"
-    ip = re.sub(r"[^0-9A-Fa-f:.]", "", (ip_address or "").strip()) or "SIN-IP"
-    return f"svc-{dni}-{ip}"[:100]
+    return f"svc-{dni}"[:100]
 
 
 def plan_rate_limit(plan: Plan) -> str:
@@ -156,7 +147,6 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
                 await mt.remove_simple_queue(f"cli-{client.dni_ruc}")
                 await mt.address_list_remove(cut_list, client.ip_address)
 
-            # Limpia también los servicios adicionales que estén en este mismo MikroTik.
             dni_marker = f"| {client.dni_ruc} |"
             name_marker = client.full_name.strip()
             for secret in await mt.ppp_secrets():
@@ -166,11 +156,10 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
             for queue in await mt.simple_queues():
                 name = str(queue.get("name") or "")
                 comment = str(queue.get("comment") or "")
-                if (name.startswith(f"svc-{re.sub(r'[^A-Za-z0-9_-]', '', (client.dni_ruc or '').strip())}-") or
+                if (name.startswith(f"svc-{re.sub(r'[^A-Za-z0-9_-]', '', (client.dni_ruc or '').strip())}") or
                         (name.startswith("svc-") and name_marker and name_marker in comment and "Servicio" in comment)):
                     await mt.remove_simple_queue(name)
 
-        # Los servicios adicionales pueden estar asociados a otros MikroTik.
         async with SessionLocal() as cleanup_db:
             services = (await cleanup_db.execute(select(ClientService).where(ClientService.client_id == client.id))).scalars().all()
             router_ids = {row.router_id for row in services if row.router_id and row.router_id != (router.id if router else None)}
@@ -186,13 +175,13 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
                             if row.pppoe_user:
                                 await service_mt.remove_ppp_secret(row.pppoe_user)
                             if row.ip_address:
-                                await service_mt.remove_simple_queue(service_queue_name(client.dni_ruc, row.ip_address))
+                                await service_mt.remove_simple_queue(service_queue_name(client.dni_ruc))
                                 await service_mt.remove_simple_queue(f"svc-{row.id}")
                 except MikroTikError as service_error:
                     return {"ok": False, "message": f"No se pudo limpiar el servicio adicional en {service_router.name}: {service_error}"}
     except MikroTikError as e:
         return {"ok": False, "message": str(e)}
-    return {"ok": True, "message": f"Configuración del cliente y sus servicios eliminada en MikroTik"}
+    return {"ok": True, "message": "Configuración del cliente y sus servicios eliminada en MikroTik"}
 
 
 async def sync_plans(router: Router, plans: list[Plan]) -> dict:
