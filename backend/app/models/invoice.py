@@ -1,13 +1,13 @@
 """
 Archivo: backend/app/models/invoice.py
-Actualización: 2026-09-08 — conserva la identificación del servicio dentro de cada factura.
+Actualización: 2026-09-08 — conserva y genera automáticamente la identificación del servicio en cada factura.
 Función: Tabla `invoices` — facturas / recibos mensuales de cada abonado con su estado y pago,
          permitiendo identificar si corresponde al servicio principal o a un servicio adicional
          incluso si posteriormente se elimina el servicio.
 Trabaja con: backend/app/routers/facturacion/router.py, backend/app/models/client.py,
              backend/app/models/client_service.py, backend/app/routers/clientes/services.py
 """
-from sqlalchemy import Float, String, Text
+from sqlalchemy import Float, String, Text, event, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, new_id
@@ -38,3 +38,29 @@ class Invoice(Base):
     operator_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
     operation_reference: Mapped[str | None] = mapped_column(String(80), nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
+
+
+@event.listens_for(Invoice, "before_insert")
+def _snapshot_service_identity(mapper, connection, target):
+    """Guarda una etiqueta estable para que una factura pagada conserve su servicio histórico."""
+    if not target.service_id:
+        target.service_label = target.service_label or "Servicio 1 · Principal"
+        target.service_type = "principal"
+        return
+
+    row = connection.execute(
+        text("SELECT client_id, created_at FROM client_services WHERE id = :service_id"),
+        {"service_id": target.service_id},
+    ).mappings().first()
+    if not row:
+        target.service_label = target.service_label or "Servicio adicional"
+        target.service_type = "adicional"
+        return
+
+    rows = connection.execute(
+        text("SELECT id, created_at FROM client_services WHERE client_id = :client_id ORDER BY created_at ASC, id ASC"),
+        {"client_id": row["client_id"]},
+    ).mappings().all()
+    number = next((index for index, item in enumerate(rows, start=2) if item["id"] == target.service_id), 2)
+    target.service_label = f"Servicio {number} · Adicional"
+    target.service_type = "adicional"
