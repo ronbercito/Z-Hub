@@ -47,7 +47,6 @@ Orden obligatorio de trabajo:
 
 Si se detecta un cambio previo sin documentación, la primera tarea será reconstruirla desde los commits y archivos reales antes de continuar con nuevas funciones.
 
-
 Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 
 1. Actualizar esta bitácora.
@@ -76,9 +75,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual verificada en main el 2026-09-08: **1.0.90**. La versión 1.0.63 se conserva abajo únicamente como referencia histórica de creación de esta bitácora.
-
-La versión 1.0.63 está confirmada en `version.js` y corresponde a las acciones de facturas: editar, ver documento, eliminar, anular y enviar. Las facturas pagadas/con pagos quedan protegidas. El envío actualmente prepara correo/WhatsApp desde el navegador. 
+- Versión funcional actual: **1.0.95**, en validación posterior a la refactorización de Facturación del cliente.
 
 ---
 
@@ -217,7 +214,7 @@ El endpoint actual llamado `/pdf` genera un **documento HTML imprimible**, que e
 
 **No es todavía un PDF binario real.**
 
-Si en el futuro se exige un PDF real descargable/visualizable como archivo PDF, implementar generación binaria en backend (por ejemplo con una librería PDF) y cambiar el endpoint para devolver `application/pdf`.
+Si en el futuro se exige un PDF real descargable/visualizable como archivo PDF, implementar generación binaria en backend y cambiar el endpoint para devolver `application/pdf`.
 
 No declarar esa tarea como terminada hasta probar el archivo PDF real.
 
@@ -350,6 +347,13 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 
 - `frontend/src/modules/clientes/Clients.jsx` → listado y apertura de ficha.
 - `frontend/src/modules/clientes/ClientDetail.jsx` → ficha por pestañas.
+- `frontend/src/modules/clientes/editor/ClientBilling.jsx` → wrapper estable y límite de error de Facturación.
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` → controlador de estado, API y coordinación de Facturación.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingTable.jsx` → tabla y ordenamiento de facturas.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingFilters.jsx` → búsqueda y filtros.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingActions.jsx` → acciones superiores y por factura.
+- `frontend/src/modules/clientes/editor/billing/clientBillingUtils.js` → configuración, fechas, clases y valores de ordenamiento.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingErrorBoundary.jsx` → aislamiento de errores de renderizado.
 - `frontend/src/modules/clientes/editor/ClientServiceEditor.jsx` → edición/eliminación de servicios.
 - `frontend/src/modules/clientes/editor/CoordinatesPicker.jsx` → selector de coordenadas/mapa.
 - `backend/app/routers/clientes/router.py` → API de clientes.
@@ -358,19 +362,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 
 ### Ubicación/mapa
 
-`CoordinatesPicker.jsx` soporta:
-
-- selección de latitud/longitud;
-- marcador;
-- mapa Google;
-- modo solo lectura;
-- vista satélite/control de mapa;
-- botón universal “Cómo llegar”.
-
-En el listado de clientes:
-
-- la IP es clicable y abre `http://IP`;
-- la dirección dispone de acción “Ubicación” con mini mapa de solo lectura.
+`CoordinatesPicker.jsx` soporta selección de latitud/longitud, marcador, mapa Google, modo solo lectura, vista satélite/control de mapa y botón universal “Cómo llegar”.
 
 ---
 
@@ -380,13 +372,13 @@ En el listado de clientes:
 
 `frontend/src/modules/system-update/version.js`
 
-Actualmente:
+Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.0.90
+PANEL_VERSION = 1.0.95
 ```
 
-Este archivo es parte del panel y **sí** debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
+Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
 
 ### Centro de actualización
 
@@ -464,10 +456,6 @@ grep -R "PANEL_VERSION" /var/www/mikrosmart_web/static/js 2>/dev/null | head
 ls -la /var/www/mikrosmart_web
 ```
 
-Si el código es nuevo y el build es viejo → revisar `setup_debian.sh`, build y copia.
-
-Si código/build son nuevos pero navegador es viejo → revisar caché/Nginx y hacer recarga forzada.
-
 ---
 
 ## 9. Historial de versiones y cambios importantes
@@ -475,169 +463,105 @@ Si código/build son nuevos pero navegador es viejo → revisar caché/Nginx y h
 > Este historial es resumido. La bitácora debe seguir agregando entradas, no reemplazar las anteriores.
 
 ### 1.0.23
-
 - Selector de IP de servicio.
 - Puertos libres de NAP.
 - Potencia óptica en dBm.
 
 ### 1.0.25
-
 - Criterios de disponibilidad IPv4.
 - Exclusión de red/gateway/broadcast.
 - Conteos consistentes.
 
 ### 1.0.26–1.0.27
-
 - Reescritura de ClientDetail y schemas.
 - Corrección de sintaxis Python inválida en schemas que impedía arranque/login del backend.
 
 ### 1.0.28
-
 - Selector de coordenadas con Google Maps.
 - Integración en ClientDetail.
 
 ### 1.0.29
-
 - Centro de actualización detecta cualquier diferencia `HEAD != origin/main`, no solo cambios de `version.js`.
 
 ### 1.0.30
-
 - Guardado de servicio cierra correctamente el editor.
 - `ClientServiceEditor` acepta `onSave`/`onSaveSuccess`.
 
 ### 1.0.36–1.0.37
-
 - Servicios adicionales provisionan/actualizan MikroTik.
 - Manejo independiente de ONU/potencia.
 - Limpieza de recursos MikroTik al eliminar cliente.
 - Nombres de colas basados en DNI.
 
-### 1.0.38–1.0.39
-
-- Colas y señal ONU.
-- Corrección de actualización de colas para evitar duplicados.
-- Búsqueda de cola por IP/DNI y uso de `.id` de RouterOS.
-- Nombres únicos de servicios adicionales.
-
-### 1.0.40–1.0.43
-
+### 1.0.38–1.0.43
 - Comentarios de recursos diferenciados por servicio.
 - Sincronización de nombre/DNI con recursos MikroTik existentes.
 
 ### 1.0.52
-
 - Facturación global con Facturas/Configuración.
 - Factura manual.
 - Pagos.
 - Configuración de facturación.
 
 ### 1.0.58
-
 - ClientBilling reestructurado con Facturas/Transacciones/Saldos/Configuración.
 - Facturas relacionadas con `service_id`.
 - Corrección posterior de JSX.
 
 ### 1.0.61
-
 - Eliminación de servicio adicional con protección de facturas pendientes.
 - Confirmación explícita antes de borrar servicio + facturas pendientes.
 - Facturas pagadas protegidas.
 
 ### 1.0.62
-
 - Eliminación completa del cliente limpia facturas, servicios, tickets, tareas, comunicaciones, documentos e historial asociado.
 - Facturas conservan identificación del servicio mediante `service_label`/`service_type`.
 - Migración conservadora de columnas sin borrar base de datos existente.
 
-### 1.0.63 — histórico
-
+### 1.0.63
 - Acciones por factura: editar, ver documento, eliminar, anular y enviar.
 - Protección de facturas pagadas/con pagos.
 - Ventana de envío con Correo o WhatsApp.
 - Documento actual imprimible/guardable como PDF, todavía no PDF binario real.
-- Envío actual mediante `mailto:` / `wa.me`; pendiente integración de proveedor automático si se solicita.
+- Envío actual mediante `mailto:` / `wa.me`.
+
+### 1.0.85–1.0.90
+- Correcciones y mejoras del flujo de eliminación de clientes.
+- Fuente única de versión.
+- Mejoras de feedback del Centro de Actualizaciones.
+- Fecha de instalación preseleccionada en Nuevo Abonado.
+- 1.0.90: feedback visual persistente al comprobar actualizaciones.
 
 ---
 
-## 10. Archivos creados/modificados recientemente para Facturación
-
-### `backend/app/routers/facturacion/invoice_actions.py`
-
-Nueva API para acciones de factura.
-
-Recibe:
-- solicitudes autenticadas del frontend;
-- ID de factura;
-- datos de edición o canal de envío.
-
-Entrega:
-- factura actualizada;
-- eliminación/anulación controlada;
-- documento imprimible;
-- metadata de preparación de envío.
-
-### `frontend/src/modules/facturacion/Billing.jsx`
-
-Nueva interfaz de acciones por factura y modal de envío.
-
-Recibe:
-- datos de facturas desde la API;
-- acciones del administrador.
-
-Entrega:
-- acciones visuales y llamadas a los endpoints.
-
-### `frontend/src/modules/system-update/version.js`
-
-Actualizado a 1.0.63.
-
----
-
-## 11. Problemas conocidos / pendientes
+## 10. Problemas conocidos / pendientes
 
 ### P1 — PDF real
-
 **Estado:** pendiente.
 
 La ruta `/pdf` genera HTML imprimible. Si se requiere archivo PDF real, implementar generación PDF binaria y probar apertura/descarga.
 
 ### P2 — Envío automático real
-
 **Estado:** pendiente.
 
-Correo/WhatsApp actualmente abren los mecanismos del navegador. Para envío automático desde MikroHub habrá que definir e integrar:
-
-- proveedor SMTP/correo;
-- o proveedor WhatsApp Business/API;
-- credenciales en variables seguras, nunca en Git;
-- estados de entrega/error;
-- registro de actividad.
+Correo/WhatsApp actualmente abren los mecanismos del navegador. Para envío automático desde MikroHub habrá que definir e integrar proveedor y credenciales seguras.
 
 ### P3 — Email del cliente
-
 **Estado:** revisar.
 
-El modelo/flujo actual no tiene un campo de email de cliente utilizado directamente para el envío de facturas, por eso la UI puede solicitar el correo al administrador.
+El flujo actual puede solicitar el correo al administrador.
 
 ### P4 — Búsqueda por servicio en Facturación
-
 **Estado:** revisar.
 
-La UI muestra `service_label`, pero comprobar si el buscador backend de facturas también debe buscar por esa etiqueta para localizar rápidamente facturas por servicio.
+Comprobar si el buscador backend también debe buscar por `service_label`.
 
-### P5 — ClientBilling
-
-**Estado:** revisar.
-
-La implementación reciente de acciones completas se hizo en la facturación global (`modules/facturacion/Billing.jsx`). `ClientBilling.jsx` puede necesitar recibir las mismas acciones si se desea exactamente el mismo comportamiento dentro de la ficha del cliente.
-
-### P6 — Documentos físicos
-
-La eliminación de filas de `ClientDocument` no implica necesariamente eliminar archivos físicos almacenados en disco. Si se exige limpieza física completa, revisar esa integración de forma independiente y segura.
+### P5 — Documentos físicos
+La eliminación de filas de `ClientDocument` no implica necesariamente eliminar archivos físicos almacenados en disco. Revisar de forma independiente y segura si se exige esa limpieza.
 
 ---
 
-## 12. Reglas de seguridad y mantenimiento
+## 11. Reglas de seguridad y mantenimiento
 
 Nunca:
 
@@ -649,7 +573,7 @@ Nunca:
 - afirmar que una función está terminada sin probarla;
 - activar módulos en revisión sin compilar/probar;
 - cambiar Layout para resolver un defecto que pertenece a otro módulo;
-- hacer una modificación funcional sin actualizar versión/changelog.
+- hacer una modificación funcional sin actualizar versión/changelog/bitácora.
 
 Siempre:
 
@@ -662,40 +586,21 @@ Siempre:
 
 ---
 
-## 13. Módulos en revisión especial
+## 12. Módulos en revisión especial
 
 ### Email/SMS de cliente
 
 Hubo componentes experimentales que podían dejar React en blanco. Se desactivó su renderizado directo desde ClientDetail para mantener estable el panel.
 
-Archivos relacionados para futuras revisiones:
-
-- `backend/app/models/client_communication.py`
-- `backend/app/modules/client_workspace/router.py`
-- `frontend/src/modules/clientes/editor/ClientCommunications.jsx`
-
-No reactivar sin:
-
-1. compilar frontend;
-2. abrir la ficha;
-3. entrar/salir de la pestaña;
-4. probar con cliente real de prueba;
-5. revisar consola y backend.
+No reactivar sin compilar frontend, abrir la ficha, entrar/salir de la pestaña, probar con cliente de prueba y revisar consola/backend.
 
 ### Documentos de cliente
 
-Relacionado con:
-
-- `backend/app/models/client_document.py`
-- `frontend/src/modules/clientes/editor/ClientDocuments.jsx`
-
-Misma regla: revisión aislada antes de reintegrar.
+Revisión aislada antes de reintegrar cambios.
 
 ---
 
-## 14. Plantilla obligatoria para futuras entradas
-
-Copiar esta estructura al final del documento para cada nueva intervención:
+## 13. Plantilla obligatoria para futuras entradas
 
 ```text
 ## [REVISION INTERNA] — [FECHA] — Panel [VERSION]
@@ -739,209 +644,124 @@ SHA: ...
 
 ---
 
-## 15. Entrada actual de creación de esta bitácora
+## 14. Registro de continuidad — 2026-09-08 — Panel 1.0.91
 
-### REV-0001 — 2026-09-08 — Panel 1.0.63
+**Tipo:** Arquitectura / aislamiento de Facturación.
 
-**Tipo:** Documentación / continuidad.
+**Resumen:** se creó un punto de entrada estable para `ClientBilling.jsx`, se trasladó la implementación al directorio `clientes/editor/billing/` y se agregó `ClientBillingErrorBoundary.jsx`. Se creó la rama `backup/pre-facturacion-aislada-2026-09-08` antes de la refactorización.
 
-**Objetivo:** crear una bitácora maestra persistente para futuras sesiones y evitar pérdida de contexto técnico.
-
-**Archivo creado:**
-
-`docs/CONTINUIDAD_MIKROHUB.md`
-
-**Regla de publicación:** este archivo permanece dentro de `docs/` y no debe formar parte del build React ni ser copiado al directorio público del panel.
-
-**Versión del panel:** no cambia por esta entrada documental. El panel continúa en **1.0.63**.
-
-**Estado:** completado.
-
-**Próxima regla:** toda modificación futura debe añadir una nueva entrada debajo de esta sección y conservar las entradas anteriores.
+**Resultado:** la primera versión aislada requirió correcciones posteriores de JSX y ruta de `AuthContext`; el actualizador realizó rollback cuando el build falló. El flujo de rollback funcionó correctamente.
 
 ---
 
-## 16. Registro de próximas modificaciones
+## 15. Registro de continuidad — 2026-09-08 — Panel 1.0.93
 
-> **No borrar las entradas anteriores.** Agregar siempre una nueva entrada al final.
+**Tipo:** Corrección de build.
 
-### REV-0002 — pendiente
+**Causa:** al mover el módulo a `editor/billing/`, la ruta relativa de `AuthContext` dejó de resolver.
 
-- Fecha: pendiente
-- Panel: pendiente
-- Tipo: pendiente
-- Resumen: pendiente
-- Archivos: pendiente
-- Pruebas: pendiente
-- Commit: pendiente
+**Solución:** se corrigió la ruta del contexto manteniendo API, base de datos y lógica de negocio sin cambios.
 
+**Resultado:** el usuario confirmó que la actualización posterior cargó normalmente y que Facturación abrió correctamente.
 
 ---
 
-### REV-0002 — 2026-09-08 — Panel 1.0.79
+## 16. Registro de continuidad — 2026-09-08 — Panel 1.0.94
 
-**Corrección:** El modal de eliminación definitiva de clientes mostraba el nombre correcto, pero podía indicar 0 servicios, 0 facturas y S/. 0.00 pese a que la ficha tenía datos reales.
+**Tipo:** Funcionalidad / ordenamiento.
 
-**Causa:** El navegador reconstruía el resumen con varias solicitudes frontend, por lo que podía usar respuestas vacías o antiguas.
+**Resumen:** se agregó ordenamiento para Recibo, Servicio, Período, Monto, Vencimiento y Estado. Inicialmente se implementó como una capa independiente, pero se reemplaza en 1.0.95 por ordenamiento React dentro de la tabla para evitar manipulación directa del DOM.
 
-**Cambio aplicado:** `frontend/src/constants/clientDeleteGuard.js` consulta ahora únicamente `GET /api/clients/{id}/deletion-summary`, que lee directamente `Client`, `ClientService` e `Invoice` en el backend. La consulta incluye un parámetro de verificación para evitar reutilizar una respuesta almacenada. Si el resumen no responde, se bloquea la eliminación.
-
-**Archivos:** `clientDeleteGuard.js`, `modules/system-update/version.js`.
-
-**Prueba pendiente:** Actualizar el panel, recargar con Ctrl+F5 y abrir la eliminación del cliente con dos servicios y dos facturas pendientes. Debe mostrar sus cantidades y saldo reales antes de aceptar `SI`.
-
-
-### REV-0003 — 2026-09-08 — Panel 1.0.80
-
-**Corrección definitiva de ruta:** en producción, Axios usa URLs relativas como `/api/clients/{id}` sin `baseURL`. La versión 1.0.79 construía el resumen como `/clients/{id}/deletion-summary`, omitiendo `/api`; Nginx devolvía la aplicación React en lugar del JSON, de ahí que el modal mostrara “Cliente” y valores 0.
-
-`clientDeleteGuard.js` ahora toma la URL DELETE original y añade `/deletion-summary`, conservando el prefijo `/api`: `/api/clients/{id}/deletion-summary`.
-
-**Prueba requerida:** actualizar a 1.0.80, Ctrl+F5 y abrir el modal. Debe mostrar datos reales; no confirmar la eliminación durante la verificación.
-
-
-### REV-0004 — 2026-09-08 — Panel 1.0.81
-
-**Causa confirmada:** La versión anterior usaba un interceptor global de Axios para deducir el cliente desde cualquier DELETE. Ese mecanismo perdió el contexto del botón y podía mostrar el modal con datos vacíos, aunque el resumen de backend sí existiera.
-
-**Corrección:** `frontend/src/modules/clientes/Clients.jsx`, dueño del botón Eliminar, solicita `/api/clients/{id}/deletion-summary` con el ID exacto antes de mostrar el mismo modal amigable. Solo después de confirmar `SI` envía el DELETE marcado como ya confirmado; el interceptor global no vuelve a intervenir.
-
-**Prueba requerida:** tras instalar 1.0.81, abrir Eliminar para `prueba`: el modal debe mostrar cliente `prueba`, 2 servicios, 2 facturas y S/.100.00 antes de confirmar.
-
-
-### REV-0005 — 2026-09-08 — Panel 1.0.84
-
-**Diagnóstico final:** el guardia global de Axios cambiaba las rutas reales de Servicios y Facturación por rutas incompletas. Por eso el diálogo recibía listas vacías o mostraba el UUID como nombre.
-
-**Corrección:** el guardia global queda sin interceptores. Clients.jsx, propietario del botón Eliminar, consulta directamente ambas APIs reales con el ID y nombre de la fila; muestra el resumen en el diálogo nativo y solo permite el DELETE cuando se escribe SI. Si una consulta falla, cancela el borrado.
-
-**Verificación estática realizada:** versión 1.0.84; Clientes llama las dos rutas exactas; no existe interceptor global ni reemplazo de window.confirm.
-
+**Resultado:** 1.0.94 fue validada visualmente en el panel antes de continuar con la refactorización completa.
 
 ---
 
-## 17. Reconstrucción documentada — versiones 1.0.85 a 1.0.90
+## 17. Registro de continuidad — 2026-09-08 — Panel 1.0.95
 
-> Esta sección fue reconstruida el 2026-09-08 comparando version.js, archivos vigentes y commits reales de main. Sustituye el vacío documental que quedó después de la revisión 1.0.84.
+**Tipo:** Arquitectura / mantenimiento / funcionalidad.
 
-### REV-0006 — 2026-09-08 — Panel 1.0.85
+### Objetivo
+Completar el aislamiento recomendado para que futuras modificaciones de Facturación tengan propietarios de código más pequeños y claros, manteniendo el resto de la ficha del cliente separado y protegido por `ErrorBoundary`.
 
-**Tipo:** Mejora / seguridad de eliminación de clientes.
+### Estructura nueva
 
-**Resumen:** se conservó la carga correcta del resumen desde Clients.jsx y se trasladó solo la presentación a una ventana propia y modular de advertencia roja. La confirmación exige escribir SI.
+```text
+frontend/src/modules/clientes/editor/
+├── ClientDetail.jsx
+├── ClientBilling.jsx                  ← wrapper estable + ErrorBoundary
+└── billing/
+    ├── ClientBilling.jsx              ← controlador/API/estado
+    ├── ClientBillingTable.jsx         ← tabla + ordenamiento
+    ├── ClientBillingFilters.jsx       ← búsqueda + filtros
+    ├── ClientBillingActions.jsx       ← acciones superiores y por factura
+    ├── clientBillingUtils.js          ← utilidades/configuración
+    └── ClientBillingErrorBoundary.jsx ← aislamiento de errores de renderizado
+```
 
-**Archivos modificados:**
-- frontend/src/modules/clientes/Clients.jsx — propietario del botón; consulta GET /api/clients/{id}/services y GET /api/clients/{id}/invoices, calcula servicios, facturas pendientes y saldo antes del DELETE.
-- frontend/src/constants/clientDeleteGuard.js — módulo visual showDeleteModal; no hace interceptación global de Axios ni consultas API.
-- frontend/src/modules/system-update/version.js — versión y changelog 1.0.85.
+### Archivos modificados
 
-**Flujo:** Clientes obtiene los datos reales → entrega el resumen al modal rojo → el modal devuelve confirmación SI → Clientes envía DELETE /api/clients/{id}.
+- `frontend/src/modules/clientes/editor/ClientBilling.jsx` — wrapper estable; ya no contiene lógica de negocio.
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — controlador que coordina API, estado y formularios.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingTable.jsx` — tabla y ordenamiento React por las seis columnas solicitadas.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingFilters.jsx` — búsqueda y filtros Todos/Pagados/Pendientes/Vencidos.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingActions.jsx` — acciones Factura libre, Factura de servicios, Configuración y acciones por factura.
+- `frontend/src/modules/clientes/editor/billing/clientBillingUtils.js` — configuración por defecto, fechas, clases y valores de ordenamiento.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingErrorBoundary.jsx` — límite de error de ejecución.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingSorting.jsx` — eliminado; su lógica fue reemplazada por ordenamiento React propio de `ClientBillingTable`.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.95 y CHANGELOG.
 
-**Pruebas:** verificación estática de rutas reales, uso del módulo, advertencia roja y ausencia de interceptores globales. El usuario confirmó visualmente que el resumen se veía correcto.
+### Flujo
 
-**Resultado:** correcto. No reintroducir interceptores globales para este flujo.
+```text
+ClientDetail
+   ↓
+ClientBilling wrapper
+   ↓
+ErrorBoundary
+   ↓
+billing/ClientBilling controlador
+   ├── ClientBillingFilters
+   ├── ClientBillingTable
+   ├── ClientBillingActions
+   └── clientBillingUtils
+```
 
-**Commits:** 248ab097, 9e44b38a, c1108842.
+### Base de datos
+Sin cambios.
 
-### REV-0007 — 2026-09-08 — Panel 1.0.86
+### API
+Sin cambios. Se conservan endpoints existentes para facturas, servicios, pagos, configuración, documento, eliminación, anulación y envío.
 
-**Tipo:** Arquitectura / mantenimiento.
+### Comportamiento
+Se conserva la lógica existente de facturas, pagos, transacciones, saldos, configuración, edición, eliminación, anulación y envío.
 
-**Resumen:** frontend/src/modules/system-update/version.js quedó como fuente única de PANEL_VERSION y CHANGELOG; los consumidores no deben duplicar números de versión.
+### Ordenamiento
+`ClientBillingTable` mantiene su propio estado de ordenamiento y ordena los objetos de factura antes de renderizar. Recibo, Servicio, Período, Monto, Vencimiento y Estado alternan ascendente/descendente. Acciones no es ordenable.
 
-**Archivos modificados:**
-- frontend/src/modules/system-update/version.js — fuente única de versión.
-- backend/app/modules/system_update/router.py — consulta ese archivo desde Git para informar el estado remoto.
+### Aislamiento
+Los errores de renderizado de Facturación quedan contenidos por `ClientBillingErrorBoundary`. Esto no puede proteger errores de sintaxis/compilación, por lo que el build debe ejecutarse antes de desplegar.
 
-**Flujo:** version.js entrega versión y changelog a frontend y backend → UpdateCenter muestra el estado al administrador.
+### Pruebas
+- [x] revisión de la implementación vigente antes de refactorizar;
+- [x] separación de tabla, filtros, acciones y utilidades;
+- [x] eliminación de la capa anterior de manipulación DOM;
+- [x] revisión de rutas relativas del contexto;
+- [ ] build React en servidor;
+- [ ] prueba completa de Facturación después de instalar 1.0.95;
+- [ ] prueba de las seis columnas en ascendente/descendente;
+- [ ] prueba de otras pestañas de ClientDetail;
+- [ ] verificación final de backend y Nginx.
 
-**Pruebas:** revisión de la fuente única y commit publicado.
+### Riesgos / pendientes
+- Un error de sintaxis/compilación todavía puede afectar el build React completo; el ErrorBoundary solo cubre errores de ejecución/renderizado.
+- El backup `backup/pre-facturacion-aislada-2026-09-08` debe conservarse hasta completar la validación de 1.0.95.
 
-**Resultado:** correcto. Para una versión futura editar únicamente este archivo como fuente de versión, además de actualizar esta bitácora.
+### Commits de la entrega
+- refactorización de utilidades, filtros, acciones y tabla: `7d470a55d9caf56b70aff029bfa03e2392872177`, `20ac89ae40f06c0408958363757ab547e14adb98`, `c41f60e86038299cf186fcba7d23513e6f6f7839`, `5cc8657ccbbaf7628c44b9148d6ea6356fa31e57`;
+- controlador refactorizado: `c448983ee3283e7c8b897cf843e2e3fad0c72420`;
+- wrapper estable: `2126582ede3ce749081280638b9da861dde22880`;
+- eliminación del ordenamiento DOM: `d3b0b4bde86974421833354cc3548738365e18b1`;
+- versión 1.0.95: `2af5da43628fbf335277246d7c5747fb05ad832a`.
 
-**Commit:** 886317ce (documentación asociada: 770f796d).
-
-### REV-0008 — 2026-09-08 — Panel 1.0.87
-
-**Tipo:** Mejora de interfaz.
-
-**Resumen:** el botón Comprobar pasó a mostrar feedback inmediato durante la consulta para evitar la impresión de que el clic no funcionó.
-
-**Archivos modificados:**
-- frontend/src/modules/system-update/UpdateCenter.jsx — estado checking, texto Buscando actualización, icono giratorio y control de clics repetidos.
-- frontend/src/modules/system-update/version.js — changelog 1.0.87.
-
-**Flujo:** clic en Comprobar → GET /api/system-update/status → UI mantiene estado de búsqueda → actualiza el estado o muestra error.
-
-**Pruebas:** revisión de checking, bloqueo del botón y publicación de versión.
-
-**Resultado:** correcto; posteriormente fue reforzado en 1.0.89 y 1.0.90.
-
-**Commits:** 3527f3a8, 189932ca.
-
-### REV-0009 — 2026-09-08 — Panel 1.0.88
-
-**Tipo:** Mejora de registro de clientes.
-
-**Resumen:** al abrir Nuevo Abonado, la fecha de instalación se preselecciona con la fecha actual y continúa siendo editable desde el calendario.
-
-**Archivo modificado:**
-- frontend/src/modules/clientes/Clients.jsx — emptyForm() construye installation_date con la fecha local actual.
-
-**Flujo:** abrir registro → emptyForm() entrega fecha actual → el formulario permite cambiarla antes de guardar.
-
-**Pruebas:** revisión del valor inicial y de que el campo conserva edición manual.
-
-**Resultado:** correcto. No afecta datos existentes ni requiere migración.
-
-**Commit de documentación:** bbe930ba.
-
-### REV-0010 — 2026-09-08 — Panel 1.0.89
-
-**Tipo:** Mejora de interfaz.
-
-**Resumen:** se reforzó el feedback de Comprobar: giro, pulso, resplandor, puntos animados, aviso de consulta al servidor y bloqueo de comprobaciones repetidas.
-
-**Archivo modificado:**
-- frontend/src/modules/system-update/UpdateCenter.jsx — estado visual más explícito mientras la petición está activa.
-
-**Pruebas:** revisión de checking, disabled, aria-busy y aviso visible.
-
-**Resultado:** correcto; fue ajustado nuevamente en 1.0.90 para que la animación tenga duración mínima visible.
-
-**Commits:** 59ca30d3, c351dc55, 94732849.
-
-### REV-0011 — 2026-09-08 — Panel 1.0.90 — estado actual
-
-**Tipo:** Mejora de interfaz / actualización.
-
-**Resumen:** la comprobación de actualizaciones conserva su feedback visual al menos 850 ms, incluso si el servidor responde muy rápido. Esto hace visible la confirmación de clic y evita consultas simultáneas.
-
-**Archivos modificados:**
-- frontend/src/modules/system-update/UpdateCenter.jsx — mide la duración de la consulta, mantiene checking durante el mínimo visual y deshabilita Comprobar durante la comprobación o instalación.
-- frontend/src/modules/system-update/version.js — PANEL_VERSION = 1.0.90 y changelog actual.
-
-**Flujo:** Comprobar → checking=true → consulta GET /api/system-update/status sin caché → espera visual mínima de 850 ms → actualiza estado y habilita el botón.
-
-**Base de datos:** sin cambios. **Integraciones:** ninguna nueva; usa la API existente de actualización.
-
-**Pruebas realizadas:** inspección del código vigente; verificación de versión 1.0.90; verificación del estado visual, la espera mínima, bloqueo de repetición y commits en main. No se ejecutó build local en esta revisión documental.
-
-**Resultado:** correcto según revisión estática. Para validar en servidor: desplegar con bash setup_debian.sh, cerrar/ingresar al panel y probar Comprobar.
-
-**Commits:** ce4ca639, bb7152da; documentación previa a013c224 (esta entrada corrige que ese cambio no permaneció en la bitácora vigente).
-
-### REV-0012 — 2026-09-08 — Documentación / regla de prioridad
-
-**Tipo:** Documentación de continuidad.
-
-**Resumen:** se corrigió el desfase de la bitácora que terminaba en 1.0.84 pese a que el panel está en 1.0.90. Se registraron las versiones 1.0.85–1.0.90 y se estableció el cierre obligatorio: ningún cambio puede considerarse terminado sin actualizar este documento y verificarlo en main.
-
-**Archivo modificado:**
-- docs/CONTINUIDAD_MIKROHUB.md — bitácora, versión vigente, reglas y reconstrucción detallada.
-
-**Pruebas:** comparación de version.js vigente, UpdateCenter.jsx, Clients.jsx y commits históricos de main.
-
-**Resultado:** completado.
-
-**Commit:** se añade con esta actualización documental.
+### Estado
+**Preparado para validación mediante el Actualizador del panel. No declarar final hasta que el build y el flujo real sean verificados.**
