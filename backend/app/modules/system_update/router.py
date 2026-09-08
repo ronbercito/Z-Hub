@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-08 — evita respuestas cacheadas y comunica fallos de consulta remota.
+Actualización: 2026-09-08 — evita respuestas cacheadas y bloquea avisos cuando la versión publicada es la misma.
 Función: consulta la rama remota, compara versiones y ejecuta run_update.sh con manejo de errores.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
 Entrega: estado, fase, porcentaje y errores mediante /api/system-update para el centro de actualizaciones.
@@ -130,7 +130,7 @@ async def update_status(response: Response):
         error_message = _extract_error_message(error_log)
 
     return {
-        "available": current_commit != remote_commit,
+        "available": current_commit != remote_commit and current_version != remote_version,
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
         "remote": {"version": remote_version, "commit": remote_commit[:12], "changelog": remote_changelog},
         "installation": {
