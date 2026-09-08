@@ -1,7 +1,7 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-08 — detiene correctamente el estado visual cuando una actualización falla o hace rollback.
- * Función: consulta, presenta e inicia actualizaciones del panel sin dejar la interfaz bloqueada tras un fallo.
+ * Actualización: 2026-09-08 — feedback visual inmediato al comprobar actualizaciones.
+ * Función: consulta, presenta e inicia actualizaciones del panel, mostrando claramente cuando la comprobación está en curso.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito.
  */
@@ -21,11 +21,13 @@ export default function UpdateCenter() {
   const { API, token, logout } = useAuth();
   const [open, setOpen] = useState(false), [confirmOpen, setConfirmOpen] = useState(false);
   const [status, setStatus] = useState(null), [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState(false), [error, setError] = useState("");
   const startedHere = useRef(false), logoutQueued = useRef(false);
   const headers = token ? { Authorization: "Bearer " + token } : {};
 
   const check = useCallback(async () => {
+    setChecking(true);
     try {
       const response = await axios.get(API + "/system-update/status", {
         headers: { ...headers, "Cache-Control": "no-cache" },
@@ -43,7 +45,10 @@ export default function UpdateCenter() {
       }
     } catch (err) {
       setError(err.response?.data?.detail || "No se pudo consultar el estado de actualizaciones.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+      setChecking(false);
+    }
   }, [API, token, logout]);
 
   useEffect(() => {
@@ -94,7 +99,18 @@ export default function UpdateCenter() {
           {previousSuccess && <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-100"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización versión {status.current.version} instalada correctamente.</div>}
           {showProgress && <div className="mt-5 rounded-xl border border-cyan-500/30 bg-slate-950/70 p-4"><div className="flex justify-between text-xs text-slate-200"><span>{failed ? "No se pudo completar la actualización" : installation?.phase || "Preparando actualización"}</span><b>{progress}%</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700"><div className={"h-full rounded-full transition-all duration-500 " + (failed ? "bg-rose-500" : "bg-cyan-400")} style={{ width: progress + "%" }} /></div>{installation?.state === "success" && <p className="mt-3 text-xs text-emerald-200"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización finalizada. Cerrando sesión…</p>}{failed && <><p className="mt-3 text-xs text-rose-200"><AlertTriangle className="mr-1 inline w-4 h-4" />Se restauró la versión anterior.</p>{installation?.error && <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-lg bg-rose-950/30 p-2 text-[11px] text-rose-200">{installation.error}</pre>}</>}</div>}
         </>}
-        <div className="mt-5 flex gap-3"><button onClick={check} disabled={loading || installing} className="rounded-xl border border-slate-600 px-4 py-2.5 text-sm text-slate-200 disabled:opacity-50"><RefreshCw className="mr-1 inline w-4 h-4" />Comprobar</button><button onClick={() => setConfirmOpen(true)} disabled={!status?.available || installing} className="flex-1 rounded-xl bg-cyan-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">{installing ? "Actualizando…" : "Actualizar"}</button></div>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={check}
+            disabled={loading || installing || checking}
+            className={(checking ? "bg-cyan-500/10 border-cyan-400/60 text-cyan-200 animate-pulse " : "") + "rounded-xl border px-4 py-2.5 text-sm transition-all duration-150 active:scale-95 disabled:opacity-50"}
+          >
+            <RefreshCw className={(checking ? "animate-spin " : "") + "mr-1 inline w-4 h-4"} />
+            {checking ? "Buscando actualización…" : "Comprobar"}
+          </button>
+          <button onClick={() => setConfirmOpen(true)} disabled={!status?.available || installing || checking} className="flex-1 rounded-xl bg-cyan-500 py-2.5 text-sm font-bold text-slate-950 transition-all duration-150 active:scale-[0.98] disabled:opacity-50">{installing ? "Actualizando…" : "Actualizar"}</button>
+        </div>
+        {checking && <p className="mt-2 text-center text-xs text-cyan-300 animate-pulse">Consultando el servidor y verificando si existe una nueva versión…</p>}
       </section>
     </div>, document.body
   ) : null;
