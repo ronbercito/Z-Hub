@@ -1,9 +1,8 @@
 """
 Archivo: backend/app/models/setting.py
-Función: Tabla `settings` — configuración general del ISP en una sola fila
-         (id = "system_config") guardada como JSON: razón social, RUC, teléfono,
-         cuentas Yape/Plin/BCP, días de gracia, corte automático y lista de corte MikroTik.
-Trabaja con: backend/app/routers/ajustes/router.py, backend/app/integrations/mikrotik/service.py
+Actualización: 2026-09-08 — agrega reglas globales de facturación, gracia, corte y notificaciones.
+Función: Tabla `settings` — configuración general del ISP en una sola fila guardada como JSON.
+Trabaja con: backend/app/routers/ajustes/router.py y frontend/src/modules/facturacion/Billing.jsx.
 """
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -22,6 +21,15 @@ DEFAULT_SETTINGS = {
     "auto_cut_enabled": True,
     "grace_days": 3,
     "billing_day": 5,
+    "billing_invoice_lead_days": 5,
+    "billing_grace_days": 5,
+    "billing_cut_after_months": 1,
+    "billing_invoice_notification_channel": "none",
+    "billing_payment_reminder_channel": "none",
+    "billing_reminder_1_days": 5,
+    "billing_reminder_2_days": 0,
+    "billing_reminder_3_days": 0,
+    "billing_auto_generate": True,
     "yape_number": "",
     "plin_number": "",
     "bcp_account": "",
