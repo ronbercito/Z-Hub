@@ -196,9 +196,9 @@ async def _create_advance_invoice(db: AsyncSession, client: Client, row: ClientS
     """Genera un recibo pendiente por el importe del nuevo servicio adicional."""
     now = datetime.now(timezone.utc)
     invoice = Invoice(
-        invoice_number=correlative("REC"), client_id=client.id, client_name=client.full_name,
-        client_dni_ruc=client.dni_ruc, client_address=client.address, client_phone=client.phone,
-        plan_name=row.plan_name, amount=row.plan_price, month_period=current_period(),
+        invoice_number=correlative("REC"), client_id=client.id, service_id=row.id,
+        client_name=client.full_name, client_dni_ruc=client.dni_ruc, client_address=client.address,
+        client_phone=client.phone, plan_name=row.plan_name, amount=row.plan_price, month_period=current_period(),
         issue_date=now.strftime("%Y-%m-%d"), due_date=(now + timedelta(days=10)).strftime("%Y-%m-%d"),
         status="unpaid", notes=f"Pago adelantado - Servicio {service_number}",
     )
