@@ -1,8 +1,8 @@
 """
 Archivo: backend/app/routers/facturacion/client_balances.py
-Actualización: 2026-09-08 — auditoría detallada de altas y ediciones de saldos.
-Función: listar, registrar y editar créditos/deudas firmados sin permitir que un ajuste nuevo aumente por encima del monto registrado.
-Trabaja con: ClientBalance, Client, Invoice, ClientActivity y frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx.
+Actualización: 2026-09-08 — agrega edición de configuración de facturación por cliente sin tocar la configuración global.
+Función: listar, registrar y editar créditos/deudas firmados y guardar reglas de facturación directamente en el abonado.
+Trabaja con: ClientBalance, Client, Invoice, ClientActivity y frontend/src/modules/clientes/editor/billing/ClientBilling.jsx.
 """
 from typing import Optional
 
@@ -34,6 +34,19 @@ class ClientBalanceUpdate(BaseModel):
     description: Optional[str] = None
 
 
+class ClientBillingConfigUpdate(BaseModel):
+    billing_type: str = Field(default="prepaid", pattern="^(prepaid|postpaid)$")
+    billing_day: int = Field(default=5, ge=1, le=30)
+    invoice_lead_days: int = Field(default=5, ge=1, le=20)
+    grace_days: int = Field(default=5, ge=1, le=20)
+    cut_after_months: int = Field(default=1, ge=1, le=6)
+    invoice_notification_channel: str = Field(default="none", pattern="^(none|sms|whatsapp|email)$")
+    payment_reminder_channel: str = Field(default="none", pattern="^(none|sms|whatsapp|email)$")
+    reminder_1_days: Optional[int] = Field(default=None, ge=1, le=20)
+    reminder_2_days: Optional[int] = Field(default=None, ge=1, le=20)
+    reminder_3_days: Optional[int] = Field(default=None, ge=1, le=20)
+
+
 async def _serialize_rows(db: AsyncSession, rows: list[ClientBalance]) -> list[dict]:
     invoice_ids = {row.source_invoice_id for row in rows if row.source_invoice_id}
     invoice_ids.update(row.target_invoice_id for row in rows if row.target_invoice_id)
@@ -54,6 +67,58 @@ def _operator(user: dict) -> tuple[str, str]:
 def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: dict):
     operator, identity = _operator(user)
     db.add(ClientActivity(client_id=client_id, action=action, detail=f"{detail} | {identity}", operator_name=operator))
+
+
+@router.get("/{client_id}/billing-config")
+async def get_client_billing_config(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Devuelve exactamente las reglas de facturación guardadas en el abonado."""
+    client = await _get_visible_client(db, client_id, current_user)
+    return {
+        "client_id": client.id,
+        "billing_type": client.billing_type or "prepaid",
+        "billing_day": client.billing_day or 5,
+        "invoice_lead_days": client.invoice_lead_days or 5,
+        "grace_days": client.grace_days or 5,
+        "cut_after_months": client.cut_after_months or 1,
+        "invoice_notification_channel": client.invoice_notification_channel or "none",
+        "payment_reminder_channel": client.payment_reminder_channel or "none",
+        "reminder_1_days": client.reminder_1_days,
+        "reminder_2_days": client.reminder_2_days,
+        "reminder_3_days": client.reminder_3_days,
+    }
+
+
+@router.patch("/{client_id}/billing-config")
+async def update_client_billing_config(client_id: str, data: ClientBillingConfigUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Guarda las reglas elegidas durante el registro en el mismo abonado."""
+    client = await _get_visible_client(db, client_id, current_user)
+    old = {
+        "billing_type": client.billing_type,
+        "billing_day": client.billing_day,
+        "invoice_lead_days": client.invoice_lead_days,
+        "grace_days": client.grace_days,
+        "cut_after_months": client.cut_after_months,
+        "invoice_notification_channel": client.invoice_notification_channel,
+        "payment_reminder_channel": client.payment_reminder_channel,
+        "reminder_1_days": client.reminder_1_days,
+        "reminder_2_days": client.reminder_2_days,
+        "reminder_3_days": client.reminder_3_days,
+    }
+    for field, value in data.model_dump().items():
+        setattr(client, field, value)
+    _activity(
+        db,
+        client.id,
+        "Configuración de facturación editada",
+        "Se actualizaron las reglas del abonado: "
+        f"tipo={client.billing_type}, día de pago={client.billing_day}, "
+        f"crear factura={client.invoice_lead_days} días antes, gracia={client.grace_days} días, "
+        f"corte={client.cut_after_months} mes(es), aviso={client.invoice_notification_channel}, "
+        f"recordatorios={client.payment_reminder_channel}.",
+        current_user,
+    )
+    await db.commit()
+    return await get_client_billing_config(client_id, db, current_user)
 
 
 @router.get("/{client_id}/balances")
