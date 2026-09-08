@@ -83,10 +83,38 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
         return {"ok": False, "message": f"MikroTik no respondió: {exc}"}
 
 
+async def _refresh_optical_power(db: AsyncSession, rows: list[ClientService]) -> None:
+    """Actualiza la potencia de las ONUs de los servicios de fibra cuando la OLT la expone."""
+    fiber_rows = [row for row in rows if row.technology == "fiber" and row.onu_sn]
+    if not fiber_rows:
+        return
+    olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
+    if not olts:
+        return
+    changed = False
+    for row in fiber_rows:
+        for olt_router in olts:
+            try:
+                result = await olt.find_onu(olt_router, row.onu_sn)
+                if result.get("found"):
+                    power = result.get("optical_power_dbm")
+                    if power is None:
+                        power = result.get("power_dbm") or result.get("rx_power_dbm")
+                    if power is not None:
+                        row.optical_power_dbm = power
+                        changed = True
+                    break
+            except Exception:
+                continue
+    if changed:
+        await db.commit()
+
+
 @router.get("/{client_id}/services")
 async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     client = await _get_visible_client(db, client_id, current_user)
     rows = (await db.execute(select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.asc()))).scalars().all()
+    await _refresh_optical_power(db, rows)
     primary = client.to_dict(); primary.update({"service_id": "primary", "is_primary": True})
     result = [primary]
     for row in rows:
@@ -175,9 +203,7 @@ async def client_service_onu_status(client_id: str, service_id: str, db: AsyncSe
             res = await olt.find_onu(olt_router, row.onu_sn)
             results.append(res)
             if res.get("found"):
-                power = res.get("optical_power_dbm")
-                if power is None:
-                    power = res.get("power_dbm") or res.get("rx_power_dbm")
+                power = res.get("optical_power_dbm") or res.get("power_dbm") or res.get("rx_power_dbm")
                 if power is not None:
                     row.optical_power_dbm = power
                 await db.commit()
