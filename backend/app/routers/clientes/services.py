@@ -1,9 +1,11 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar, nombres por DNI, actualización de la cola existente al editar e identificación por número de servicio.
+Actualización: 2026-09-08 — servicios adicionales con aprovisionamiento MikroTik, recibo adelantado por servicio y consulta de potencia ONU optimizada.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
-Trabaja con: backend/app/models/client_service.py, clientes/router.py, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
+Trabaja con: backend/app/models/client_service.py, clientes/router.py, facturación, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
+import asyncio
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,10 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.utils import correlative, current_period
 from app.integrations.mikrotik import service as mt
 from app.integrations.olt import service as olt
 from app.models.client import Client
 from app.models.client_service import ClientService
+from app.models.invoice import Invoice
 from app.models.plan import Plan
 from app.models.router import Router
 from app.routers.clientes.router import _attach_plan_router, _get_visible_client
@@ -47,9 +51,7 @@ def _clean_dni(value: str) -> str:
 async def _service_number(db: AsyncSession, client_id: str, service_id: Optional[str] = None) -> int:
     """Devuelve 2 para el primer servicio adicional, 3 para el segundo, etc.; el principal es el servicio 1."""
     rows = (await db.execute(
-        select(ClientService)
-        .where(ClientService.client_id == client_id)
-        .order_by(ClientService.created_at.asc(), ClientService.id.asc())
+        select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.asc(), ClientService.id.asc())
     )).scalars().all()
     if service_id:
         for index, row in enumerate(rows, start=2):
@@ -70,11 +72,7 @@ def _queue_matches_service(queue: dict, dni: str, old_ip: str | None = None) -> 
     expected_target = f"{old_ip}/32" if old_ip else ""
     if expected_target and target != expected_target:
         return False
-    return (
-        name == f"svc-{clean_dni}"
-        or name.startswith(f"svc-{clean_dni}-")
-        or clean_dni in comment
-    )
+    return name == f"svc-{clean_dni}" or name.startswith(f"svc-{clean_dni}-") or clean_dni in comment
 
 
 async def _queue_name_for_new_service(mikrotik, dni: str) -> str:
@@ -127,15 +125,9 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
                 return {"ok": True, "message": f"PPP secret '{row.pppoe_user}' {action} en {router_obj.name} (perfil {profile})."}
             if row.ip_address:
                 max_limit = mt.plan_rate_limit(plan) if plan else "1M/1M"
-                data = {
-                    "name": f"svc-{_clean_dni(temp.dni_ruc)}",
-                    "target": f"{row.ip_address}/32",
-                    "max-limit": max_limit.split(" ")[0],
-                    "comment": comment,
-                }
+                data = {"name": f"svc-{_clean_dni(temp.dni_ruc)}", "target": f"{row.ip_address}/32", "max-limit": max_limit.split(" ")[0], "comment": comment}
                 if plan and "/" in (plan.burst_limit or ""):
                     data["burst-limit"] = plan.burst_limit
-
                 if updating:
                     queues = await mikrotik.simple_queues()
                     old_queue = next((q for q in queues if _queue_matches_service(q, temp.dni_ruc, previous_ip)), None)
@@ -149,7 +141,6 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
                         data["name"] = desired_name
                         await mikrotik.set("queue", "simple", **{".id": old_queue["id"], **data})
                         return {"ok": True, "message": f"Cola simple '{desired_name}' actualizada en {router_obj.name} ({max_limit})."}
-
                 queue_name = await _queue_name_for_new_service(mikrotik, temp.dni_ruc)
                 data["name"] = queue_name
                 await mikrotik.add("queue", "simple", **data)
@@ -160,7 +151,6 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
 
 
 async def _remove_service_queue(mikrotik, dni: str, ip_address: Optional[str]) -> None:
-    """Elimina solo la cola del servicio indicado, sin borrar otra cola del mismo cliente."""
     queues = await mikrotik.simple_queues()
     matches = [q for q in queues if _queue_matches_service(q, dni, ip_address)]
     if not matches and ip_address:
@@ -170,30 +160,54 @@ async def _remove_service_queue(mikrotik, dni: str, ip_address: Optional[str]) -
 
 
 async def _refresh_optical_power(db: AsyncSession, rows: list[ClientService]) -> None:
-    """Actualiza la potencia de las ONUs de los servicios de fibra cuando la OLT la expone."""
+    """Consulta en paralelo las OLT para reducir el tiempo de carga de la pestaña Servicios."""
     fiber_rows = [row for row in rows if row.technology == "fiber" and row.onu_sn]
     if not fiber_rows:
         return
     olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
     if not olts:
         return
-    changed = False
-    for row in fiber_rows:
-        for olt_router in olts:
+
+    async def find_power(row: ClientService):
+        async def query_olt(olt_router: Router):
             try:
                 result = await olt.find_onu(olt_router, row.onu_sn)
                 if result.get("found"):
                     power = result.get("optical_power_dbm")
                     if power is None:
                         power = result.get("power_dbm") or result.get("rx_power_dbm")
-                    if power is not None:
-                        row.optical_power_dbm = power
-                        changed = True
-                    break
+                    return power
             except Exception:
-                continue
+                return None
+            return None
+        values = await asyncio.gather(*(query_olt(olt_router) for olt_router in olts))
+        for power in values:
+            if power is not None:
+                row.optical_power_dbm = power
+                return True
+        return False
+
+    changed = any(await asyncio.gather(*(find_power(row) for row in fiber_rows)))
     if changed:
         await db.commit()
+
+
+async def _create_advance_invoice(db: AsyncSession, client: Client, row: ClientService, service_number: int) -> Invoice:
+    """Genera un recibo pendiente por el importe del nuevo servicio adicional."""
+    now = datetime.now(timezone.utc)
+    invoice = Invoice(
+        invoice_number=correlative("REC"), client_id=client.id, client_name=client.full_name,
+        client_dni_ruc=client.dni_ruc, client_address=client.address, client_phone=client.phone,
+        plan_name=row.plan_name, amount=row.plan_price, month_period=current_period(),
+        issue_date=now.strftime("%Y-%m-%d"), due_date=(now + timedelta(days=10)).strftime("%Y-%m-%d"),
+        status="unpaid", notes=f"Pago adelantado - Servicio {service_number}",
+    )
+    db.add(invoice)
+    await db.flush()
+    unpaid = (await db.execute(select(Invoice).where(Invoice.client_id == client.id, Invoice.status.in_(["unpaid", "overdue"])))) .scalars().all()
+    client.unpaid_invoices_count = len(unpaid)
+    client.balance_due = round(sum(item.amount for item in unpaid), 2)
+    return invoice
 
 
 @router.get("/{client_id}/services")
@@ -210,7 +224,7 @@ async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db
 
 @router.post("/{client_id}/services")
 async def create_client_service(client_id: str, payload: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    await _get_visible_client(db, client_id, current_user)
+    client = await _get_visible_client(db, client_id, current_user)
     temp = await _prepare(db, client_id, payload.model_dump(exclude_unset=True))
     row = ClientService(client_id=client_id, **_service_payload(temp))
     db.add(row); await db.flush()
@@ -220,8 +234,9 @@ async def create_client_service(client_id: str, payload: ClientServiceUpdate, db
     result = await _provision_service(row, temp, router_obj, plan, service_number)
     if not result["ok"]:
         await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo crear el servicio en MikroTik: {result['message']}")
+    invoice = await _create_advance_invoice(db, client, row, service_number)
     await db.commit(); await db.refresh(row)
-    return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result}
+    return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result, "advance_invoice": invoice.to_dict()}
 
 
 @router.patch("/{client_id}/services/{service_id}")
@@ -231,10 +246,7 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
     current = row.to_dict(); current.update(payload.model_dump(exclude_unset=True))
-    old_router_id = row.router_id
-    old_connection_type = row.connection_type
-    old_pppoe_user = row.pppoe_user
-    old_ip_address = row.ip_address
+    old_router_id = row.router_id; old_connection_type = row.connection_type; old_pppoe_user = row.pppoe_user; old_ip_address = row.ip_address
     temp = await _prepare(db, client_id, current, service_id)
     for field, value in _service_payload(temp).items(): setattr(row, field, value)
     await db.flush()
@@ -249,10 +261,8 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
         if old_router and old_router.device_type == "mikrotik" and old_router.password:
             try:
                 async with mt.connect(old_router) as old_mikrotik:
-                    if old_pppoe_user and old_connection_type == "PPPoE":
-                        await old_mikrotik.remove_ppp_secret(old_pppoe_user)
-                    if old_ip_address and old_connection_type != "PPPoE":
-                        await _remove_service_queue(old_mikrotik, client.dni_ruc, old_ip_address)
+                    if old_pppoe_user and old_connection_type == "PPPoE": await old_mikrotik.remove_ppp_secret(old_pppoe_user)
+                    if old_ip_address and old_connection_type != "PPPoE": await _remove_service_queue(old_mikrotik, client.dni_ruc, old_ip_address)
             except mt.MikroTikError as exc:
                 await db.rollback(); raise HTTPException(status_code=502, detail=f"Servicio actualizado, pero no se pudo limpiar la configuración anterior en MikroTik: {exc}")
     await db.commit(); await db.refresh(row)
@@ -269,10 +279,8 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
     if router_obj and router_obj.device_type == "mikrotik" and router_obj.password:
         try:
             async with mt.connect(router_obj) as mikrotik:
-                if row.pppoe_user:
-                    await mikrotik.remove_ppp_secret(row.pppoe_user)
-                if row.ip_address:
-                    await _remove_service_queue(mikrotik, client.dni_ruc, row.ip_address)
+                if row.pppoe_user: await mikrotik.remove_ppp_secret(row.pppoe_user)
+                if row.ip_address: await _remove_service_queue(mikrotik, client.dni_ruc, row.ip_address)
         except mt.MikroTikError as exc:
             raise HTTPException(status_code=502, detail=f"No se pudo eliminar el servicio de MikroTik: {exc}")
     await db.delete(row); await db.commit()
@@ -283,34 +291,26 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
 async def get_client_service(client_id: str, service_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     await _get_visible_client(db, client_id, current_user)
     row = await db.get(ClientService, service_id)
-    if not row or row.client_id != client_id:
-        raise HTTPException(status_code=404, detail="Servicio no encontrado.")
+    if not row or row.client_id != client_id: raise HTTPException(status_code=404, detail="Servicio no encontrado.")
     return {**row.to_dict(), "service_id": row.id, "is_primary": False}
 
 
 @router.get("/{client_id}/services/{service_id}/onu-status")
 async def client_service_onu_status(client_id: str, service_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Busca la ONU del servicio en las OLT y devuelve su potencia óptica."""
     await _get_visible_client(db, client_id, current_user)
     row = await db.get(ClientService, service_id)
-    if not row or row.client_id != client_id:
-        raise HTTPException(status_code=404, detail="Servicio no encontrado.")
-    if not row.onu_sn:
-        raise HTTPException(status_code=400, detail="El servicio no tiene ONU SN registrado.")
+    if not row or row.client_id != client_id: raise HTTPException(status_code=404, detail="Servicio no encontrado.")
+    if not row.onu_sn: raise HTTPException(status_code=400, detail="El servicio no tiene ONU SN registrado.")
     olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
-    if not olts:
-        raise HTTPException(status_code=400, detail="No hay ninguna OLT registrada en Gestión de Red.")
+    if not olts: raise HTTPException(status_code=400, detail="No hay ninguna OLT registrada en Gestión de Red.")
     results = []
     for olt_router in olts:
         try:
-            res = await olt.find_onu(olt_router, row.onu_sn)
-            results.append(res)
+            res = await olt.find_onu(olt_router, row.onu_sn); results.append(res)
             if res.get("found"):
                 power = res.get("optical_power_dbm")
-                if power is None:
-                    power = res.get("power_dbm") or res.get("rx_power_dbm")
-                if power is not None:
-                    row.optical_power_dbm = power
+                if power is None: power = res.get("power_dbm") or res.get("rx_power_dbm")
+                if power is not None: row.optical_power_dbm = power
                 await db.commit()
                 return {"ok": True, "service_id": row.id, "onu_sn": row.onu_sn, "power_dbm": power, "result": res, "olt": olt_router.name}
         except Exception as exc:
