@@ -4,7 +4,7 @@
 
 ## Versión funcional
 
-**1.0.99**
+**1.0.100**
 
 ## Registro 1.0.98 — Navegación de Facturación
 
@@ -14,104 +14,81 @@ Se aplicó la mejora visual de las pestañas internas de Facturación del client
 
 **Tipo:** Funcionalidad / corrección operativa de Facturación → Saldos.
 
+Se añadió el botón **Editar** en cada fila y el endpoint `PUT /api/clients/{client_id}/balances/{balance_id}`. Los movimientos ya aplicados conservan su importe para proteger la trazabilidad; los disponibles permiten editar monto y descripción.
+
+## Registro 1.0.100 — Límite seguro al editar un saldo nuevo
+
+**Tipo:** Corrección / protección de saldo.
+
 ### Objetivo
-Permitir que el administrador corrija un saldo registrado por error sin tener que crear un movimiento duplicado.
 
-### Solución
-Se añadió un botón **Editar** en cada fila del historial de Saldos.
+Resolver el caso en que el cliente ya tiene un saldo anterior y se agrega otro movimiento. Ejemplo: saldo anterior S/. 30.00 + nuevo saldo S/. 100.00 = S/. 130.00. El administrador debe poder editar únicamente el movimiento nuevo, sin alterar los S/. 30.00 anteriores.
 
-El formulario permite modificar:
+### Regla implementada
 
-- monto;
-- descripción.
+Para un movimiento nuevo o completamente disponible:
 
-### Protección de trazabilidad
+- se puede reducir el monto hasta S/. 0.00;
+- no se puede aumentar por encima del monto original;
+- no se puede cambiar saldo a favor por deuda ni deuda por saldo a favor;
+- si el original fue S/. 100.00 y se intenta guardar S/. 101.00, el sistema rechaza la operación y muestra: **“No es posible. El monto máximo a editar es S/. 100.00.”**;
+- si se guarda S/. 0.00, ese movimiento deja de aportar al saldo neto, pero permanece en el historial para conservar el registro de la corrección.
 
-Si el movimiento todavía no fue aplicado y mantiene todo su importe disponible, se permite editar el monto y la descripción.
-
-Si el movimiento ya fue aplicado a una factura, el monto queda bloqueado para no alterar retrospectivamente una factura ni romper el libro mayor. En ese caso se puede corregir únicamente la descripción.
-
-### Backend
-
-Nuevo endpoint:
-
-```text
-PUT /api/clients/{client_id}/balances/{balance_id}
-```
-
-Valida que el movimiento pertenezca al cliente visible y protege los movimientos aplicados/parcialmente consumidos.
-
-### Frontend
-
-Archivo:
-
-`frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx`
-
-Se añadió:
-
-- estado de edición;
-- modal reutilizado para crear/editar;
-- botón Editar por movimiento;
-- bloqueo visual del monto cuando ya fue aplicado;
-- recarga del saldo e historial después de guardar.
+Los movimientos ya aplicados o parcialmente consumidos mantienen el monto bloqueado.
 
 ### Archivos modificados
 
-- `backend/app/routers/facturacion/client_balances.py` — endpoint seguro de edición.
-- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — botón, modal y flujo de edición.
-- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.99 y CHANGELOG.
-- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta entrada diaria.
-
-### Base de datos
-
-No se crean tablas nuevas ni se eliminan datos. La edición reutiliza los campos existentes de `client_balances`.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — validación visual, límites `min/max`, advertencia y edición a cero para movimientos disponibles.
+- `backend/app/routers/facturacion/client_balances.py` — validación servidor del importe máximo, signo del movimiento y edición a cero.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.100 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta entrada.
 
 ### Flujo
 
 ```text
-Saldos
+Saldo anterior 30
+  +
+Nuevo movimiento 100
   ↓
-Historial
+Saldo mostrado 130
   ↓
-Editar
-  ↓
-¿Movimiento disponible completo?
-  ├─ Sí → editar monto + descripción
-  └─ No → monto bloqueado, editar descripción
-  ↓
-Guardar
-  ↓
-Recalcular saldo mostrado
+Editar movimiento nuevo
+  ├─ 0 a 100 → permitido
+  ├─ 101 → rechazado con advertencia
+  └─ -100 → rechazado por cambio de tipo
 ```
+
+### Base de datos
+
+No se crean tablas nuevas ni se eliminan datos. Se reutilizan `amount` y `remaining_amount` de `client_balances`.
 
 ### Backup
 
-Antes de modificar `main` se creó:
+Antes de esta corrección se creó:
 
 `backup/pre-editar-saldos-2026-09-08`
 
-Este backup conserva el estado anterior a 1.0.99 y debe mantenerse hasta validar el panel.
+Debe conservarse hasta validar la actualización en el panel.
 
 ### Pruebas
 
-- [x] backup creado antes del cambio;
-- [x] endpoint revisado para pertenencia al cliente;
-- [x] protección de movimientos ya aplicados;
-- [x] interfaz de edición integrada al historial;
-- [x] versión 1.0.99 y CHANGELOG actualizados;
+- [x] backup creado;
+- [x] validación frontend del máximo original;
+- [x] validación backend del máximo original;
+- [x] protección contra cambio de signo;
+- [x] edición a S/. 0.00 para retirar el aporte del movimiento nuevo;
+- [x] movimientos aplicados permanecen bloqueados;
+- [x] versión 1.0.100 y CHANGELOG actualizados;
 - [ ] `yarn build` — no ejecutado desde este entorno;
-- [ ] prueba en panel de editar saldo disponible;
-- [ ] prueba de edición de descripción en saldo aplicado;
-- [ ] prueba de Factura libre y aplicación automática después de editar;
-- [ ] validación final de Facturas, Transacciones y Configuración.
+- [ ] prueba real: 30 + 100 = 130;
+- [ ] editar 100 → 0 y confirmar saldo 30;
+- [ ] intentar 100 → 101 y confirmar advertencia;
+- [ ] validar que el movimiento anterior de 30 no cambia;
+- [ ] validar Factura libre y aplicación automática de saldos.
 
 ### Resultado
 
-El cambio está publicado en `main`. La validación de build y producción queda pendiente y no debe declararse completa hasta probar el flujo real.
-
-### Riesgos
-
-No se permite modificar el importe de movimientos que ya participaron en una aplicación a factura. Esto es deliberado para proteger la trazabilidad contable.
+La corrección está publicada en `main`. Falta validación de build y del flujo real en el panel antes de declarar 1.0.100 completamente validada.
 
 ## Despliegue
 
@@ -128,11 +105,11 @@ git rev-parse --short HEAD
 supervisorctl status mikrosmart_backend
 ```
 
-No borrar la base de datos ni datos existentes para solucionar un problema visual o funcional.
+No borrar la base de datos ni datos existentes para solucionar problemas visuales o funcionales.
 
 ## Referencias
 
 - Bitácora maestra: `docs/CONTINUIDAD_MIKROHUB.md`
 - Continuidad específica de Saldos: `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md`
-- Backup anterior de navegación: `backup/pre-facturacion-tabs-resaltadas-2026-09-08`
-- Backup actual: `backup/pre-editar-saldos-2026-09-08`
+- Backup de navegación: `backup/pre-facturacion-tabs-resaltadas-2026-09-08`
+- Backup de edición: `backup/pre-editar-saldos-2026-09-08`
