@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/red/router.py
-Actualización: 2026-09-08 — aplica la configuración global de meses vencidos al corte masivo.
+Actualización: 2026-09-08 — el corte masivo respeta los meses vencidos configurados en cada abonado.
 Función: Gestión de equipos de red (/api/routers), lectura MikroTik/OLT y corte real por mora.
 Trabaja con: backend/app/models/client.py, invoice.py, setting.py e integraciones MikroTik/OLT.
 """
@@ -273,7 +273,6 @@ async def sync_cuts(db: AsyncSession = Depends(get_db)):
     s = await db.get(Setting, "system_config")
     data = s.data or {}
     cut_list = data.get("mikrotik_cut_list") or "morosos"
-    required_months = max(1, int(data.get("billing_cut_after_months") or 1))
     overdue = (await db.execute(select(Invoice).where(Invoice.status == "overdue"))).scalars().all()
     by_client: dict[str, list[Invoice]] = {}
     for invoice in overdue:
@@ -281,10 +280,13 @@ async def sync_cuts(db: AsyncSession = Depends(get_db)):
     routers_cache: dict[str, Router | None] = {}
     affected, details = 0, []
     skipped = 0
+    required_by_client = {}
     for cid, client_invoices in by_client.items():
         c = await db.get(Client, cid)
         if not c or c.status != "active":
             continue
+        required_months = max(1, int(c.cut_after_months or 1))
+        required_by_client[c.full_name] = required_months
         if len(client_invoices) < required_months:
             skipped += 1
             continue
@@ -292,7 +294,8 @@ async def sync_cuts(db: AsyncSession = Depends(get_db)):
             routers_cache[c.router_id] = await db.get(Router, c.router_id) if c.router_id else None
         c.status, c.is_online = "suspended", False
         res = await mt.cut_client(c, routers_cache[c.router_id], cut_list)
-        details.append({"client": c.full_name, "overdue_months": len(client_invoices), **res})
+        details.append({"client": c.full_name, "overdue_months": len(client_invoices), "required_months": required_months, **res})
         affected += 1
     await db.commit()
-    return {"message": f"Cortes aplicados: {affected} cliente(s) con {required_months} o más recibos vencidos.", "clients_affected": affected, "skipped_by_cut_rule": skipped, "required_months": required_months, "routers_synced": len([r for r in routers_cache.values() if r]), "details": details}
+    unique_rules = sorted(set(required_by_client.values()))
+    return {"message": f"Cortes aplicados: {affected} cliente(s) según la regla individual de meses vencidos.", "clients_affected": affected, "skipped_by_cut_rule": skipped, "required_months": unique_rules[0] if len(unique_rules) == 1 else None, "required_months_by_client": required_by_client, "routers_synced": len([r for r in routers_cache.values() if r]), "details": details}
