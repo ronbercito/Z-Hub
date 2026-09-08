@@ -27,6 +27,7 @@ export default function UpdateCenter() {
   const headers = token ? { Authorization: "Bearer " + token } : {};
 
   const check = useCallback(async () => {
+    const startedAt = Date.now();
     setChecking(true);
     try {
       const response = await axios.get(API + "/system-update/status", {
@@ -46,8 +47,12 @@ export default function UpdateCenter() {
     } catch (err) {
       setError(err.response?.data?.detail || "No se pudo consultar el estado de actualizaciones.");
     } finally {
-      setLoading(false);
-      setChecking(false);
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, 850 - elapsed);
+      window.setTimeout(() => {
+        setLoading(false);
+        setChecking(false);
+      }, remaining);
     }
   }, [API, token, logout]);
 
@@ -104,7 +109,7 @@ export default function UpdateCenter() {
             onClick={check}
             disabled={loading || installing || checking}
             aria-busy={checking}
-            className={(checking ? "relative overflow-hidden border-cyan-300/80 bg-cyan-500/20 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.28)] animate-pulse " : "border-slate-600 bg-slate-900 text-slate-200 hover:border-cyan-400/60 hover:bg-slate-800 ") + "min-w-[150px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-wait disabled:opacity-80"}
+            className={(checking ? "relative overflow-hidden border-cyan-300/80 bg-cyan-500/20 text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.38)] -translate-y-0.5 animate-pulse " : "border-slate-600 bg-slate-900 text-slate-200 hover:border-cyan-400/60 hover:bg-slate-800 ") + "min-w-[150px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-wait disabled:opacity-80"}
           >
             <RefreshCw className={(checking ? "animate-spin " : "") + "mr-2 inline w-4 h-4 align-[-3px]"} />
             {checking ? "Buscando actualización…" : "Comprobar"}
