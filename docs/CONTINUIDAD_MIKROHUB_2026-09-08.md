@@ -97,6 +97,10 @@ Esto permite que una próxima falla pueda identificarse directamente desde el Ce
 
 El build frontend se ejecuta con `CI=` para evitar que advertencias heredadas del entorno conviertan innecesariamente el build en un fallo.
 
+### `backend/app/modules/system_update/router.py`
+
+El endpoint de estado ahora reconoce tanto `ERROR_SETUP` como `ERROR en paso` y devuelve el mensaje exacto al Centro de Actualizaciones, en lugar de mostrar únicamente el último `exit code 1`.
+
 ### Versión
 
 `frontend/src/modules/system-update/version.js` → **1.0.65**
