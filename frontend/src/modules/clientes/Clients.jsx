@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — la eliminación consulta el resumen desde el módulo dueño antes del DELETE; la tabla muestra deuda y meses pendientes.
+ * Actualización: 2026-09-08 — se restaura la confirmación nativa con el resumen probado de dependencias; la tabla muestra deuda y meses pendientes.
  * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import ClientRegistrationWizard from "./usuarios/ClientRegistrationWizard";
 import ClientDetail from "./ClientDetail";
 import CoordinatesPicker from "../red/components/CoordinatesPicker";
-import { showDeleteModal } from "../../constants/clientDeleteGuard";
 
 const emptyForm = (planId = "", routerId = "") => ({
   full_name: "", dni_ruc: "", phone: "", email: "", address: "", reference: "",
@@ -125,29 +124,14 @@ export default function Clients({ onSelectClient }) {
     }
   };
 
-  const handleDeleteClient = async (id) => {
-    const headers = { Authorization: `Bearer ${token}` };
+  const handleDeleteClient = async (id, name) => {
+    if (!window.confirm(`¿Estás seguro de eliminar el cliente "${name}"?`)) return;
     try {
-      // Esta vista conoce el ID exacto: consulta el backend antes del DELETE y evita depender del interceptor global.
-      const { data: summary } = await axios.get(`${API}/clients/${id}/deletion-summary`, {
-        headers, params: { _delete_check: Date.now() },
-      });
-      const services = Array.isArray(summary?.services) ? summary.services : [];
-      const pendingCount = Number(summary?.pending_invoice_count || 0);
-      const pendingTotal = Number(summary?.pending_total || 0);
-      const confirmed = await showDeleteModal({
-        clientName: summary?.client_name || "Cliente",
-        services, pendingCount, pendingTotal,
-        priority: services.length > 1 && pendingCount > 0,
-      });
-      if (!confirmed) return;
-      await axios.delete(`${API}/clients/${id}`, {
-        headers, __mikrohubDeleteConfirmed: true,
-      });
+      await axios.delete(`${API}/clients/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       toast.success("Cliente eliminado del sistema");
       fetchData();
     } catch (e) {
-      toast.error(e?.response?.data?.detail || "No se pudo verificar o eliminar el cliente.");
+      toast.error("Error al eliminar");
     }
   };
 
@@ -222,7 +206,7 @@ export default function Clients({ onSelectClient }) {
                   {c.onu_sn && <button onClick={() => handleOnuStatus(c)} title="Ver ONU en la OLT" className="p-1.5 rounded-lg bg-cyan-600/10 text-cyan-300 border border-cyan-600/30"><Radio className="w-4 h-4" /></button>}
                   <button onClick={() => openWhatsAppReminder(c)} title="Enviar aviso WhatsApp" className="p-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 border border-emerald-600/30"><MessageSquare className="w-4 h-4" /></button>
                   <button onClick={() => startEdit(c)} title="Editar Abonado" className="p-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => handleDeleteClient(c.id)} title="Eliminar" className="p-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => handleDeleteClient(c.id, c.full_name)} title="Eliminar" className="p-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700"><Trash2 className="w-4 h-4" /></button>
                 </div></td>
               </tr>
             ))}
