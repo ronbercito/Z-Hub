@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — usa la ruta técnica aislada para evitar sobrescribir datos personales.
+ * Actualización: 2026-09-08 — muestra IPs y puertos libres, y permite registrar potencia ONU manual.
  * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
  * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
  * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
@@ -24,6 +24,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
     nap_box_id: "",
     nap_port: "",
     onu_sn: "",
+    optical_power_dbm: "",
     monitoring_equipment_id: "",
     antenna_type: "",
     management_ip: "",
@@ -35,6 +36,14 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
   const [zones, setZones] = useState([]);
   const [napBoxes, setNapBoxes] = useState([]);
   const [monitoringEquipment, setMonitoringEquipment] = useState([]);
+  const [availableAddresses, setAvailableAddresses] = useState([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const connectionUsage = { "PPPoE": "pppoe_pool", "IP Estática": "static", "DHCP": "dhcp" }[formData.connection_type] || "static";
+  const compatibleNetworks = ipv4Networks.filter((network) => network.router_id === formData.router_id && network.usage_type === connectionUsage);
+  const selectedNap = napBoxes.find((nap) => nap.id === formData.nap_box_id);
+  const occupiedNapPorts = new Set(Object.keys(selectedNap?.assigned_ports || {}).map(Number));
+  const availableNapPorts = Array.from({ length: selectedNap?.ports || 0 }, (_, index) => index + 1)
+    .filter((port) => !occupiedNapPorts.has(port) || Number(formData.nap_port) === port);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,6 +80,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
           nap_box_id: client.nap_box_id || "",
           nap_port: client.nap_port ? String(client.nap_port) : "",
           onu_sn: client.onu_sn || "",
+          optical_power_dbm: client.optical_power_dbm ?? "",
           monitoring_equipment_id: client.monitoring_equipment_id || "",
           antenna_type: client.antenna_type || "",
           management_ip: client.management_ip || "",
@@ -91,6 +101,27 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
 
     load();
   }, [api, clientId, token]);
+
+  // Consulta solo las IP libres; la IP actual se excluye de la ocupación mediante clientId.
+  useEffect(() => {
+    if (!formData.ipv4_network_id || formData.connection_type === "PPPoE") {
+      setAvailableAddresses([]);
+      return;
+    }
+    let active = true;
+    setLoadingAddresses(true);
+    axios.get(`${api}/ipv4-networks/${formData.ipv4_network_id}/available-addresses`, {
+      params: { exclude_client_id: clientId },
+      headers: { Authorization: `Bearer ${token}` }
+    }).then((response) => {
+      if (active) setAvailableAddresses(response.data.addresses || []);
+    }).catch(() => {
+      if (active) setAvailableAddresses([]);
+    }).finally(() => {
+      if (active) setLoadingAddresses(false);
+    });
+    return () => { active = false; };
+  }, [api, clientId, formData.connection_type, formData.ipv4_network_id, token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -160,6 +191,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
         nap_box_id: formData.nap_box_id || null,
         nap_port: formData.nap_port ? parseInt(formData.nap_port) : null,
         onu_sn: formData.onu_sn || null,
+        optical_power_dbm: formData.optical_power_dbm === "" ? null : parseFloat(formData.optical_power_dbm),
         monitoring_equipment_id: formData.monitoring_equipment_id || null,
         antenna_type: formData.antenna_type || null,
         management_ip: formData.management_ip || null,
@@ -281,23 +313,28 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
               <select
                 name="ipv4_network_id"
                 value={formData.ipv4_network_id}
-                onChange={handleChange}
+                onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))}
                 className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
               >
                 <option value="">-- Selecciona una red --</option>
-                {ipv4Networks.map(net => (
-                  <option key={net.id} value={net.id}>{net.name} ({net.cidr})</option>
+                {compatibleNetworks.map(net => (
+                  <option key={net.id} value={net.id}>{net.name} (${net.cidr})</option>
                 ))}
               </select>
 
-              <input
-                type="text"
+              <select
                 name="ip_address"
                 value={formData.ip_address}
+                disabled={!formData.ipv4_network_id || loadingAddresses}
                 onChange={handleChange}
-                placeholder="IP del cliente (ej: 192.168.1.10)"
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
+                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="">{loadingAddresses ? "Consultando IPs disponibles..." : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>
+                {formData.ip_address && !availableAddresses.includes(formData.ip_address) && (
+                  <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>
+                )}
+                {availableAddresses.map((address) => <option key={address} value={address}>{address}</option>)}
+              </select>
             </div>
           </div>
         )}
@@ -356,15 +393,16 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
                 ))}
               </select>
 
-              <input
-                type="number"
+              <select
                 name="nap_port"
                 value={formData.nap_port}
+                disabled={!selectedNap || availableNapPorts.length === 0}
                 onChange={handleChange}
-                placeholder="Puerto NAP (1-N)"
-                min="1"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="">{!selectedNap ? "Primero selecciona una caja NAP" : availableNapPorts.length === 0 ? "No hay puertos libres" : "Selecciona un puerto libre"}</option>
+                {availableNapPorts.map((port) => <option key={port} value={port}>Puerto {port}</option>)}
+              </select>
 
               <input
                 type="text"
@@ -372,6 +410,16 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
                 value={formData.onu_sn}
                 onChange={handleChange}
                 placeholder="Serie ONU (opcional)"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+              />
+
+              <input
+                type="number"
+                step="0.1"
+                name="optical_power_dbm"
+                value={formData.optical_power_dbm}
+                onChange={handleChange}
+                placeholder="Potencia de la ONU (dBm), ej. -19.5"
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
               />
             </div>
