@@ -1,7 +1,7 @@
 """
 Archivo: backend/app/routers/facturacion/invoice_actions.py
-Actualización: 2026-09-08 — acciones completas de factura: editar, ver imprimible/PDF, eliminar, anular y preparar envío.
-Función: operaciones seguras sobre facturas individuales sin borrar facturas pagadas.
+Actualización: 2026-09-08 — acciones completas de factura y sincronización del saldo del cliente.
+Función: operaciones seguras sobre facturas individuales sin borrar facturas pagadas y manteniendo actualizado el resumen del cliente.
 Trabaja con: invoice.py, client.py, client_service.py y Billing.jsx.
 """
 from datetime import datetime
@@ -33,6 +33,25 @@ async def _invoice(db: AsyncSession, invoice_id: str) -> Invoice:
         raise HTTPException(404, "Factura no encontrada")
     return row
 
+async def _refresh_client_balance(db: AsyncSession, client_id: str):
+    """Recalcula contador y saldo desde las facturas reales del cliente."""
+    client = await db.get(Client, client_id)
+    if not client:
+        return
+    unpaid = (
+        await db.execute(
+            select(Invoice).where(
+                Invoice.client_id == client_id,
+                Invoice.status.in_(["unpaid", "overdue"]),
+            )
+        )
+    ).scalars().all()
+    client.unpaid_invoices_count = len(unpaid)
+    client.balance_due = round(
+        sum(float(x.amount or 0) - float(x.paid_amount or 0) for x in unpaid),
+        2,
+    )
+
 @router.put("/invoices/{invoice_id}")
 async def update_invoice(invoice_id: str, data: InvoiceUpdateIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     inv = await _invoice(db, invoice_id)
@@ -46,6 +65,7 @@ async def update_invoice(invoice_id: str, data: InvoiceUpdateIn, db: AsyncSessio
         value = getattr(data, field)
         if value is not None:
             setattr(inv, field, value)
+    await _refresh_client_balance(db, inv.client_id)
     await db.commit()
     await db.refresh(inv)
     return inv.to_dict()
@@ -55,12 +75,12 @@ async def delete_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), cu
     inv = await _invoice(db, invoice_id)
     if inv.status == "paid" or float(inv.paid_amount or 0) > 0:
         raise HTTPException(409, "Protección activa: las facturas pagadas o con pagos registrados no se pueden eliminar.")
-    if inv.status == "canceled":
-        # Una factura anulada ya no afecta saldo; se permite eliminarla físicamente.
-        pass
+    client_id = inv.client_id
     await db.delete(inv)
+    await db.flush()
+    await _refresh_client_balance(db, client_id)
     await db.commit()
-    return {"message": "Factura eliminada definitivamente"}
+    return {"message": "Factura eliminada definitivamente", "client_id": client_id}
 
 @router.post("/invoices/{invoice_id}/annul")
 async def annul_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
@@ -70,11 +90,7 @@ async def annul_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), cur
     if inv.status == "canceled":
         return {"message": "La factura ya estaba anulada", "invoice": inv.to_dict()}
     inv.status = "canceled"
-    c = await db.get(Client, inv.client_id)
-    if c:
-        unpaid = (await db.execute(select(Invoice).where(Invoice.client_id == c.id, Invoice.status.in_(["unpaid", "overdue"])))).scalars().all()
-        c.unpaid_invoices_count = len(unpaid)
-        c.balance_due = round(sum(float(x.amount or 0) - float(x.paid_amount or 0) for x in unpaid), 2)
+    await _refresh_client_balance(db, inv.client_id)
     await db.commit()
     await db.refresh(inv)
     return {"message": "Factura anulada correctamente", "invoice": inv.to_dict()}
