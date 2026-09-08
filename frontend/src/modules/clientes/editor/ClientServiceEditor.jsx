@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — normalización y semáforo visual de potencia óptica.
+ * Actualización: 2026-09-08 — evita registrar “Servicio editado” al eliminar y entrega el tipo de operación al Log.
  * Función: lista los servicios de Internet del cliente y abre una ventana emergente para crear o editar cada servicio.
  * Recibe de: ClientDetail.jsx y backend/app/routers/clientes/services.py.
  * Entrega a: backend mediante /clients/{clientId}/service para el servicio principal histórico y /clients/{clientId}/services para servicios adicionales.
@@ -65,7 +65,8 @@ function ServiceModal({ clientId, api, token, service, onSaved, onClose }) {
     if (formData.connection_type === "PPPoE") { if (!formData.pppoe_user.trim()) throw new Error("Ingresa usuario PPPoE."); } else { if (!formData.ipv4_network_id) throw new Error("Selecciona una red IPv4."); if (!formData.ip_address) throw new Error("Selecciona una IP disponible."); }
     if (!formData.zone_id) throw new Error("Selecciona una zona."); if (formData.technology === "fiber") { if (!formData.nap_box_id) throw new Error("Selecciona una caja NAP."); if (!formData.nap_port) throw new Error("Selecciona un puerto NAP."); } else if (!formData.monitoring_equipment_id) throw new Error("Selecciona el equipo al que se conectará el servicio inalámbrico.");
     const payload = { plan_id: formData.plan_id, router_id: formData.router_id, connection_type: formData.connection_type, ipv4_network_id: formData.ipv4_network_id || null, ip_address: formData.ip_address || null, pppoe_user: formData.pppoe_user || null, pppoe_password: formData.pppoe_password || null, technology: formData.technology, zone_id: formData.zone_id || null, nap_box_id: formData.technology === "fiber" ? formData.nap_box_id || null : null, nap_port: formData.technology === "fiber" && formData.nap_port ? parseInt(formData.nap_port, 10) : null, onu_sn: formData.technology === "fiber" ? formData.onu_sn || null : null, optical_power_dbm: formData.technology === "fiber" && formData.optical_power_dbm !== "" ? parseFloat(formData.optical_power_dbm) : null, monitoring_equipment_id: formData.technology === "wireless" ? formData.monitoring_equipment_id || null : null, antenna_type: formData.technology === "wireless" ? formData.antenna_type || null : null, management_ip: formData.technology === "wireless" ? formData.management_ip || null : null };
-    const headers = { Authorization: `Bearer ${token}` }; if (editingPrimary) await axios.patch(`${api}/clients/${clientId}/service`, payload, { headers }); else if (service) await axios.patch(`${api}/clients/${clientId}/services/${service.service_id}`, payload, { headers }); else await axios.post(`${api}/clients/${clientId}/services`, payload, { headers }); onSaved?.(); onClose?.();
+    const headers = { Authorization: `Bearer ${token}` }; if (editingPrimary) await axios.patch(`${api}/clients/${clientId}/service`, payload, { headers }); else if (service) await axios.patch(`${api}/clients/${clientId}/services/${service.service_id}`, payload, { headers }); else await axios.post(`${api}/clients/${clientId}/services`, payload, { headers });
+    onSaved?.({ type: editingPrimary || service ? "edit" : "create", service: { ...(service || {}), ...formData } }); onClose?.();
   } catch (err) { setError(err.response?.data?.detail || err.message || "Error al guardar el servicio."); } finally { setSaving(false); } };
 
   if (loading) return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"><div className="rounded-2xl border border-slate-700 bg-slate-900 p-8 text-center"><Loader className="mx-auto mb-3 h-6 w-6 animate-spin text-cyan-300" /><p className="text-sm text-slate-400">Cargando servicio…</p></div></div>;
@@ -83,14 +84,15 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
   const [services, setServices] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [modalService, setModalService] = useState(undefined);
   const loadServices = async () => { setLoading(true); setError(""); try { const r = await axios.get(`${api}/clients/${clientId}/services`, { headers: { Authorization: `Bearer ${token}` } }); setServices(r.data || []); } catch (err) { setError(err.response?.data?.detail || "No se pudieron cargar los servicios del cliente."); } finally { setLoading(false); } };
   useEffect(() => { loadServices(); }, [api, clientId, token]);
-  const afterSaved = () => { setModalService(undefined); loadServices(); onSave?.(); onSaveSuccess?.(); };
+  const afterSaved = (event = {}) => { setModalService(undefined); loadServices(); onSave?.(); onSaveSuccess?.(event); };
   const deleteService = async (s) => {
     if (s.is_primary) return;
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      let deleteUrl = `${api}/clients/${clientId}/services/${s.service_id}`;
+      const deleteUrl = `${api}/clients/${clientId}/services/${s.service_id}`;
+      let deleteResult;
       try {
-        await axios.delete(deleteUrl, { headers });
+        deleteResult = await axios.delete(deleteUrl, { headers });
       } catch (err) {
         const detail = err.response?.data?.detail;
         if (err.response?.status !== 409 || detail?.code !== "PENDING_INVOICES") throw err;
@@ -98,11 +100,11 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
         const total = Number(detail.total || 0).toFixed(2);
         const confirmed = window.confirm(`ADVERTENCIA\n\nSe eliminará el servicio ${s.is_primary ? "" : "adicional"} y también ${count} factura(s) pendiente(s) por S/. ${total}.\n\nEsta acción no elimina facturas pagadas y no se puede deshacer.\n\n¿Deseas continuar?`);
         if (!confirmed) return;
-        await axios.delete(`${deleteUrl}?confirm_delete_invoices=true`, { headers });
+        deleteResult = await axios.delete(`${deleteUrl}?confirm_delete_invoices=true`, { headers });
       }
       await loadServices();
       onSave?.();
-      onSaveSuccess?.();
+      onSaveSuccess?.({ type: "delete", service: s, result: deleteResult?.data || {} });
     } catch (err) {
       setError(err.response?.data?.detail?.message || err.response?.data?.detail || "No se pudo eliminar el servicio.");
     }
