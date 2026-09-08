@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-08 — versión 1.1.1: Log operativo con cuenta autenticada.
+ * Actualización: 2026-09-08 — versión 1.1.3: el Log distingue creación/edición de eliminación de servicios.
  * Función: ficha operativa del cliente con pestañas editables: Resumen, Servicio, Facturación, Email y SMS y Log.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
  * Entrega a: Clients.jsx y al operador una ficha editable y un historial de acciones.
@@ -106,9 +106,29 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
     finally { setSummarySaving(false); }
   };
 
-  const handleServiceSaveSuccess = async () => {
-    try { await reloadClient(); await logActivity("Servicio editado", "Se actualizó la configuración del servicio del cliente y se sincronizó con el equipo de red."); onClientUpdated?.(); }
-    catch (err) { console.error("Error recargando cliente:", err); }
+  const handleServiceSaveSuccess = async (event = {}) => {
+    try {
+      await reloadClient();
+      if (event.type === "delete") {
+        // La eliminación ya genera una auditoría detallada en backend. No crear aquí un “Servicio editado” genérico.
+        onClientUpdated?.();
+        return;
+      }
+      const service = event.service || {};
+      const action = event.type === "create" ? "Servicio creado" : "Servicio editado";
+      const detail = [
+        `${event.type === "create" ? "Se creó" : "Se actualizó"} el servicio${service.plan_name ? ` del plan ${service.plan_name}` : ""}.`,
+        `Precio: ${money(service.plan_price)}.`,
+        `Conexión: ${service.connection_type || "sin especificar"}.`,
+        `Tecnología: ${service.technology === "wireless" ? "Inalámbrico" : service.technology === "fiber" ? "Fibra óptica" : "sin especificar"}.`,
+        `IP: ${service.ip_address || "sin IP"}.`,
+        `Usuario PPPoE: ${service.pppoe_user || "sin usuario"}.`,
+        `MikroTik: ${service.router_name || service.router_id || "sin asignar"}.`,
+        `Zona: ${service.zone_name || service.zone_id || "sin zona"}.`,
+      ].join(" ");
+      await logActivity(action, detail);
+      onClientUpdated?.();
+    } catch (err) { console.error("Error recargando cliente:", err); }
   };
   const handleBalanceUpdate = async () => {
     try { await reloadClient(); await logActivity("Facturación actualizada", "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."); }
