@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-08 — feedback visual inmediato al comprobar actualizaciones.
+ * Actualización: 2026-09-08 — feedback visual reforzado al comprobar actualizaciones.
  * Función: consulta, presenta e inicia actualizaciones del panel, mostrando claramente cuando la comprobación está en curso.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito.
@@ -103,14 +103,16 @@ export default function UpdateCenter() {
           <button
             onClick={check}
             disabled={loading || installing || checking}
-            className={(checking ? "bg-cyan-500/10 border-cyan-400/60 text-cyan-200 animate-pulse " : "") + "rounded-xl border px-4 py-2.5 text-sm transition-all duration-150 active:scale-95 disabled:opacity-50"}
+            aria-busy={checking}
+            className={(checking ? "relative overflow-hidden border-cyan-300/80 bg-cyan-500/20 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.28)] animate-pulse " : "border-slate-600 bg-slate-900 text-slate-200 hover:border-cyan-400/60 hover:bg-slate-800 ") + "min-w-[150px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-wait disabled:opacity-80"}
           >
-            <RefreshCw className={(checking ? "animate-spin " : "") + "mr-1 inline w-4 h-4"} />
+            <RefreshCw className={(checking ? "animate-spin " : "") + "mr-2 inline w-4 h-4 align-[-3px]"} />
             {checking ? "Buscando actualización…" : "Comprobar"}
+            {checking && <span className="ml-1 inline-flex w-5 justify-start"><span className="animate-bounce">.</span><span className="animate-bounce [animation-delay:120ms]">.</span><span className="animate-bounce [animation-delay:240ms]">.</span></span>}
           </button>
           <button onClick={() => setConfirmOpen(true)} disabled={!status?.available || installing || checking} className="flex-1 rounded-xl bg-cyan-500 py-2.5 text-sm font-bold text-slate-950 transition-all duration-150 active:scale-[0.98] disabled:opacity-50">{installing ? "Actualizando…" : "Actualizar"}</button>
         </div>
-        {checking && <p className="mt-2 text-center text-xs text-cyan-300 animate-pulse">Consultando el servidor y verificando si existe una nueva versión…</p>}
+        {checking && <div className="mt-3 rounded-lg border border-cyan-400/20 bg-cyan-400/5 px-3 py-2 text-center text-xs text-cyan-200"><span className="mr-1 inline-block h-2 w-2 animate-ping rounded-full bg-cyan-300" /> Consultando el servidor y verificando si existe una nueva versión…</div>}
       </section>
     </div>, document.body
   ) : null;
