@@ -1,12 +1,14 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-08 — versión 1.0.28, selector de ubicación integrado.
- * Función: define la versión y changelog que el frontend muestra y que el backend compara.
+ * Actualización: 2026-09-08 — versión 1.0.29, detección de actualizaciones por commit.
+ * Función: define la versión y changelog que el frontend muestra y que el backend consulta.
  * Recibe de: no recibe datos; UpdateCenter.jsx y system_update/router.py leen este archivo.
  * Entrega a: el centro de actualizaciones PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.0.28";
+export const PANEL_VERSION = "1.0.29";
 export const CHANGELOG = [
+  { type: "Corrección", text: "El centro de actualizaciones detecta cualquier cambio publicado en main por diferencia de commit, aunque version.js no haya sido modificado." },
+  { type: "Mejora", text: "La versión publicada sigue mostrando el número y changelog correspondientes al código remoto." },
   { type: "Mejora", text: "La ubicación del cliente abre un selector de Google Maps dentro de MikroHub para mover el marcador, seleccionar el punto y guardar latitud y longitud." },
   { type: "Corrección", text: "La ficha del cliente marca Nombre, DNI/RUC y Celular / WhatsApp como datos obligatorios antes de guardar." },
   { type: "Mejora", text: "Guardar Resumen cierra la ficha inmediatamente después de una actualización exitosa." },
