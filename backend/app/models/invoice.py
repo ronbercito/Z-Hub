@@ -1,10 +1,10 @@
 """
 Archivo: backend/app/models/invoice.py
-Función: Tabla `invoices` — facturas / recibos mensuales de cada abonado con su
-         estado (unpaid, paid, overdue, canceled) y los datos del pago registrado
-         (método Yape/Plin/BCP/Efectivo, referencia, operador).
+Actualización: 2026-09-08 — vincula cada factura opcionalmente con un servicio del cliente.
+Función: Tabla `invoices` — facturas / recibos mensuales de cada abonado con su estado y pago,
+         permitiendo identificar si corresponde al servicio principal o a un servicio adicional.
 Trabaja con: backend/app/routers/facturacion/router.py, backend/app/models/client.py,
-             backend/app/routers/inicio/router.py (KPIs del dashboard)
+             backend/app/models/client_service.py, backend/app/routers/clientes/services.py
 """
 from sqlalchemy import Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -18,6 +18,7 @@ class Invoice(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     invoice_number: Mapped[str] = mapped_column(String(40), index=True)
     client_id: Mapped[str] = mapped_column(String(36), index=True)
+    service_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     client_name: Mapped[str] = mapped_column(String(150), default="")
     client_dni_ruc: Mapped[str] = mapped_column(String(20), default="")
     client_address: Mapped[str] = mapped_column(String(255), default="")
