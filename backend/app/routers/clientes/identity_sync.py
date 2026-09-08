@@ -64,7 +64,7 @@ async def _sync_router_identity(
         if client.connection_type == "PPPoE" and client.pppoe_user:
             secret = next((item for item in secrets if str(item.get("name") or "") == client.pppoe_user), None)
             if secret and secret.get("id"):
-                await mikrotik.set("ppp", "secret", **{".id": secret["id"], "comment": f"{client.full_name} | {client.dni_ruc}"})
+                await mikrotik.set("ppp", "secret", **{".id": secret["id"], "comment": f"{client.full_name} | {client.plan_name}"})
         elif client.ip_address:
             queue = next((item for item in queues if _queue_matches(item, dni_values, old_name, client.ip_address, True)), None)
             if queue and queue.get("id"):
@@ -79,12 +79,13 @@ async def _sync_router_identity(
     for service_index, row in enumerate(services, start=2):
         if row.router_id != router_id:
             continue
+        service_comment = f"{client.full_name} | {row.plan_name} | serv {service_index}"
         if row.connection_type == "PPPoE" and row.pppoe_user:
             secret = next((item for item in secrets if str(item.get("name") or "") == row.pppoe_user), None)
             if secret and secret.get("id"):
                 await mikrotik.set(
                     "ppp", "secret",
-                    **{".id": secret["id"], "comment": f"{client.full_name} | {client.dni_ruc} | serv {service_index}"},
+                    **{".id": secret["id"], "comment": service_comment},
                 )
             continue
         if not row.ip_address:
@@ -97,7 +98,7 @@ async def _sync_router_identity(
                 **{
                     ".id": queue["id"],
                     "name": desired_name,
-                    "comment": f"{client.full_name} | {client.dni_ruc} | serv {service_index}",
+                    "comment": service_comment,
                 },
             )
 
