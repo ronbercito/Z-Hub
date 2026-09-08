@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/client_workspace/router.py
-Actualización: 2026-09-08 — registra actividades del editor con la cuenta autenticada.
+Actualización: 2026-09-08 — evita registrar el evento genérico de Facturación cuando ya existe auditoría específica.
 Función: registra comunicaciones, documentos y acciones operativas del editor de cliente.
 Recibe: ClientDetail.jsx, usuario autenticado y archivos multipart.
 Entrega: datos persistentes para las pestañas Email y SMS, Documentos y Log.
@@ -60,13 +60,23 @@ async def create_communication(client_id: str, data: CommunicationIn, db: AsyncS
 
 @router.post("/{client_id}/activity")
 async def create_activity(client_id: str, data: ActivityIn, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
-    """Registra una acción del editor usando la cuenta autenticada, sin aceptar operador desde el frontend."""
+    """Registra una acción del editor usando la cuenta autenticada.
+
+    Las acciones de Facturación ya generan auditoría específica desde sus endpoints.
+    El antiguo callback genérico 'Facturación actualizada' se ignora para evitar
+    duplicados y para que el Log conserve únicamente eventos descriptivos.
+    """
     await _client(db, client_id)
+    action = data.action.strip()
     detail = data.detail.strip()
+    if action == "Facturación actualizada" and (
+        not detail or detail == "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."
+    ):
+        return {"ok": True, "skipped": True, "reason": "La operación de Facturación se registra con detalle específico."}
     operator = user.get("name") or user.get("email") or "Sistema"
     if user.get("email"):
         detail = f"{detail} | Cuenta: {user['email']} | Rol: {user.get('role') or 'sin rol'}".strip(" |")
-    row = ClientActivity(client_id=client_id, action=data.action.strip(), detail=detail, operator_name=operator)
+    row = ClientActivity(client_id=client_id, action=action, detail=detail, operator_name=operator)
     db.add(row)
     await db.commit()
     await db.refresh(row)
