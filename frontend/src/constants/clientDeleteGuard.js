@@ -1,11 +1,10 @@
 /*
  * MikroHub — confirmaciones críticas de eliminación.
- * Actualización 2026-09-08: ventana visual roja reutilizable para eliminar clientes y servicios adicionales.
+ * Actualización 2026-09-08: versión 1.1.7 — corrección del modal de eliminación de servicio con facturación pendiente.
  * Función: presenta confirmaciones críticas con diseño consistente y evita los diálogos nativos del navegador.
  * Clientes: recibe un resumen ya validado desde Clients.jsx; no consulta ni intercepta Axios.
  * Servicios: intercepta únicamente los window.confirm() generados por ClientServiceEditor para reemplazarlos por el mismo patrón visual.
  */
-import axios from "axios";
 
 const DELETE_CLIENT_RE = /\/clients\/([^/?#]+)\/?$/;
 const CLIENT_DELETE_CONFIRM_RE = /¿Estás seguro de eliminar el cliente/i;
@@ -107,7 +106,9 @@ function parseServiceDeleteMessage(message) {
   const text = String(message || "");
   const secondStep = /SEGUNDA ADVERTENCIA/i.test(text);
   if (secondStep) {
-    const pending = text.match(/tiene\s+(\d+)\s+factura\(s\)\s+pendiente\(s\)\s+por\s+un\s+total\s+de\s+S\/.\s*([\d.,]+)/i);
+    // ClientServiceEditor envía actualmente "por S/. 10.00"; también aceptamos
+    // "por un total de S/. 10.00" para mantener compatibilidad con mensajes previos.
+    const pending = text.match(/tiene\s+(\d+)\s+factura\(s\)\s+pendiente\(s\)\s+por\s+(?:un\s+total\s+de\s+)?S\/.\s*([\d.,]+)/i);
     return {
       secondStep: true,
       count: pending ? Number(pending[1]) : null,
@@ -133,8 +134,8 @@ function showServiceDeleteModal(message) {
     document.getElementById("mikrohub-service-delete-modal")?.remove();
     const overlay = document.createElement("div");
     overlay.id = "mikrohub-service-delete-modal";
-    const title = parsed.secondStep ? "Confirmación de facturas" : "Advertencia prioritaria";
-    const subtitle = parsed.secondStep ? "Eliminación del servicio y facturación pendiente" : "Eliminación definitiva del servicio adicional";
+    const title = parsed.secondStep ? "Confirmación de eliminación del servicio" : "Advertencia prioritaria";
+    const subtitle = parsed.secondStep ? "El servicio tiene facturación pendiente asociada" : "Eliminación definitiva del servicio adicional";
     const intro = parsed.secondStep
       ? "Este servicio tiene facturación pendiente asociada. Revisa el impacto antes de continuar."
       : "Esta acción eliminará definitivamente el servicio seleccionado del cliente.";
