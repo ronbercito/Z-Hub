@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/facturacion/balances.py
-Actualización: 2026-09-08 — motor aislado para saldos a favor y deudas del cliente.
+Actualización: 2026-09-08 — corrige la aplicación de deuda completa a la siguiente factura.
 Función: registra movimientos firmados y aplica automáticamente créditos o deudas a facturas nuevas.
 Trabaja con: ClientBalance, Invoice, Client y las rutas de facturación del cliente.
 """
@@ -50,7 +50,7 @@ async def apply_balances_to_invoice(
     """Aplica saldo pendiente a una factura recién generada.
 
     Crédito positivo: paga la factura total o parcialmente.
-    Deuda negativa: se suma al monto de la factura y se consume la deuda.
+    Deuda negativa: se suma completa al monto de la factura y se consume la deuda.
     Cada aplicación queda registrada como movimiento inverso ligado a la factura destino.
     """
     active = (await db.execute(
@@ -65,17 +65,16 @@ async def apply_balances_to_invoice(
 
     credit_applied = 0.0
     debt_added = 0.0
-    remaining_due = max(0.0, float(invoice.amount or 0) - float(invoice.paid_amount or 0))
 
-    # Primero se consolida cualquier deuda pendiente en el nuevo recibo.
+    # Toda deuda pendiente se traslada a la nueva factura, aunque sea mayor que su importe original.
     for source in active:
-        if source.remaining_amount >= 0 or abs(source.remaining_amount) < 0.005:
+        if float(source.remaining_amount or 0) >= 0 or abs(float(source.remaining_amount or 0)) < 0.005:
             continue
-        debt = min(abs(float(source.remaining_amount)), max(0.0, remaining_due))
+        debt = abs(float(source.remaining_amount or 0))
         if debt <= 0:
-            break
+            continue
         invoice.amount = round(float(invoice.amount or 0) + debt, 2)
-        source.remaining_amount = round(float(source.remaining_amount) + debt, 2)
+        source.remaining_amount = 0.0
         debt_added += debt
         application = ClientBalance(
             client_id=invoice.client_id,
@@ -88,13 +87,11 @@ async def apply_balances_to_invoice(
             operator_name=operator_name or "Sistema",
         )
         db.add(application)
-        remaining_due += debt
-        remaining_due = round(remaining_due, 2)
 
-    # Luego se usa el crédito disponible para pagar el nuevo recibo.
+    # Después se utiliza el crédito disponible sobre el total final de la factura.
     remaining_due = max(0.0, float(invoice.amount or 0) - float(invoice.paid_amount or 0))
     for source in active:
-        if source.remaining_amount <= 0 or remaining_due <= 0:
+        if float(source.remaining_amount or 0) <= 0 or remaining_due <= 0:
             continue
         credit = min(float(source.remaining_amount), remaining_due)
         if credit <= 0:
