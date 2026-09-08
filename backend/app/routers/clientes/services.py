@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios adicionales con aprovisionamiento MikroTik, recibo adelantado por servicio, consulta ONU optimizada y validación cruzada de recursos.
+Actualización: 2026-09-08 — al eliminar un servicio adicional se detectan y eliminan sus facturas pendientes con confirmación explícita.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
 Trabaja con: backend/app/models/client_service.py, clientes/router.py, facturación, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
@@ -8,8 +8,8 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -50,9 +50,7 @@ def _clean_dni(value: str) -> str:
 
 async def _service_number(db: AsyncSession, client_id: str, service_id: Optional[str] = None) -> int:
     """Devuelve 2 para el primer servicio adicional, 3 para el segundo, etc.; el principal es el servicio 1."""
-    rows = (await db.execute(
-        select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.asc(), ClientService.id.asc())
-    )).scalars().all()
+    rows = (await db.execute(select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.asc(), ClientService.id.asc()))).scalars().all()
     if service_id:
         for index, row in enumerate(rows, start=2):
             if row.id == service_id:
@@ -90,9 +88,7 @@ async def _queue_name_for_new_service(mikrotik, dni: str) -> str:
 
 async def _purge_orphan_services(db: AsyncSession) -> None:
     """Elimina filas de servicios cuyo cliente ya no existe para que nunca vuelvan a reservar IP/NAP."""
-    rows = (await db.execute(
-        select(ClientService).where(~ClientService.client_id.in_(select(Client.id)))
-    )).scalars().all()
+    rows = (await db.execute(select(ClientService).where(~ClientService.client_id.in_(select(Client.id))))).scalars().all()
     if rows:
         for row in rows:
             await db.delete(row)
@@ -108,31 +104,13 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     temp.dni_ruc = client.dni_ruc
     await _attach_plan_router(db, temp)
     if temp.ip_address:
-        client_ip = await db.scalar(select(Client.id).where(
-            Client.id != client_id,
-            Client.ipv4_network_id == temp.ipv4_network_id,
-            Client.ip_address == temp.ip_address,
-        ))
-        service_ip = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(
-            ClientService.ipv4_network_id == temp.ipv4_network_id,
-            ClientService.ip_address == temp.ip_address,
-            Client.id != client_id,
-            ClientService.id != (current_service_id or "__none__"),
-        ))
+        client_ip = await db.scalar(select(Client.id).where(Client.id != client_id, Client.ipv4_network_id == temp.ipv4_network_id, Client.ip_address == temp.ip_address))
+        service_ip = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(ClientService.ipv4_network_id == temp.ipv4_network_id, ClientService.ip_address == temp.ip_address, Client.id != client_id, ClientService.id != (current_service_id or "__none__")))
         if client_ip or service_ip:
             raise HTTPException(status_code=422, detail="La IP seleccionada ya está asignada a otro cliente o servicio.")
     if temp.nap_box_id and temp.nap_port is not None:
-        client_port = await db.scalar(select(Client.id).where(
-            Client.id != client_id,
-            Client.nap_box_id == temp.nap_box_id,
-            Client.nap_port == temp.nap_port,
-        ))
-        service_port = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(
-            ClientService.nap_box_id == temp.nap_box_id,
-            ClientService.nap_port == temp.nap_port,
-            Client.id != client_id,
-            ClientService.id != (current_service_id or "__none__"),
-        ))
+        client_port = await db.scalar(select(Client.id).where(Client.id != client_id, Client.nap_box_id == temp.nap_box_id, Client.nap_port == temp.nap_port))
+        service_port = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(ClientService.nap_box_id == temp.nap_box_id, ClientService.nap_port == temp.nap_port, Client.id != client_id, ClientService.id != (current_service_id or "__none__")))
         if client_port or service_port:
             raise HTTPException(status_code=422, detail=f"El puerto NAP {temp.nap_port} ya está ocupado por otro cliente o servicio.")
     return temp
@@ -195,7 +173,6 @@ async def _refresh_optical_power(db: AsyncSession, rows: list[ClientService]) ->
     olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
     if not olts:
         return
-
     async def find_power(row: ClientService):
         async def query_olt(olt_router: Router):
             try:
@@ -214,7 +191,6 @@ async def _refresh_optical_power(db: AsyncSession, rows: list[ClientService]) ->
                 row.optical_power_dbm = power
                 return True
         return False
-
     changed = any(await asyncio.gather(*(find_power(row) for row in fiber_rows)))
     if changed:
         await db.commit()
@@ -299,11 +275,29 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
 
 
 @router.delete("/{client_id}/services/{service_id}")
-async def delete_client_service(client_id: str, service_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+async def delete_client_service(client_id: str, service_id: str, confirm_delete_invoices: bool = Query(False), db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Elimina el servicio y, si el operador lo confirma, sus facturas pendientes no pagadas."""
     client = await _get_visible_client(db, client_id, current_user)
     row = await db.get(ClientService, service_id)
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
+
+    pending_invoices = (await db.execute(
+        select(Invoice).where(
+            Invoice.service_id == service_id,
+            Invoice.status.in_(["unpaid", "overdue"]),
+            Invoice.paid_amount <= 0,
+        )
+    )).scalars().all()
+    if pending_invoices and not confirm_delete_invoices:
+        total = round(sum(float(invoice.amount or 0) for invoice in pending_invoices), 2)
+        raise HTTPException(status_code=409, detail={
+            "code": "PENDING_INVOICES",
+            "message": f"Este servicio tiene {len(pending_invoices)} factura(s) pendiente(s) por S/. {total:.2f}.",
+            "count": len(pending_invoices),
+            "total": total,
+        })
+
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
     if router_obj and router_obj.device_type == "mikrotik" and router_obj.password:
         try:
@@ -312,8 +306,17 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
                 if row.ip_address: await _remove_service_queue(mikrotik, client.dni_ruc, row.ip_address)
         except mt.MikroTikError as exc:
             raise HTTPException(status_code=502, detail=f"No se pudo eliminar el servicio de MikroTik: {exc}")
-    await db.delete(row); await db.commit()
-    return {"ok": True}
+
+    deleted_invoice_count = len(pending_invoices)
+    if pending_invoices:
+        await db.execute(delete(Invoice).where(Invoice.id.in_([invoice.id for invoice in pending_invoices])))
+    await db.delete(row)
+    await db.flush()
+    remaining = (await db.execute(select(Invoice).where(Invoice.client_id == client.id, Invoice.status.in_(["unpaid", "overdue"])))) .scalars().all()
+    client.unpaid_invoices_count = len(remaining)
+    client.balance_due = round(sum(float(invoice.amount or 0) for invoice in remaining), 2)
+    await db.commit()
+    return {"ok": True, "deleted_invoices": deleted_invoice_count}
 
 
 @router.get("/{client_id}/services/{service_id}")
