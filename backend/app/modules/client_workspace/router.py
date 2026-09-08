@@ -1,6 +1,6 @@
 """Archivo: backend/app/modules/client_workspace/router.py
-Actualización: 2026-09-07 — crea API de comunicaciones y documentos del editor de cliente.
-Función: registra comunicaciones y adjunta/entrega documentos con control de acceso del cliente.
+Actualización: 2026-09-08 — registra actividades del editor con la cuenta autenticada.
+Función: registra comunicaciones, documentos y acciones operativas del editor de cliente.
 Recibe: ClientDetail.jsx, usuario autenticado y archivos multipart.
 Entrega: datos persistentes para las pestañas Email y SMS, Documentos y Log.
 """
@@ -30,6 +30,10 @@ class CommunicationIn(BaseModel):
     subject: str = ""
     message: str = Field(min_length=1, max_length=10000)
 
+class ActivityIn(BaseModel):
+    action: str = Field(min_length=1, max_length=80)
+    detail: str = Field(default="", max_length=4000)
+
 async def _client(db: AsyncSession, client_id: str) -> Client:
     row = await db.get(Client, client_id)
     if not row:
@@ -37,7 +41,7 @@ async def _client(db: AsyncSession, client_id: str) -> Client:
     return row
 
 def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: dict):
-    db.add(ClientActivity(client_id=client_id, action=action, detail=detail, operator_name=user.get("name") or "Sistema"))
+    db.add(ClientActivity(client_id=client_id, action=action, detail=detail, operator_name=user.get("name") or user.get("email") or "Sistema"))
 
 @router.get("/{client_id}/communications")
 async def communications(client_id: str, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -52,6 +56,20 @@ async def create_communication(client_id: str, data: CommunicationIn, db: AsyncS
     db.add(row)
     _activity(db, client_id, "Comunicación registrada", f"{data.channel.upper()}: {data.subject or data.message[:80]}", user)
     await db.commit()
+    return row.to_dict()
+
+@router.post("/{client_id}/activity")
+async def create_activity(client_id: str, data: ActivityIn, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    """Registra una acción del editor usando la cuenta autenticada, sin aceptar operador desde el frontend."""
+    await _client(db, client_id)
+    detail = data.detail.strip()
+    operator = user.get("name") or user.get("email") or "Sistema"
+    if user.get("email"):
+        detail = f"{detail} | Cuenta: {user['email']} | Rol: {user.get('role') or 'sin rol'}".strip(" |")
+    row = ClientActivity(client_id=client_id, action=data.action.strip(), detail=detail, operator_name=operator)
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
     return row.to_dict()
 
 @router.get("/{client_id}/documents")
