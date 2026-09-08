@@ -27,12 +27,17 @@ function installClientDeleteGuard() {
 
     const clientId = match[1];
     try {
-      const baseURL = config.baseURL || "";
+      const configuredBase = config.baseURL || "";
+      const originalUrl = String(config.url || "");
+      const apiRoot = originalUrl.includes("/clients/")
+        ? originalUrl.replace(DELETE_CLIENT_RE, "")
+        : configuredBase;
       const headers = config.headers || {};
+      const makeUrl = (suffix) => `${apiRoot}/clients/${clientId}${suffix}`;
       const [clientRes, servicesRes, invoicesRes] = await Promise.all([
-        originalRequest({ method: "get", baseURL, url: `/clients/${clientId}`, headers }),
-        originalRequest({ method: "get", baseURL, url: `/clients/${clientId}/services`, headers }),
-        originalRequest({ method: "get", baseURL, url: `/clients/${clientId}/invoices`, headers })
+        originalRequest({ method: "get", url: makeUrl(""), headers }),
+        originalRequest({ method: "get", url: makeUrl("/services"), headers }),
+        originalRequest({ method: "get", url: makeUrl("/invoices"), headers })
       ]);
 
       const clientName = clientRes.data?.full_name || clientId;
