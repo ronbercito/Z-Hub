@@ -1,12 +1,12 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-08 — versión 1.0.41, sincronización de identidad con MikroTik.
+ * Actualización: 2026-09-08 — versión 1.0.42, comentarios de colas con nombre y plan.
  * Función: define la versión y changelog que el frontend muestra y que el backend consulta.
  * Recibe de: no recibe datos; UpdateCenter.jsx y system_update/router.py leen este archivo.
  * Entrega a: el centro de actualizaciones PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.0.41";
+export const PANEL_VERSION = "1.0.42";
 export const CHANGELOG = [
-  { type: "Corrección", text: "Al cambiar el nombre o DNI de un cliente desde Resumen, se actualiza la misma cola simple de MikroTik sin crear duplicados." },
-  { type: "Mejora", text: "Los servicios adicionales conservan la identificación serv 2, serv 3, etc. y actualizan su comentario con el nuevo nombre y DNI." },
+  { type: "Corrección", text: "Los comentarios de las colas simples usan ahora NOMBRE | PLAN, sin mostrar el DNI en el comentario." },
+  { type: "Mejora", text: "Los servicios adicionales usan NOMBRE | PLAN | serv 2, serv 3, etc.; el DNI continúa identificando la cola en su nombre." },
 ];
