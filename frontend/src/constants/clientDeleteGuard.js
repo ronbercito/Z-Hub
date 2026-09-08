@@ -1,7 +1,7 @@
 /*
  * MikroHub — confirmación de eliminación de clientes.
- * Actualización 2026-09-08: la confirmación usa el resumen autoritativo de backend
- * sin reutilizar respuestas antiguas del navegador antes de enviar el DELETE.
+ * Actualización 2026-09-08: conserva el prefijo /api de la solicitud original al consultar
+ * el resumen autoritativo, sin reutilizar respuestas antiguas del navegador.
  * Función: modal crítico; no usa confirm() nativo para decidir la eliminación.
  */
 import axios from "axios";
@@ -121,15 +121,14 @@ function installClientDeleteGuard() {
     const clientId = match[1];
     try {
       const originalUrl = String(config.url || "");
-      const isAbsolute = /^https?:\/\//i.test(originalUrl);
-      const base = (config.baseURL || axios.defaults.baseURL || "").replace(/\/$/, "");
-      const apiRoot = isAbsolute ? originalUrl.replace(DELETE_CLIENT_RE, "") : base;
+      // Construye desde la URL DELETE ya comprobada: conserva /api aunque Axios no tenga baseURL.
+      const summaryUrl = originalUrl.replace(/\/?$/, "/deletion-summary");
       const headers = config.headers || {};
 
       // La base de datos es la única fuente de verdad: evita contar listas React vacías o respuestas almacenadas.
       const summaryRes = await originalRequest({
         method: "get",
-        url: `${apiRoot}/clients/${clientId}/deletion-summary`,
+        url: summaryUrl,
         headers,
         params: { _delete_check: Date.now() },
       });
