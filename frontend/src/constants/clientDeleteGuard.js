@@ -1,9 +1,13 @@
 /*
  * MikroHub — confirmación de eliminación de clientes.
- * Actualización 2026-09-08: la confirmación se abre directamente desde Clients.jsx
- * y recibe los datos de las mismas APIs que alimentan Servicios y Facturación.
- * Función: modal crítico reutilizable; no intercepta Axios ni usa confirm() nativo.
+ * Actualización 2026-09-08: la confirmación consulta directamente las mismas APIs
+ * que alimentan las pestañas Servicios y Facturación antes de enviar el DELETE.
+ * Función: modal crítico; no usa confirm() nativo para decidir la eliminación.
  */
+import axios from "axios";
+
+const DELETE_CLIENT_RE = /\/clients\/([^/?#]+)\/?$/;
+const CLIENT_DELETE_CONFIRM_RE = /¿Estás seguro de eliminar el cliente/i;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -97,3 +101,66 @@ export function showDeleteModal({ clientName, services = [], pendingCount = 0, p
     setTimeout(() => input.focus(), 0);
   });
 }
+
+function installClientDeleteGuard() {
+  if (typeof window === "undefined" || window.__mikrohubClientDeleteGuard) return;
+  window.__mikrohubClientDeleteGuard = true;
+
+  const nativeConfirm = window.confirm.bind(window);
+  window.confirm = (message) => {
+    if (CLIENT_DELETE_CONFIRM_RE.test(String(message || ""))) return true;
+    return nativeConfirm(message);
+  };
+
+  const originalRequest = axios.request.bind(axios);
+  axios.interceptors.request.use(async (config) => {
+    if ((config.method || "").toLowerCase() !== "delete" || config.__mikrohubDeleteConfirmed) return config;
+    const match = String(config.url || "").match(DELETE_CLIENT_RE);
+    if (!match) return config;
+
+    const clientId = match[1];
+    try {
+      const originalUrl = String(config.url || "");
+      const isAbsolute = /^https?:\/\//i.test(originalUrl);
+      const base = (config.baseURL || axios.defaults.baseURL || "").replace(/\/$/, "");
+      const apiRoot = isAbsolute ? originalUrl.replace(DELETE_CLIENT_RE, "") : base;
+      const headers = config.headers || {};
+
+      const [servicesRes, invoicesRes, clientRes] = await Promise.all([
+        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}/services`, headers }),
+        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}/invoices`, headers }),
+        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}`, headers }),
+      ]);
+
+      const services = Array.isArray(servicesRes.data) ? servicesRes.data : [];
+      const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
+      const client = clientRes.data || {};
+      const pending = invoices.filter((item) => ["unpaid", "overdue"].includes(String(item.status || "").toLowerCase()));
+      const pendingCount = pending.length;
+      const pendingTotal = Math.round(pending.reduce((sum, item) => {
+        const amount = Number(item.amount || 0);
+        const paid = Number(item.paid_amount || 0);
+        return sum + Math.max(0, amount - paid);
+      }, 0) * 100) / 100;
+      const clientName = client.full_name || window.__mikrohubPendingDeleteClientName || "Cliente";
+      const priority = services.length > 1 && pendingCount > 0;
+
+      if (!await showDeleteModal({ clientName, services, pendingCount, pendingTotal, priority })) {
+        const error = new Error("Eliminación cancelada por el operador.");
+        error.__mikrohubDeleteCancelled = true;
+        throw error;
+      }
+    } catch (error) {
+      if (error.__mikrohubDeleteCancelled) throw error;
+      console.error("MikroHub: no se pudo verificar servicios y facturación", error);
+      const safeError = new Error("No se pudo verificar la información del cliente. Eliminación cancelada por seguridad.");
+      safeError.__mikrohubDeleteCancelled = true;
+      throw safeError;
+    }
+
+    config.__mikrohubDeleteConfirmed = true;
+    return config;
+  });
+}
+
+installClientDeleteGuard();
