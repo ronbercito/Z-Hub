@@ -75,7 +75,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.0.98**, correspondiente a la mejora visual de navegación de Facturación.
+- Versión funcional actual: **1.1.9**, correspondiente a la configuración de facturación individual por cliente y sus reglas de vencimiento/corte/mensajería.
 
 ---
 
@@ -375,7 +375,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.0.98
+PANEL_VERSION = 1.1.9
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -898,6 +898,165 @@ El cambio visual y la documentación están publicados en `main`. La versión 1.
 - Continuidad Saldos: `2a76212a080c52b6814dbffc74a4014ca67d4bdd`
 - Continuidad diaria: `7f7c9b203c25e3315038ae8e60d56c24d029740f`
 
-## Estado de cierre
+---
 
-**1.0.98 está publicada en `main` con backup y continuidad documentados. Falta únicamente la validación de build/servidor antes de declararla completamente validada.**
+## 20. Registro de continuidad — 2026-09-08 — Panel 1.1.9
+
+**Tipo:** Corrección funcional / Facturación por cliente / vencimiento / corte / mensajería.
+
+### Causa
+
+La pantalla `Ficha del cliente → Facturación → Configuración` estaba leyendo la configuración global del ISP (`/settings`) en lugar de las reglas específicas guardadas en el registro del abonado. El asistente de registro ya persistía las reglas en la tabla `clients`, por lo que los valores mostrados en la ficha no coincidían con los elegidos al registrar al cliente.
+
+### Datos que deben ser la fuente real del cliente
+
+La configuración individual utiliza:
+
+- `billing_type` — Prepago (adelantado) / Postpago (Vencido).
+- `billing_day` — día de pago.
+- `invoice_lead_days` — días de anticipación para crear factura.
+- `grace_days` — días de gracia.
+- `cut_after_months` — meses vencidos antes del corte.
+- `invoice_notification_channel` — canal del aviso de nueva factura.
+- `payment_reminder_channel` — canal de recordatorios.
+- `reminder_1_days`, `reminder_2_days`, `reminder_3_days` — días de cada recordatorio.
+
+### Solución
+
+La configuración de Facturación del cliente se alineó con los valores guardados durante el registro.
+
+#### Frontend
+
+`frontend/src/modules/clientes/editor/billing/ClientBilling.jsx`
+
+- Configuración deja de depender de la configuración global para representar las reglas del abonado.
+- La pantalla utiliza las mismas opciones conceptuales del registro.
+- Se muestra una previsión de emisión/vencimiento calculada con el día de pago y la anticipación del cliente.
+- Guardar configuración afecta al abonado y no reprovisiona el servicio técnico.
+
+#### Backend
+
+`backend/app/routers/facturacion/client_balances.py`
+
+- `GET /clients/{client_id}/billing-config` recupera la configuración individual.
+- `PATCH /clients/{client_id}/billing-config` permite actualizarla y registrar el cambio.
+
+`backend/app/routers/facturacion/router.py`
+
+- La generación mensual calcula la emisión restando `invoice_lead_days` al día de vencimiento configurado.
+- El vencimiento se calcula usando `billing_day` del abonado.
+- `mark-overdue` suma `grace_days` del cliente antes de cambiar una factura a `overdue`.
+
+`backend/app/routers/red/router.py`
+
+- `sync-cuts` usa `cut_after_months` del abonado.
+- El resultado informa qué regla individual se aplicó y qué clientes fueron omitidos por no alcanzar el número de meses requerido.
+
+### Flujo funcional
+
+```text
+Registro de abonado
+  ↓
+Paso Facturación
+  ↓
+Reglas guardadas en clients
+  ├── tipo
+  ├── día de pago
+  ├── anticipación
+  ├── gracia
+  ├── meses para corte
+  └── canales/días de mensajes
+        ↓
+Ficha del cliente
+  ↓
+Facturación → Configuración
+  ↓
+GET billing-config
+  ↓
+Mostrar exactamente las reglas del abonado
+  ↓
+Guardar cambios del abonado
+```
+
+### Reglas de fechas
+
+Para facturación mensual:
+
+```text
+vencimiento = próximo día de pago del abonado
+emisión = vencimiento - días de anticipación
+```
+
+Una factura pasa a vencida solo después de:
+
+```text
+fecha de vencimiento + días de gracia del abonado
+```
+
+El corte evalúa las facturas `overdue` del cliente y exige la cantidad de meses configurada en `cut_after_months`.
+
+### Mensajería
+
+Los canales y días de recordatorio quedan asociados al abonado. La interfaz conserva las opciones de aviso y recordatorio seleccionadas durante el registro.
+
+**Estado de integración:** la configuración individual queda persistida y disponible para el flujo de mensajería, pero el envío automático externo por proveedor no se declara terminado. El envío existente de factura por navegador continúa usando `mailto:`/`wa.me` hasta integrar un proveedor servidor y sus credenciales seguras.
+
+### Archivos modificados
+
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — configuración y cálculo de fechas en la ficha.
+- `backend/app/routers/facturacion/client_balances.py` — API de configuración individual del cliente.
+- `backend/app/routers/facturacion/router.py` — fechas de emisión/vencimiento y gracia individual.
+- `backend/app/routers/red/router.py` — regla individual de meses para corte.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.1.9 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB.md` — registro maestro de esta entrega.
+- `docs/CONTINUIDAD_MIKROHUB_1.1.9_FACTURACION_CLIENTE.md` — continuidad complementaria detallada.
+
+### Base de datos
+
+No se creó una tabla nueva. Se utilizan los campos de facturación ya existentes en `clients`.
+
+### Integraciones
+
+- MikroTik: la regla de corte usa la configuración individual del abonado.
+- Correo/WhatsApp: canales de notificación quedan asociados al cliente; el transporte automático servidor/proveedor sigue pendiente.
+
+### Pruebas
+
+- [x] revisión de los campos existentes en el modelo `Client`;
+- [x] revisión de que el registro del abonado ya guarda las reglas de facturación;
+- [x] revisión del propietario de la pantalla de configuración;
+- [x] revisión de rutas backend de facturación y corte;
+- [x] actualización de `PANEL_VERSION` a 1.1.9;
+- [x] actualización de esta bitácora maestra;
+- [x] continuidad complementaria creada;
+- [ ] build React — no ejecutado desde este entorno;
+- [ ] prueba funcional real en navegador con un abonado cuyos valores difieran de la configuración global;
+- [ ] prueba real de generación mensual y fechas;
+- [ ] prueba real de vencimiento después de gracia;
+- [ ] prueba real de corte contra MikroTik;
+- [ ] prueba real de transporte SMS/WhatsApp/Correo automático.
+
+### Resultado
+
+**Código y documentación de continuidad publicados en `main`.** La versión funcional declarada es 1.1.9. La lógica fue preparada para que la configuración de la ficha corresponda al abonado registrado y para que vencimiento, gracia y corte respeten esas reglas individuales.
+
+La validación real de build, navegador, servidor y transporte externo permanece pendiente y no se debe declarar como aprobada hasta ejecutarla.
+
+### Riesgos / pendientes
+
+1. Validar que un cliente con valores distintos de los globales muestre exactamente sus propios valores.
+2. Confirmar que la generación mensual produce emisión/vencimiento esperados para distintos días de pago y anticipación.
+3. Confirmar que `grace_days` impide el cambio prematuro a `overdue`.
+4. Confirmar que `cut_after_months` evita cortes antes del número de meses configurado.
+5. Integrar/probar proveedor servidor real para SMS/WhatsApp/correo si se requiere envío automático.
+6. Mantener la regla de no modificar datos existentes para corregir problemas visuales.
+
+### Commits
+
+- Cambios funcionales de configuración/fechas/corte: commits de la entrega 1.1.9 publicados en `main`.
+- Versión 1.1.9: `0b7a94f4f36b45f6b1425eb1f1d6c1069d9418ab`.
+- Continuidad complementaria: commit de creación de `docs/CONTINUIDAD_MIKROHUB_1.1.9_FACTURACION_CLIENTE.md`.
+
+### Estado de cierre
+
+**1.1.9 queda documentada en la bitácora maestra y en su continuidad complementaria. Pendiente únicamente la validación real de build/servidor/navegador y pruebas de transporte externo antes de considerarla completamente validada.**
