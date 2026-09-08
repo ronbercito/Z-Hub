@@ -1,7 +1,8 @@
 /**
  * Archivo: frontend/src/modules/red/components/CoordinatesPicker.jsx
- * Función: Selector visual de coordenadas con Google Maps. Permite mover el
- *          marcador o hacer clic en el mapa y devolver latitud/longitud al formulario.
+ * Actualización: 2026-09-08 — añade modo de mapa solo lectura para consultar ubicaciones desde el listado de abonados.
+ * Función: Selector visual de coordenadas con Google Maps. En modo edición permite mover
+ *          el marcador; en modo solo lectura muestra un minimapa de la ubicación guardada.
  */
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -28,7 +29,7 @@ const loadMaps = (apiKey) => new Promise((resolve, reject) => {
   document.head.appendChild(script);
 });
 
-export default function CoordinatesPicker({ title = "Ubicación del equipo", latitude, longitude, onApply, onClose }) {
+export default function CoordinatesPicker({ title = "Ubicación del equipo", latitude, longitude, onApply, onClose, readOnly = false }) {
   const { API, token } = useAuth();
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -51,16 +52,25 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
         }
         const maps = await loadMaps(key);
         if (cancelled || !mapRef.current) return;
-        const map = new maps.Map(mapRef.current, { center: initial, zoom: 16, mapTypeControl: false, streetViewControl: false });
-        const marker = new maps.Marker({ map, position: initial, draggable: true, title: title });
+        const map = new maps.Map(mapRef.current, {
+          center: initial,
+          zoom: 16,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: !readOnly,
+          zoomControl: !readOnly,
+        });
+        const marker = new maps.Marker({ map, position: initial, draggable: !readOnly, title: title });
         markerRef.current = marker;
-        const setFromPosition = (next) => {
-          const point = { lat: next.lat(), lng: next.lng() };
-          setPosition(point);
-          marker.setPosition(point);
-        };
-        marker.addListener("dragend", (event) => setFromPosition(event.latLng));
-        map.addListener("click", (event) => setFromPosition(event.latLng));
+        if (!readOnly) {
+          const setFromPosition = (next) => {
+            const point = { lat: next.lat(), lng: next.lng() };
+            setPosition(point);
+            marker.setPosition(point);
+          };
+          marker.addListener("dragend", (event) => setFromPosition(event.latLng));
+          map.addListener("click", (event) => setFromPosition(event.latLng));
+        }
         setMessage("");
       } catch {
         if (!cancelled) setMessage("No se pudo cargar el mapa. Revisa la clave de Google Maps y el dominio autorizado.");
@@ -68,19 +78,23 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
     };
     start();
     return () => { cancelled = true; };
-  }, [API, token]);
+  }, [API, token, readOnly, title]);
 
   return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-    <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+    <div className={`w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${readOnly ? "max-w-xl" : "max-w-2xl"}`}>
       <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-        <div><h3 className="flex items-center gap-2 font-bold text-slate-100"><MapPin className="h-5 w-5 text-cyan-400" /> {title}</h3><p className="mt-1 text-xs text-slate-500">Arrastra el marcador o haz clic en el mapa.</p></div>
+        <div><h3 className="flex items-center gap-2 font-bold text-slate-100"><MapPin className="h-5 w-5 text-cyan-400" /> {title}</h3><p className="mt-1 text-xs text-slate-500">{readOnly ? "Ubicación registrada del abonado." : "Arrastra el marcador o haz clic en el mapa."}</p></div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button>
       </div>
-      <div ref={mapRef} className="h-80 w-full bg-slate-950" />
+      <div ref={mapRef} className={`${readOnly ? "h-64" : "h-80"} w-full bg-slate-950`} />
       {message && <div className="border-t border-slate-800 p-5 text-center text-sm text-slate-400">{message}</div>}
       <div className="flex flex-col items-start justify-between gap-3 border-t border-slate-800 p-4 sm:flex-row sm:items-center">
         <p className="font-mono text-xs text-cyan-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</p>
-        <div className="flex gap-2"><button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button><button type="button" onClick={() => { onApply(position); onClose(); }} className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400">Usar estas coordenadas</button></div>
+        {readOnly ? (
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cerrar</button>
+        ) : (
+          <div className="flex gap-2"><button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button><button type="button" onClick={() => { onApply(position); onClose(); }} className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400">Usar estas coordenadas</button></div>
+        )}
       </div>
     </div>
   </div>;
