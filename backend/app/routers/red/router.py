@@ -1,22 +1,8 @@
 """
 Archivo: backend/app/routers/red/router.py
-Función: Gestión de equipos de red (/api/routers): CRUD de MikroTik / OLT y lectura en
-         vivo del RouterOS a través de la API:
-           POST /{id}/test-connection  -> conecta, lee identidad/versión/CPU/RAM y actualiza estado
-           POST /{id}/ping             -> latencia TCP al puerto API + ping ICMP desde el router
-           GET  /{id}/interfaces       -> interfaces con tráfico RX/TX en tiempo real
-           (las lecturas GET responden siempre 200 con {ok, data} o {ok:false, error})
-           GET  /{id}/pppoe/active | /pppoe/secrets | /pppoe/profiles
-           GET  /{id}/queues | /dhcp-leases | /address-list | /hotspot/users | /hotspot/active
-           POST /{id}/sync-plans       -> crea/actualiza PPP profiles de todos los planes
-           POST /{id}/pppoe/secrets/{name}/toggle, POST /{id}/address-list (add/remove)
-           POST /sync-cuts             -> aplica corte real a todos los clientes con deuda vencida
-           GET  /{id}/olt/{system|pon_optical|pon_stats|onu_list|onu_autofind|onu_optical|onu_detail}?pon=&onu=
-           POST /{id}/olt/onu/{authorize|reboot|deactivate|activate|delete}, POST /{id}/olt/command (consola)
-Trabaja con: backend/app/models/router.py, client.py, plan.py, invoice.py,
-             backend/app/integrations/olt/service.py, vsol.py,
-             backend/app/integrations/mikrotik/client.py, service.py,
-             frontend/src/modules/red/Network.jsx y sus componentes
+Actualización: 2026-09-08 — aplica la configuración global de meses vencidos al corte masivo.
+Función: Gestión de equipos de red (/api/routers), lectura MikroTik/OLT y corte real por mora.
+Trabaja con: backend/app/models/client.py, invoice.py, setting.py e integraciones MikroTik/OLT.
 """
 from typing import Optional
 
@@ -50,7 +36,6 @@ async def _router(db: AsyncSession, router_id: str) -> Router:
 
 
 async def _read(db: AsyncSession, router_id: str, reader):
-    """Abre la conexión al MikroTik, ejecuta `reader(mt_client)` y lanza MikroTikError si falla."""
     r = await _router(db, router_id)
     try:
         async with mt.connect(r) as client:
@@ -65,14 +50,12 @@ async def _read(db: AsyncSession, router_id: str, reader):
 
 
 async def _live(db: AsyncSession, router_id: str, reader):
-    """Respuesta uniforme de lectura en vivo: {ok, data} o {ok:false, error} (siempre HTTP 200)."""
     try:
         return {"ok": True, "data": await _read(db, router_id, reader)}
     except MikroTikError as e:
         return {"ok": False, "error": str(e), "data": []}
 
 
-# ---------- CRUD ----------
 @router.get("")
 async def list_routers(current: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(Router).order_by(Router.name))).scalars().all()
@@ -126,7 +109,6 @@ async def delete_router(router_id: str, db: AsyncSession = Depends(get_db)):
     return {"message": "Equipo eliminado"}
 
 
-# ---------- Conexión y estado ----------
 @router.get("/olt-profiles")
 async def olt_profiles():
     return [{"id": k, "label": v["label"]} for k, v in OLT_PROFILES.items()]
@@ -154,9 +136,7 @@ async def ping_router(router_id: str, target: Optional[str] = None, db: AsyncSes
         except MikroTikError as e:
             icmp = {"error": str(e)}
     await db.commit()
-    return {"router": r.name, "ip": r.ip_address, "port": r.cli_port, "latency_ms": latency,
-            "status": r.status, "remote_ping": icmp,
-            "packet_loss": "0%" if latency is not None else "100%"}
+    return {"router": r.name, "ip": r.ip_address, "port": r.cli_port, "latency_ms": latency, "status": r.status, "remote_ping": icmp, "packet_loss": "0%" if latency is not None else "100%"}
 
 
 @router.get("/{router_id}/resources")
@@ -245,11 +225,10 @@ async def hotspot_active(router_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/{router_id}/sync-plans")
 async def sync_plans(router_id: str, db: AsyncSession = Depends(get_db)):
     r = await _router(db, router_id)
-    plans = (await db.execute(select(Plan).where(Plan.is_active == True))).scalars().all()  # noqa: E712
+    plans = (await db.execute(select(Plan).where(Plan.is_active == True))).scalars().all()
     return await mt.sync_plans(r, plans)
 
 
-# ---------- OLT (VSOL) por CLI ----------
 async def _olt(db: AsyncSession, router_id: str) -> Router:
     r = await get_or_404(db, Router, router_id, "Router")
     if r.device_type != "olt":
@@ -289,26 +268,31 @@ async def olt_command(router_id: str, data: OltCommandIn, db: AsyncSession = Dep
     return result
 
 
-# ---------- Cortes masivos ----------
 @router.post("/sync-cuts")
 async def sync_cuts(db: AsyncSession = Depends(get_db)):
     s = await db.get(Setting, "system_config")
-    cut_list = (s.data or {}).get("mikrotik_cut_list") or "morosos"
+    data = s.data or {}
+    cut_list = data.get("mikrotik_cut_list") or "morosos"
+    required_months = max(1, int(data.get("billing_cut_after_months") or 1))
     overdue = (await db.execute(select(Invoice).where(Invoice.status == "overdue"))).scalars().all()
-    client_ids = {i.client_id for i in overdue}
+    by_client: dict[str, list[Invoice]] = {}
+    for invoice in overdue:
+        by_client.setdefault(invoice.client_id, []).append(invoice)
     routers_cache: dict[str, Router | None] = {}
     affected, details = 0, []
-    for cid in client_ids:
+    skipped = 0
+    for cid, client_invoices in by_client.items():
         c = await db.get(Client, cid)
         if not c or c.status != "active":
+            continue
+        if len(client_invoices) < required_months:
+            skipped += 1
             continue
         if c.router_id not in routers_cache:
             routers_cache[c.router_id] = await db.get(Router, c.router_id) if c.router_id else None
         c.status, c.is_online = "suspended", False
         res = await mt.cut_client(c, routers_cache[c.router_id], cut_list)
-        details.append({"client": c.full_name, **res})
+        details.append({"client": c.full_name, "overdue_months": len(client_invoices), **res})
         affected += 1
     await db.commit()
-    return {"message": f"Cortes aplicados: {affected} cliente(s) con facturas vencidas suspendidos.",
-            "clients_affected": affected, "routers_synced": len([r for r in routers_cache.values() if r]),
-            "details": details}
+    return {"message": f"Cortes aplicados: {affected} cliente(s) con {required_months} o más recibos vencidos.", "clients_affected": affected, "skipped_by_cut_rule": skipped, "required_months": required_months, "routers_synced": len([r for r in routers_cache.values() if r]), "details": details}
