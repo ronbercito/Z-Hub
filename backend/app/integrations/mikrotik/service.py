@@ -15,9 +15,12 @@ Trabaja con: backend/app/integrations/mikrotik/client.py, backend/app/models/rou
 import logging
 import re
 
-from app.core.database import now_iso
+from sqlalchemy import select
+
+from app.core.database import SessionLocal, now_iso
 from app.integrations.mikrotik.client import MikroTikClient, MikroTikError, tcp_latency_ms
 from app.models.client import Client
+from app.models.client_service import ClientService
 from app.models.plan import Plan
 from app.models.router import Router
 
@@ -153,7 +156,7 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
                 await mt.remove_simple_queue(f"cli-{client.dni_ruc}")
                 await mt.address_list_remove(cut_list, client.ip_address)
 
-            # Limpia también servicios adicionales creados por MikroHub para este cliente.
+            # Limpia también los servicios adicionales que estén en este mismo MikroTik.
             dni_marker = f"| {client.dni_ruc} |"
             name_marker = client.full_name.strip()
             for secret in await mt.ppp_secrets():
@@ -166,9 +169,30 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
                 if (name.startswith(f"svc-{re.sub(r'[^A-Za-z0-9_-]', '', (client.dni_ruc or '').strip())}-") or
                         (name.startswith("svc-") and name_marker and name_marker in comment and "Servicio" in comment)):
                     await mt.remove_simple_queue(name)
+
+        # Los servicios adicionales pueden estar asociados a otros MikroTik.
+        async with SessionLocal() as cleanup_db:
+            services = (await cleanup_db.execute(select(ClientService).where(ClientService.client_id == client.id))).scalars().all()
+            router_ids = {row.router_id for row in services if row.router_id and row.router_id != (router.id if router else None)}
+            for service_router_id in router_ids:
+                service_router = await cleanup_db.get(Router, service_router_id)
+                if not service_router or service_router.device_type != "mikrotik" or not service_router.password:
+                    continue
+                try:
+                    async with connect(service_router) as service_mt:
+                        for row in services:
+                            if row.router_id != service_router_id:
+                                continue
+                            if row.pppoe_user:
+                                await service_mt.remove_ppp_secret(row.pppoe_user)
+                            if row.ip_address:
+                                await service_mt.remove_simple_queue(service_queue_name(client.dni_ruc, row.ip_address))
+                                await service_mt.remove_simple_queue(f"svc-{row.id}")
+                except MikroTikError as service_error:
+                    return {"ok": False, "message": f"No se pudo limpiar el servicio adicional en {service_router.name}: {service_error}"}
     except MikroTikError as e:
         return {"ok": False, "message": str(e)}
-    return {"ok": True, "message": f"Configuración del cliente y sus servicios eliminada en {router.name}"}
+    return {"ok": True, "message": f"Configuración del cliente y sus servicios eliminada en MikroTik"}
 
 
 async def sync_plans(router: Router, plans: list[Plan]) -> dict:
