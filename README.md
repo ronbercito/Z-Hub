@@ -1,6 +1,6 @@
 <!--
 Archivo: README.md
-Actualización: 2026-09-07 — incorpora enlaces de documentación para colaboradores y mantenimiento.
+Actualización: 2026-09-08 — establece README y bitácora maestra como lectura obligatoria de continuidad.
 Función: punto de entrada del repositorio MikroHub y acceso a sus guías principales.
 Recibe de: documentación versionada dentro del repositorio.
 Entrega a: desarrolladores, Copilot y mantenedores rutas de lectura antes de modificar el sistema.
@@ -12,14 +12,49 @@ Panel de gestión para operación ISP: clientes, red, routers/OLT, IPv4, factura
 
 ## 📚 Documentación
 
-Para colaboradores y mantenimiento:
+### 🔴 Lectura obligatoria para retomar el proyecto
+
+Antes de realizar cualquier modificación en MikroHub, una nueva sesión de ChatGPT/Copilot o cualquier colaborador debe revisar estos dos documentos:
+
+1. **[README.md](README.md)** — Entrada general del proyecto, reglas de publicación y documentación principal.
+2. **[Bitácora maestra de continuidad](docs/CONTINUIDAD_MIKROHUB.md)** — Historial interno de cambios, versiones, ubicación de funcionalidades, decisiones técnicas, correcciones, pruebas, pendientes y contexto necesario para continuar el desarrollo.
+
+**Orden recomendado:** README → Bitácora maestra → archivo/módulo específico que se vaya a modificar.
+
+### Documentación técnica
 
 - **[Guía de Continuidad para Copilot](docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md)** — Arquitectura, módulos, método de corrección, pruebas, troubleshooting y checklist de despliegue.
 
-Para instalación y uso:
+### Instalación y despliegue
 
 - **[Guía de Instalación Debian](INSTALL_DEBIAN.md)** — Instalación y despliegue del panel.
 
-## Regla de publicación
+## 🔐 Documentación interna de continuidad
 
-Todo cambio funcional debe incluir comentarios de actualización en los archivos modificados, una nueva versión en `frontend/src/modules/system-update/version.js` y un changelog visible desde el botón **Actualizaciones** del panel.
+`docs/CONTINUIDAD_MIKROHUB.md` es una bitácora interna del proyecto. **No forma parte de la interfaz ni de la lógica del panel.**
+
+No debe:
+
+- importarse desde React;
+- importarse desde FastAPI;
+- copiarse al directorio público del panel;
+- incluirse en el build frontend;
+- utilizarse como fuente de datos del panel;
+- contener contraseñas, tokens, claves privadas, `.env` ni secretos reales.
+
+La documentación existe únicamente para conservar el contexto técnico y facilitar futuras revisiones o nuevas sesiones de desarrollo.
+
+## 📝 Regla de continuidad y publicación
+
+Todo cambio funcional debe:
+
+1. Modificar el módulo/archivo responsable del comportamiento.
+2. Incluir comentarios de actualización en los archivos modificados.
+3. Registrar el cambio en `docs/CONTINUIDAD_MIKROHUB.md`.
+4. Indicar en la bitácora la versión del panel afectada.
+5. Actualizar `frontend/src/modules/system-update/version.js` y su `CHANGELOG` cuando el cambio sea funcional para el panel.
+6. Registrar archivos modificados, origen/destino de los datos, pruebas realizadas y pendientes.
+7. Publicar la documentación junto con el cambio funcional cuando sea posible.
+8. Verificar el estado real de `main` y el despliegue antes de considerar terminada la entrega.
+
+Los cambios exclusivamente documentales **no deben incrementar `PANEL_VERSION`**, salvo que también modifiquen el funcionamiento del panel.
