@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/billing/ClientBilling.jsx
- * Actualización: 2026-09-08 — refuerzo visual de la navegación interna de Facturación.
+ * Actualización: 2026-09-08 — Configuración por cliente sincronizada con los valores usados durante el registro.
  * Función: coordina datos/API/estado; la UI de filtros, tabla, acciones y saldos vive en submódulos independientes.
  * Recibe de: ClientDetail.jsx mediante el wrapper estable del módulo de Clientes.
- * Entrega a: subcomponentes de billing y endpoints existentes.
+ * Entrega a: subcomponentes de billing y configuración de facturación del abonado.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
@@ -27,6 +27,22 @@ function Field({ label, children }) {
   return <label className="block text-xs text-slate-300"><span className="font-semibold">{label}</span>{children}</label>;
 }
 
+function toIsoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function billingDates(config) {
+  const now = new Date();
+  const billingDay = Math.min(Math.max(Number(config?.billing_day || 5), 1), 28);
+  let due = new Date(now.getFullYear(), now.getMonth(), billingDay);
+  if (due < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    due = new Date(now.getFullYear(), now.getMonth() + 1, billingDay);
+  }
+  const issue = new Date(due);
+  issue.setDate(issue.getDate() - Math.max(Number(config?.billing_invoice_lead_days || 0), 0));
+  return { issue_date: toIsoDate(issue), due_date: toIsoDate(due) };
+}
+
 export default function ClientBilling({ clientId, onBalanceUpdate }) {
   const { API, token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
@@ -46,8 +62,9 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
   const [pay, setPay] = useState({ method: "Yape", amount: 0, reference: "", notes: "" });
   const [processing, setProcessing] = useState(false);
   const [receipt, setReceipt] = useState(null);
-  const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [config, setConfig] = useState({ ...DEFAULT_CONFIG, billing_type: "prepaid" });
   const [configSaving, setConfigSaving] = useState(false);
+  const [configLoading, setConfigLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -66,18 +83,34 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
     finally { setServicesLoading(false); }
   };
   const loadConfig = async () => {
+    setConfigLoading(true);
     try {
-      const response = await axios.get(`${API}/settings`, { headers });
-      setConfig({ ...DEFAULT_CONFIG, ...(response.data || {}) });
-    } catch (error) { toast.error("No se pudo cargar la configuración"); }
+      const response = await axios.get(`${API}/clients/${clientId}/billing-config`, { headers });
+      const data = response.data || {};
+      setConfig(value => ({
+        ...value,
+        billing_type: data.billing_type || "prepaid",
+        billing_day: data.billing_day ?? 5,
+        billing_invoice_lead_days: data.invoice_lead_days ?? 5,
+        billing_grace_days: data.grace_days ?? 5,
+        billing_cut_after_months: data.cut_after_months ?? 1,
+        billing_invoice_notification_channel: data.invoice_notification_channel || "none",
+        billing_payment_reminder_channel: data.payment_reminder_channel || "none",
+        billing_reminder_1_days: data.reminder_1_days ?? 0,
+        billing_reminder_2_days: data.reminder_2_days ?? 0,
+        billing_reminder_3_days: data.reminder_3_days ?? 0,
+      }));
+    } catch (error) { toast.error("No se pudo cargar la configuración del abonado"); }
+    finally { setConfigLoading(false); }
   };
   useEffect(() => { load(); }, [clientId, filter, search]);
   useEffect(() => { loadServices(); loadConfig(); }, [clientId]);
 
   const openInvoice = mode => {
     const primary = services.find(service => service.is_primary) || services[0];
+    const dates = billingDates(config);
     setModal(mode);
-    setInvoice({ id: null, service_id: mode === "service" ? (primary?.service_id || "") : "", plan_name: mode === "service" ? (primary?.plan_name || "") : "", amount: mode === "service" ? (primary?.plan_price ?? "") : "", month_period: periodNow(), issue_date: today(), due_date: "", notes: mode === "service" ? "Factura de servicio" : "Factura libre" });
+    setInvoice({ id: null, service_id: mode === "service" ? (primary?.service_id || "") : "", plan_name: mode === "service" ? (primary?.plan_name || "") : "", amount: mode === "service" ? (primary?.plan_price ?? "") : "", month_period: periodNow(), issue_date: dates.issue_date, due_date: dates.due_date, notes: mode === "service" ? "Factura de servicio" : "Factura libre" });
   };
   const openEdit = inv => {
     if (inv.status === "paid" || inv.status === "canceled" || Number(inv.paid_amount || 0) > 0) return toast.error("Esta factura está protegida y no se puede editar.");
@@ -92,6 +125,7 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
     event.preventDefault();
     if (modal === "service" && !invoice.service_id) return toast.error("Selecciona el servicio");
     if (Number(invoice.amount) <= 0) return toast.error("Ingresa un monto válido");
+    if (!invoice.due_date) return toast.error("Define la fecha de vencimiento");
     try {
       const response = await axios.post(`${API}/invoices`, { client_id: clientId, service_id: modal === "service" ? invoice.service_id : null, plan_name: invoice.plan_name, amount: Number(invoice.amount), month_period: invoice.month_period, issue_date: invoice.issue_date, due_date: invoice.due_date, status: "unpaid", notes: invoice.notes }, { headers });
       const autoPaid = Number(response.data?.paid_amount || 0) > 0 && response.data?.payment_method === "Saldo a favor";
@@ -154,8 +188,24 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
   };
   const saveConfig = async event => {
     event.preventDefault(); setConfigSaving(true);
-    try { const response = await axios.put(`${API}/settings`, config, { headers }); setConfig({ ...DEFAULT_CONFIG, ...(response.data || {}) }); toast.success("Configuración guardada"); }
-    catch (error) { toast.error(error.response?.data?.detail || "No se pudo guardar"); }
+    try {
+      const payload = {
+        billing_type: config.billing_type,
+        billing_day: Number(config.billing_day),
+        invoice_lead_days: Number(config.billing_invoice_lead_days),
+        grace_days: Number(config.billing_grace_days),
+        cut_after_months: Number(config.billing_cut_after_months),
+        invoice_notification_channel: config.billing_invoice_notification_channel,
+        payment_reminder_channel: config.billing_payment_reminder_channel,
+        reminder_1_days: Number(config.billing_reminder_1_days || 0) || null,
+        reminder_2_days: Number(config.billing_reminder_2_days || 0) || null,
+        reminder_3_days: Number(config.billing_reminder_3_days || 0) || null,
+      };
+      const response = await axios.patch(`${API}/clients/${clientId}/billing-config`, payload, { headers });
+      const data = response.data || {};
+      setConfig(v => ({ ...v, billing_type: data.billing_type, billing_day: data.billing_day, billing_invoice_lead_days: data.invoice_lead_days, billing_grace_days: data.grace_days, billing_cut_after_months: data.cut_after_months, billing_invoice_notification_channel: data.invoice_notification_channel, billing_payment_reminder_channel: data.payment_reminder_channel, billing_reminder_1_days: data.reminder_1_days ?? 0, billing_reminder_2_days: data.reminder_2_days ?? 0, billing_reminder_3_days: data.reminder_3_days ?? 0 }));
+      toast.success("Configuración del abonado guardada");
+    } catch (error) { toast.error(error.response?.data?.detail || "No se pudo guardar la configuración del abonado"); }
     finally { setConfigSaving(false); }
   };
 
@@ -164,6 +214,7 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
   const pagado = invoices.reduce((sum, item) => sum + Number(item.paid_amount || 0), 0);
   const cobrar = invoices.filter(item => !["paid", "canceled"].includes(item.status)).reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0) - Number(item.paid_amount || 0)), 0);
   const transactions = invoices.filter(item => Number(item.paid_amount || 0) > 0);
+  const preview = billingDates(config);
 
   return <div className="space-y-5">
     <div className="rounded-2xl border border-cyan-500/40 bg-slate-950/60 p-1.5 shadow-[0_0_30px_rgba(6,182,212,0.08)]">
@@ -190,7 +241,32 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
     {tab === "transactions" && <div className="border border-slate-800 rounded-xl overflow-hidden"><table className="w-full text-left text-xs"><thead className="bg-slate-950 text-slate-400"><tr><th className="p-3">Fecha</th><th className="p-3">Recibo</th><th className="p-3">Servicio</th><th className="p-3">Método</th><th className="p-3">Referencia</th><th className="p-3 text-right">Monto</th></tr></thead><tbody className="divide-y divide-slate-800">{transactions.length ? transactions.map(item => <tr key={item.id}><td className="p-3">{item.payment_date || "—"}</td><td className="p-3 font-mono font-bold">{item.invoice_number}</td><td className="p-3 text-cyan-300">{item.service_label || "Servicio 1"}</td><td className="p-3">{item.payment_method || "—"}</td><td className="p-3 font-mono text-slate-400">{item.operation_reference || "—"}</td><td className="p-3 text-right font-bold text-emerald-400">S/. {Number(item.paid_amount || 0).toFixed(2)}</td></tr>) : <tr><td colSpan="6" className="p-8 text-center text-slate-500">No hay transacciones registradas.</td></tr>}</tbody></table></div>}
     {tab === "balances" && <ClientBillingBalances clientId={clientId} API={API} headers={headers} onBalanceUpdate={onBalanceUpdate} />}
 
-    {tab === "config" && <form onSubmit={saveConfig} className="space-y-4"><div className="bg-slate-900 border border-slate-800 rounded-2xl p-5"><div className="flex items-center gap-2 mb-4"><CalendarDays className="w-5 h-5 text-cyan-400" /><div><h4 className="font-bold">Configuración de facturación</h4><p className="text-[10px] text-slate-500">Las reglas son generales del ISP y quedan disponibles desde la ficha del cliente.</p></div></div><div className="grid md:grid-cols-2 gap-4"><Field label="Tipo"><select value={config.billing_type} onChange={e => setConfig(v => ({ ...v, billing_type: e.target.value }))} className={INPUT_CLASS}><option value="postpaid">Postpago (Vencido)</option><option value="prepaid">Prepago</option></select></Field><Field label="Día pago"><input type="number" min="1" max="28" value={config.billing_day} onChange={e => setConfig(v => ({ ...v, billing_day: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Crear factura (días antes)"><input type="number" min="0" value={config.billing_invoice_lead_days} onChange={e => setConfig(v => ({ ...v, billing_invoice_lead_days: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Tipo impuesto"><select value={config.billing_tax_type} onChange={e => setConfig(v => ({ ...v, billing_tax_type: e.target.value }))} className={INPUT_CLASS}><option value="none">Sin impuesto</option><option value="igv">IGV</option><option value="other">Otro</option></select></Field><Field label="Días de gracia"><input type="number" min="0" value={config.billing_grace_days} onChange={e => setConfig(v => ({ ...v, billing_grace_days: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Aplicar corte (meses vencidos)"><input type="number" min="1" value={config.billing_cut_after_months} onChange={e => setConfig(v => ({ ...v, billing_cut_after_months: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Otros impuestos"><input type="number" step="0.01" min="0" value={config.billing_other_taxes} onChange={e => setConfig(v => ({ ...v, billing_other_taxes: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Aviso nueva factura"><select value={config.billing_invoice_notification_channel} onChange={e => setConfig(v => ({ ...v, billing_invoice_notification_channel: e.target.value }))} className={INPUT_CLASS}><option value="none">No enviar</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Correo</option></select></Field><Field label="Recordatorios"><select value={config.billing_payment_reminder_channel} onChange={e => setConfig(v => ({ ...v, billing_payment_reminder_channel: e.target.value }))} className={INPUT_CLASS}><option value="none">No enviar</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Correo</option></select></Field><Field label="Recordatorio #1"><input type="number" min="0" value={config.billing_reminder_1_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_1_days: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Recordatorio #2"><input type="number" min="0" value={config.billing_reminder_2_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_2_days: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Recordatorio #3"><input type="number" min="0" value={config.billing_reminder_3_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_3_days: e.target.value }))} className={INPUT_CLASS} /></Field></div></div><div className="bg-slate-900 border border-slate-800 rounded-2xl p-5"><div className="flex items-center gap-2 mb-3"><MessageSquare className="w-5 h-5 text-emerald-400" /><h4 className="font-bold">Reglas adicionales</h4></div><div className="grid md:grid-cols-2 gap-2">{[["billing_lower_speed", "Bajar velocidad"], ["billing_fixed_date", "Fecha fija"], ["billing_fixed_cut", "Corte fijo programado"], ["billing_late_fee", "Aplicar mora"], ["billing_reconnection_fee", "Aplicar reconexión"], ["billing_auto_generate", "Generar automáticamente"]].map(([key, label]) => <label key={key} className="flex justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs"><span>{label}</span><input type="checkbox" checked={Boolean(config[key])} onChange={e => setConfig(v => ({ ...v, [key]: e.target.checked }))} /></label>)}</div></div><div className="flex justify-end"><button disabled={configSaving} className="px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-xs font-bold flex items-center gap-2"><Save className="w-4 h-4" />{configSaving ? "Guardando..." : "Guardar configuración"}</button></div></form>}
+    {tab === "config" && <form onSubmit={saveConfig} className="space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4"><CalendarDays className="w-5 h-5 text-cyan-400" /><div><h4 className="font-bold">Configuración de facturación</h4><p className="text-[10px] text-slate-500">Estos valores son del abonado y son los mismos que se guardaron durante su registro.</p></div></div>
+        {configLoading ? <div className="py-10 text-center text-slate-500">Cargando configuración del abonado...</div> : <>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Field label="Tipo de servicio"><select value={config.billing_type} onChange={e => setConfig(v => ({ ...v, billing_type: e.target.value }))} className={INPUT_CLASS}><option value="prepaid">Prepago (adelantado)</option><option value="postpaid">Postpago</option></select></Field>
+            <Field label="Día de pago"><select value={config.billing_day} onChange={e => setConfig(v => ({ ...v, billing_day: Number(e.target.value) }))} className={INPUT_CLASS}>{Array.from({ length: 30 }, (_, index) => index + 1).map(day => <option key={day} value={day}>Día {day} de cada mes</option>)}</select></Field>
+            <Field label="Crear factura (días antes)"><select value={config.billing_invoice_lead_days} onChange={e => setConfig(v => ({ ...v, billing_invoice_lead_days: Number(e.target.value) }))} className={INPUT_CLASS}>{Array.from({ length: 20 }, (_, index) => index + 1).map(day => <option key={day} value={day}>{day} día{day !== 1 ? "s" : ""} antes</option>)}</select></Field>
+            <Field label="Días de gracia"><select value={config.billing_grace_days} onChange={e => setConfig(v => ({ ...v, billing_grace_days: Number(e.target.value) }))} className={INPUT_CLASS}>{Array.from({ length: 20 }, (_, index) => index + 1).map(day => <option key={day} value={day}>{day} día{day !== 1 ? "s" : ""}</option>)}</select></Field>
+            <Field label="Aplicar corte (meses vencidos)"><select value={config.billing_cut_after_months} onChange={e => setConfig(v => ({ ...v, billing_cut_after_months: Number(e.target.value) }))} className={INPUT_CLASS}>{Array.from({ length: 6 }, (_, index) => index + 1).map(month => <option key={month} value={month}>{month} mes{month !== 1 ? "es" : ""} vencido{month !== 1 ? "s" : ""}</option>)}</select></Field>
+          </div>
+          <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-[11px] text-slate-300"><b className="text-cyan-300">Próxima regla calculada:</b> factura desde <span className="font-mono">{preview.issue_date}</span> y vencimiento <span className="font-mono">{preview.due_date}</span>. Después del vencimiento se respetan los <b>{config.billing_grace_days}</b> días de gracia y el corte se evalúa con <b>{config.billing_cut_after_months}</b> mes(es) vencido(s).</div>
+        </>}
+      </div>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-3"><MessageSquare className="w-5 h-5 text-emerald-400" /><div><h4 className="font-bold">Envío de mensajes</h4><p className="text-[10px] text-slate-500">El canal y los días quedan asociados a este abonado, no a la configuración global.</p></div></div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <Field label="Aviso de nueva factura"><select value={config.billing_invoice_notification_channel} onChange={e => setConfig(v => ({ ...v, billing_invoice_notification_channel: e.target.value }))} className={INPUT_CLASS}><option value="none">No enviar</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Correo</option></select></Field>
+          <Field label="Recordatorios de pago"><select value={config.billing_payment_reminder_channel} onChange={e => setConfig(v => ({ ...v, billing_payment_reminder_channel: e.target.value }))} className={INPUT_CLASS}><option value="none">No enviar</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Correo</option></select></Field>
+          <Field label="Recordatorio #1 (días)"><input type="number" min="0" max="20" value={config.billing_reminder_1_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_1_days: e.target.value }))} className={INPUT_CLASS} /></Field>
+          <Field label="Recordatorio #2 (días)"><input type="number" min="0" max="20" value={config.billing_reminder_2_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_2_days: e.target.value }))} className={INPUT_CLASS} /></Field>
+          <Field label="Recordatorio #3 (días)"><input type="number" min="0" max="20" value={config.billing_reminder_3_days} onChange={e => setConfig(v => ({ ...v, billing_reminder_3_days: e.target.value }))} className={INPUT_CLASS} /></Field>
+        </div>
+      </div>
+      <div className="flex justify-end"><button disabled={configSaving || configLoading} className="px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-xs font-bold flex items-center gap-2"><Save className="w-4 h-4" />{configSaving ? "Guardando..." : "Guardar configuración"}</button></div>
+    </form>}
 
     {modal && <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"><form onSubmit={modal === "edit" ? saveEdit : createInvoice} className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-4"><div className="flex justify-between"><div><h4 className="font-bold">{modal === "edit" ? "Editar factura" : modal === "service" ? "Factura de servicios" : "Factura libre"}</h4><p className="text-[10px] text-slate-500">Cliente: este abonado</p></div><button type="button" onClick={() => setModal(null)}><X className="w-4 h-4" /></button></div>{modal === "service" && <Field label="Servicio"><select required value={invoice.service_id} onChange={e => chooseService(e.target.value)} className={INPUT_CLASS}><option value="">{servicesLoading ? "Cargando..." : "Selecciona un servicio"}</option>{services.map((service, index) => <option key={service.service_id} value={service.service_id}>{service.is_primary ? "Servicio 1" : `Servicio ${index + 1}`} · {service.plan_name || "Sin plan"} · S/. {Number(service.plan_price || 0).toFixed(2)}</option>)}</select></Field>}<div className="grid md:grid-cols-2 gap-3"><Field label="Plan / concepto"><input value={invoice.plan_name} onChange={e => setInvoice(v => ({ ...v, plan_name: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Monto"><input required type="number" step="0.01" min="0.01" value={invoice.amount} onChange={e => setInvoice(v => ({ ...v, amount: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Período"><input value={invoice.month_period} onChange={e => setInvoice(v => ({ ...v, month_period: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Fecha emisión"><input type="date" value={invoice.issue_date} onChange={e => setInvoice(v => ({ ...v, issue_date: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Vencimiento"><input type="date" value={invoice.due_date} onChange={e => setInvoice(v => ({ ...v, due_date: e.target.value }))} className={INPUT_CLASS} /></Field><Field label="Notas"><input value={invoice.notes} onChange={e => setInvoice(v => ({ ...v, notes: e.target.value }))} className={INPUT_CLASS} /></Field></div><div className="flex justify-end gap-2"><button type="button" onClick={() => setModal(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-xs">Cancelar</button><button className="px-4 py-2 rounded-xl bg-cyan-600 text-white text-xs font-bold">{modal === "edit" ? "Guardar cambios" : "Generar factura"}</button></div></form></div>}
 
