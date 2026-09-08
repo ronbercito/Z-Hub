@@ -1,58 +1,69 @@
-# MikroHub — continuidad funcional 1.0.97
+# MikroHub — continuidad funcional 1.0.98
 
-**Fecha:** 2026-09-08
-**Versión funcional:** 1.0.97
-**Tema:** Facturación del cliente → Saldos
+**Fecha:** 2026-09-08  
+**Versión funcional:** 1.0.98  
+**Tema:** Facturación del cliente → navegación visual de pestañas
 
 ## Objetivo
-Implementar y corregir el libro mayor de saldos para registrar abonos a favor y deudas del cliente, manteniendo trazabilidad y aplicación automática en facturas futuras.
+Hacer que las pestañas internas de Facturación del cliente sean claramente visibles y fáciles de ubicar, siguiendo el diseño aprobado: navegación amplia, iconos, estado activo luminoso y separación visual entre Facturas, Transacciones, Saldos y Configuración.
 
-## Regla funcional definitiva
-- Monto positivo: saldo a favor del cliente.
-- Monto negativo: deuda del cliente.
-- Saldo a favor se descuenta automáticamente de la siguiente factura mensual o manual.
-- Deuda se suma **completa** a la siguiente factura mensual o manual, aunque la deuda sea mayor que el monto base de esa factura.
-- Las aplicaciones quedan registradas como movimientos con factura destino.
-- Una factura puede quedar pagada total o parcialmente con saldo a favor.
-
-## Corrección 1.0.97
-En la primera implementación, una deuda negativa se limitaba al saldo pendiente de la factura nueva. Eso no correspondía a la regla solicitada: `-100` + factura base `50` debe producir una factura final de `150`. Se corrigió `balances.py` para trasladar la deuda completa y consumirla en un solo movimiento de aplicación.
-
-## Archivos nuevos
-- `backend/app/models/client_balance.py` — libro mayor ORM de movimientos firmados.
-- `backend/app/routers/facturacion/balances.py` — motor de aplicación automática de crédito/deuda.
-- `backend/app/routers/facturacion/client_balances.py` — API aislada de Saldos.
-- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — UI aislada de Saldos.
+## Solución
+- Se reemplazó la barra de pestañas pequeña por un contenedor destacado con cuatro botones grandes.
+- La pestaña activa usa fondo cian translúcido, borde luminoso, icono resaltado y línea inferior brillante.
+- Las pestañas inactivas mantienen contraste suficiente y una respuesta visual al pasar el cursor.
+- La navegación pasa a dos columnas en pantallas pequeñas y cuatro columnas en pantallas grandes.
+- Se mantiene el contenido y la lógica de cada pestaña sin cambiar endpoints ni base de datos.
+- El encabezado de Facturación ahora identifica explícitamente el módulo y explica que las pestañas superiores controlan facturas, pagos/transacciones, saldos y configuración.
+- Se conservaron las tarjetas de Facturado, Pagado y Por cobrar.
 
 ## Archivos modificados
-- `backend/app/models/__init__.py` — registra `ClientBalance` para creación/migración ligera de tabla.
-- `backend/server.py` — monta la API de saldos con permiso `billing`.
-- `backend/app/routers/facturacion/router.py` — aplica saldo al crear facturas, aplica facturación mensual masiva y corrige el cálculo de pendiente/pagos parciales.
-- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — integra el submódulo `ClientBillingBalances`.
-- `backend/app/routers/facturacion/balances.py` — corrección de deuda completa.
-- `frontend/src/modules/system-update/version.js` — versión 1.0.97 y changelog.
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — propietario de la navegación interna y composición visual de Facturación.
+- `frontend/src/modules/system-update/version.js` — versión 1.0.98 y CHANGELOG visible.
+- `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md` — registro de continuidad actualizado.
+
+## Backup
+Antes de modificar `main` se creó:
+
+`backup/pre-facturacion-tabs-resaltadas-2026-09-08`
+
+La rama conserva el estado anterior a este cambio visual para permitir rollback si el build o la interfaz presentan regresiones.
+
+## Base de datos
+Sin cambios. No se eliminan tablas ni datos.
 
 ## API
-- `GET /api/clients/{client_id}/balances`
-- `POST /api/clients/{client_id}/balances`
+Sin cambios.
 
 ## Flujo
-1. Usuario entra a Facturación → Saldos.
-2. Registra `500` como saldo a favor o `-100` como deuda.
-3. El movimiento queda en `client_balances` con monto firmado y saldo restante.
-4. Al generar una factura manual, el backend aplica el libro mayor.
-5. La generación mensual masiva utiliza el mismo motor.
-6. Crédito positivo aumenta `paid_amount` hasta el máximo de la factura y deja el excedente como saldo disponible.
-7. Deuda negativa aumenta el `amount` de la nueva factura con el total de la deuda y consume esa deuda.
-8. Cada aplicación queda trazada con factura destino.
+```text
+Ficha del cliente
+  ↓
+Facturación
+  ↓
+Navegación destacada
+  ├── Facturas
+  ├── Transacciones
+  ├── Saldos
+  └── Configuración
+```
 
-## Validación pendiente
-No se ha ejecutado `yarn build` ni una prueba contra la base de producción desde este entorno. Antes de considerar 1.0.97 final se debe validar mediante el Centro de Actualizaciones:
-- `500` → factura base `50` → factura final `50`, estado `paid`, pago automático `50`, saldo disponible `450`;
-- `-100` → factura base `50` → factura final `150`, deuda consumida `100`;
-- pagos parciales siguen calculando correctamente el pendiente;
-- historial de Saldos muestra factura origen/destino y movimientos de aplicación;
-- Facturas, Transacciones y Configuración siguen funcionando;
-- las demás pestañas del cliente no presentan regresiones.
+## Pruebas
+- [x] backup creado antes de modificar `main`.
+- [x] revisión del propietario real del comportamiento (`billing/ClientBilling.jsx`).
+- [x] actualización de la fuente de versión a 1.0.98.
+- [x] revisión de que endpoints y estado funcional no fueron cambiados deliberadamente.
+- [ ] `yarn build` — no ejecutado desde este entorno.
+- [ ] validación visual en navegador/servidor — pendiente de despliegue.
+- [ ] prueba de las cuatro pestañas y de Factura libre/Saldos después de instalar 1.0.98.
 
-**Nota de continuidad:** el registro maestro `docs/CONTINUIDAD_MIKROHUB.md` debe incorporar este registro antes de declarar 1.0.97 cerrada. Se mantiene separado para no reemplazar ni perder el historial maestro existente.
+## Resultado
+Código publicado en `main` con la navegación visual resaltada. La validación de build y del panel real queda pendiente y debe realizarse antes de considerar la versión completamente validada.
+
+## Riesgos / pendientes
+- Un error de compilación React solo puede descartarse ejecutando el build real.
+- La rama de backup debe conservarse hasta validar 1.0.98 en el servidor.
+- La bitácora maestra `docs/CONTINUIDAD_MIKROHUB.md` debe incorporar este registro en su próxima actualización consolidada; este archivo conserva el detalle específico de la entrega.
+
+## Commits
+- Cambio visual de Facturación: `7ddae5b12235f5b9dce43a0ce6154ffefb3a5590`
+- Versión 1.0.98: `f2d098facf6aea953df195eb768e3dc56ad1ae3d`
