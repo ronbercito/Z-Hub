@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — la ubicación del listado abre un minimapa con navegación y datos guardados; la tabla muestra fecha de instalación.
+ * Actualización: 2026-09-08 — la ubicación del listado abre un minimapa con navegación y datos guardados; la tabla muestra deuda y meses pendientes.
  * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
@@ -45,7 +45,6 @@ export default function Clients({ onSelectClient }) {
 
   const activePlans = plans.filter((plan) => plan.is_active);
   const mikrotikRouters = routers.filter((router) => router.device_type === "mikrotik");
-  const compatibleNetworks = ipv4Networks.filter((network) => network.router_id === formData.router_id);
 
   const fetchData = async () => {
     setLoading(true);
@@ -192,16 +191,15 @@ export default function Clients({ onSelectClient }) {
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto"><table className="w-full text-left text-xs">
           <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800"><tr>
-            <th className="py-3 px-4">Abonado / Contacto</th><th className="py-3 px-4">Plan / Tarifa</th><th className="py-3 px-4">IP / Conexión</th><th className="py-3 px-4">Fecha de instalación</th><th className="py-3 px-4">Estado / Deuda</th><th className="py-3 px-4 text-center">Acciones</th>
+            <th className="py-3 px-4">Abonado / Contacto</th><th className="py-3 px-4">Plan / Tarifa</th><th className="py-3 px-4">IP / Conexión</th><th className="py-3 px-4">Estado / Deuda</th><th className="py-3 px-4 text-center">Acciones</th>
           </tr></thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
-            {loading ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">Cargando abonados...</td></tr> : clients.length === 0 ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">No se encontraron abonados con los filtros aplicados.</td></tr> : clients.map((c) => (
+            {loading ? <tr><td colSpan="5" className="py-8 text-center text-slate-500">Cargando abonados...</td></tr> : clients.length === 0 ? <tr><td colSpan="5" className="py-8 text-center text-slate-500">No se encontraron abonados con los filtros aplicados.</td></tr> : clients.map((c) => (
               <tr key={c.id} className="hover:bg-slate-800/40 transition">
                 <td className="py-3 px-4"><div className="font-bold text-slate-100 flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c.is_online ? "bg-emerald-400" : "bg-rose-400"}`}></span>{c.full_name}</div><div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5"><span>DNI: {c.dni_ruc}</span><span>•</span><span className="flex items-center gap-1 text-slate-300"><Phone className="w-3 h-3 text-cyan-400" /> {c.phone}</span></div><div className="text-[10px] mt-0.5"><button type="button" disabled={!c.latitude || !c.longitude} onClick={() => setLocationClient(c)} title={c.latitude && c.longitude ? "Ver ubicación en el mapa" : "El abonado no tiene coordenadas registradas"} className={`inline-flex items-center justify-center rounded-lg border px-3 py-1 font-semibold transition ${c.latitude && c.longitude ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20" : "border-slate-700 bg-slate-800/50 text-slate-500 cursor-default"}`}><MapPin className="w-3 h-3 mr-1" />Ubicación</button></div></td>
                 <td className="py-3 px-4"><div className="font-semibold text-cyan-300">{c.plan_name}</div><div className="text-[11px] font-bold text-emerald-400">S/. {Number(c.plan_price || 0).toFixed(2)} / mes</div><div className="text-[10px] text-slate-500">Día de cobro: {c.billing_day} de cada mes</div></td>
                 <td className="py-3 px-4"><button type="button" onClick={() => window.open(`http://${c.ip_address}`, "_blank")} title="Abrir MikroTik / equipo en una nueva pestaña" className="font-mono text-slate-200 hover:text-cyan-300 cursor-pointer">{c.ip_address}</button><div className="text-[11px] text-slate-400">{c.connection_type}: <span className="font-mono text-cyan-400">{c.pppoe_user || "estática"}</span></div><div className="text-[10px] text-slate-500">Router: {c.router_name}</div></td>
-                <td className="py-3 px-4"><div className="font-medium text-slate-200">{c.installation_date ? new Date(`${c.installation_date}T00:00:00`).toLocaleDateString("es-PE") : "—"}</div></td>
-                <td className="py-3 px-4"><div>{c.status === "active" ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px] border border-emerald-500/30"><CheckCircle2 className="w-3.5 h-3.5" /> ACTIVO</span> : <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 font-bold text-[11px] border border-rose-500/30"><XCircle className="w-3.5 h-3.5" /> CORTADO</span>}</div>{c.balance_due > 0 && <div className="text-[11px] text-rose-400 font-bold mt-1">Deuda: S/. {Number(c.balance_due).toFixed(2)} ({c.unpaid_invoices_count} rec.)</div>}</td>
+                <td className="py-3 px-4"><div>{c.status === "active" ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px] border border-emerald-500/30"><CheckCircle2 className="w-3.5 h-3.5" /> ACTIVO</span> : <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 font-bold text-[11px] border border-rose-500/30"><XCircle className="w-3.5 h-3.5" /> CORTADO</span>}</div>{c.balance_due > 0 && <div className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-2"><span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold" title={`${c.unpaid_invoices_count || 0} meses pendientes`}>{c.unpaid_invoices_count || 0}</span><span>S/. {Number(c.balance_due).toFixed(2)}</span></div>}</td>
                 <td className="py-3 px-4 text-center"><div className="flex items-center justify-center gap-1.5">
                   <button onClick={() => setDetailClientId(c.id)} title="Ver ficha del cliente" className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"><ExternalLink className="w-4 h-4" /></button>
                   <button onClick={() => handleToggleStatus(c.id, c.full_name)} title={c.status === "active" ? "Cortar Servicio MikroTik" : "Reactivar Servicio"} className={`p-1.5 rounded-lg border ${c.status === "active" ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"}`}><ShieldAlert className="w-4 h-4" /></button>
