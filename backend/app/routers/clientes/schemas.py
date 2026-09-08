@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/schemas.py
-Actualización: 2026-09-08 — separa actualizaciones de Resumen y Servicio para no sobrescribir datos ajenos.\nFunción: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
+Actualización: 2026-09-08 — admite potencia ONU manual al editar la configuración técnica.\nFunción: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
 Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
 """
 from typing import Optional
@@ -74,6 +74,7 @@ class ClientServiceUpdate(BaseModel):
     nap_box_id: Optional[str] = None
     nap_port: Optional[int] = None
     onu_sn: Optional[str] = None
+    optical_power_dbm: Optional[float] = None
     monitoring_equipment_id: Optional[str] = None
     antenna_type: Optional[str] = None
     management_ip: Optional[str] = None
