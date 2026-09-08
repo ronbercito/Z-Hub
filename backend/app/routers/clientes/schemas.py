@@ -1,9 +1,9 @@
-/**
- * Archivo: backend/app/routers/clientes/schemas.py
- * Actualización: 2026-09-08 — admite potencia ONU manual al editar la configuración técnica y refuerza datos obligatorios del Resumen.
- * Función: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
- * Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
- */
+"""
+Archivo: backend/app/routers/clientes/schemas.py
+Actualización: 2026-09-08 — corrige el encabezado Python que impedía iniciar el backend y refuerza datos obligatorios del Resumen.
+Función: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
+Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
+"""
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
