@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — se restaura la confirmación nativa con el resumen probado de dependencias; la tabla muestra deuda y meses pendientes.
+ * Actualización: 2026-09-08 — la eliminación se valida localmente con las APIs reales de Servicios y Facturación; la tabla muestra deuda y meses pendientes.
  * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
@@ -125,13 +125,39 @@ export default function Clients({ onSelectClient }) {
   };
 
   const handleDeleteClient = async (id, name) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el cliente "${name}"?`)) return;
+    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.delete(`${API}/clients/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      // Estas son exactamente las rutas que ya alimentan las pestañas Servicios y Facturación.
+      const [servicesRes, invoicesRes] = await Promise.all([
+        axios.get(`${API}/clients/${id}/services`, { headers }),
+        axios.get(`${API}/clients/${id}/invoices`, { headers }),
+      ]);
+      const services = Array.isArray(servicesRes.data) ? servicesRes.data : [];
+      const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
+      const pending = invoices.filter((invoice) => ["unpaid", "overdue"].includes(String(invoice.status || "").toLowerCase()));
+      const balance = pending.reduce((total, invoice) => total + Math.max(0, Number(invoice.amount || 0) - Number(invoice.paid_amount || 0)), 0);
+      const details = [
+        "⚠ ALERTA DE ELIMINACIÓN DEFINITIVA",
+        "",
+        `Cliente: ${name}`,
+        `Servicios registrados: ${services.length}`,
+        `Facturas pendientes: ${pending.length}`,
+        `Saldo pendiente: S/. ${balance.toFixed(2)}`,
+        "",
+        "OBSERVACIONES:",
+        "• Se eliminarán todos los servicios y facturas asociados.",
+        "• Esta operación es definitiva y no se puede deshacer.",
+        "",
+        "Para continuar escribe SI. Para cancelar escribe NO."
+      ].join("\n");
+      const answer = window.prompt(details, "");
+      if (String(answer || "").trim().toUpperCase() !== "SI") return;
+      await axios.delete(`${API}/clients/${id}`, { headers, __mikrohubDeleteConfirmed: true });
       toast.success("Cliente eliminado del sistema");
       fetchData();
     } catch (e) {
-      toast.error("Error al eliminar");
+      console.error("MikroHub: resumen de eliminación", e);
+      toast.error("No se pudo verificar servicios y facturas; la eliminación fue cancelada.");
     }
   };
 
