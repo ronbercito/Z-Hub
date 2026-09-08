@@ -758,3 +758,18 @@ SHA: ...
 - Archivos: pendiente
 - Pruebas: pendiente
 - Commit: pendiente
+
+
+---
+
+### REV-0002 — 2026-09-08 — Panel 1.0.79
+
+**Corrección:** El modal de eliminación definitiva de clientes mostraba el nombre correcto, pero podía indicar 0 servicios, 0 facturas y S/. 0.00 pese a que la ficha tenía datos reales.
+
+**Causa:** El navegador reconstruía el resumen con varias solicitudes frontend, por lo que podía usar respuestas vacías o antiguas.
+
+**Cambio aplicado:** `frontend/src/constants/clientDeleteGuard.js` consulta ahora únicamente `GET /api/clients/{id}/deletion-summary`, que lee directamente `Client`, `ClientService` e `Invoice` en el backend. La consulta incluye un parámetro de verificación para evitar reutilizar una respuesta almacenada. Si el resumen no responde, se bloquea la eliminación.
+
+**Archivos:** `clientDeleteGuard.js`, `modules/system-update/version.js`.
+
+**Prueba pendiente:** Actualizar el panel, recargar con Ctrl+F5 y abrir la eliminación del cliente con dos servicios y dos facturas pendientes. Debe mostrar sus cantidades y saldo reales antes de aceptar `SI`.
