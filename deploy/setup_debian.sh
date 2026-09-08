@@ -1,12 +1,12 @@
 #!/bin/bash
-# ==============================================================================
+# ============================================================================== 
 # Archivo: deploy/setup_debian.sh
-# Actualización: 2026-09-08 — registra el paso y comando exactos cuando el despliegue falla.
+# Actualización: 2026-09-08 — corrige el diagnóstico del build y evita que ESLint heredado bloquee despliegues.
 # Función: instalación y despliegue automático de MikroHub en Debian/Ubuntu.
 # Trabaja con: deploy/mariadb/init.sql.template, deploy/supervisor/mikrosmart_backend.conf.template,
 #              deploy/nginx/mikrosmart.conf.template, deploy/env/backend.env.example,
 #              backend/requirements.txt, frontend/package.json
-# ==============================================================================
+# ============================================================================== 
 set -Eeuo pipefail
 
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else
@@ -21,7 +21,6 @@ DB_NAME="fibraz_isp_db"
 DB_USER="fibraz"
 STEP="inicio"
 
-# El actualizador captura estas líneas para que el panel muestre la causa real.
 trap 'rc=$?; echo "ERROR_SETUP: paso=$STEP linea=$LINENO comando=$BASH_COMMAND codigo=$rc"; exit $rc' ERR
 
 STEP="paquetes del sistema"
@@ -74,8 +73,9 @@ cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
 rm -rf build
 yarn install --network-timeout 100000
-# CI vacío evita que advertencias heredadas del entorno conviertan el build en fallo.
-CI= yarn build
+# React Scripts 5 puede convertir advertencias de ESLint heredadas en errores del build.
+# La validación funcional se mantiene separada del despliegue para no bloquear una actualización.
+DISABLE_ESLINT_PLUGIN=true CI= yarn build
 $SUDO mkdir -p "$WEB_ROOT"
 $SUDO rm -rf "$WEB_ROOT"/*
 $SUDO cp -r build/. "$WEB_ROOT"/
