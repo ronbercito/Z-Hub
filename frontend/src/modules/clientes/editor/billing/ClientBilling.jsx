@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/billing/ClientBilling.jsx
- * Actualización: 2026-09-08 — refactorización del controlador de Facturación del cliente.
- * Función: coordina datos/API/estado de facturación; la UI de filtros, tabla y acciones vive en submódulos independientes.
+ * Actualización: 2026-09-08 — integra el submódulo aislado de Saldos del cliente.
+ * Función: coordina datos/API/estado de facturación; la UI de filtros, tabla, acciones y saldos vive en submódulos independientes.
  * Recibe de: ClientDetail.jsx mediante el wrapper estable del módulo de Clientes.
- * Entrega a: subcomponentes de billing y endpoints existentes, sin cambios de API ni base de datos.
+ * Entrega a: subcomponentes de billing y endpoints existentes.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
@@ -12,6 +12,7 @@ import { DollarSign, Wallet, CalendarDays, MessageSquare, Save, X, Mail, Smartph
 import { toast } from "sonner";
 import ClientBillingFilters from "./ClientBillingFilters";
 import ClientBillingTable from "./ClientBillingTable";
+import ClientBillingBalances from "./ClientBillingBalances";
 import { ClientBillingHeaderActions } from "./ClientBillingActions";
 import { DEFAULT_CONFIG, INPUT_CLASS, periodNow, today } from "./clientBillingUtils";
 
@@ -119,13 +120,20 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
         status: "unpaid",
         notes: invoice.notes,
       }, { headers });
-      toast.success(`${response.data.invoice_number} generado`);
+      const autoPaid = Number(response.data?.paid_amount || 0) > 0 && response.data?.payment_method === "Saldo a favor";
+      toast.success(autoPaid ? `${response.data.invoice_number} generado y pagado con saldo a favor` : `${response.data.invoice_number} generado`);
       setModal(null);
       await load();
       onBalanceUpdate?.();
     } catch (error) {
       toast.error(error.response?.data?.detail || "No se pudo generar la factura");
     }
+  };
+
+  const openEdit = inv => {
+    if (inv.status === "paid" || inv.status === "canceled" || Number(inv.paid_amount || 0) > 0) return toast.error("Esta factura está protegida y no se puede editar.");
+    setModal("edit");
+    setInvoice({ id: inv.id, service_id: inv.service_id || "", plan_name: inv.plan_name || "", amount: inv.amount || "", month_period: inv.month_period || periodNow(), issue_date: inv.issue_date || today(), due_date: inv.due_date || "", notes: inv.notes || "" });
   };
 
   const saveEdit = async event => {
@@ -302,10 +310,7 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
       )}
 
       {tab === "balances" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5"><h4 className="font-bold flex items-center gap-2"><Wallet className="w-4 h-4 text-cyan-400" /> Saldos del cliente</h4><div className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-400">Facturado</span><b>S/. {facturado.toFixed(2)}</b></div><div className="flex justify-between text-emerald-400"><span>Pagado</span><b>S/. {pagado.toFixed(2)}</b></div><div className="flex justify-between border-t border-slate-800 pt-3 text-rose-400"><span>Por cobrar</span><b>S/. {cobrar.toFixed(2)}</b></div></div></div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5"><h4 className="font-bold mb-3">Deuda por servicio</h4>{services.map((service, index) => { const label = service.is_primary ? "Servicio 1" : `Servicio ${index + 1}`; const amount = invoices.filter(item => (item.service_label || "Servicio 1") === label && !["paid", "canceled"].includes(item.status)).reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0) - Number(item.paid_amount || 0)), 0); return <div key={service.service_id} className="flex justify-between p-2 rounded-lg bg-slate-950 mb-2"><span>{label} · {service.plan_name || "Sin plan"}</span><b className={amount ? "text-rose-400" : "text-emerald-400"}>S/. {amount.toFixed(2)}</b></div>; })}</div>
-        </div>
+        <ClientBillingBalances clientId={clientId} API={API} headers={headers} onBalanceUpdate={onBalanceUpdate} />
       )}
 
       {tab === "config" && (
