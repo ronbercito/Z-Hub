@@ -44,10 +44,16 @@ jobs:
           text = text.replace(old, new, 1)
 
           marker = '''    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
-          replacement = '''    {showLocationPicker && (\n      <CoordinatesPicker\n        title={"Ubicación · " + (client?.full_name || "Cliente")}\n        latitude={summaryFormData.latitude}\n        longitude={summaryFormData.longitude}\n        onApply={applyLocation}\n        onClose={() => setShowLocationPicker(false)}\n      />\n    )}\n\n    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
+          replacement = '''    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
           if marker not in text:
               raise SystemExit('No se encontró el contenedor principal de ClientDetail; no se modifica el archivo.')
           text = text.replace(marker, replacement, 1)
+
+          child_marker = '''      <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">'''
+          child_replacement = '''      <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">\n        {showLocationPicker && (\n          <CoordinatesPicker\n            title={"Ubicación · " + (client?.full_name || "Cliente")}\n            latitude={summaryFormData.latitude}\n            longitude={summaryFormData.longitude}\n            onApply={applyLocation}\n            onClose={() => setShowLocationPicker(false)}\n          />\n        )}'''
+          if child_marker not in text:
+              raise SystemExit('No se encontró el contenedor interno de ClientDetail; no se modifica el archivo.')
+          text = text.replace(child_marker, child_replacement, 1)
 
           client.write_text(text)
 
