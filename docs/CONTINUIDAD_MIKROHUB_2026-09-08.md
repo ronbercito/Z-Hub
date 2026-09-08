@@ -4,119 +4,116 @@
 
 ## Versión funcional
 
-**1.0.98**
+**1.0.99**
 
-## Resumen de la entrega
+## Registro 1.0.98 — Navegación de Facturación
 
-Se aplicó una mejora visual a la navegación interna de **Facturación dentro de la ficha del cliente**, tomando como referencia el diseño aprobado: pestañas amplias, visibles, con iconos y un estado activo luminoso para facilitar la ubicación del administrador.
+Se aplicó la mejora visual de las pestañas internas de Facturación del cliente: Facturas, Transacciones, Saldos y Configuración, con pestaña activa destacada, iconos, borde y glow. Se creó el backup `backup/pre-facturacion-tabs-resaltadas-2026-09-08`.
 
-## Backup previo
+## Registro 1.0.99 — Editar saldo
 
-Antes de modificar `main` se creó la rama:
+**Tipo:** Funcionalidad / corrección operativa de Facturación → Saldos.
 
-`backup/pre-facturacion-tabs-resaltadas-2026-09-08`
+### Objetivo
+Permitir que el administrador corrija un saldo registrado por error sin tener que crear un movimiento duplicado.
 
-La rama conserva el estado anterior al cambio visual y debe mantenerse hasta validar el build y el panel real.
+### Solución
+Se añadió un botón **Editar** en cada fila del historial de Saldos.
 
-## Cambio visual 1.0.98
+El formulario permite modificar:
 
-### Archivo principal
+- monto;
+- descripción.
 
-`frontend/src/modules/clientes/editor/billing/ClientBilling.jsx`
+### Protección de trazabilidad
 
-### Navegación
+Si el movimiento todavía no fue aplicado y mantiene todo su importe disponible, se permite editar el monto y la descripción.
 
-La barra interna ahora muestra claramente:
+Si el movimiento ya fue aplicado a una factura, el monto queda bloqueado para no alterar retrospectivamente una factura ni romper el libro mayor. En ese caso se puede corregir únicamente la descripción.
 
-- **Facturas** — icono de documento.
-- **Transacciones** — icono de intercambio.
-- **Saldos** — icono de saldo/cartera.
-- **Configuración** — icono de configuración.
+### Backend
 
-La pestaña activa utiliza:
-
-- fondo cian translúcido;
-- borde resaltado;
-- icono cian ampliado;
-- línea inferior luminosa;
-- sombra/glow suave.
-
-Las pestañas inactivas conservan contraste y efecto hover. La distribución es responsive: dos columnas en pantallas pequeñas y cuatro en pantallas grandes.
-
-### Encabezado
-
-Se añadió una identificación visual de **Facturación** y una descripción indicando que las pestañas permiten administrar facturas, transacciones, saldos y configuración.
-
-Se conservaron las tarjetas de resumen:
-
-- Facturado.
-- Pagado.
-- Por cobrar.
-
-## Compatibilidad
-
-No se cambiaron endpoints, tablas ni reglas de negocio.
-
-Se conserva el flujo existente de:
-
-- Factura libre.
-- Factura de servicios.
-- Facturas.
-- Transacciones.
-- Saldos.
-- Configuración.
-- Pagos.
-- Aplicación automática de saldos.
-
-## Saldos 1.0.96–1.0.97
-
-El módulo mantiene el libro mayor de saldos:
-
-- positivo = saldo a favor;
-- negativo = deuda;
-- crédito positivo se aplica automáticamente a facturas futuras;
-- excedente permanece disponible;
-- deuda negativa se suma completa a la siguiente factura, incluso si supera el monto base;
-- las aplicaciones conservan trazabilidad de factura origen/destino.
-
-Ejemplos de validación:
+Nuevo endpoint:
 
 ```text
-500 → factura base 50 → factura final 50 → pagada → saldo restante 450
--100 → factura base 50 → factura final 150 → deuda consumida 100
+PUT /api/clients/{client_id}/balances/{balance_id}
 ```
 
-## Archivos de 1.0.98
+Valida que el movimiento pertenezca al cliente visible y protege los movimientos aplicados/parcialmente consumidos.
 
-- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — navegación y composición visual.
-- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.98 y changelog.
-- `docs/CONTINUIDAD_MIKROHUB.md` — bitácora maestra pendiente de consolidación por el mecanismo de reemplazo completo del archivo.
-- `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md` — continuidad específica de Saldos actualizada a 1.0.98.
-- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta continuidad diaria consolidada.
+### Frontend
 
-## Commits
+Archivo:
 
-- Cambio visual: `7ddae5b12235f5b9dce43a0ce6154ffefb3a5590`
-- Versión 1.0.98: `f2d098facf6aea953df195eb768e3dc56ad1ae3d`
-- Continuidad Saldos actualizada: `2a76212a080c52b6814dbffc74a4014ca67d4bdd`
+`frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx`
 
-## Pruebas
+Se añadió:
 
-- [x] backup creado antes de modificar `main`;
-- [x] revisión del propietario real del comportamiento;
-- [x] cambio visual limitado a Facturación del cliente;
-- [x] versión 1.0.98 registrada;
-- [x] endpoints y base de datos sin cambios deliberados;
+- estado de edición;
+- modal reutilizado para crear/editar;
+- botón Editar por movimiento;
+- bloqueo visual del monto cuando ya fue aplicado;
+- recarga del saldo e historial después de guardar.
+
+### Archivos modificados
+
+- `backend/app/routers/facturacion/client_balances.py` — endpoint seguro de edición.
+- `frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx` — botón, modal y flujo de edición.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.0.99 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta entrada diaria.
+
+### Base de datos
+
+No se crean tablas nuevas ni se eliminan datos. La edición reutiliza los campos existentes de `client_balances`.
+
+### Flujo
+
+```text
+Saldos
+  ↓
+Historial
+  ↓
+Editar
+  ↓
+¿Movimiento disponible completo?
+  ├─ Sí → editar monto + descripción
+  └─ No → monto bloqueado, editar descripción
+  ↓
+Guardar
+  ↓
+Recalcular saldo mostrado
+```
+
+### Backup
+
+Antes de modificar `main` se creó:
+
+`backup/pre-editar-saldos-2026-09-08`
+
+Este backup conserva el estado anterior a 1.0.99 y debe mantenerse hasta validar el panel.
+
+### Pruebas
+
+- [x] backup creado antes del cambio;
+- [x] endpoint revisado para pertenencia al cliente;
+- [x] protección de movimientos ya aplicados;
+- [x] interfaz de edición integrada al historial;
+- [x] versión 1.0.99 y CHANGELOG actualizados;
 - [ ] `yarn build` — no ejecutado desde este entorno;
-- [ ] validación visual en navegador/servidor;
-- [ ] prueba de las cuatro pestañas después de instalar 1.0.98;
-- [ ] prueba de Factura libre y aplicación de Saldos después del despliegue.
+- [ ] prueba en panel de editar saldo disponible;
+- [ ] prueba de edición de descripción en saldo aplicado;
+- [ ] prueba de Factura libre y aplicación automática después de editar;
+- [ ] validación final de Facturas, Transacciones y Configuración.
 
-## Resultado
+### Resultado
 
-La mejora visual está publicada en `main`. La validación de build y producción queda pendiente; no se debe afirmar que 1.0.98 está completamente validada hasta ejecutar esas comprobaciones.
+El cambio está publicado en `main`. La validación de build y producción queda pendiente y no debe declararse completa hasta probar el flujo real.
 
-## Regla de despliegue
+### Riesgos
+
+No se permite modificar el importe de movimientos que ya participaron en una aplicación a factura. Esto es deliberado para proteger la trazabilidad contable.
+
+## Despliegue
 
 ```bash
 cd /var/www/mikrohub
@@ -131,15 +128,11 @@ git rev-parse --short HEAD
 supervisorctl status mikrosmart_backend
 ```
 
-No borrar la base de datos ni datos existentes para solucionar un problema visual. Si el build falla, revisar el error real y usar el backup/rollback antes de realizar cambios adicionales.
+No borrar la base de datos ni datos existentes para solucionar un problema visual o funcional.
 
-## Regla para futuras sesiones
+## Referencias
 
-Antes de continuar con Facturación o Actualizaciones, leer:
-
-1. `README.md`
-2. `docs/CONTINUIDAD_MIKROHUB.md`
-3. `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md`
-4. `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md`
-
-Este documento es documentación interna y no debe entrar en el build público.
+- Bitácora maestra: `docs/CONTINUIDAD_MIKROHUB.md`
+- Continuidad específica de Saldos: `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md`
+- Backup anterior de navegación: `backup/pre-facturacion-tabs-resaltadas-2026-09-08`
+- Backup actual: `backup/pre-editar-saldos-2026-09-08`
