@@ -782,3 +782,12 @@ SHA: ...
 `clientDeleteGuard.js` ahora toma la URL DELETE original y añade `/deletion-summary`, conservando el prefijo `/api`: `/api/clients/{id}/deletion-summary`.
 
 **Prueba requerida:** actualizar a 1.0.80, Ctrl+F5 y abrir el modal. Debe mostrar datos reales; no confirmar la eliminación durante la verificación.
+
+
+### REV-0004 — 2026-09-08 — Panel 1.0.81
+
+**Causa confirmada:** La versión anterior usaba un interceptor global de Axios para deducir el cliente desde cualquier DELETE. Ese mecanismo perdió el contexto del botón y podía mostrar el modal con datos vacíos, aunque el resumen de backend sí existiera.
+
+**Corrección:** `frontend/src/modules/clientes/Clients.jsx`, dueño del botón Eliminar, solicita `/api/clients/{id}/deletion-summary` con el ID exacto antes de mostrar el mismo modal amigable. Solo después de confirmar `SI` envía el DELETE marcado como ya confirmado; el interceptor global no vuelve a intervenir.
+
+**Prueba requerida:** tras instalar 1.0.81, abrir Eliminar para `prueba`: el modal debe mostrar cliente `prueba`, 2 servicios, 2 facturas y S/.100.00 antes de confirmar.
