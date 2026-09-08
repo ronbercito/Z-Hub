@@ -1,13 +1,13 @@
 /**
  * Archivo: frontend/src/modules/red/components/CoordinatesPicker.jsx
- * Actualización: 2026-09-08 — el minimapa de solo lectura muestra dirección y referencia junto al mapa.
+ * Actualización: 2026-09-08 — habilita mapa/satélite y navegación hacia la ubicación del abonado.
  * Función: Selector visual de coordenadas con Google Maps. En modo edición permite mover
- *          el marcador; en modo solo lectura muestra un minimapa y los datos de ubicación guardados.
+ *          el marcador; en modo solo lectura muestra minimapa, datos de ubicación y acceso a navegación.
  */
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../../context/AuthContext";
-import { MapPin, X, Navigation } from "lucide-react";
+import { MapPin, X, Navigation, Route } from "lucide-react";
 
 const DEFAULT_POSITION = { lat: -8.0679, lng: -78.9859 };
 
@@ -40,6 +40,17 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
     ? { lat: initialLat, lng: initialLng } : DEFAULT_POSITION;
   const [position, setPosition] = useState(initial);
 
+  const openDirections = () => {
+    const destination = `${position.lat},${position.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+    const isMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent || "");
+    if (isMobile) {
+      window.location.href = url;
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     const start = async () => {
@@ -55,10 +66,16 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
         const map = new maps.Map(mapRef.current, {
           center: initial,
           zoom: 16,
-          mapTypeControl: false,
+          mapTypeId: maps.MapTypeId.ROADMAP,
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: maps.ControlPosition.TOP_RIGHT,
+            mapTypeIds: [maps.MapTypeId.ROADMAP, maps.MapTypeId.SATELLITE],
+          },
           streetViewControl: false,
           fullscreenControl: !readOnly,
-          zoomControl: !readOnly,
+          zoomControl: true,
         });
         const marker = new maps.Marker({ map, position: initial, draggable: !readOnly, title: title });
         markerRef.current = marker;
@@ -107,6 +124,9 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
                 <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">Coordenadas</div>
                 <div className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-cyan-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</div>
               </div>
+              <button type="button" onClick={openDirections} className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-cyan-400">
+                <Route className="h-4 w-4" /> Cómo llegar
+              </button>
             </div>
           </div>
         </div>
