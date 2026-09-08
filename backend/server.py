@@ -1,7 +1,7 @@
 """
 Punto de entrada FastAPI. Monta rutas bajo /api y aplica permisos por módulo.
 Las rutas OLT específicas se registran antes del router genérico de red.
-Actualización: 2026-09-08 — al guardar Resumen, sincroniza nombre/DNI con MikroTik sin reprovisionar servicios.
+Actualización: 2026-09-08 — registra acciones de facturas: editar, PDF, eliminar, anular y enviar.
 """
 from app.core.config import CORS_ORIGINS
 import logging
@@ -25,6 +25,7 @@ from app.routers.clientes.services import router as client_services_router
 from app.routers.clientes.identity_sync import sync_client_identity
 from app.routers.clientes.zones import router as zones_router
 from app.routers.facturacion.router import router as facturacion_router
+from app.routers.facturacion.invoice_actions import router as invoice_actions_router
 from app.routers.hotspot.router import router as hotspot_router
 from app.routers.inicio.router import router as inicio_router
 from app.routers.mensajeria.router import router as mensajeria_router
@@ -81,22 +82,19 @@ async def sync_summary_identity(request, call_next):
 
 api = APIRouter(prefix="/api")
 
-# OLT: rutas específicas antes de /routers genérico.
 for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
 
-# Públicas o de sesión; no pasan por control de módulo.
 for router in (ajustes_public_router, auth_router, system_update_router):
     api.include_router(router)
 
-# Cada grupo aplica autorización real antes de ejecutar sus endpoints.
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
 for router, module in (
     (inicio_router, "dashboard"), (clientes_router, "clients"), (client_services_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
-    (monitoring_router, "monitoring"), (facturacion_router, "billing"),
+    (monitoring_router, "monitoring"), (facturacion_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
     (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"),
     (staff_router, "staff"),
