@@ -20,7 +20,7 @@ const emptyForm = (planId = "", routerId = "") => ({
   latitude: "", longitude: "", ip_address: "", onu_sn: "", connection_type: "PPPoE",
   pppoe_user: "", pppoe_password: "", plan_id: planId, router_id: routerId,
   ipv4_network_id: "", nap_box: "", nap_box_id: "", nap_port: "", optical_power_dbm: "",
-  installation_date: "", technology: "fiber", zone_id: "", zone_name: "",
+  installation_date: (() => { const today = new Date(); return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`; })(), technology: "fiber", zone_id: "", zone_name: "",
   monitoring_equipment_id: "", monitoring_equipment_name: "", antenna_type: "", management_ip: "",
   status: "active", billing_day: new Date().getDate(), billing_type: "prepaid", invoice_lead_days: 5,
   grace_days: 5, cut_after_months: 1, invoice_notification_channel: "none",
