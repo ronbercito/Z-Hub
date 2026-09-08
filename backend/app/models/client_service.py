@@ -1,14 +1,15 @@
 """
 Archivo: backend/app/models/client_service.py
-Actualización: 2026-09-08 — agrega servicios independientes por cliente para agrupar múltiples conexiones.
+Actualización: 2026-09-08 — los servicios adicionales se eliminan automáticamente al eliminar su cliente.
 Función: Tabla de servicios de Internet adicionales de un cliente; conserva la configuración técnica
          de cada servicio separada para permitir varios servicios dentro de una misma ficha.
 Trabaja con: backend/app/models/client.py, backend/app/routers/clientes/router.py y ClientDetail.jsx.
 """
-from sqlalchemy import Float, Integer, String
+from sqlalchemy import Float, Integer, String, delete, event
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, new_id, now_iso
+from app.models.client import Client
 
 
 class ClientService(Base):
@@ -42,3 +43,9 @@ class ClientService(Base):
     management_ip: Mapped[str] = mapped_column(String(60), default="")
     status: Mapped[str] = mapped_column(String(30), default="active")
     created_at: Mapped[str] = mapped_column(String(40), default=now_iso)
+
+
+@event.listens_for(Client, "after_delete")
+def _delete_client_services_after_client_delete(mapper, connection, target):
+    """Libera en la base de datos todos los recursos de servicios del cliente eliminado."""
+    connection.execute(delete(ClientService).where(ClientService.client_id == target.id))
