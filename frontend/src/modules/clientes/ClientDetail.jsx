@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-08 — guarda Resumen por ruta aislada sin alterar plan, router ni servicio.
+ * Actualización: 2026-09-08 — sincroniza Resumen y Servicio con el listado general tras guardar.
  * Función: ficha operativa del cliente con pestañas completamente editables: Resumen, Servicio, Facturación, Email y SMS.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
  * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio, facturas y comunicaciones.
@@ -48,7 +48,7 @@ function Value({ label, children }) {
   );
 }
 
-export default function ClientDetail({ clientId, api, token, onClose }) {
+export default function ClientDetail({ clientId, api, token, onClose, onClientUpdated }) {
   const [activeTab, setActiveTab] = useState("summary");
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -176,6 +176,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
               headers: { Authorization: `Bearer ${token}` }
             });
             setClient(response.data);
+            onClientUpdated?.();
             setSummaryFormData({
               full_name: response.data.full_name || "",
               dni_ruc: response.data.dni_ruc || "",
@@ -209,6 +210,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
           headers: { Authorization: `Bearer ${token}` }
         });
         setClient(response.data);
+        onClientUpdated?.();
       } catch (err) {
         console.error("Error recargando cliente:", err);
       }
