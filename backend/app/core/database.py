@@ -82,3 +82,18 @@ def _add_missing_columns(conn):
                 default_sql = "" if default is None else f" DEFAULT {repr(default) if isinstance(default, str) else int(default) if isinstance(default, bool) else default}"
                 conn.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}{default_sql}"))
                 logger.info("Columna agregada: %s.%s", table.name, col.name)
+
+    # Las facturas antiguas ya tenían service_id, pero no la etiqueta histórica.
+    # Conservamos el vínculo y, como mínimo, dejamos visible el tipo + plan aun si el servicio se elimina.
+    invoice_columns = {c["name"] for c in insp.get_columns("invoices")} if "invoices" in insp.get_table_names() else set()
+    if {"service_id", "service_label", "service_type"}.issubset(invoice_columns):
+        conn.execute(text("""
+            UPDATE invoices
+            SET service_type = CASE WHEN service_id IS NULL OR service_id = '' THEN 'principal' ELSE 'adicional' END,
+                service_label = CASE
+                    WHEN service_id IS NULL OR service_id = '' THEN CONCAT('Servicio 1 · Principal')
+                    WHEN service_label IS NULL OR service_label = '' OR service_label = 'Servicio 1 · Principal'
+                        THEN CONCAT('Servicio adicional · ', COALESCE(plan_name, ''))
+                    ELSE service_label
+                END
+        """))
