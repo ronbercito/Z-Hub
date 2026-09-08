@@ -1,5 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
+ * Actualización: 2026-09-08 — recibe los guardados de la ficha y recarga el listado del abonado.
  * Función: Módulo Clientes: listado con búsqueda/filtros, alta y edición de abonados (datos personales, tipo de conexión PPPoE/IP Estática/DHCP, IP, usuario PPPoE, plan, router, NAP, potencia óptica), corte/reactivación real en MikroTik, recordatorio WhatsApp y eliminación.
  * Trabaja con: backend/app/routers/clientes/router.py (/api/clients), backend/app/integrations/mikrotik/service.py, modules/planes, modules/red
  */
@@ -773,6 +774,7 @@ export default function Clients({ onSelectClient }) {
           api={API}
           token={token}
           onClose={() => setDetailClientId(null)}
+          onClientUpdated={fetchData}
         />
       )}
       {showAddModal && (
