@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar y nombres visibles por DNI.
+Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar, nombres por DNI y actualización de la cola existente al editar.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
 Trabaja con: backend/app/models/client_service.py, clientes/router.py, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
@@ -39,6 +39,43 @@ def _normalize(data: dict) -> dict:
     return data
 
 
+def _clean_dni(value: str) -> str:
+    import re
+    return re.sub(r"[^A-Za-z0-9_-]", "", (value or "").strip()) or "SIN-DNI"
+
+
+def _queue_comment(temp: Client, row: ClientService) -> str:
+    return f"{temp.full_name} | {temp.dni_ruc} | {row.plan_name}"
+
+
+def _queue_matches_service(queue: dict, dni: str, old_ip: str | None = None) -> bool:
+    clean_dni = _clean_dni(dni)
+    name = str(queue.get("name") or "")
+    comment = str(queue.get("comment") or "")
+    target = str(queue.get("target") or "")
+    expected_target = f"{old_ip}/32" if old_ip else ""
+    if expected_target and target != expected_target:
+        return False
+    return (
+        name == f"svc-{clean_dni}"
+        or name.startswith(f"svc-{clean_dni}-")
+        or clean_dni in comment
+    )
+
+
+async def _queue_name_for_new_service(mikrotik, dni: str) -> str:
+    """Usa svc-DNI para el primer servicio y un sufijo solo si el DNI ya existe."""
+    base = f"svc-{_clean_dni(dni)}"
+    existing = await mikrotik.simple_queues()
+    names = {str(q.get("name") or "") for q in existing}
+    if base not in names:
+        return base
+    index = 2
+    while f"{base}-{index}" in names:
+        index += 1
+    return f"{base}-{index}"
+
+
 async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service_id: Optional[str] = None) -> Client:
     client = await _get_visible_client(db, client_id, {})
     temp = Client(**_normalize(data))
@@ -61,26 +98,61 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     return temp
 
 
-async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan: Optional[Plan]) -> dict:
-    """Aprovisiona un servicio adicional sin reutilizar el identificador global del cliente."""
+async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan: Optional[Plan], previous_ip: Optional[str] = None, updating: bool = False) -> dict:
+    """Aprovisiona el servicio y, al editar, modifica la cola existente en vez de crear otra."""
     if not router_obj or router_obj.device_type != "mikrotik" or not router_obj.password:
         return {"ok": False, "message": "El servicio fue validado, pero el MikroTik no tiene credenciales API configuradas."}
     try:
         async with mt.connect(router_obj) as mikrotik:
+            comment = _queue_comment(temp, row)
             if row.connection_type == "PPPoE" and row.pppoe_user:
                 profile = mt.plan_profile_name(plan) if plan else "default"
                 if plan:
                     await mikrotik.upsert_ppp_profile(profile, mt.plan_rate_limit(plan))
-                action = await mikrotik.upsert_ppp_secret(row.pppoe_user, row.pppoe_password or row.pppoe_user, profile, comment=f"{temp.full_name} | {temp.dni_ruc} | {row.plan_name} | Servicio {row.id[:8]}", remote_address=row.ip_address, disabled=(row.status == "suspended"))
+                action = await mikrotik.upsert_ppp_secret(row.pppoe_user, row.pppoe_password or row.pppoe_user, profile, comment=comment, remote_address=row.ip_address, disabled=(row.status == "suspended"))
                 return {"ok": True, "message": f"PPP secret '{row.pppoe_user}' {action} en {router_obj.name} (perfil {profile})."}
             if row.ip_address:
                 max_limit = mt.plan_rate_limit(plan) if plan else "1M/1M"
-                queue_name = mt.service_queue_name(temp.dni_ruc)
-                action = await mikrotik.upsert_simple_queue(queue_name, f"{row.ip_address}/32", max_limit.split(" ")[0], comment=f"{temp.full_name} | {temp.dni_ruc} | {row.plan_name} | Servicio {row.id[:8]}", burst_limit=plan.burst_limit if plan and "/" in (plan.burst_limit or "") else "")
-                return {"ok": True, "message": f"Cola simple '{queue_name}' {action} en {router_obj.name} ({max_limit})."}
+                data = {
+                    "name": f"svc-{_clean_dni(temp.dni_ruc)}",
+                    "target": f"{row.ip_address}/32",
+                    "max-limit": max_limit.split(" ")[0],
+                    "comment": comment,
+                }
+                if plan and "/" in (plan.burst_limit or ""):
+                    data["burst-limit"] = plan.burst_limit
+
+                if updating:
+                    queues = await mikrotik.simple_queues()
+                    old_queue = next((q for q in queues if _queue_matches_service(q, temp.dni_ruc, previous_ip)), None)
+                    if old_queue is None and previous_ip:
+                        legacy_name = f"svc-{_clean_dni(temp.dni_ruc)}-{previous_ip}"
+                        old_queue = next((q for q in queues if q.get("name") == legacy_name), None)
+                    if old_queue is not None:
+                        desired_name = data["name"]
+                        if any(q.get("name") == desired_name and q.get("id") != old_queue.get("id") for q in queues):
+                            desired_name = await _queue_name_for_new_service(mikrotik, temp.dni_ruc)
+                        data["name"] = desired_name
+                        await mikrotik.set("queue", "simple", **{".id": old_queue["id"], **data})
+                        return {"ok": True, "message": f"Cola simple '{desired_name}' actualizada en {router_obj.name} ({max_limit})."}
+
+                queue_name = await _queue_name_for_new_service(mikrotik, temp.dni_ruc)
+                data["name"] = queue_name
+                await mikrotik.add("queue", "simple", **data)
+                return {"ok": True, "message": f"Cola simple '{queue_name}' creada en {router_obj.name} ({max_limit})."}
             return {"ok": False, "message": "El servicio no tiene usuario PPPoE ni IP para aprovisionar."}
     except mt.MikroTikError as exc:
         return {"ok": False, "message": f"MikroTik no respondió: {exc}"}
+
+
+async def _remove_service_queue(mikrotik, dni: str, ip_address: Optional[str]) -> None:
+    """Elimina solo la cola del servicio indicado, sin borrar otra cola del mismo cliente."""
+    queues = await mikrotik.simple_queues()
+    matches = [q for q in queues if _queue_matches_service(q, dni, ip_address)]
+    if not matches and ip_address:
+        legacy_name = f"svc-{_clean_dni(dni)}-{ip_address}"
+        matches = [q for q in queues if q.get("name") == legacy_name]
+    await mikrotik.remove("queue", "simple", ids=[q["id"] for q in matches if q.get("id")])
 
 
 async def _refresh_optical_power(db: AsyncSession, rows: list[ClientService]) -> None:
@@ -153,10 +225,10 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
     await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
     plan = await db.get(Plan, row.plan_id) if row.plan_id else None
-    result = await _provision_service(row, temp, router_obj, plan)
+    result = await _provision_service(row, temp, router_obj, plan, previous_ip=old_ip_address, updating=True)
     if not result["ok"]:
         await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo actualizar el servicio en MikroTik: {result['message']}")
-    if old_router_id != row.router_id or old_connection_type != row.connection_type or old_pppoe_user != row.pppoe_user or old_ip_address != row.ip_address:
+    if old_router_id != row.router_id or old_connection_type != row.connection_type or old_pppoe_user != row.pppoe_user:
         old_router = await db.get(Router, old_router_id) if old_router_id else None
         if old_router and old_router.device_type == "mikrotik" and old_router.password:
             try:
@@ -164,8 +236,7 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
                     if old_pppoe_user and old_connection_type == "PPPoE":
                         await old_mikrotik.remove_ppp_secret(old_pppoe_user)
                     if old_ip_address and old_connection_type != "PPPoE":
-                        await old_mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc))
-                        await old_mikrotik.remove_simple_queue(f"svc-{row.id}")
+                        await _remove_service_queue(old_mikrotik, client.dni_ruc, old_ip_address)
             except mt.MikroTikError as exc:
                 await db.rollback(); raise HTTPException(status_code=502, detail=f"Servicio actualizado, pero no se pudo limpiar la configuración anterior en MikroTik: {exc}")
     await db.commit(); await db.refresh(row)
@@ -185,8 +256,7 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
                 if row.pppoe_user:
                     await mikrotik.remove_ppp_secret(row.pppoe_user)
                 if row.ip_address:
-                    await mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc))
-                    await mikrotik.remove_simple_queue(f"svc-{row.id}")
+                    await _remove_service_queue(mikrotik, client.dni_ruc, row.ip_address)
         except mt.MikroTikError as exc:
             raise HTTPException(status_code=502, detail=f"No se pudo eliminar el servicio de MikroTik: {exc}")
     await db.delete(row); await db.commit()
