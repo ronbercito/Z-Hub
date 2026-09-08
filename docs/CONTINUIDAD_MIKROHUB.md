@@ -773,3 +773,12 @@ SHA: ...
 **Archivos:** `clientDeleteGuard.js`, `modules/system-update/version.js`.
 
 **Prueba pendiente:** Actualizar el panel, recargar con Ctrl+F5 y abrir la eliminación del cliente con dos servicios y dos facturas pendientes. Debe mostrar sus cantidades y saldo reales antes de aceptar `SI`.
+
+
+### REV-0003 — 2026-09-08 — Panel 1.0.80
+
+**Corrección definitiva de ruta:** en producción, Axios usa URLs relativas como `/api/clients/{id}` sin `baseURL`. La versión 1.0.79 construía el resumen como `/clients/{id}/deletion-summary`, omitiendo `/api`; Nginx devolvía la aplicación React en lugar del JSON, de ahí que el modal mostrara “Cliente” y valores 0.
+
+`clientDeleteGuard.js` ahora toma la URL DELETE original y añade `/deletion-summary`, conservando el prefijo `/api`: `/api/clients/{id}/deletion-summary`.
+
+**Prueba requerida:** actualizar a 1.0.80, Ctrl+F5 y abrir el modal. Debe mostrar datos reales; no confirmar la eliminación durante la verificación.
