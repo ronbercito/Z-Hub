@@ -41,13 +41,7 @@ async def _serialize_rows(db: AsyncSession, rows: list[ClientBalance]) -> list[d
     if invoice_ids:
         invoices = (await db.execute(select(Invoice).where(Invoice.id.in_(invoice_ids)))).scalars().all()
         invoice_map = {invoice.id: invoice.invoice_number for invoice in invoices}
-    return [
-        row.to_dict(
-            source_number=invoice_map.get(row.source_invoice_id),
-            target_number=invoice_map.get(row.target_invoice_id),
-        )
-        for row in rows
-    ]
+    return [row.to_dict(source_number=invoice_map.get(row.source_invoice_id), target_number=invoice_map.get(row.target_invoice_id)) for row in rows]
 
 
 def _operator(user: dict) -> tuple[str, str]:
@@ -106,7 +100,6 @@ async def update_client_balance(client_id: str, balance_id: str, data: ClientBal
     entry = await db.get(ClientBalance, balance_id)
     if not entry or entry.client_id != client.id:
         raise HTTPException(status_code=404, detail="Movimiento de saldo no encontrado.")
-
     old_amount = round(float(entry.amount or 0), 2)
     old_description = entry.description or ""
     if data.description is not None:
@@ -114,7 +107,6 @@ async def update_client_balance(client_id: str, balance_id: str, data: ClientBal
         if not description:
             raise HTTPException(status_code=422, detail="La descripción no puede quedar vacía.")
         entry.description = description
-
     if data.amount is not None:
         new_amount = round(float(data.amount), 2)
         original = old_amount
@@ -131,8 +123,7 @@ async def update_client_balance(client_id: str, balance_id: str, data: ClientBal
                 raise HTTPException(status_code=422, detail=f"No es posible. El monto máximo a editar es S/. {abs(original):.2f}.")
             entry.amount = new_amount
             entry.remaining_amount = new_amount
-
-    operator, identity = _operator(current_user)
+    operator, _ = _operator(current_user)
     entry.operator_name = operator
     changes = []
     if data.amount is not None and old_amount != round(float(entry.amount or 0), 2):
@@ -142,7 +133,7 @@ async def update_client_balance(client_id: str, balance_id: str, data: ClientBal
     if not changes:
         changes.append("se guardó el movimiento sin cambios de importe ni descripción")
     new_total = round(await balance_total(db, client.id), 2)
-    _activity(db, client.id, "Saldo editado", f"Se modificó el movimiento {entry.id[:8]}. {'; '.join(changes)}. Saldo neto resultante: S/. {new_total:.2f} | {identity}", current_user)
+    _activity(db, client.id, "Saldo editado", f"Se modificó el movimiento {entry.id[:8]}. {'; '.join(changes)}. Saldo neto resultante: S/. {new_total:.2f}", current_user)
     await db.commit()
     rows = await _serialize_rows(db, [entry])
     return {"message": "Saldo actualizado correctamente.", "balance": new_total, "entry": rows[0]}
