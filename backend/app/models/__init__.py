@@ -8,6 +8,7 @@ from .user import User
 from .plan import Plan
 from .router import Router
 from .client import Client
+from .client_service import ClientService
 from .ipv4_network import IPv4Network
 from .nap_box import NapBox
 from .zone import Zone
@@ -23,6 +24,6 @@ from .task import Task
 from .setting import Setting
 
 __all__ = [
-    "User", "Plan", "Router", "Client", "Invoice", "Ticket",
+    "User", "Plan", "Router", "Client", "ClientService", "Invoice", "Ticket",
     "InventoryItem", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
 ]
