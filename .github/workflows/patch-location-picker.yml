@@ -44,7 +44,7 @@ jobs:
           text = text.replace(old, new, 1)
 
           marker = '''    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
-          replacement = '''    {showLocationPicker && (\n      <CoordinatesPicker\n        title={`Ubicación · ${client?.full_name || "Cliente"}`}\n        latitude={summaryFormData.latitude}\n        longitude={summaryFormData.longitude}\n        onApply={applyLocation}\n        onClose={() => setShowLocationPicker(false)}\n      />\n    )}\n\n    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
+          replacement = '''    {showLocationPicker && (\n      <CoordinatesPicker\n        title={"Ubicación · " + (client?.full_name || "Cliente")}\n        latitude={summaryFormData.latitude}\n        longitude={summaryFormData.longitude}\n        onApply={applyLocation}\n        onClose={() => setShowLocationPicker(false)}\n      />\n    )}\n\n    <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
           if marker not in text:
               raise SystemExit('No se encontró el contenedor principal de ClientDetail; no se modifica el archivo.')
           text = text.replace(marker, replacement, 1)
@@ -53,6 +53,8 @@ jobs:
 
           version = Path('frontend/src/modules/system-update/version.js')
           v = version.read_text()
+          if 'PANEL_VERSION = "1.0.27"' not in v:
+              raise SystemExit('La versión base esperada 1.0.27 no está disponible; se cancela para evitar una actualización incorrecta.')
           v = v.replace('PANEL_VERSION = "1.0.27"', 'PANEL_VERSION = "1.0.28"', 1)
           v = v.replace(
               'export const CHANGELOG = [\n',
