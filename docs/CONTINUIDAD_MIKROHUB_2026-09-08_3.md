@@ -24,22 +24,29 @@ Corrección:
 ## 4. Commits
 - Corrección `ClientBilling.jsx`: `00b91d516f656fdd74f6574f93cfa879592cb813`
 - Versión 1.0.67: `53ad105aa7662eb59b510451c2b05c64b711eb99`
+- Continuidad de la corrección: `51f631e` (commit de documentación)
 
 ## 5. Estado de producción
-El servidor de producción continúa protegido en la versión anterior mientras se verifica el build. No se debe hacer `git pull`, `reset --hard` ni ejecutar el instalador sobre `/var/www/mikrohub` hasta confirmar una compilación exitosa.
+El servidor de producción fue actualizado correctamente desde el Centro de Actualizaciones después de verificar el build de 1.0.67.
 
-## 6. Verificación pendiente
-En el worktree aislado `/tmp/mikrohub-build-debug` del servidor de pruebas se debe sincronizar `origin/main` y ejecutar:
+## 6. Verificación realizada
+En el worktree aislado `/tmp/mikrohub-build-debug` se ejecutó una instalación limpia de dependencias y el build de producción.
 
-```bash
-cd /tmp/mikrohub-build-debug
-rm -rf frontend/node_modules
-cd frontend
-yarn install --network-timeout 100000
-DISABLE_ESLINT_PLUGIN=true CI= yarn build 2>&1 | tee /tmp/mikrohub-build-error.log
-```
+Resultado:
+- `yarn install --network-timeout 100000` → correcto.
+- `DISABLE_ESLINT_PLUGIN=true CI= yarn build` → `Compiled successfully`.
+- El mensaje `Cannot find ESLint plugin (ESLintWebpackPlugin).` apareció como aviso no fatal; el build terminó correctamente.
 
-Si el build termina correctamente, recién entonces se puede probar el flujo de actualización del panel.
+## 7. Nueva política prioritaria
+Se agregó el archivo interno:
 
-## 7. Regla de continuidad
+`docs/POLITICA_PRIORITARIA_ERRORES_ACTUALIZACION.md`
+
+Regla obligatoria para futuras actualizaciones: si un update falla, **primero se debe revisar exactamente lo modificado y buscar un error introducido por el cambio antes de repetir el update**. También se debe seguir la cadena completa de la funcionalidad y comparar el código nuevo con otras implementaciones existentes que hagan la misma llamada, recepción o envío.
+
+No se debe repetir una actualización fallida a ciegas ni asumir de inmediato que el problema es Yarn, Node, ESLint, caché o servidor sin revisar primero el código modificado.
+
+## 8. Regla de continuidad
 Esta documentación es interna y no forma parte del build ni debe importarse desde el panel. Las modificaciones funcionales futuras deben incrementar `PANEL_VERSION` y registrar el cambio aquí o en el documento maestro de continuidad.
+
+La nueva política es documental y **no incrementa `PANEL_VERSION`**.
