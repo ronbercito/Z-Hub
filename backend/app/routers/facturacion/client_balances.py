@@ -1,7 +1,7 @@
 """
 Archivo: backend/app/routers/facturacion/client_balances.py
-Actualización: 2026-09-08 — API exclusiva de Saldos del cliente.
-Función: listar, registrar y editar créditos/deudas firmados sin mezclar la lógica de facturas con la interfaz.
+Actualización: 2026-09-08 — edición segura con límite sobre el movimiento original.
+Función: listar, registrar y editar créditos/deudas firmados sin permitir que un ajuste nuevo aumente por encima del monto registrado.
 Trabaja con: ClientBalance, Client, Invoice y frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx.
 """
 from typing import Optional
@@ -123,15 +123,29 @@ async def update_client_balance(
 
     if data.amount is not None:
         new_amount = round(float(data.amount), 2)
-        if new_amount == 0:
-            raise HTTPException(status_code=422, detail="El monto no puede ser cero.")
-        if entry.parent_id or abs(float(entry.remaining_amount or 0) - float(entry.amount or 0)) >= 0.005:
+        original = round(float(entry.amount or 0), 2)
+        remaining = round(float(entry.remaining_amount or 0), 2)
+        if entry.parent_id or abs(remaining - original) >= 0.005:
             raise HTTPException(
                 status_code=409,
                 detail="El monto ya fue aplicado a una factura y no puede modificarse. Puedes editar la descripción.",
             )
-        entry.amount = new_amount
-        entry.remaining_amount = new_amount
+        if new_amount == 0:
+            entry.amount = 0
+            entry.remaining_amount = 0
+        else:
+            if (original > 0 and new_amount < 0) or (original < 0 and new_amount > 0):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"No puedes cambiar el tipo de saldo. Conserva {'saldo a favor' if original > 0 else 'deuda'}.",
+                )
+            if abs(new_amount) > abs(original) + 0.005:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"No es posible. El monto máximo a editar es S/. {abs(original):.2f}.",
+                )
+            entry.amount = new_amount
+            entry.remaining_amount = new_amount
 
     entry.operator_name = current_user.get("name") or current_user.get("username") or entry.operator_name or "Sistema"
     await db.commit()
