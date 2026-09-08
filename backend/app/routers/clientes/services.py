@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios adicionales con aprovisionamiento MikroTik, recibo adelantado por servicio y consulta de potencia ONU optimizada.
+Actualización: 2026-09-08 — servicios adicionales con aprovisionamiento MikroTik, recibo adelantado por servicio, consulta ONU optimizada y validación cruzada de recursos.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
 Trabaja con: backend/app/models/client_service.py, clientes/router.py, facturación, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
@@ -88,7 +88,19 @@ async def _queue_name_for_new_service(mikrotik, dni: str) -> str:
     return f"{base}-{index}"
 
 
+async def _purge_orphan_services(db: AsyncSession) -> None:
+    """Elimina filas de servicios cuyo cliente ya no existe para que nunca vuelvan a reservar IP/NAP."""
+    rows = (await db.execute(
+        select(ClientService).where(~ClientService.client_id.in_(select(Client.id)))
+    )).scalars().all()
+    if rows:
+        for row in rows:
+            await db.delete(row)
+        await db.commit()
+
+
 async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service_id: Optional[str] = None) -> Client:
+    await _purge_orphan_services(db)
     client = await _get_visible_client(db, client_id, {})
     temp = Client(**_normalize(data))
     temp.id = ""
@@ -96,17 +108,33 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     temp.dni_ruc = client.dni_ruc
     await _attach_plan_router(db, temp)
     if temp.ip_address:
-        q = select(ClientService.id).where(ClientService.client_id == client_id, ClientService.ip_address == temp.ip_address)
-        if current_service_id:
-            q = q.where(ClientService.id != current_service_id)
-        if await db.scalar(q):
-            raise HTTPException(status_code=422, detail="La IP seleccionada ya está asignada a otro servicio del cliente.")
+        client_ip = await db.scalar(select(Client.id).where(
+            Client.id != client_id,
+            Client.ipv4_network_id == temp.ipv4_network_id,
+            Client.ip_address == temp.ip_address,
+        ))
+        service_ip = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(
+            ClientService.ipv4_network_id == temp.ipv4_network_id,
+            ClientService.ip_address == temp.ip_address,
+            Client.id != client_id,
+            ClientService.id != (current_service_id or "__none__"),
+        ))
+        if client_ip or service_ip:
+            raise HTTPException(status_code=422, detail="La IP seleccionada ya está asignada a otro cliente o servicio.")
     if temp.nap_box_id and temp.nap_port is not None:
-        q = select(ClientService.id).where(ClientService.nap_box_id == temp.nap_box_id, ClientService.nap_port == temp.nap_port)
-        if current_service_id:
-            q = q.where(ClientService.id != current_service_id)
-        if await db.scalar(q):
-            raise HTTPException(status_code=422, detail=f"El puerto NAP {temp.nap_port} ya está ocupado por otro servicio.")
+        client_port = await db.scalar(select(Client.id).where(
+            Client.id != client_id,
+            Client.nap_box_id == temp.nap_box_id,
+            Client.nap_port == temp.nap_port,
+        ))
+        service_port = await db.scalar(select(ClientService.id).join(Client, Client.id == ClientService.client_id).where(
+            ClientService.nap_box_id == temp.nap_box_id,
+            ClientService.nap_port == temp.nap_port,
+            Client.id != client_id,
+            ClientService.id != (current_service_id or "__none__"),
+        ))
+        if client_port or service_port:
+            raise HTTPException(status_code=422, detail=f"El puerto NAP {temp.nap_port} ya está ocupado por otro cliente o servicio.")
     return temp
 
 
@@ -212,6 +240,7 @@ async def _create_advance_invoice(db: AsyncSession, client: Client, row: ClientS
 
 @router.get("/{client_id}/services")
 async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    await _purge_orphan_services(db)
     client = await _get_visible_client(db, client_id, current_user)
     rows = (await db.execute(select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.asc()))).scalars().all()
     await _refresh_optical_power(db, rows)
