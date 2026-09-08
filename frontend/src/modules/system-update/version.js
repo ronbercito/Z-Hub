@@ -1,16 +1,17 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-08 — versión 1.0.90, feedback visual persistente al comprobar actualizaciones.
+ * Actualización: 2026-09-08 — versión 1.0.91, aislamiento del módulo de facturación del cliente.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG para frontend y sistema de actualización.
  * Recibe de: no recibe datos.
  * Entrega a: componentes frontend que importen PANEL_VERSION/CHANGELOG y backend/app/modules/system_update/router.py, que consulta este mismo archivo desde Git.
  * Regla: para cambiar la versión del panel se modifica únicamente PANEL_VERSION aquí; no se deben duplicar números de versión en otros módulos.
  */
-export const PANEL_VERSION = "1.0.90";
+export const PANEL_VERSION = "1.0.91";
 export const CHANGELOG = [
-  { type: "Interfaz", text: "El botón Comprobar mantiene un estado visual claramente activo mientras busca actualizaciones." },
-  { type: "Interfaz", text: "Durante la comprobación se muestra giro, pulso, resplandor, elevación y puntos animados para confirmar que el clic fue recibido." },
-  { type: "Interfaz", text: "La búsqueda mantiene el feedback visible al menos unos instantes aunque el servidor responda muy rápido." },
-  { type: "Interfaz", text: "La ventana indica explícitamente que está consultando el servidor y bloquea comprobaciones repetidas mientras espera la respuesta." },
-  { type: "Interfaz", text: "La versión del panel continúa administrada desde una única fuente de verdad: frontend/src/modules/system-update/version.js." },
+  { type: "Arquitectura", text: "Facturación del cliente queda encapsulada en un módulo independiente dentro de clientes/editor/billing/." },
+  { type: "Estabilidad", text: "Se incorpora un ErrorBoundary exclusivo para Facturación: un error de renderizado del módulo muestra un aviso controlado sin derribar la ficha ni sus demás pestañas." },
+  { type: "Estabilidad", text: "El punto de entrada ClientBilling.jsx se conserva como wrapper estable para no alterar la integración existente de ClientDetail." },
+  { type: "Mantenimiento", text: "Se mantiene el flujo existente de facturas, pagos, transacciones, saldos y configuración sin cambios de API ni base de datos." },
+  { type: "Respaldo", text: "Se creó la rama backup/pre-facturacion-aislada-2026-09-08 antes de aplicar la refactorización." },
+  { type: "Nota", text: "El aislamiento protege errores en ejecución; un error de sintaxis/compilación todavía debe corregirse porque afecta al build completo de React." },
 ];
