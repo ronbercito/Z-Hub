@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-08 — integración de ClientCommunications en pestaña Email y SMS.
+ * Actualización: 2026-09-08 — guarda Resumen por ruta aislada sin alterar plan, router ni servicio.
  * Función: ficha operativa del cliente con pestañas completamente editables: Resumen, Servicio, Facturación, Email y SMS.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
  * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio, facturas y comunicaciones.
@@ -164,7 +164,7 @@ export default function ClientDetail({ clientId, api, token, onClose }) {
         longitude: summaryFormData.longitude ? parseFloat(summaryFormData.longitude) : null
       };
 
-      await axios.put(`${api}/clients/${clientId}`, payload, {
+      await axios.patch(`${api}/clients/${clientId}/summary`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
