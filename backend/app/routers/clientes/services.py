@@ -59,7 +59,7 @@ async def _service_number(db: AsyncSession, client_id: str, service_id: Optional
 
 
 def _queue_comment(temp: Client, row: ClientService, service_number: int) -> str:
-    return f"{temp.full_name} | {temp.dni_ruc} | serv {service_number}"
+    return f"{temp.full_name} | {row.plan_name} | serv {service_number}"
 
 
 def _queue_matches_service(queue: dict, dni: str, old_ip: str | None = None) -> bool:
