@@ -24,6 +24,7 @@ Antes de realizar cualquier modificación en MikroHub, una nueva sesión de Chat
 ### Documentación técnica
 
 - **[Guía de Continuidad para Copilot](docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md)** — Arquitectura, módulos, método de corrección, pruebas, troubleshooting y checklist de despliegue.
+- **[Continuidad detallada 2026-09-08](docs/CONTINUIDAD_MIKROHUB_2026-09-08.md)** — Detalle del cambio 1.0.64 de Facturación dentro de la ficha del cliente y pruebas pendientes.
 
 ### Instalación y despliegue
 
@@ -31,9 +32,9 @@ Antes de realizar cualquier modificación en MikroHub, una nueva sesión de Chat
 
 ## 🔐 Documentación interna de continuidad
 
-`docs/CONTINUIDAD_MIKROHUB.md` es una bitácora interna del proyecto. **No forma parte de la interfaz ni de la lógica del panel.**
+`docs/CONTINUIDAD_MIKROHUB.md` y sus registros de continuidad fechados son documentación interna del proyecto. **No forman parte de la interfaz ni de la lógica del panel.**
 
-No debe:
+No deben:
 
 - importarse desde React;
 - importarse desde FastAPI;
@@ -50,7 +51,7 @@ Todo cambio funcional debe:
 
 1. Modificar el módulo/archivo responsable del comportamiento.
 2. Incluir comentarios de actualización en los archivos modificados.
-3. Registrar el cambio en `docs/CONTINUIDAD_MIKROHUB.md`.
+3. Registrar el cambio en `docs/CONTINUIDAD_MIKROHUB.md` o, cuando el detalle requiera un registro fechado, en `docs/CONTINUIDAD_MIKROHUB_YYYY-MM-DD.md` y mantenerlo enlazado desde este README.
 4. Indicar en la bitácora la versión del panel afectada.
 5. Actualizar `frontend/src/modules/system-update/version.js` y su `CHANGELOG` cuando el cambio sea funcional para el panel.
 6. Registrar archivos modificados, origen/destino de los datos, pruebas realizadas y pendientes.
