@@ -1,7 +1,7 @@
 /*
  * MikroHub — confirmación de eliminación de clientes.
- * Actualización 2026-09-08: la confirmación consulta directamente las mismas APIs
- * que alimentan las pestañas Servicios y Facturación antes de enviar el DELETE.
+ * Actualización 2026-09-08: la confirmación usa el resumen autoritativo de backend
+ * sin reutilizar respuestas antiguas del navegador antes de enviar el DELETE.
  * Función: modal crítico; no usa confirm() nativo para decidir la eliminación.
  */
 import axios from "axios";
@@ -126,23 +126,18 @@ function installClientDeleteGuard() {
       const apiRoot = isAbsolute ? originalUrl.replace(DELETE_CLIENT_RE, "") : base;
       const headers = config.headers || {};
 
-      const [servicesRes, invoicesRes, clientRes] = await Promise.all([
-        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}/services`, headers }),
-        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}/invoices`, headers }),
-        originalRequest({ method: "get", url: `${apiRoot}/clients/${clientId}`, headers }),
-      ]);
-
-      const services = Array.isArray(servicesRes.data) ? servicesRes.data : [];
-      const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
-      const client = clientRes.data || {};
-      const pending = invoices.filter((item) => ["unpaid", "overdue"].includes(String(item.status || "").toLowerCase()));
-      const pendingCount = pending.length;
-      const pendingTotal = Math.round(pending.reduce((sum, item) => {
-        const amount = Number(item.amount || 0);
-        const paid = Number(item.paid_amount || 0);
-        return sum + Math.max(0, amount - paid);
-      }, 0) * 100) / 100;
-      const clientName = client.full_name || window.__mikrohubPendingDeleteClientName || "Cliente";
+      // La base de datos es la única fuente de verdad: evita contar listas React vacías o respuestas almacenadas.
+      const summaryRes = await originalRequest({
+        method: "get",
+        url: `${apiRoot}/clients/${clientId}/deletion-summary`,
+        headers,
+        params: { _delete_check: Date.now() },
+      });
+      const summary = summaryRes.data || {};
+      const services = Array.isArray(summary.services) ? summary.services : [];
+      const pendingCount = Number(summary.pending_invoice_count || 0);
+      const pendingTotal = Math.round(Number(summary.pending_total || 0) * 100) / 100;
+      const clientName = summary.client_name || window.__mikrohubPendingDeleteClientName || "Cliente";
       const priority = services.length > 1 && pendingCount > 0;
 
       if (!await showDeleteModal({ clientName, services, pendingCount, pendingTotal, priority })) {
