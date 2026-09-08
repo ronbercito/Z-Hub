@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/schemas.py
-Función: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
+Actualización: 2026-09-08 — separa actualizaciones de Resumen y Servicio para no sobrescribir datos ajenos.\nFunción: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
 Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
 """
 from typing import Optional
@@ -77,3 +77,19 @@ class ClientServiceUpdate(BaseModel):
     monitoring_equipment_id: Optional[str] = None
     antenna_type: Optional[str] = None
     management_ip: Optional[str] = None
+
+
+class ClientSummaryUpdate(BaseModel):
+    """Actualiza solo datos personales; recibe el formulario Resumen y entrega cambios sin tocar el servicio."""
+    model_config = ConfigDict(extra="ignore")
+
+    full_name: Optional[str] = None
+    dni_ruc: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    reference: Optional[str] = None
+    installation_date: Optional[str] = None
+    zone_id: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
