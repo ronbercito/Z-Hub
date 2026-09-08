@@ -82,12 +82,12 @@ class ClientServiceUpdate(BaseModel):
 
 
 class ClientSummaryUpdate(BaseModel):
-    """Actualiza el formulario completo de Resumen; identidad y contacto son obligatorios."""
+    """Actualiza el formulario completo de Resumen; identidad y contacto son obligatorios y no pueden quedar vacíos."""
     model_config = ConfigDict(extra="ignore")
 
-    full_name: str
-    dni_ruc: str
-    phone: str
+    full_name: str = Field(min_length=1)
+    dni_ruc: str = Field(min_length=1)
+    phone: str = Field(min_length=1)
     email: Optional[str] = None
     address: Optional[str] = None
     reference: Optional[str] = None
