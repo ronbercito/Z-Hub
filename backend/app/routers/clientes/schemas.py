@@ -52,3 +52,28 @@ class ClientIn(BaseModel):
     reminder_2_days: Optional[int] = Field(default=None, ge=1, le=20)
     reminder_3_days: Optional[int] = Field(default=None, ge=1, le=20)
     create_first_invoice: bool = True
+
+
+class ClientServiceUpdate(BaseModel):
+    """
+    Schema para actualización de Servicio del cliente (pestaña Servicio).
+    Solo incluye campos técnicos de configuración de servicio.
+    Todos los campos son opcionales para permitir actualizaciones parciales.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    plan_id: Optional[str] = None
+    router_id: Optional[str] = None
+    connection_type: Optional[str] = None
+    ipv4_network_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    pppoe_user: Optional[str] = None
+    pppoe_password: Optional[str] = None
+    technology: Optional[str] = None
+    zone_id: Optional[str] = None
+    nap_box_id: Optional[str] = None
+    nap_port: Optional[int] = None
+    onu_sn: Optional[str] = None
+    monitoring_equipment_id: Optional[str] = None
+    antenna_type: Optional[str] = None
+    management_ip: Optional[str] = None
