@@ -1,7 +1,7 @@
 """
 Archivo: backend/app/routers/facturacion/client_balances.py
 Actualización: 2026-09-08 — API exclusiva de Saldos del cliente.
-Función: listar y registrar créditos/deudas firmados sin mezclar la lógica de facturas con la interfaz.
+Función: listar, registrar y editar créditos/deudas firmados sin mezclar la lógica de facturas con la interfaz.
 Trabaja con: ClientBalance, Client, Invoice y frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx.
 """
 from typing import Optional
@@ -26,6 +26,11 @@ class ClientBalanceIn(BaseModel):
     amount: float = Field(..., description="Positivo = saldo a favor; negativo = deuda")
     description: str = ""
     source_invoice_id: Optional[str] = None
+
+
+class ClientBalanceUpdate(BaseModel):
+    amount: Optional[float] = Field(None, description="Nuevo monto; solo editable antes de aplicar el movimiento")
+    description: Optional[str] = None
 
 
 async def _serialize_rows(db: AsyncSession, rows: list[ClientBalance]) -> list[dict]:
@@ -95,3 +100,44 @@ async def add_client_balance(
     await db.commit()
     rows = await _serialize_rows(db, [entry])
     return {"message": "Saldo registrado correctamente.", "balance": round(await balance_total(db, client.id), 2), "entry": rows[0]}
+
+
+@router.put("/{client_id}/balances/{balance_id}")
+async def update_client_balance(
+    client_id: str,
+    balance_id: str,
+    data: ClientBalanceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    client = await _get_visible_client(db, client_id, current_user)
+    entry = await db.get(ClientBalance, balance_id)
+    if not entry or entry.client_id != client.id:
+        raise HTTPException(status_code=404, detail="Movimiento de saldo no encontrado.")
+
+    if data.description is not None:
+        description = data.description.strip()
+        if not description:
+            raise HTTPException(status_code=422, detail="La descripción no puede quedar vacía.")
+        entry.description = description
+
+    if data.amount is not None:
+        new_amount = round(float(data.amount), 2)
+        if new_amount == 0:
+            raise HTTPException(status_code=422, detail="El monto no puede ser cero.")
+        if entry.parent_id or abs(float(entry.remaining_amount or 0) - float(entry.amount or 0)) >= 0.005:
+            raise HTTPException(
+                status_code=409,
+                detail="El monto ya fue aplicado a una factura y no puede modificarse. Puedes editar la descripción.",
+            )
+        entry.amount = new_amount
+        entry.remaining_amount = new_amount
+
+    entry.operator_name = current_user.get("name") or current_user.get("username") or entry.operator_name or "Sistema"
+    await db.commit()
+    rows = await _serialize_rows(db, [entry])
+    return {
+        "message": "Saldo actualizado correctamente.",
+        "balance": round(await balance_total(db, client.id), 2),
+        "entry": rows[0],
+    }
