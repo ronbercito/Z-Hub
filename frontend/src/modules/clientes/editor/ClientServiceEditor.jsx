@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — muestra IPs y puertos libres, y permite registrar potencia ONU manual.
+ * Actualización: 2026-09-08 — cierra la ficha inmediatamente después de guardar el servicio.
  * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
  * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
  * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
@@ -10,7 +10,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { AlertCircle, CheckCircle2, Loader, Save, X } from "lucide-react";
 
-export default function ClientServiceEditor({ clientId, api, token, onSave, onCancel }) {
+export default function ClientServiceEditor({ clientId, api, token, onSave, onSaveSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     plan_id: "",
     router_id: "",
@@ -50,7 +50,6 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Cargar datos iniciales
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -102,7 +101,6 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
     load();
   }, [api, clientId, token]);
 
-  // Consulta solo las IP libres; la IP actual se excluye de la ocupación mediante clientId.
   useEffect(() => {
     if (!formData.ipv4_network_id || formData.connection_type === "PPPoE") {
       setAvailableAddresses([]);
@@ -135,47 +133,22 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
     setSuccess("");
 
     try {
-      // Validaciones básicas
-      if (!formData.plan_id) {
-        throw new Error("Selecciona un plan.");
-      }
-      if (!formData.router_id) {
-        throw new Error("Selecciona un MikroTik.");
-      }
-      if (!formData.technology) {
-        throw new Error("Selecciona la tecnología (Fibra u Inalámbrico).");
-      }
+      if (!formData.plan_id) throw new Error("Selecciona un plan.");
+      if (!formData.router_id) throw new Error("Selecciona un MikroTik.");
+      if (!formData.technology) throw new Error("Selecciona la tecnología (Fibra u Inalámbrico).");
 
-      // Validaciones por tipo de conexión
       if (formData.technology === "fiber") {
-        if (!formData.zone_id) {
-          throw new Error("Selecciona una zona para fibra.");
-        }
-        if (!formData.nap_box_id) {
-          throw new Error("Selecciona una caja NAP.");
-        }
-        if (!formData.nap_port) {
-          throw new Error("Selecciona un puerto NAP.");
-        }
-
-        // Validar tipo de conexión
+        if (!formData.zone_id) throw new Error("Selecciona una zona para fibra.");
+        if (!formData.nap_box_id) throw new Error("Selecciona una caja NAP.");
+        if (!formData.nap_port) throw new Error("Selecciona un puerto NAP.");
         if (formData.connection_type === "PPPoE") {
-          if (!formData.pppoe_user) {
-            throw new Error("Ingresa usuario PPPoE.");
-          }
-        } else if (formData.connection_type !== "PPPoE") {
-          if (!formData.ipv4_network_id) {
-            throw new Error("Selecciona una red IPv4.");
-          }
-          if (!formData.ip_address) {
-            throw new Error("Ingresa la IP del cliente.");
-          }
+          if (!formData.pppoe_user) throw new Error("Ingresa usuario PPPoE.");
+        } else {
+          if (!formData.ipv4_network_id) throw new Error("Selecciona una red IPv4.");
+          if (!formData.ip_address) throw new Error("Ingresa la IP del cliente.");
         }
-      } else {
-        // Inalámbrico
-        if (!formData.monitoring_equipment_id) {
-          throw new Error("Selecciona un equipo de monitoreo.");
-        }
+      } else if (!formData.monitoring_equipment_id) {
+        throw new Error("Selecciona un equipo de monitoreo.");
       }
 
       const payload = {
@@ -202,9 +175,8 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
       });
 
       setSuccess("Servicio del cliente actualizado correctamente.");
-      setTimeout(() => {
-        if (onSave) onSave();
-      }, 1500);
+      const closeAfterSave = onSave || onSaveSuccess;
+      if (closeAfterSave) closeAfterSave();
     } catch (err) {
       const msg = err.response?.data?.detail || err.message || "Error al guardar los cambios.";
       setError(msg);
@@ -230,7 +202,6 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
           <p className="text-sm text-rose-300">{error}</p>
         </div>
       )}
-
       {success && (
         <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
@@ -239,65 +210,34 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Plan y Router */}
         <div>
           <h3 className="mb-3 text-base font-bold text-white">Configuración básica</h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            <select
-              name="plan_id"
-              value={formData.plan_id}
-              onChange={handleChange}
-              required
-              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-            >
+            <select name="plan_id" value={formData.plan_id} onChange={handleChange} required className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
               <option value="">-- Selecciona un plan --</option>
-              {plans.map(plan => (
-                <option key={plan.id} value={plan.id}>{plan.name} - S/. {plan.price}</option>
-              ))}
+              {plans.map(plan => <option key={plan.id} value={plan.id}>{plan.name} - S/. {plan.price}</option>)}
             </select>
-
-            <select
-              name="router_id"
-              value={formData.router_id}
-              onChange={handleChange}
-              required
-              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-            >
+            <select name="router_id" value={formData.router_id} onChange={handleChange} required className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
               <option value="">-- Selecciona un MikroTik --</option>
-              {routers.map(router => (
-                <option key={router.id} value={router.id}>{router.name}</option>
-              ))}
+              {routers.map(router => <option key={router.id} value={router.id}>{router.name}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Tecnología */}
         <div>
           <h3 className="mb-3 text-base font-bold text-white">Tecnología</h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            <select
-              name="technology"
-              value={formData.technology}
-              onChange={handleChange}
-              required
-              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-            >
+            <select name="technology" value={formData.technology} onChange={handleChange} required className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
               <option value="fiber">Fibra óptica</option>
               <option value="wireless">Inalámbrico</option>
             </select>
           </div>
         </div>
 
-        {/* Tipo de conexión (solo para fibra) */}
         {formData.technology === "fiber" && (
           <div>
             <h3 className="mb-3 text-base font-bold text-white">Tipo de conexión</h3>
-            <select
-              name="connection_type"
-              value={formData.connection_type}
-              onChange={handleChange}
-              className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-            >
+            <select name="connection_type" value={formData.connection_type} onChange={handleChange} className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
               <option value="PPPoE">PPPoE</option>
               <option value="IP Estática">IP Estática</option>
               <option value="DHCP">DHCP</option>
@@ -305,189 +245,73 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
           </div>
         )}
 
-        {/* Red IPv4 e IP (si no es PPPoE) */}
         {formData.technology === "fiber" && formData.connection_type !== "PPPoE" && (
           <div>
             <h3 className="mb-3 text-base font-bold text-white">Red y dirección IP</h3>
             <div className="grid gap-3 sm:grid-cols-2">
-              <select
-                name="ipv4_network_id"
-                value={formData.ipv4_network_id}
-                onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))}
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-              >
+              <select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))} className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
                 <option value="">-- Selecciona una red --</option>
-                {compatibleNetworks.map(net => (
-                  <option key={net.id} value={net.id}>{net.name} (${net.cidr})</option>
-                ))}
+                {compatibleNetworks.map(net => <option key={net.id} value={net.id}>{net.name} (${net.cidr})</option>)}
               </select>
-
-              <select
-                name="ip_address"
-                value={formData.ip_address}
-                disabled={!formData.ipv4_network_id || loadingAddresses}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-              >
+              <select name="ip_address" value={formData.ip_address} disabled={!formData.ipv4_network_id || loadingAddresses} onChange={handleChange} className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60">
                 <option value="">{loadingAddresses ? "Consultando IPs disponibles..." : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>
-                {formData.ip_address && !availableAddresses.includes(formData.ip_address) && (
-                  <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>
-                )}
+                {formData.ip_address && !availableAddresses.includes(formData.ip_address) && <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>}
                 {availableAddresses.map((address) => <option key={address} value={address}>{address}</option>)}
               </select>
             </div>
           </div>
         )}
 
-        {/* PPPoE (si está seleccionado) */}
         {formData.technology === "fiber" && formData.connection_type === "PPPoE" && (
           <div>
             <h3 className="mb-3 text-base font-bold text-white">Credenciales PPPoE</h3>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                type="text"
-                name="pppoe_user"
-                value={formData.pppoe_user}
-                onChange={handleChange}
-                placeholder="Usuario PPPoE"
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
-              <input
-                type="password"
-                name="pppoe_password"
-                value={formData.pppoe_password}
-                onChange={handleChange}
-                placeholder="Contraseña PPPoE"
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
+              <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Usuario PPPoE" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
+              <input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña PPPoE" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
             </div>
           </div>
         )}
 
-        {/* Fibra */}
         {formData.technology === "fiber" && (
           <div>
             <h3 className="mb-3 text-base font-bold text-white">Instalación de fibra</h3>
             <div className="space-y-3">
-              <select
-                name="zone_id"
-                value={formData.zone_id}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-              >
+              <select name="zone_id" value={formData.zone_id} onChange={handleChange} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
                 <option value="">-- Selecciona una zona --</option>
-                {zones.map(zone => (
-                  <option key={zone.id} value={zone.id}>{zone.name}</option>
-                ))}
+                {zones.map(zone => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
               </select>
-
-              <select
-                name="nap_box_id"
-                value={formData.nap_box_id}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-              >
+              <select name="nap_box_id" value={formData.nap_box_id} onChange={handleChange} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
                 <option value="">-- Selecciona una caja NAP --</option>
-                {napBoxes.filter(nap => nap.zone_id === formData.zone_id).map(nap => (
-                  <option key={nap.id} value={nap.id}>{nap.name} ({nap.ports} puertos)</option>
-                ))}
+                {napBoxes.filter(nap => nap.zone_id === formData.zone_id).map(nap => <option key={nap.id} value={nap.id}>{nap.name} ({nap.ports} puertos)</option>)}
               </select>
-
-              <select
-                name="nap_port"
-                value={formData.nap_port}
-                disabled={!selectedNap || availableNapPorts.length === 0}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-              >
+              <select name="nap_port" value={formData.nap_port} disabled={!selectedNap || availableNapPorts.length === 0} onChange={handleChange} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60">
                 <option value="">{!selectedNap ? "Primero selecciona una caja NAP" : availableNapPorts.length === 0 ? "No hay puertos libres" : "Selecciona un puerto libre"}</option>
                 {availableNapPorts.map((port) => <option key={port} value={port}>Puerto {port}</option>)}
               </select>
-
-              <input
-                type="text"
-                name="onu_sn"
-                value={formData.onu_sn}
-                onChange={handleChange}
-                placeholder="Serie ONU (opcional)"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
-
-              <input
-                type="number"
-                step="0.1"
-                name="optical_power_dbm"
-                value={formData.optical_power_dbm}
-                onChange={handleChange}
-                placeholder="Potencia de la ONU (dBm), ej. -19.5"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
+              <input type="text" name="onu_sn" value={formData.onu_sn} onChange={handleChange} placeholder="Serie ONU (opcional)" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
+              <input type="number" step="0.1" name="optical_power_dbm" value={formData.optical_power_dbm} onChange={handleChange} placeholder="Potencia de la ONU (dBm), ej. -19.5" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
             </div>
           </div>
         )}
 
-        {/* Inalámbrico */}
         {formData.technology === "wireless" && (
           <div>
             <h3 className="mb-3 text-base font-bold text-white">Instalación inalámbrica</h3>
             <div className="space-y-3">
-              <select
-                name="monitoring_equipment_id"
-                value={formData.monitoring_equipment_id}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
-              >
+              <select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none">
                 <option value="">-- Selecciona un equipo --</option>
-                {monitoringEquipment.map(eq => (
-                  <option key={eq.id} value={eq.id}>{eq.name}</option>
-                ))}
+                {monitoringEquipment.map(eq => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
               </select>
-
-              <input
-                type="text"
-                name="antenna_type"
-                value={formData.antenna_type}
-                onChange={handleChange}
-                placeholder="Tipo de antena (opcional)"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
-
-              <input
-                type="text"
-                name="management_ip"
-                value={formData.management_ip}
-                onChange={handleChange}
-                placeholder="IP de administración (opcional)"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
-              />
+              <input type="text" name="antenna_type" value={formData.antenna_type} onChange={handleChange} placeholder="Tipo de antena (opcional)" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
+              <input type="text" name="management_ip" value={formData.management_ip} onChange={handleChange} placeholder="IP de administración (opcional)" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-cyan-500 focus:outline-none" />
             </div>
           </div>
         )}
 
-        {/* Botones */}
         <div className="flex flex-wrap justify-end gap-2 pt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
-          >
-            <X className="h-4 w-4" /> Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader className="h-4 w-4 animate-spin" /> Guardando…
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" /> Guardar cambios
-              </>
-            )}
+          <button type="button" onClick={onCancel} disabled={saving} className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"><X className="h-4 w-4" /> Cancelar</button>
+          <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50">
+            {saving ? <><Loader className="h-4 w-4 animate-spin" /> Guardando…</> : <><Save className="h-4 w-4" /> Guardar cambios</>}
           </button>
         </div>
       </form>
