@@ -40,8 +40,11 @@ def _normalize(data: dict) -> dict:
 
 
 async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service_id: Optional[str] = None) -> Client:
+    client = await _get_visible_client(db, client_id, {})
     temp = Client(**_normalize(data))
     temp.id = ""
+    temp.full_name = client.full_name
+    temp.dni_ruc = client.dni_ruc
     await _attach_plan_router(db, temp)
     if temp.ip_address:
         q = select(ClientService.id).where(ClientService.client_id == client_id, ClientService.ip_address == temp.ip_address)
@@ -68,25 +71,12 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
                 profile = mt.plan_profile_name(plan) if plan else "default"
                 if plan:
                     await mikrotik.upsert_ppp_profile(profile, mt.plan_rate_limit(plan))
-                action = await mikrotik.upsert_ppp_secret(
-                    row.pppoe_user,
-                    row.pppoe_password or row.pppoe_user,
-                    profile,
-                    comment=f"{temp.full_name} | {temp.dni_ruc} | Servicio {row.id[:8]}",
-                    remote_address=row.ip_address,
-                    disabled=(row.status == "suspended"),
-                )
+                action = await mikrotik.upsert_ppp_secret(row.pppoe_user, row.pppoe_password or row.pppoe_user, profile, comment=f"{temp.full_name} | {temp.dni_ruc} | Servicio {row.id[:8]}", remote_address=row.ip_address, disabled=(row.status == "suspended"))
                 return {"ok": True, "message": f"PPP secret '{row.pppoe_user}' {action} en {router_obj.name} (perfil {profile})."}
             if row.ip_address:
                 max_limit = mt.plan_rate_limit(plan) if plan else "1M/1M"
                 queue_name = f"svc-{row.id}"
-                action = await mikrotik.upsert_simple_queue(
-                    queue_name,
-                    f"{row.ip_address}/32",
-                    max_limit.split(" ")[0],
-                    comment=f"{temp.full_name} | {row.plan_name} | Servicio {row.id[:8]}",
-                    burst_limit=plan.burst_limit if plan and "/" in (plan.burst_limit or "") else "",
-                )
+                action = await mikrotik.upsert_simple_queue(queue_name, f"{row.ip_address}/32", max_limit.split(" ")[0], comment=f"{temp.full_name} | {row.plan_name} | Servicio {row.id[:8]}", burst_limit=plan.burst_limit if plan and "/" in (plan.burst_limit or "") else "")
                 return {"ok": True, "message": f"Cola simple '{queue_name}' {action} en {router_obj.name} ({max_limit})."}
             return {"ok": False, "message": "El servicio no tiene usuario PPPoE ni IP para aprovisionar."}
     except mt.MikroTikError as exc:
@@ -106,24 +96,22 @@ async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db
 
 @router.post("/{client_id}/services")
 async def create_client_service(client_id: str, payload: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    client = await _get_visible_client(db, client_id, current_user)
+    await _get_visible_client(db, client_id, current_user)
     temp = await _prepare(db, client_id, payload.model_dump(exclude_unset=True))
     row = ClientService(client_id=client_id, **_service_payload(temp))
-    db.add(row)
-    await db.flush()
+    db.add(row); await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
     plan = await db.get(Plan, row.plan_id) if row.plan_id else None
     result = await _provision_service(row, temp, router_obj, plan)
     if not result["ok"]:
-        await db.rollback()
-        raise HTTPException(status_code=502, detail=f"No se pudo crear el servicio en MikroTik: {result['message']}")
+        await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo crear el servicio en MikroTik: {result['message']}")
     await db.commit(); await db.refresh(row)
     return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result}
 
 
 @router.patch("/{client_id}/services/{service_id}")
 async def update_client_service(client_id: str, service_id: str, payload: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    client = await _get_visible_client(db, client_id, current_user)
+    await _get_visible_client(db, client_id, current_user)
     row = await db.get(ClientService, service_id)
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
@@ -135,8 +123,7 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
     plan = await db.get(Plan, row.plan_id) if row.plan_id else None
     result = await _provision_service(row, temp, router_obj, plan)
     if not result["ok"]:
-        await db.rollback()
-        raise HTTPException(status_code=502, detail=f"No se pudo actualizar el servicio en MikroTik: {result['message']}")
+        await db.rollback(); raise HTTPException(status_code=502, detail=f"No se pudo actualizar el servicio en MikroTik: {result['message']}")
     await db.commit(); await db.refresh(row)
     return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result}
 
@@ -189,6 +176,8 @@ async def client_service_onu_status(client_id: str, service_id: str, db: AsyncSe
             results.append(res)
             if res.get("found"):
                 power = res.get("optical_power_dbm")
+                if power is None:
+                    power = res.get("power_dbm") or res.get("rx_power_dbm")
                 if power is not None:
                     row.optical_power_dbm = power
                 await db.commit()
