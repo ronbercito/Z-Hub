@@ -1,13 +1,13 @@
 /**
  * Archivo: frontend/src/modules/red/components/CoordinatesPicker.jsx
- * Actualización: 2026-09-08 — añade modo de mapa solo lectura para consultar ubicaciones desde el listado de abonados.
+ * Actualización: 2026-09-08 — el minimapa de solo lectura muestra dirección y referencia junto al mapa.
  * Función: Selector visual de coordenadas con Google Maps. En modo edición permite mover
- *          el marcador; en modo solo lectura muestra un minimapa de la ubicación guardada.
+ *          el marcador; en modo solo lectura muestra un minimapa y los datos de ubicación guardados.
  */
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../../context/AuthContext";
-import { MapPin, X } from "lucide-react";
+import { MapPin, X, Navigation } from "lucide-react";
 
 const DEFAULT_POSITION = { lat: -8.0679, lng: -78.9859 };
 
@@ -29,7 +29,7 @@ const loadMaps = (apiKey) => new Promise((resolve, reject) => {
   document.head.appendChild(script);
 });
 
-export default function CoordinatesPicker({ title = "Ubicación del equipo", latitude, longitude, onApply, onClose, readOnly = false }) {
+export default function CoordinatesPicker({ title = "Ubicación del equipo", latitude, longitude, address = "", reference = "", onApply, onClose, readOnly = false }) {
   const { API, token } = useAuth();
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -81,19 +81,46 @@ export default function CoordinatesPicker({ title = "Ubicación del equipo", lat
   }, [API, token, readOnly, title]);
 
   return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-    <div className={`w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${readOnly ? "max-w-xl" : "max-w-2xl"}`}>
+    <div className={`w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl ${readOnly ? "max-w-3xl" : "max-w-2xl"}`}>
       <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
         <div><h3 className="flex items-center gap-2 font-bold text-slate-100"><MapPin className="h-5 w-5 text-cyan-400" /> {title}</h3><p className="mt-1 text-xs text-slate-500">{readOnly ? "Ubicación registrada del abonado." : "Arrastra el marcador o haz clic en el mapa."}</p></div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button>
       </div>
-      <div ref={mapRef} className={`${readOnly ? "h-64" : "h-80"} w-full bg-slate-950`} />
+
+      {readOnly ? (
+        <div className="grid grid-cols-1 md:grid-cols-[1.45fr_0.9fr]">
+          <div ref={mapRef} className="h-72 w-full bg-slate-950" />
+          <div className="border-t border-slate-800 bg-slate-900 p-5 md:border-l md:border-t-0">
+            <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-cyan-300">
+              <Navigation className="h-4 w-4" /> Datos de ubicación
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">Dirección</div>
+                <div className="text-sm leading-5 text-slate-100">{address || "Sin dirección registrada"}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">Referencia</div>
+                <div className="text-sm leading-5 text-slate-300">{reference || "Sin referencia registrada"}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">Coordenadas</div>
+                <div className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-cyan-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div ref={mapRef} className="h-80 w-full bg-slate-950" />
+      )}
+
       {message && <div className="border-t border-slate-800 p-5 text-center text-sm text-slate-400">{message}</div>}
       <div className="flex flex-col items-start justify-between gap-3 border-t border-slate-800 p-4 sm:flex-row sm:items-center">
-        <p className="font-mono text-xs text-cyan-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</p>
+        {!readOnly && <p className="font-mono text-xs text-cyan-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</p>}
         {readOnly ? (
-          <button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cerrar</button>
+          <button type="button" onClick={onClose} className="ml-auto rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cerrar</button>
         ) : (
-          <div className="flex gap-2"><button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button><button type="button" onClick={() => { onApply(position); onClose(); }} className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400">Usar estas coordenadas</button></div>
+          <div className="ml-auto flex gap-2"><button type="button" onClick={onClose} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button><button type="button" onClick={() => { onApply(position); onClose(); }} className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400">Usar estas coordenadas</button></div>
         )}
       </div>
     </div>
