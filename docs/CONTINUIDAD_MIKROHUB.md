@@ -791,3 +791,12 @@ SHA: ...
 **Corrección:** `frontend/src/modules/clientes/Clients.jsx`, dueño del botón Eliminar, solicita `/api/clients/{id}/deletion-summary` con el ID exacto antes de mostrar el mismo modal amigable. Solo después de confirmar `SI` envía el DELETE marcado como ya confirmado; el interceptor global no vuelve a intervenir.
 
 **Prueba requerida:** tras instalar 1.0.81, abrir Eliminar para `prueba`: el modal debe mostrar cliente `prueba`, 2 servicios, 2 facturas y S/.100.00 antes de confirmar.
+
+
+### REV-0005 — 2026-09-08 — Panel 1.0.84
+
+**Diagnóstico final:** el guardia global de Axios cambiaba las rutas reales de Servicios y Facturación por rutas incompletas. Por eso el diálogo recibía listas vacías o mostraba el UUID como nombre.
+
+**Corrección:** el guardia global queda sin interceptores. Clients.jsx, propietario del botón Eliminar, consulta directamente ambas APIs reales con el ID y nombre de la fila; muestra el resumen en el diálogo nativo y solo permite el DELETE cuando se escribe SI. Si una consulta falla, cancela el borrado.
+
+**Verificación estática realizada:** versión 1.0.84; Clientes llama las dos rutas exactas; no existe interceptor global ni reemplazo de window.confirm.
