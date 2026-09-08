@@ -4,7 +4,7 @@
 
 ## Versión funcional
 
-**1.1.1**
+**1.1.2**
 
 ## Registro 1.0.98 — Navegación de Facturación
 
@@ -42,84 +42,129 @@ Al alcanzar 1.0.99, el siguiente ciclo pasa a 1.1.0. Se creó `backup/pre-versio
 
 **Tipo:** Funcionalidad / auditoría operativa.
 
-### Objetivo
+La pestaña **Log** de la ficha del cliente presenta el historial persistente de acciones. Cada evento muestra acción, detalle, fecha/hora y la cuenta que ejecutó la operación. El backend obtiene la identidad desde la sesión autenticada.
 
-La pestaña **Log** de la ficha del cliente deja de mostrar un estado vacío y presenta el historial persistente de acciones realizadas sobre ese cliente. Cada evento muestra acción, detalle, fecha/hora y la cuenta que ejecutó la operación.
+### Backup
 
-### Regla de cuenta
+`backup/pre-log-cliente-2026-09-08`
 
-Las nuevas actividades registradas por el editor toman la cuenta autenticada desde el backend (`get_current_user`). El frontend no puede indicar manualmente otro operador. El detalle incluye correo de la cuenta y rol cuando están disponibles, para distinguir administradores y técnicos.
+### Estado heredado
 
-### Acciones cubiertas
+El registro anterior cubría Resumen, Servicio, Facturación/Saldos mediante callback, comunicaciones y documentos, pero Facturación/Saldos todavía podía producir el detalle genérico **“Facturación actualizada”**.
 
-- edición de datos de Resumen;
-- edición de Servicio;
-- operaciones de Facturación y Saldos realizadas desde la ficha;
-- comunicaciones Email/SMS ya registradas por el módulo de cliente;
-- documentos adjuntados/eliminados ya registrados por el módulo de cliente.
+## Registro 1.1.2 — Auditoría detallada por operación
 
-Las pestañas Tickets y Estadísticas continúan sin operaciones persistentes propias en la ficha actual, por lo que no generan eventos hasta que tengan funciones reales.
+**Tipo:** Corrección / mejora de auditoría.
+
+### Causa
+
+Al agregar un saldo, el Log mostraba solamente **“Facturación actualizada”**, sin explicar qué operación concreta se realizó. Esto no permite auditar correctamente una cuenta cuando existen varios movimientos.
+
+### Solución
+
+La auditoría de Facturación ahora registra detalles específicos desde backend:
+
+- **Saldo agregado:** tipo (saldo a favor/deuda), monto, descripción, saldo neto resultante y factura de origen cuando existe.
+- **Saldo editado:** ID del movimiento, monto anterior → nuevo, descripción anterior → nueva y saldo neto resultante.
+- **Factura creada:** número, tipo (servicio/libre), plan, monto base, período, vencimiento y aplicación automática de saldo/deuda.
+- **Factura editada:** únicamente los campos que realmente cambiaron, mostrando valor anterior → nuevo.
+- **Factura eliminada:** número, monto y período.
+- **Factura anulada:** número, monto, período y estado anterior cuando corresponde.
+- **Pago registrado:** monto de la operación, método, referencia, acumulado pagado, total de factura y estado resultante.
+- **Factura mensual generada:** número, período, monto base, vencimiento y aplicaciones automáticas de saldo/deuda.
+- **Factura vencida:** número, monto pendiente, vencimiento y días de gracia.
+- **Factura preparada para envío:** número y canal.
+
+Cada evento incorpora la **cuenta autenticada y el rol**. El frontend no puede indicar manualmente otra cuenta.
 
 ### Archivos modificados
 
-- `backend/app/modules/client_workspace/router.py` — endpoint `POST /api/clients/{client_id}/activity`, registra la cuenta autenticada y rol sin aceptar operador desde frontend.
-- `frontend/src/modules/clientes/ClientActivityLog.jsx` — nueva vista visual del historial.
-- `frontend/src/modules/clientes/ClientDetail.jsx` — integración del Log y registro de acciones de Resumen, Servicio y Facturación.
-- `frontend/src/modules/system-update/version.js` — versión 1.1.1 y CHANGELOG.
-- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — esta entrada.
+- `backend/app/routers/facturacion/client_balances.py` — auditoría detallada de altas y ediciones de saldos.
+- `backend/app/routers/facturacion/invoice_actions.py` — auditoría detallada de edición, eliminación, anulación y preparación de envío de facturas.
+- `backend/app/routers/facturacion/router.py` — auditoría detallada de creación de facturas, pagos, facturación mensual automática y vencimientos.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.1.2 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — continuidad diaria.
 
 ### Flujo
 
 ```text
 Administrador / Técnico
         ↓
-realiza una acción en la ficha
+realiza operación
         ↓
-acción operativa exitosa
+backend valida y ejecuta
         ↓
-POST /clients/{id}/activity
+ClientActivity
+        ├── acción específica
+        ├── detalle de valores
+        ├── cuenta
+        ├── rol
+        └── fecha/hora
         ↓
-backend toma usuario autenticado
+GET /api/clients/{id}
         ↓
-ClientActivity(operator_name, acción, detalle, fecha)
-        ↓
-GET /clients/{id}
-        ↓
-pestaña Log muestra historial
+Log del cliente
 ```
 
-### Protección
+### Ejemplo esperado
 
-No se almacenan contraseñas, tokens ni credenciales. El operador se obtiene de la sesión autenticada. El registro de actividad no modifica la operación principal si el endpoint de auditoría falla; en ese caso la acción funcional permanece y se registra el error técnico en consola.
+```text
+Saldo agregado
+Se agregó saldo a favor por S/. 100.00.
+Descripción: pago adelantado.
+Saldo neto resultante: S/. 130.00.
+Cuenta: admin@ejemplo.pe | Rol: admin
+```
+
+Si luego se edita ese movimiento:
+
+```text
+Saldo editado
+Se modificó el movimiento 7400c0d2.
+monto: S/. 100.00 → S/. 0.00.
+Saldo neto resultante: S/. 30.00.
+Cuenta: admin@ejemplo.pe | Rol: admin
+```
+
+### Base de datos
+
+No se crean tablas nuevas ni se eliminan datos. Se reutiliza `client_activities` y los modelos existentes de facturación/saldos.
 
 ### Backup
 
-Se creó antes de la modificación:
+Se creó antes del cambio funcional:
 
-`backup/pre-log-cliente-2026-09-08`
+`backup/pre-log-detallado-2026-09-08`
+
+El backup conserva el estado anterior a esta mejora.
 
 ### Pruebas
 
-- [x] backup creado antes del cambio;
-- [x] endpoint de actividad protegido por autenticación;
-- [x] operador obtenido del usuario autenticado;
-- [x] rol/cuenta incluidos en el detalle cuando existe correo;
-- [x] Log visual conectado a `client.activities`;
-- [x] Resumen registra edición;
-- [x] Servicio registra edición;
-- [x] Facturación/Saldos registra actividad mediante callback de actualización;
-- [x] Comunicaciones y documentos ya tenían auditoría con operador;
+- [x] backup creado;
+- [x] auditoría de alta de saldo;
+- [x] auditoría de edición de saldo;
+- [x] auditoría de creación de factura;
+- [x] auditoría de edición de factura;
+- [x] auditoría de eliminación/anulación;
+- [x] auditoría de pago;
+- [x] auditoría de facturación mensual y vencimientos;
+- [x] cuenta y rol tomados de sesión autenticada;
+- [x] versión 1.1.2 y CHANGELOG actualizados;
 - [ ] `yarn build` — no ejecutado desde este entorno;
-- [ ] prueba real con cuenta administrador;
-- [ ] prueba real con cuenta técnico;
-- [ ] editar Resumen y confirmar cuenta, fecha, hora y detalle;
-- [ ] editar Servicio y confirmar cuenta;
-- [ ] agregar/editar saldo y confirmar evento en Log;
-- [ ] crear factura/pago/anular y confirmar evento en Log.
+- [ ] prueba real agregando saldo desde el panel;
+- [ ] prueba real editando saldo desde el panel;
+- [ ] prueba con administrador y técnico;
+- [ ] confirmar que no aparezca nuevamente el mensaje genérico para estas operaciones.
+
+### Riesgos / pendientes
+
+- El build React/backend todavía debe ejecutarse en el servidor.
+- Debe verificarse visualmente que los detalles largos se presenten correctamente en la tarjeta del Log.
+- Las acciones antiguas ya almacenadas con “Facturación actualizada” no pueden reconstruirse automáticamente si no existe detalle histórico adicional; las nuevas operaciones sí quedan detalladas.
 
 ### Resultado
 
-**1.1.1 está publicada en `main`**, con backup y continuidad diaria actualizada. Falta ejecutar build y validación funcional en el panel antes de declarar la versión completamente validada.
+**1.1.2 publicada en `main` con backup y continuidad diaria actualizada.** Falta ejecutar build y validación funcional real antes de declarar la versión completamente validada.
 
 ## Despliegue
 
@@ -146,3 +191,4 @@ No borrar la base de datos ni datos existentes para solucionar problemas visuale
 - Backup de edición: `backup/pre-editar-saldos-2026-09-08`
 - Backup de transición de versión: `backup/pre-version-1.1.0-2026-09-08`
 - Backup de Log: `backup/pre-log-cliente-2026-09-08`
+- Backup de Log detallado: `backup/pre-log-detallado-2026-09-08`
