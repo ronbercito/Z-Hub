@@ -1,12 +1,12 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/billing/ClientBillingBalances.jsx
- * Actualización: 2026-09-08 — nueva interfaz de libro mayor de Saldos.
- * Función: muestra saldo a favor/deuda, historial y permite registrar movimientos firmados.
+ * Actualización: 2026-09-08 — edición segura de movimientos de Saldos.
+ * Función: muestra saldo a favor/deuda, historial y permite registrar o corregir movimientos.
  * Recibe de: ClientBilling.jsx.
- * Entrega a: API /clients/{client_id}/balances; no modifica directamente facturas.
+ * Entrega a: API /clients/{client_id}/balances; los movimientos ya aplicados conservan su monto por trazabilidad.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Plus, Search, Wallet, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, Plus, Search, Wallet, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -22,6 +22,7 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ amount: "", description: "" });
 
   const load = async () => {
@@ -47,6 +48,25 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
     return { title: "Saldo", text: money(0), tone: "slate" };
   }, [data.total]);
 
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ amount: "", description: "" });
+    setModal(true);
+  };
+
+  const openEdit = row => {
+    setEditing(row);
+    setForm({ amount: Number(row.amount || 0).toFixed(2), description: row.description || "" });
+    setModal(true);
+  };
+
+  const closeModal = () => {
+    if (saving) return;
+    setModal(false);
+    setEditing(null);
+    setForm({ amount: "", description: "" });
+  };
+
   const save = async event => {
     event.preventDefault();
     const amount = Number(form.amount);
@@ -54,17 +74,21 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
     if (!form.description.trim()) return toast.error("Ingresa una descripción");
     setSaving(true);
     try {
-      const response = await axios.post(`${API}/clients/${clientId}/balances`, {
-        amount,
-        description: form.description.trim(),
-      }, { headers });
-      toast.success(response.data?.message || "Saldo registrado correctamente");
-      setModal(false);
-      setForm({ amount: "", description: "" });
+      const response = editing
+        ? await axios.put(`${API}/clients/${clientId}/balances/${editing.id}`, {
+            amount,
+            description: form.description.trim(),
+          }, { headers })
+        : await axios.post(`${API}/clients/${clientId}/balances`, {
+            amount,
+            description: form.description.trim(),
+          }, { headers });
+      toast.success(response.data?.message || (editing ? "Saldo actualizado correctamente" : "Saldo registrado correctamente"));
+      closeModal();
       await load();
       onBalanceUpdate?.();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "No se pudo registrar el saldo");
+      toast.error(error.response?.data?.detail || (editing ? "No se pudo actualizar el saldo" : "No se pudo registrar el saldo"));
     } finally {
       setSaving(false);
     }
@@ -79,7 +103,7 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
           </h4>
           <p className="text-[11px] text-slate-500 mt-1">Los movimientos positivos son saldo a favor; los negativos son deuda que se trasladará a la siguiente factura.</p>
         </div>
-        <button type="button" onClick={() => setModal(true)} className="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5">
+        <button type="button" onClick={openCreate} className="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5">
           <Plus className="w-3.5 h-3.5" /> Agregar saldo
         </button>
       </div>
@@ -109,7 +133,7 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
 
       <div className="border border-slate-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[850px]">
+          <table className="w-full text-left text-xs min-w-[920px]">
             <thead className="bg-slate-950 text-slate-400">
               <tr>
                 <th className="p-3">ID</th>
@@ -119,13 +143,15 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
                 <th className="p-3">Fecha</th>
                 <th className="p-3">Descripción</th>
                 <th className="p-3">Estado</th>
+                <th className="p-3 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {loading ? (
-                <tr><td colSpan="7" className="p-8 text-center text-slate-500">Cargando saldos...</td></tr>
+                <tr><td colSpan="8" className="p-8 text-center text-slate-500">Cargando saldos...</td></tr>
               ) : data.rows.length ? data.rows.map(row => {
                 const positive = Number(row.amount || 0) >= 0;
+                const amountLocked = Boolean(row.parent_id) || Math.abs(Number(row.remaining_amount || 0) - Number(row.amount || 0)) >= 0.005;
                 return (
                   <tr key={row.id} className="hover:bg-slate-900/60">
                     <td className="p-3 font-mono text-slate-500">{row.id.slice(0, 8)}</td>
@@ -137,10 +163,15 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
                     <td className="p-3 text-slate-400">{row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td>
                     <td className="p-3 max-w-[280px]">{row.description || "—"}</td>
                     <td className="p-3"><span className="px-2 py-1 rounded-full bg-slate-800 text-[10px] font-bold">{row.status}</span></td>
+                    <td className="p-3 text-center">
+                      <button type="button" onClick={() => openEdit(row)} title={amountLocked ? "Editar descripción" : "Editar saldo"} className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/50 text-slate-200 hover:text-cyan-300 text-[10px] font-bold">
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </button>
+                    </td>
                   </tr>
                 );
               }) : (
-                <tr><td colSpan="7" className="p-10 text-center text-slate-500">No hay movimientos de saldo registrados.</td></tr>
+                <tr><td colSpan="8" className="p-10 text-center text-slate-500">No hay movimientos de saldo registrados.</td></tr>
               )}
             </tbody>
           </table>
@@ -151,18 +182,27 @@ export default function ClientBillingBalances({ clientId, API, headers, onBalanc
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={save} className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-              <div><h4 className="font-bold text-slate-100">Saldo cliente</h4><p className="text-[10px] text-slate-500 mt-1">Registra un saldo a favor o una deuda pendiente.</p></div>
-              <button type="button" onClick={() => setModal(false)}><X className="w-4 h-4" /></button>
+              <div>
+                <h4 className="font-bold text-slate-100">{editing ? "Editar saldo" : "Saldo cliente"}</h4>
+                <p className="text-[10px] text-slate-500 mt-1">{editing ? "Corrige el monto o la descripción del movimiento." : "Registra un saldo a favor o una deuda pendiente."}</p>
+              </div>
+              <button type="button" onClick={closeModal} disabled={saving}><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-4">
-              <p className="text-[11px] text-slate-400">Monto positivo = saldo a favor del cliente (ej. <b>500</b>). Monto negativo = deuda del cliente (ej. <b>-100</b>). El saldo a favor se aplicará automáticamente a las siguientes facturas; la deuda se sumará a la siguiente factura generada.</p>
-              <label className="block text-xs text-slate-300"><span className="font-semibold">Monto</span><input autoFocus required type="number" step="0.01" value={form.amount} onChange={event => setForm(value => ({ ...value, amount: event.target.value }))} placeholder="500 o -100" className={INPUT_CLASS} /></label>
+              <p className="text-[11px] text-slate-400">Monto positivo = saldo a favor del cliente (ej. <b>500</b>). Monto negativo = deuda del cliente (ej. <b>-100</b>).</p>
+              {editing && (Boolean(editing.parent_id) || Math.abs(Number(editing.remaining_amount || 0) - Number(editing.amount || 0)) >= 0.005) && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-900/10 p-3 text-[10px] text-amber-300">Este movimiento ya fue aplicado a una factura. El monto queda bloqueado para no alterar la trazabilidad; puedes corregir la descripción.</div>
+              )}
+              <label className="block text-xs text-slate-300">
+                <span className="font-semibold">Monto</span>
+                <input autoFocus={!editing || !Boolean(editing.parent_id)} required type="number" step="0.01" disabled={editing && (Boolean(editing.parent_id) || Math.abs(Number(editing.remaining_amount || 0) - Number(editing.amount || 0)) >= 0.005)} value={form.amount} onChange={event => setForm(value => ({ ...value, amount: event.target.value }))} className={`${INPUT_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`} />
+              </label>
               <label className="block text-xs text-slate-300"><span className="font-semibold">Descripción</span><textarea required rows="3" value={form.description} onChange={event => setForm(value => ({ ...value, description: event.target.value }))} placeholder="Abono del cliente, deuda pendiente, ajuste..." className={INPUT_CLASS} /></label>
-              <p className="text-[10px] text-slate-500">El movimiento queda registrado en el historial y no se borra al aplicarse a una factura.</p>
+              <p className="text-[10px] text-slate-500">Los movimientos aplicados no cambian su importe histórico. Solo se permite corregir su descripción.</p>
             </div>
             <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-800">
-              <button type="button" onClick={() => setModal(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-xs">Cancelar</button>
-              <button disabled={saving} className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold">{saving ? "Registrando..." : "Registrar saldo"}</button>
+              <button type="button" onClick={closeModal} disabled={saving} className="px-4 py-2 rounded-xl bg-slate-800 text-xs">Cancelar</button>
+              <button disabled={saving} className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold">{saving ? "Guardando..." : editing ? "Guardar cambios" : "Registrar saldo"}</button>
             </div>
           </form>
         </div>
