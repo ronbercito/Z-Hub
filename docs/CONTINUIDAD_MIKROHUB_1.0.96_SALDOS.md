@@ -1,19 +1,22 @@
-# MikroHub — continuidad funcional 1.0.96
+# MikroHub — continuidad funcional 1.0.97
 
 **Fecha:** 2026-09-08
-**Versión funcional:** 1.0.96
+**Versión funcional:** 1.0.97
 **Tema:** Facturación del cliente → Saldos
 
 ## Objetivo
-Implementar un libro mayor de saldos para registrar abonos a favor y deudas del cliente, manteniendo trazabilidad y aplicación automática en facturas futuras.
+Implementar y corregir el libro mayor de saldos para registrar abonos a favor y deudas del cliente, manteniendo trazabilidad y aplicación automática en facturas futuras.
 
-## Regla funcional
+## Regla funcional definitiva
 - Monto positivo: saldo a favor del cliente.
 - Monto negativo: deuda del cliente.
 - Saldo a favor se descuenta automáticamente de la siguiente factura mensual o manual.
-- Deuda se suma automáticamente a la siguiente factura mensual o manual.
+- Deuda se suma **completa** a la siguiente factura mensual o manual, aunque la deuda sea mayor que el monto base de esa factura.
 - Las aplicaciones quedan registradas como movimientos con factura destino.
 - Una factura puede quedar pagada total o parcialmente con saldo a favor.
+
+## Corrección 1.0.97
+En la primera implementación, una deuda negativa se limitaba al saldo pendiente de la factura nueva. Eso no correspondía a la regla solicitada: `-100` + factura base `50` debe producir una factura final de `150`. Se corrigió `balances.py` para trasladar la deuda completa y consumirla en un solo movimiento de aplicación.
 
 ## Archivos nuevos
 - `backend/app/models/client_balance.py` — libro mayor ORM de movimientos firmados.
@@ -25,8 +28,9 @@ Implementar un libro mayor de saldos para registrar abonos a favor y deudas del 
 - `backend/app/models/__init__.py` — registra `ClientBalance` para creación/migración ligera de tabla.
 - `backend/server.py` — monta la API de saldos con permiso `billing`.
 - `backend/app/routers/facturacion/router.py` — aplica saldo al crear facturas, aplica facturación mensual masiva y corrige el cálculo de pendiente/pagos parciales.
-- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — integra el submódulo `ClientBillingBalances` sin mezclar su UI con la tabla de facturas.
-- `frontend/src/modules/system-update/version.js` — versión 1.0.96 y changelog.
+- `frontend/src/modules/clientes/editor/billing/ClientBilling.jsx` — integra el submódulo `ClientBillingBalances`.
+- `backend/app/routers/facturacion/balances.py` — corrección de deuda completa.
+- `frontend/src/modules/system-update/version.js` — versión 1.0.97 y changelog.
 
 ## API
 - `GET /api/clients/{client_id}/balances`
@@ -34,22 +38,21 @@ Implementar un libro mayor de saldos para registrar abonos a favor y deudas del 
 
 ## Flujo
 1. Usuario entra a Facturación → Saldos.
-2. Puede registrar, por ejemplo, `500` como saldo a favor o `-100` como deuda.
+2. Registra `500` como saldo a favor o `-100` como deuda.
 3. El movimiento queda en `client_balances` con monto firmado y saldo restante.
-4. Al generar una factura manual desde Facturación, el backend aplica el libro mayor.
-5. La generación mensual masiva usa el mismo motor.
-6. Crédito positivo reduce `paid_amount` de la factura y puede marcarla `paid`.
-7. Deuda negativa aumenta el monto de la nueva factura y se consume la deuda aplicada.
-8. La aplicación queda trazada con factura destino.
+4. Al generar una factura manual, el backend aplica el libro mayor.
+5. La generación mensual masiva utiliza el mismo motor.
+6. Crédito positivo aumenta `paid_amount` hasta el máximo de la factura y deja el excedente como saldo disponible.
+7. Deuda negativa aumenta el `amount` de la nueva factura con el total de la deuda y consume esa deuda.
+8. Cada aplicación queda trazada con factura destino.
 
 ## Validación pendiente
-No se ha ejecutado `yarn build` ni una prueba contra la base de producción desde este entorno. La validación requerida antes de considerar 1.0.96 final es:
-- actualizar por el Centro de Actualizaciones;
-- comprobar que Facturación → Saldos carga;
-- registrar `500` y verificar saldo a favor;
-- generar una factura de `50` y verificar que queda pagada automáticamente y queda `450` disponible;
-- registrar una deuda `-100` y generar una factura de `50`, verificando que la factura queda en `150` y la deuda se reduce en `50`;
-- verificar historial, Facturas, Transacciones y Configuración;
-- comprobar que las demás pestañas del cliente no presentan regresiones.
+No se ha ejecutado `yarn build` ni una prueba contra la base de producción desde este entorno. Antes de considerar 1.0.97 final se debe validar mediante el Centro de Actualizaciones:
+- `500` → factura base `50` → factura final `50`, estado `paid`, pago automático `50`, saldo disponible `450`;
+- `-100` → factura base `50` → factura final `150`, deuda consumida `100`;
+- pagos parciales siguen calculando correctamente el pendiente;
+- historial de Saldos muestra factura origen/destino y movimientos de aplicación;
+- Facturas, Transacciones y Configuración siguen funcionando;
+- las demás pestañas del cliente no presentan regresiones.
 
-**Nota:** este registro complementa la bitácora maestra; la entrega no debe considerarse cerrada hasta que `docs/CONTINUIDAD_MIKROHUB.md` quede actualizado con este registro.
+**Nota de continuidad:** el registro maestro `docs/CONTINUIDAD_MIKROHUB.md` debe incorporar este registro antes de declarar 1.0.97 cerrada. Se mantiene separado para no reemplazar ni perder el historial maestro existente.
