@@ -1,13 +1,13 @@
 """
 Archivo: backend/app/models/client_service.py
-Actualización: 2026-09-08 — al eliminar un cliente se eliminan servicios y todos sus datos asociados.
+Actualización: 2026-09-08 — normalización de potencia óptica para servicios adicionales.
 Función: Tabla de servicios de Internet adicionales de un cliente; conserva la configuración técnica
          de cada servicio separada para permitir varios servicios dentro de una misma ficha.
 Trabaja con: backend/app/models/client.py, invoice.py, ticket.py, task.py, client_activity.py,
              client_communication.py, client_document.py, clientes/router.py y ClientDetail.jsx.
 """
 from sqlalchemy import Float, Integer, String, delete, event
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.core.database import Base, new_id, now_iso
 from app.models.client import Client
@@ -50,6 +50,18 @@ class ClientService(Base):
     management_ip: Mapped[str] = mapped_column(String(60), default="")
     status: Mapped[str] = mapped_column(String(30), default="active")
     created_at: Mapped[str] = mapped_column(String(40), default=now_iso)
+
+    @validates("optical_power_dbm")
+    def _normalize_optical_power(self, key, value):
+        """Guarda siempre la potencia de fibra en formato dBm negativo.
+
+        El formulario puede recibir 14, 11, etc.; al persistir se convierte a -14, -11.
+        Los valores ya negativos se conservan y los nulos siguen siendo nulos.
+        """
+        if value is None or value == "":
+            return None
+        number = float(value)
+        return -abs(number)
 
 
 @event.listens_for(Client, "after_delete")
