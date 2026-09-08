@@ -1,21 +1,25 @@
 """
-Archivo: backend/app/routers/clientes/router.py (actualizado 2026-09-07)
-Actualización: agrega endpoint GET /clients/{client_id}/invoices para listar facturas del cliente.
+Archivo: backend/app/routers/clientes/router.py (actualizado 2026-09-08)
+Actualización: agrega endpoints /clients/{client_id}/communications para Email y SMS.
 Función: CRUD de abonados (/api/clients): listar con búsqueda y filtro, detalle con
          facturas y tickets, crear (aprovisiona PPPoE/cola en el MikroTik y emite la
          primera factura), editar (re-aprovisiona), eliminar (limpia el MikroTik) y
          corte / reactivación de servicio real vía API RouterOS. GET /{id}/onu-status busca la ONU
          del abonado (onu_sn) en las OLT VSOL registradas y devuelve estado y potencia óptica.
          GET /{id}/invoices lista todas las facturas del cliente con filtros opcionales.
+         GET /{id}/communications lista Email y SMS; POST send-email y send-sms registran nuevos.
 Trabaja con: backend/app/models/client.py, plan.py, router.py, invoice.py, ticket.py,
+             backend/app/models/client_communication.py,
              backend/app/integrations/mikrotik/service.py, backend/app/routers/ajustes/router.py,
-             frontend/src/modules/clientes/Clients.jsx, frontend/src/modules/clientes/editor/ClientBilling.jsx
+             frontend/src/modules/clientes/Clients.jsx, frontend/src/modules/clientes/editor/ClientBilling.jsx,
+             frontend/src/modules/clientes/editor/ClientCommunications.jsx
 """
 from datetime import datetime, timedelta, timezone
 import ipaddress
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,9 +39,20 @@ from app.models.ticket import Ticket
 from app.models.zone import Zone
 from app.models.monitoring_equipment import MonitoringEquipment
 from app.models.client_activity import ClientActivity
+from app.models.client_communication import ClientCommunication
 from app.routers.clientes.schemas import ClientIn
 
 router = APIRouter(prefix="/clients", tags=["Clientes"], dependencies=[Depends(get_current_user)])
+
+# Schemas para comunicaciones
+class EmailIn(BaseModel):
+    to: str
+    subject: str
+    body: str
+    template: Optional[str] = "none"
+
+class SmsIn(BaseModel):
+    message: str
 
 def _activity(db: AsyncSession, client_id: str, action: str, detail: str):
     """Registra un evento operativo sin interrumpir la transacción del cliente."""
@@ -219,6 +234,85 @@ async def get_client_invoices(client_id: str, status: Optional[str] = None, sear
         q = q.where(or_(Invoice.invoice_number.ilike(like), Invoice.month_period.ilike(like)))
     rows = (await db.execute(q.order_by(Invoice.issue_date.desc()))).scalars().all()
     return [i.to_dict() for i in rows]
+
+
+@router.get("/{client_id}/communications")
+async def get_client_communications(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Lista historial de Email y SMS enviados al cliente."""
+    c = await _get_visible_client(db, client_id, current_user)
+    comms = (await db.execute(
+        select(ClientCommunication)
+        .where(ClientCommunication.client_id == client_id)
+        .order_by(ClientCommunication.created_at.desc())
+    )).scalars().all()
+    return [{"id": comm.id, "type": comm.type or comm.channel, "recipient": comm.recipient, 
+             "subject": comm.subject, "message": comm.message, "status": comm.status, 
+             "created_at": comm.created_at} for comm in comms]
+
+
+@router.post("/{client_id}/communications/send-email")
+async def send_email(client_id: str, data: EmailIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Registra y envía un correo al cliente."""
+    c = await _get_visible_client(db, client_id, current_user)
+    
+    # Validar entrada
+    if not data.to.strip():
+        raise HTTPException(status_code=400, detail="Correo destinatario requerido.")
+    if not data.subject.strip():
+        raise HTTPException(status_code=400, detail="Asunto requerido.")
+    if not data.body.strip():
+        raise HTTPException(status_code=400, detail="Cuerpo del correo requerido.")
+    
+    # Registrar comunicación
+    comm = ClientCommunication(
+        client_id=client_id,
+        type="email",
+        channel="email",
+        recipient=data.to,
+        subject=data.subject,
+        message=data.body,
+        template=data.template or "none",
+        status="sent",
+        operator_id=current_user.get("id", ""),
+        operator_name=current_user.get("name", "Sistema")
+    )
+    db.add(comm)
+    _activity(db, client_id, "Correo enviado", f"Asunto: {data.subject} a {data.to}")
+    await db.commit()
+    
+    return {"ok": True, "id": comm.id, "message": "Correo registrado y enviado correctamente."}
+
+
+@router.post("/{client_id}/communications/send-sms")
+async def send_sms(client_id: str, data: SmsIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Registra y envía un SMS/WhatsApp al cliente."""
+    c = await _get_visible_client(db, client_id, current_user)
+    
+    # Validar entrada
+    if not data.message.strip():
+        raise HTTPException(status_code=400, detail="Mensaje requerido.")
+    if len(data.message) > 900:
+        raise HTTPException(status_code=400, detail="El mensaje no puede exceder 900 caracteres.")
+    if not c.phone:
+        raise HTTPException(status_code=400, detail="El cliente no tiene teléfono registrado.")
+    
+    # Registrar comunicación
+    comm = ClientCommunication(
+        client_id=client_id,
+        type="sms",
+        channel="sms",
+        recipient=c.phone,
+        subject="",
+        message=data.message,
+        status="sent",
+        operator_id=current_user.get("id", ""),
+        operator_name=current_user.get("name", "Sistema")
+    )
+    db.add(comm)
+    _activity(db, client_id, "SMS enviado", f"A {c.phone}: {data.message[:50]}...")
+    await db.commit()
+    
+    return {"ok": True, "id": comm.id, "message": "SMS registrado y enviado correctamente."}
 
 
 @router.get("/{client_id}/onu-status")
