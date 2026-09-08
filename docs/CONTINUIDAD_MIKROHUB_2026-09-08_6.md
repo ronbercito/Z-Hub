@@ -1,40 +1,31 @@
-# Continuidad MikroHub — 2026-09-08 — Potencia óptica y semáforo visual
+# Continuidad MikroHub — 2026-09-08 — Corrección de eliminación de clientes
 
-## Cambio
-Se implementó una corrección funcional para la potencia óptica de fibra en la creación/edición de servicios adicionales.
+## Problema
+Al eliminar un cliente desde `Clients.jsx`, el componente todavía ejecutaba `window.confirm(...)`. El guardia existente interceptaba la solicitud Axios, pero el diálogo nativo se ejecutaba antes del DELETE y mostraba `192.168.10.250 dice`.
 
-## Solicitud
-- Permitir que el operador escriba `14` o `-14`.
-- Guardar y mostrar siempre `-14 dBm`.
-- Aplicar semáforo visual por umbral:
-  - `-28 dBm` o menor: rojo/crítico.
-  - `-25` a `-27 dBm`: amarillo/naranja/advertencia.
-  - mejor que `-25 dBm`: verde/normal.
+## Causa raíz
+La confirmación nativa ocurría sincrónicamente antes de que el interceptor de Axios pudiera mostrar el modal propio.
 
-## Causa y decisión técnica
-El modelo `ClientService` ya dispone del campo `optical_power_dbm`. Se mantiene la normalización en backend mediante el validador para garantizar que los datos persistidos sean negativos aunque una petición externa envíe un valor positivo. El frontend también normaliza el valor al escribir para que el operador vea inmediatamente el signo `-`.
+## Corrección
+- `frontend/src/constants/clientDeleteGuard.js`: intercepta únicamente el mensaje de confirmación de eliminación de cliente y deja pasar el flujo hasta el modal propio de MikroHub.
+- El interceptor mantiene la consulta de cliente, servicios y facturas antes del DELETE.
+- Se mantiene la alerta roja elegante para más de un servicio con facturas pendientes.
+- Se mantiene la confirmación escrita `SI`.
+- Cancelar, `NO`, vacío, ESC o cerrar bloquean la eliminación.
+- Si no se puede verificar servicios/facturación, se bloquea por seguridad.
+- `frontend/src/constants/clientDeleteNativeConfirmBlocker.js`: soporte aislado creado para bloquear el confirm nativo específico de eliminación de clientes.
+- `frontend/src/modules/system-update/version.js`: versión `1.0.73`.
 
-## Archivos afectados
-- `backend/app/models/client_service.py`
-  - Normaliza `optical_power_dbm` con `-abs(valor)`.
-- `frontend/src/modules/clientes/editor/ClientServiceEditor.jsx`
-  - Normalización inmediata del campo.
-  - Coloreado del campo mientras se edita.
-  - Coloreado de la columna Señal ONU según umbrales.
-- `frontend/src/modules/system-update/version.js`
-  - Versión `1.0.69` y changelog funcional.
+## Resultado esperado
+Al pulsar eliminar cliente no debe aparecer ningún diálogo que muestre la IP del servidor. Debe aparecer directamente el modal propio de MikroHub. Para múltiples servicios con facturas pendientes debe aparecer `Advertencia prioritaria`.
 
-## Publicación
-- Versión: **1.0.69**.
-- Commit de semáforo visual: `7cd5205a10adb938ae208f9f4f2d3e149692c610`.
-- El cambio quedó publicado en `main`.
+## Prueba requerida
+1. Actualizar a 1.0.73.
+2. Abrir Clientes.
+3. Pulsar eliminar sobre un cliente con 2 servicios y deuda: debe aparecer la advertencia prioritaria.
+4. Cancelar: no elimina.
+5. Repetir y escribir `SI`: ejecuta el DELETE.
+6. Probar un cliente sin condición prioritaria: también debe aparecer el modal propio, nunca `window.confirm`.
 
-## Verificación prevista en producción
-1. Actualizar desde Centro de Actualizaciones a 1.0.69.
-2. Crear servicio de fibra e introducir `14`; debe mostrarse `-14` y guardarse como `-14 dBm`.
-3. Probar `-24`, `-25`, `-27`, `-28` y `-30`.
-4. Confirmar verde para `-24`, amarillo/naranja para `-25` a `-27`, y rojo para `-28` o menor.
-5. Editar un servicio existente y confirmar que el valor negativo se conserva.
-
-## Política aplicada
-Ante una modificación funcional se revisó primero el código existente y se mantuvo el flujo actual de creación/edición de servicios, modificando únicamente la normalización y presentación de potencia óptica. No se alteraron datos existentes ni se creó una migración destructiva.
+## Política prioritaria aplicada
+Se revisó primero el flujo real de eliminación y se identificó que el código modificado no era suficiente porque `Clients.jsx` conservaba una llamada nativa. Se corrigió la causa concreta sin eliminar datos ni modificar manualmente la base de producción.
