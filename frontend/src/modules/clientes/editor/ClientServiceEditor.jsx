@@ -1,361 +1,63 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — distribución del formulario de Servicio en dos columnas y red/IP visibles también para inalámbrico.
- * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
- * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
- * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
- * No modifica: datos personales, facturación, tickets ni comunicaciones; solo configuración de servicio.
+ * Actualización: 2026-09-08 — convierte Servicio en listado agrupado y formulario emergente para múltiples servicios por cliente.
+ * Función: lista los servicios de Internet del cliente y abre una ventana emergente para crear o editar cada servicio.
+ * Recibe de: ClientDetail.jsx y backend/app/routers/clientes/services.py.
+ * Entrega a: backend mediante /clients/{clientId}/service para el servicio principal histórico y /clients/{clientId}/services para servicios adicionales.
  */
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { AlertCircle, CheckCircle2, Loader, Save, X } from "lucide-react";
+import { AlertCircle, Loader, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 const inputClass = "w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-60";
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400";
 const sectionClass = "rounded-2xl border border-slate-800 bg-slate-900/35 p-4 sm:p-5";
 const sectionTitleClass = "mb-4 border-b border-slate-800 pb-3 text-base font-bold text-white";
+const emptyForm = { plan_id: "", router_id: "", connection_type: "PPPoE", ipv4_network_id: "", ip_address: "", pppoe_user: "", pppoe_password: "", technology: "fiber", zone_id: "", nap_box_id: "", nap_port: "", onu_sn: "", optical_power_dbm: "", monitoring_equipment_id: "", antenna_type: "", management_ip: "" };
+const mapServiceToForm = (s) => ({ plan_id: s?.plan_id || "", router_id: s?.router_id || "", connection_type: s?.connection_type || "PPPoE", ipv4_network_id: s?.ipv4_network_id || "", ip_address: s?.ip_address || "", pppoe_user: s?.pppoe_user || "", pppoe_password: s?.pppoe_password || "", technology: s?.technology || "fiber", zone_id: s?.zone_id || "", nap_box_id: s?.nap_box_id || "", nap_port: s?.nap_port ? String(s.nap_port) : "", onu_sn: s?.onu_sn || "", optical_power_dbm: s?.optical_power_dbm ?? "", monitoring_equipment_id: s?.monitoring_equipment_id || "", antenna_type: s?.antenna_type || "", management_ip: s?.management_ip || "" });
 
-export default function ClientServiceEditor({ clientId, api, token, onSave, onSaveSuccess, onCancel }) {
-  const [formData, setFormData] = useState({
-    plan_id: "",
-    router_id: "",
-    connection_type: "PPPoE",
-    ipv4_network_id: "",
-    ip_address: "",
-    pppoe_user: "",
-    pppoe_password: "",
-    technology: "fiber",
-    zone_id: "",
-    nap_box_id: "",
-    nap_port: "",
-    onu_sn: "",
-    optical_power_dbm: "",
-    monitoring_equipment_id: "",
-    antenna_type: "",
-    management_ip: "",
-  });
+function Field({ label, children, hint }) { return <div className="min-w-0"><label className={labelClass}>{label}</label>{children}{hint && <p className="mt-1.5 text-[11px] text-slate-500">{hint}</p>}</div>; }
 
-  const [plans, setPlans] = useState([]);
-  const [routers, setRouters] = useState([]);
-  const [ipv4Networks, setIpv4Networks] = useState([]);
-  const [zones, setZones] = useState([]);
-  const [napBoxes, setNapBoxes] = useState([]);
-  const [monitoringEquipment, setMonitoringEquipment] = useState([]);
-  const [availableAddresses, setAvailableAddresses] = useState([]);
-  const [loadingAddresses, setLoadingAddresses] = useState(false);
+function ServiceModal({ clientId, api, token, service, onSaved, onClose }) {
+  const editingPrimary = service?.is_primary;
+  const [formData, setFormData] = useState(() => service ? mapServiceToForm(service) : { ...emptyForm });
+  const [plans, setPlans] = useState([]); const [routers, setRouters] = useState([]); const [ipv4Networks, setIpv4Networks] = useState([]); const [zones, setZones] = useState([]); const [napBoxes, setNapBoxes] = useState([]); const [monitoringEquipment, setMonitoringEquipment] = useState([]);
+  const [availableAddresses, setAvailableAddresses] = useState([]); const [loading, setLoading] = useState(true); const [loadingAddresses, setLoadingAddresses] = useState(false); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+
+  useEffect(() => { let active = true; (async () => { try { const headers = { Authorization: `Bearer ${token}` }; const [plansRes, routersRes, networksRes, zonesRes, napRes, equipRes] = await Promise.all([axios.get(`${api}/plans`, { headers }), axios.get(`${api}/routers`, { headers }), axios.get(`${api}/ipv4-networks`, { headers }), axios.get(`${api}/zones`, { headers }), axios.get(`${api}/nap-boxes`, { headers }), axios.get(`${api}/monitoring-equipment`, { headers })]); if (!active) return; setPlans(plansRes.data || []); setRouters((routersRes.data || []).filter((r) => r.device_type === "mikrotik")); setIpv4Networks(networksRes.data || []); setZones(zonesRes.data || []); setNapBoxes(napRes.data || []); setMonitoringEquipment(equipRes.data || []); } catch (err) { if (active) setError(err.response?.data?.detail || "No se pudieron cargar los datos del servicio."); } finally { if (active) setLoading(false); } })(); return () => { active = false; }; }, [api, token]);
+
   const connectionUsage = { "PPPoE": "pppoe_pool", "IP Estática": "static", "DHCP": "dhcp" }[formData.connection_type] || "static";
-  const compatibleNetworks = ipv4Networks.filter((network) => network.router_id === formData.router_id && network.usage_type === connectionUsage);
-  const selectedNap = napBoxes.find((nap) => nap.id === formData.nap_box_id);
-  const occupiedNapPorts = new Set(Object.keys(selectedNap?.assigned_ports || {}).map(Number));
-  const availableNapPorts = Array.from({ length: selectedNap?.ports || 0 }, (_, index) => index + 1)
-    .filter((port) => !occupiedNapPorts.has(port) || Number(formData.nap_port) === port);
+  const compatibleNetworks = useMemo(() => ipv4Networks.filter((n) => n.router_id === formData.router_id && n.usage_type === connectionUsage), [ipv4Networks, formData.router_id, connectionUsage]);
+  const selectedNap = napBoxes.find((n) => n.id === formData.nap_box_id); const occupiedNapPorts = new Set(Object.keys(selectedNap?.assigned_ports || {}).map(Number)); const availableNapPorts = Array.from({ length: selectedNap?.ports || 0 }, (_, i) => i + 1).filter((p) => !occupiedNapPorts.has(p) || Number(formData.nap_port) === p);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  useEffect(() => { if (!formData.ipv4_network_id || formData.connection_type === "PPPoE") { setAvailableAddresses([]); return undefined; } let active = true; setLoadingAddresses(true); axios.get(`${api}/ipv4-networks/${formData.ipv4_network_id}/available-addresses`, { params: { exclude_client_id: clientId }, headers: { Authorization: `Bearer ${token}` } }).then((r) => { if (active) setAvailableAddresses(r.data.addresses || []); }).catch(() => { if (active) setAvailableAddresses([]); }).finally(() => { if (active) setLoadingAddresses(false); }); return () => { active = false; }; }, [api, clientId, formData.connection_type, formData.ipv4_network_id, token]);
+  const handleChange = (e) => { const { name, value } = e.target; setFormData((p) => ({ ...p, [name]: value })); };
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [clientRes, plansRes, routersRes, networksRes, zonesRes, napRes, equipRes] = await Promise.all([
-          axios.get(`${api}/clients/${clientId}`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/plans`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/routers`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/ipv4-networks`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/zones`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/nap-boxes`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/monitoring-equipment`, { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
+  const handleSubmit = async (e) => { e.preventDefault(); setSaving(true); setError(""); try {
+    if (!formData.plan_id) throw new Error("Selecciona un plan."); if (!formData.router_id) throw new Error("Selecciona un MikroTik."); if (!formData.technology) throw new Error("Selecciona la tecnología.");
+    if (formData.connection_type === "PPPoE") { if (!formData.pppoe_user.trim()) throw new Error("Ingresa usuario PPPoE."); } else { if (!formData.ipv4_network_id) throw new Error("Selecciona una red IPv4."); if (!formData.ip_address) throw new Error("Selecciona una IP disponible."); }
+    if (!formData.zone_id) throw new Error("Selecciona una zona."); if (formData.technology === "fiber") { if (!formData.nap_box_id) throw new Error("Selecciona una caja NAP."); if (!formData.nap_port) throw new Error("Selecciona un puerto NAP."); } else if (!formData.monitoring_equipment_id) throw new Error("Selecciona el equipo al que se conectará el servicio inalámbrico.");
+    const payload = { plan_id: formData.plan_id, router_id: formData.router_id, connection_type: formData.connection_type, ipv4_network_id: formData.ipv4_network_id || null, ip_address: formData.ip_address || null, pppoe_user: formData.pppoe_user || null, pppoe_password: formData.pppoe_password || null, technology: formData.technology, zone_id: formData.zone_id || null, nap_box_id: formData.technology === "fiber" ? formData.nap_box_id || null : null, nap_port: formData.technology === "fiber" && formData.nap_port ? parseInt(formData.nap_port, 10) : null, onu_sn: formData.technology === "fiber" ? formData.onu_sn || null : null, optical_power_dbm: formData.technology === "fiber" && formData.optical_power_dbm !== "" ? parseFloat(formData.optical_power_dbm) : null, monitoring_equipment_id: formData.technology === "wireless" ? formData.monitoring_equipment_id || null : null, antenna_type: formData.technology === "wireless" ? formData.antenna_type || null : null, management_ip: formData.technology === "wireless" ? formData.management_ip || null : null };
+    const headers = { Authorization: `Bearer ${token}` }; if (editingPrimary) await axios.patch(`${api}/clients/${clientId}/service`, payload, { headers }); else if (service) await axios.patch(`${api}/clients/${clientId}/services/${service.service_id}`, payload, { headers }); else await axios.post(`${api}/clients/${clientId}/services`, payload, { headers }); onSaved?.(); onClose?.();
+  } catch (err) { setError(err.response?.data?.detail || err.message || "Error al guardar el servicio."); } finally { setSaving(false); } };
 
-        const client = clientRes.data;
-        setFormData({
-          plan_id: client.plan_id || "",
-          router_id: client.router_id || "",
-          connection_type: client.connection_type || "PPPoE",
-          ipv4_network_id: client.ipv4_network_id || "",
-          ip_address: client.ip_address || "",
-          pppoe_user: client.pppoe_user || "",
-          pppoe_password: client.pppoe_password || "",
-          technology: client.technology || "fiber",
-          zone_id: client.zone_id || "",
-          nap_box_id: client.nap_box_id || "",
-          nap_port: client.nap_port ? String(client.nap_port) : "",
-          onu_sn: client.onu_sn || "",
-          optical_power_dbm: client.optical_power_dbm ?? "",
-          monitoring_equipment_id: client.monitoring_equipment_id || "",
-          antenna_type: client.antenna_type || "",
-          management_ip: client.management_ip || "",
-        });
+  if (loading) return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"><div className="rounded-2xl border border-slate-700 bg-slate-900 p-8 text-center"><Loader className="mx-auto mb-3 h-6 w-6 animate-spin text-cyan-300" /><p className="text-sm text-slate-400">Cargando servicio…</p></div></div>;
+  return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) onClose?.(); }}><div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+    <header className="flex shrink-0 items-center justify-between border-b border-slate-800 px-5 py-4"><div><h2 className="text-lg font-bold text-white">{editingPrimary ? "Editar servicio principal" : service ? "Editar servicio" : "Nuevo servicio"}</h2><p className="mt-1 text-xs text-slate-500">Configura este servicio de forma independiente dentro de la ficha del cliente.</p></div><button type="button" onClick={onClose} disabled={saving} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></header>
+    <div className="overflow-y-auto p-4 sm:p-5">{error && <div className="mb-4 flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4"><AlertCircle className="h-5 w-5 shrink-0 text-rose-300" /><p className="text-sm text-rose-300">{error}</p></div>}
+      <form id="client-service-form" onSubmit={handleSubmit} className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <section className={sectionClass}><h3 className={sectionTitleClass}>Internet y MikroTik</h3><div className="space-y-4"><Field label="MikroTik"><select name="router_id" value={formData.router_id} onChange={handleChange} required className={inputClass}><option value="">Selecciona un MikroTik</option>{routers.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></Field><Field label="Plan de internet"><select name="plan_id" value={formData.plan_id} onChange={handleChange} required className={inputClass}><option value="">Selecciona un plan</option>{plans.map((p) => <option key={p.id} value={p.id}>{p.name} — S/. {Number(p.price || 0).toFixed(2)}</option>)}</select></Field><Field label="Tipo de conexión"><select name="connection_type" value={formData.connection_type} onChange={handleChange} className={inputClass}><option value="PPPoE">PPPoE</option><option value="IP Estática">IP estática</option><option value="DHCP">DHCP</option></select></Field>{formData.connection_type !== "PPPoE" ? <div className="grid gap-4 sm:grid-cols-2"><Field label="Red IP estática"><select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((p) => ({ ...p, ipv4_network_id: e.target.value, ip_address: "" }))} className={inputClass}><option value="">Selecciona una red</option>{compatibleNetworks.map((n) => <option key={n.id} value={n.id}>{n.name} — {n.cidr}</option>)}</select></Field><Field label="IP disponible del cliente" hint="Solo se muestran direcciones libres de la red seleccionada."><select name="ip_address" value={formData.ip_address} disabled={!formData.ipv4_network_id || loadingAddresses} onChange={handleChange} className={inputClass}><option value="">{loadingAddresses ? "Consultando IPs disponibles…" : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>{formData.ip_address && !availableAddresses.includes(formData.ip_address) && <option value={formData.ip_address}>{formData.ip_address} (asignada a este servicio)</option>}{availableAddresses.map((a) => <option key={a} value={a}>{a}</option>)}</select></Field></div> : <div className="grid gap-4 sm:grid-cols-2"><Field label="Usuario PPPoE"><input name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} /></Field><Field label="Contraseña PPPoE"><input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña" className={inputClass} /></Field></div>}</div></section>
+        <section className={sectionClass}><h3 className={sectionTitleClass}>Instalación y tecnología</h3><div className="space-y-4"><Field label="Tecnología"><select name="technology" value={formData.technology} onChange={(e) => setFormData((p) => ({ ...p, technology: e.target.value, nap_box_id: "", nap_port: "", onu_sn: "", optical_power_dbm: "", monitoring_equipment_id: "" }))} required className={inputClass}><option value="fiber">Fibra óptica</option><option value="wireless">Inalámbrico</option></select></Field><Field label="Zona"><select name="zone_id" value={formData.zone_id} onChange={handleChange} required className={inputClass}><option value="">Selecciona una zona</option>{zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}</select></Field>{formData.technology === "fiber" ? <><div className="grid gap-4 sm:grid-cols-2"><Field label="Caja NAP"><select name="nap_box_id" value={formData.nap_box_id} onChange={(e) => setFormData((p) => ({ ...p, nap_box_id: e.target.value, nap_port: "" }))} className={inputClass}><option value="">Selecciona una caja NAP</option>{napBoxes.filter((n) => !formData.zone_id || n.zone_id === formData.zone_id).map((n) => <option key={n.id} value={n.id}>{n.display_name || n.name} ({n.ports} puertos)</option>)}</select></Field><Field label="Puerto NAP"><select name="nap_port" value={formData.nap_port} disabled={!formData.nap_box_id} onChange={handleChange} className={inputClass}><option value="">Selecciona un puerto</option>{availableNapPorts.map((p) => <option key={p} value={p}>Puerto {p}</option>)}</select></Field></div><div className="grid gap-4 sm:grid-cols-2"><Field label="Serie ONU (opcional)"><input name="onu_sn" value={formData.onu_sn} onChange={handleChange} placeholder="Ej. VSOL12345678" className={inputClass} /></Field><Field label="Potencia óptica (dBm, opcional)"><input type="number" step="0.1" name="optical_power_dbm" value={formData.optical_power_dbm} onChange={handleChange} placeholder="Ej. -19.5" className={inputClass} /></Field></div></> : <><Field label="Conectado a"><select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} required className={inputClass}><option value="">Selecciona el equipo</option>{monitoringEquipment.map((e) => <option key={e.id} value={e.id}>{e.name}{e.management_ip ? ` — ${e.management_ip}` : ""}</option>)}</select></Field><Field label="Tipo de antena (opcional)"><input name="antenna_type" value={formData.antenna_type} onChange={handleChange} placeholder="Ej. LiteBeam 5AC" className={inputClass} /></Field><Field label="IP de administración (opcional)"><input name="management_ip" value={formData.management_ip} onChange={handleChange} placeholder="Ej. 192.168.1.20" className={inputClass} /></Field></>}</div></section>
+      </form></div><footer className="flex shrink-0 justify-end gap-2 border-t border-slate-800 bg-slate-900/90 px-5 py-4"><button type="button" onClick={onClose} disabled={saving} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800"><X className="h-4 w-4" /> Cancelar</button><button type="submit" form="client-service-form" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-50">{saving ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {saving ? "Guardando…" : "Guardar cambios"}</button></footer>
+  </div></div>;
+}
 
-        setPlans(plansRes.data || []);
-        setRouters((routersRes.data || []).filter((router) => router.device_type === "mikrotik"));
-        setIpv4Networks(networksRes.data || []);
-        setZones(zonesRes.data || []);
-        setNapBoxes(napRes.data || []);
-        setMonitoringEquipment(equipRes.data || []);
-      } catch (err) {
-        setError(err.response?.data?.detail || "No se pudieron cargar los datos.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, [api, clientId, token]);
-
-  useEffect(() => {
-    if (!formData.ipv4_network_id || formData.connection_type === "PPPoE") {
-      setAvailableAddresses([]);
-      return;
-    }
-    let active = true;
-    setLoadingAddresses(true);
-    axios.get(`${api}/ipv4-networks/${formData.ipv4_network_id}/available-addresses`, {
-      params: { exclude_client_id: clientId },
-      headers: { Authorization: `Bearer ${token}` }
-    }).then((response) => {
-      if (active) setAvailableAddresses(response.data.addresses || []);
-    }).catch(() => {
-      if (active) setAvailableAddresses([]);
-    }).finally(() => {
-      if (active) setLoadingAddresses(false);
-    });
-    return () => { active = false; };
-  }, [api, clientId, formData.connection_type, formData.ipv4_network_id, token]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      if (!formData.plan_id) throw new Error("Selecciona un plan.");
-      if (!formData.router_id) throw new Error("Selecciona un MikroTik.");
-      if (!formData.technology) throw new Error("Selecciona la tecnología (Fibra u Inalámbrico).");
-
-      if (formData.technology === "fiber") {
-        if (!formData.zone_id) throw new Error("Selecciona una zona para fibra.");
-        if (!formData.nap_box_id) throw new Error("Selecciona una caja NAP.");
-        if (!formData.nap_port) throw new Error("Selecciona un puerto NAP.");
-        if (formData.connection_type === "PPPoE") {
-          if (!formData.pppoe_user) throw new Error("Ingresa usuario PPPoE.");
-        } else {
-          if (!formData.ipv4_network_id) throw new Error("Selecciona una red IPv4.");
-          if (!formData.ip_address) throw new Error("Ingresa la IP del cliente.");
-        }
-      } else if (!formData.monitoring_equipment_id) {
-        throw new Error("Selecciona un equipo de monitoreo.");
-      }
-
-      const payload = {
-        plan_id: formData.plan_id,
-        router_id: formData.router_id,
-        connection_type: formData.connection_type,
-        ipv4_network_id: formData.ipv4_network_id || null,
-        ip_address: formData.ip_address || null,
-        pppoe_user: formData.pppoe_user || null,
-        pppoe_password: formData.pppoe_password || null,
-        technology: formData.technology,
-        zone_id: formData.zone_id || null,
-        nap_box_id: formData.nap_box_id || null,
-        nap_port: formData.nap_port ? parseInt(formData.nap_port) : null,
-        onu_sn: formData.onu_sn || null,
-        optical_power_dbm: formData.optical_power_dbm === "" ? null : parseFloat(formData.optical_power_dbm),
-        monitoring_equipment_id: formData.monitoring_equipment_id || null,
-        antenna_type: formData.antenna_type || null,
-        management_ip: formData.management_ip || null,
-      };
-
-      await axios.patch(`${api}/clients/${clientId}/service`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setSuccess("Servicio del cliente actualizado correctamente.");
-      const closeAfterSave = onSave || onSaveSuccess;
-      if (closeAfterSave) closeAfterSave();
-    } catch (err) {
-      const msg = err.response?.data?.detail || err.message || "Error al guardar los cambios.";
-      setError(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-10 text-center">
-        <Loader className="mx-auto mb-3 h-5 w-5 animate-spin text-cyan-300" />
-        <p className="text-sm text-slate-400">Cargando datos de servicio…</p>
-      </div>
-    );
-  }
-
-  const Field = ({ label, children, hint }) => (
-    <div className="min-w-0">
-      <label className={labelClass}>{label}</label>
-      {children}
-      {hint && <p className="mt-1.5 text-[11px] text-slate-500">{hint}</p>}
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      {error && (
-        <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
-          <AlertCircle className="h-5 w-5 shrink-0 text-rose-300" />
-          <p className="text-sm text-rose-300">{error}</p>
-        </div>
-      )}
-      {success && (
-        <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
-          <p className="text-sm text-emerald-300">{success}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <section className={sectionClass}>
-            <h3 className={sectionTitleClass}>Internet y MikroTik</h3>
-            <div className="space-y-4">
-              <Field label="MikroTik">
-                <select name="router_id" value={formData.router_id} onChange={handleChange} required className={inputClass}>
-                  <option value="">Selecciona un MikroTik</option>
-                  {routers.map((router) => <option key={router.id} value={router.id}>{router.name}</option>)}
-                </select>
-              </Field>
-
-              <Field label="Plan de internet">
-                <select name="plan_id" value={formData.plan_id} onChange={handleChange} required className={inputClass}>
-                  <option value="">Selecciona un plan</option>
-                  {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} — S/. {plan.price}</option>)}
-                </select>
-              </Field>
-
-              <Field label="Tipo de conexión">
-                <select name="connection_type" value={formData.connection_type} onChange={handleChange} className={inputClass}>
-                  <option value="PPPoE">PPPoE</option>
-                  <option value="IP Estática">IP estática</option>
-                  <option value="DHCP">DHCP</option>
-                </select>
-              </Field>
-
-              {formData.connection_type !== "PPPoE" && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Red IP estática">
-                    <select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))} className={inputClass}>
-                      <option value="">Selecciona una red</option>
-                      {compatibleNetworks.map((net) => <option key={net.id} value={net.id}>{net.name} — {net.cidr}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="IP disponible del cliente" hint="Solo se muestran direcciones libres de la red seleccionada.">
-                    <select name="ip_address" value={formData.ip_address} disabled={!formData.ipv4_network_id || loadingAddresses} onChange={handleChange} className={inputClass}>
-                      <option value="">{loadingAddresses ? "Consultando IPs disponibles…" : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>
-                      {formData.ip_address && !availableAddresses.includes(formData.ip_address) && <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>}
-                      {availableAddresses.map((address) => <option key={address} value={address}>{address}</option>)}
-                    </select>
-                  </Field>
-                </div>
-              )}
-
-              {formData.connection_type === "PPPoE" && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Usuario PPPoE">
-                    <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} />
-                  </Field>
-                  <Field label="Contraseña PPPoE">
-                    <input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña" className={inputClass} />
-                  </Field>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className={sectionClass}>
-            <h3 className={sectionTitleClass}>Instalación y tecnología</h3>
-            <div className="space-y-4">
-              <Field label="Tecnología">
-                <select name="technology" value={formData.technology} onChange={handleChange} required className={inputClass}>
-                  <option value="fiber">Fibra óptica</option>
-                  <option value="wireless">Inalámbrico</option>
-                </select>
-              </Field>
-
-              {formData.technology === "fiber" ? (
-                <>
-                  <Field label="Zona">
-                    <select name="zone_id" value={formData.zone_id} onChange={handleChange} className={inputClass}>
-                      <option value="">Selecciona una zona</option>
-                      {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-                    </select>
-                  </Field>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Caja NAP">
-                      <select name="nap_box_id" value={formData.nap_box_id} onChange={handleChange} className={inputClass}>
-                        <option value="">Selecciona una caja NAP</option>
-                        {napBoxes.filter((nap) => nap.zone_id === formData.zone_id).map((nap) => <option key={nap.id} value={nap.id}>{nap.name} ({nap.ports} puertos)</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Puerto NAP">
-                      <select name="nap_port" value={formData.nap_port} disabled={!selectedNap || availableNapPorts.length === 0} onChange={handleChange} className={inputClass}>
-                        <option value="">{!selectedNap ? "Primero selecciona una caja NAP" : availableNapPorts.length === 0 ? "No hay puertos libres" : "Selecciona un puerto libre"}</option>
-                        {availableNapPorts.map((port) => <option key={port} value={port}>Puerto {port}</option>)}
-                      </select>
-                    </Field>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Serie ONU (opcional)">
-                      <input type="text" name="onu_sn" value={formData.onu_sn} onChange={handleChange} placeholder="Ej. VSOL12345678" className={inputClass} />
-                    </Field>
-                    <Field label="Potencia óptica (dBm, opcional)">
-                      <input type="number" step="0.1" name="optical_power_dbm" value={formData.optical_power_dbm} onChange={handleChange} placeholder="Ej. -19.5" className={inputClass} />
-                    </Field>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Field label="Zona">
-                    <select name="zone_id" value={formData.zone_id} onChange={handleChange} className={inputClass}>
-                      <option value="">Selecciona una zona</option>
-                      {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Conectado a">
-                    <select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} className={inputClass}>
-                      <option value="">Selecciona un equipo</option>
-                      {monitoringEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Tipo de antena (opcional)">
-                    <input type="text" name="antenna_type" value={formData.antenna_type} onChange={handleChange} placeholder="Ej. Ubiquiti 5 GHz" className={inputClass} />
-                  </Field>
-                  <Field label="IP de administración (opcional)">
-                    <input type="text" name="management_ip" value={formData.management_ip} onChange={handleChange} placeholder="Ej. 192.168.1.20" className={inputClass} />
-                  </Field>
-                </>
-              )}
-            </div>
-          </section>
-        </div>
-
-        <div className="flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
-          <button type="button" onClick={onCancel} disabled={saving} className="flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50">
-            <X className="h-4 w-4" /> Cancelar
-          </button>
-          <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-50">
-            {saving ? <><Loader className="h-4 w-4 animate-spin" /> Guardando…</> : <><Save className="h-4 w-4" /> Guardar cambios</>}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+export default function ClientServiceEditor({ clientId, api, token, onSave, onSaveSuccess }) {
+  const [services, setServices] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [modalService, setModalService] = useState(undefined);
+  const loadServices = async () => { setLoading(true); setError(""); try { const r = await axios.get(`${api}/clients/${clientId}/services`, { headers: { Authorization: `Bearer ${token}` } }); setServices(r.data || []); } catch (err) { setError(err.response?.data?.detail || "No se pudieron cargar los servicios del cliente."); } finally { setLoading(false); } };
+  useEffect(() => { loadServices(); }, [api, clientId, token]);
+  const afterSaved = () => { setModalService(undefined); loadServices(); onSave?.(); onSaveSuccess?.(); };
+  const deleteService = async (s) => { if (s.is_primary || !window.confirm("¿Eliminar este servicio adicional? Esta acción no elimina al cliente.")) return; try { await axios.delete(`${api}/clients/${clientId}/services/${s.service_id}`, { headers: { Authorization: `Bearer ${token}` } }); await loadServices(); } catch (err) { setError(err.response?.data?.detail || "No se pudo eliminar el servicio."); } };
+  if (loading) return <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-10 text-center"><Loader className="mx-auto mb-3 h-5 w-5 animate-spin text-cyan-300" /><p className="text-sm text-slate-400">Cargando servicios…</p></div>;
+  return <div className="space-y-4">{error && <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4"><AlertCircle className="h-5 w-5 shrink-0 text-rose-300" /><p className="text-sm text-rose-300">{error}</p></div>}<section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/35"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4"><div><h3 className="text-base font-bold text-white">Servicios de Internet</h3><p className="mt-1 text-xs text-slate-500">Todos los servicios del cliente se agrupan aquí.</p></div><button type="button" onClick={() => setModalService(null)} className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-500"><Plus className="h-4 w-4" /> Nuevo servicio</button></div><div className="overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="bg-slate-950/70 text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Servicio</th><th className="px-4 py-3">Plan</th><th className="px-4 py-3">IP</th><th className="px-4 py-3">Router</th><th className="px-4 py-3">Tecnología</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3 text-right">Acciones</th></tr></thead><tbody className="divide-y divide-slate-800/80">{services.length === 0 ? <tr><td colSpan="7" className="px-4 py-12 text-center text-slate-500">No hay servicios registrados.</td></tr> : services.map((s, i) => <tr key={s.service_id || i} className="hover:bg-slate-800/30"><td className="px-4 py-3 font-semibold text-slate-200">{s.is_primary ? "Principal" : `Servicio ${i}`}</td><td className="px-4 py-3 text-slate-300">{s.plan_name || "Sin plan"}<div className="text-xs text-slate-500">S/. {Number(s.plan_price || 0).toFixed(2)}</div></td><td className="px-4 py-3 font-mono text-xs text-slate-300">{s.ip_address || s.pppoe_user || "—"}</td><td className="px-4 py-3 text-slate-300">{s.router_name || "—"}</td><td className="px-4 py-3 text-slate-300">{s.technology === "wireless" ? "Inalámbrico" : "Fibra óptica"}</td><td className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${s.status === "active" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>{s.status === "active" ? "Activo" : s.status || "Sin estado"}</span></td><td className="px-4 py-3"><div className="flex justify-end gap-1"><button type="button" title="Editar" onClick={() => setModalService(s)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-cyan-300"><Pencil className="h-4 w-4" /></button>{!s.is_primary && <button type="button" title="Eliminar" onClick={() => deleteService(s)} className="rounded-lg p-2 text-slate-400 hover:bg-rose-500/10 hover:text-rose-300"><Trash2 className="h-4 w-4" /></button>}</div></td></tr>)}</tbody></table></div></section>{modalService !== undefined && <ServiceModal clientId={clientId} api={api} token={token} service={modalService} onSaved={afterSaved} onClose={() => setModalService(undefined)} />}</div>;
 }
