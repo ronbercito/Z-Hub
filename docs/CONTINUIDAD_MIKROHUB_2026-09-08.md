@@ -4,7 +4,7 @@
 
 ## Versión funcional
 
-**1.0.100**
+**1.1.0**
 
 ## Registro 1.0.98 — Navegación de Facturación
 
@@ -90,6 +90,48 @@ Debe conservarse hasta validar la actualización en el panel.
 
 La corrección está publicada en `main`. Falta validación de build y del flujo real en el panel antes de declarar 1.0.100 completamente validada.
 
+## Registro de continuidad — 2026-09-08 — Panel 1.1.0
+
+**Tipo:** Gestión de versiones / transición de ciclo.
+
+### Regla solicitada
+
+Al alcanzar **1.0.99**, el siguiente ciclo de versión debe pasar a **1.1.0**, en lugar de continuar con 1.0.100.
+
+### Aplicación
+
+Se actualizó `frontend/src/modules/system-update/version.js` para que la versión funcional vigente sea **1.1.0** y se añadió el cambio al CHANGELOG visible del panel.
+
+La transición mantiene intactas las funciones de Saldos y edición implementadas previamente; únicamente se corrige el esquema de numeración para iniciar el ciclo 1.1.x.
+
+### Backup
+
+Se creó:
+
+`backup/pre-version-1.1.0-2026-09-08`
+
+Este backup conserva el estado anterior a la transición de numeración.
+
+### Archivos
+
+- `frontend/src/modules/system-update/version.js` — nueva versión 1.1.0 y regla de transición.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — registro de esta transición.
+- `docs/BACKUP_VERSION_1.0.100_TO_1.1.0.md` — referencia documental de la transición.
+
+### Pruebas
+
+- [x] backup creado antes de la modificación de versión;
+- [x] `PANEL_VERSION` actualizado a 1.1.0;
+- [x] CHANGELOG actualizado;
+- [x] continuidad diaria actualizada;
+- [ ] `yarn build`;
+- [ ] instalación mediante Centro de Actualizaciones;
+- [ ] confirmar versión visible 1.1.0 después de iniciar sesión.
+
+### Resultado
+
+**1.1.0 está publicada en `main`.** La numeración queda establecida para que después de 1.0.99 el ciclo continúe como 1.1.x.
+
 ## Despliegue
 
 ```bash
@@ -113,3 +155,4 @@ No borrar la base de datos ni datos existentes para solucionar problemas visuale
 - Continuidad específica de Saldos: `docs/CONTINUIDAD_MIKROHUB_1.0.96_SALDOS.md`
 - Backup de navegación: `backup/pre-facturacion-tabs-resaltadas-2026-09-08`
 - Backup de edición: `backup/pre-editar-saldos-2026-09-08`
+- Backup de transición de versión: `backup/pre-version-1.1.0-2026-09-08`
