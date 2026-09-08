@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — distribución del formulario de Servicio en dos columnas, siguiendo la referencia visual.
+ * Actualización: 2026-09-08 — distribución del formulario de Servicio en dos columnas y red/IP visibles también para inalámbrico.
  * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
  * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
  * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
@@ -249,7 +249,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
                 </select>
               </Field>
 
-              {formData.technology === "fiber" && formData.connection_type !== "PPPoE" && (
+              {formData.connection_type !== "PPPoE" && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Red IP estática">
                     <select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))} className={inputClass}>
@@ -267,7 +267,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
                 </div>
               )}
 
-              {formData.technology === "fiber" && formData.connection_type === "PPPoE" && (
+              {formData.connection_type === "PPPoE" && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Usuario PPPoE">
                     <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} />
@@ -323,6 +323,12 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
                 </>
               ) : (
                 <>
+                  <Field label="Zona">
+                    <select name="zone_id" value={formData.zone_id} onChange={handleChange} className={inputClass}>
+                      <option value="">Selecciona una zona</option>
+                      {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+                    </select>
+                  </Field>
                   <Field label="Conectado a">
                     <select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} className={inputClass}>
                       <option value="">Selecciona un equipo</option>
