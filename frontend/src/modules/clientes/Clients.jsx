@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — la eliminación se valida localmente con las APIs reales de Servicios y Facturación; la tabla muestra deuda y meses pendientes.
+ * Actualización: 2026-09-08 — la eliminación se valida con APIs reales y muestra una alerta roja desde su módulo; la tabla muestra deuda y meses pendientes.
  * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import ClientRegistrationWizard from "./usuarios/ClientRegistrationWizard";
 import ClientDetail from "./ClientDetail";
 import CoordinatesPicker from "../red/components/CoordinatesPicker";
+import { showDeleteModal } from "../../constants/clientDeleteGuard";
 
 const emptyForm = (planId = "", routerId = "") => ({
   full_name: "", dni_ruc: "", phone: "", email: "", address: "", reference: "",
@@ -136,22 +137,14 @@ export default function Clients({ onSelectClient }) {
       const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
       const pending = invoices.filter((invoice) => ["unpaid", "overdue"].includes(String(invoice.status || "").toLowerCase()));
       const balance = pending.reduce((total, invoice) => total + Math.max(0, Number(invoice.amount || 0) - Number(invoice.paid_amount || 0)), 0);
-      const details = [
-        "⚠ ALERTA DE ELIMINACIÓN DEFINITIVA",
-        "",
-        `Cliente: ${name}`,
-        `Servicios registrados: ${services.length}`,
-        `Facturas pendientes: ${pending.length}`,
-        `Saldo pendiente: S/. ${balance.toFixed(2)}`,
-        "",
-        "OBSERVACIONES:",
-        "• Se eliminarán todos los servicios y facturas asociados.",
-        "• Esta operación es definitiva y no se puede deshacer.",
-        "",
-        "Para continuar escribe SI. Para cancelar escribe NO."
-      ].join("\n");
-      const answer = window.prompt(details, "");
-      if (String(answer || "").trim().toUpperCase() !== "SI") return;
+      const confirmed = await showDeleteModal({
+        clientName: name,
+        services,
+        pendingCount: pending.length,
+        pendingTotal: balance,
+        priority: true,
+      });
+      if (!confirmed) return;
       await axios.delete(`${API}/clients/${id}`, { headers, __mikrohubDeleteConfirmed: true });
       toast.success("Cliente eliminado del sistema");
       fetchData();
