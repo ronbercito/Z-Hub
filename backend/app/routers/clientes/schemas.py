@@ -1,8 +1,9 @@
-"""
-Archivo: backend/app/routers/clientes/schemas.py
-Actualización: 2026-09-08 — admite potencia ONU manual al editar la configuración técnica.\nFunción: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
-Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
-"""
+/**
+ * Archivo: backend/app/routers/clientes/schemas.py
+ * Actualización: 2026-09-08 — admite potencia ONU manual al editar la configuración técnica y refuerza datos obligatorios del Resumen.
+ * Función: Esquemas Pydantic del módulo Clientes (datos de entrada para crear/editar abonados).
+ * Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/client.py
+ */
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -81,12 +82,12 @@ class ClientServiceUpdate(BaseModel):
 
 
 class ClientSummaryUpdate(BaseModel):
-    """Actualiza solo datos personales; recibe el formulario Resumen y entrega cambios sin tocar el servicio."""
+    """Actualiza el formulario completo de Resumen; identidad y contacto son obligatorios."""
     model_config = ConfigDict(extra="ignore")
 
-    full_name: Optional[str] = None
-    dni_ruc: Optional[str] = None
-    phone: Optional[str] = None
+    full_name: str
+    dni_ruc: str
+    phone: str
     email: Optional[str] = None
     address: Optional[str] = None
     reference: Optional[str] = None
