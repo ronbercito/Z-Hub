@@ -32,6 +32,22 @@ Este documento es la memoria técnica del proyecto. Su objetivo es que una nueva
 
 ### Regla de actualización de esta bitácora
 
+### Cierre obligatorio de cada cambio (prioridad máxima)
+
+**Un cambio NO está terminado, NO se debe publicar como finalizado y NO se debe informar al administrador como listo hasta que esta bitácora haya sido actualizada.** Esta regla aplica a correcciones, nuevas funciones, cambios visuales, cambios de arquitectura, versiones, despliegues y reversiones.
+
+Orden obligatorio de trabajo:
+
+1. Identificar el propietario real del comportamiento y modificar solo los archivos necesarios.
+2. Ejecutar las pruebas razonables del cambio y anotar exactamente cuáles se realizaron y cuáles no.
+3. Si es funcional, actualizar frontend/src/modules/system-update/version.js y su CHANGELOG.
+4. Actualizar **en la misma entrega** este archivo docs/CONTINUIDAD_MIKROHUB.md con fecha, versión, causa, solución, archivos, flujo, pruebas, resultado, riesgos y pendientes.
+5. Verificar en GitHub que tanto el cambio como la bitácora estén realmente en main.
+6. Recién entonces comunicar que la actualización fue publicada.
+
+Si se detecta un cambio previo sin documentación, la primera tarea será reconstruirla desde los commits y archivos reales antes de continuar con nuevas funciones.
+
+
 Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 
 1. Actualizar esta bitácora.
@@ -60,7 +76,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional registrada al crear esta bitácora: **1.0.63**.
+- Versión funcional actual verificada en main el 2026-09-08: **1.0.90**. La versión 1.0.63 se conserva abajo únicamente como referencia histórica de creación de esta bitácora.
 
 La versión 1.0.63 está confirmada en `version.js` y corresponde a las acciones de facturas: editar, ver documento, eliminar, anular y enviar. Las facturas pagadas/con pagos quedan protegidas. El envío actualmente prepara correo/WhatsApp desde el navegador. 
 
@@ -367,7 +383,7 @@ En el listado de clientes:
 Actualmente:
 
 ```text
-PANEL_VERSION = 1.0.63
+PANEL_VERSION = 1.0.90
 ```
 
 Este archivo es parte del panel y **sí** debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -533,7 +549,7 @@ Si código/build son nuevos pero navegador es viejo → revisar caché/Nginx y h
 - Facturas conservan identificación del servicio mediante `service_label`/`service_type`.
 - Migración conservadora de columnas sin borrar base de datos existente.
 
-### 1.0.63 — actual
+### 1.0.63 — histórico
 
 - Acciones por factura: editar, ver documento, eliminar, anular y enviar.
 - Protección de facturas pagadas/con pagos.
@@ -800,3 +816,132 @@ SHA: ...
 **Corrección:** el guardia global queda sin interceptores. Clients.jsx, propietario del botón Eliminar, consulta directamente ambas APIs reales con el ID y nombre de la fila; muestra el resumen en el diálogo nativo y solo permite el DELETE cuando se escribe SI. Si una consulta falla, cancela el borrado.
 
 **Verificación estática realizada:** versión 1.0.84; Clientes llama las dos rutas exactas; no existe interceptor global ni reemplazo de window.confirm.
+
+
+---
+
+## 17. Reconstrucción documentada — versiones 1.0.85 a 1.0.90
+
+> Esta sección fue reconstruida el 2026-09-08 comparando version.js, archivos vigentes y commits reales de main. Sustituye el vacío documental que quedó después de la revisión 1.0.84.
+
+### REV-0006 — 2026-09-08 — Panel 1.0.85
+
+**Tipo:** Mejora / seguridad de eliminación de clientes.
+
+**Resumen:** se conservó la carga correcta del resumen desde Clients.jsx y se trasladó solo la presentación a una ventana propia y modular de advertencia roja. La confirmación exige escribir SI.
+
+**Archivos modificados:**
+- frontend/src/modules/clientes/Clients.jsx — propietario del botón; consulta GET /api/clients/{id}/services y GET /api/clients/{id}/invoices, calcula servicios, facturas pendientes y saldo antes del DELETE.
+- frontend/src/constants/clientDeleteGuard.js — módulo visual showDeleteModal; no hace interceptación global de Axios ni consultas API.
+- frontend/src/modules/system-update/version.js — versión y changelog 1.0.85.
+
+**Flujo:** Clientes obtiene los datos reales → entrega el resumen al modal rojo → el modal devuelve confirmación SI → Clientes envía DELETE /api/clients/{id}.
+
+**Pruebas:** verificación estática de rutas reales, uso del módulo, advertencia roja y ausencia de interceptores globales. El usuario confirmó visualmente que el resumen se veía correcto.
+
+**Resultado:** correcto. No reintroducir interceptores globales para este flujo.
+
+**Commits:** 248ab097, 9e44b38a, c1108842.
+
+### REV-0007 — 2026-09-08 — Panel 1.0.86
+
+**Tipo:** Arquitectura / mantenimiento.
+
+**Resumen:** frontend/src/modules/system-update/version.js quedó como fuente única de PANEL_VERSION y CHANGELOG; los consumidores no deben duplicar números de versión.
+
+**Archivos modificados:**
+- frontend/src/modules/system-update/version.js — fuente única de versión.
+- backend/app/modules/system_update/router.py — consulta ese archivo desde Git para informar el estado remoto.
+
+**Flujo:** version.js entrega versión y changelog a frontend y backend → UpdateCenter muestra el estado al administrador.
+
+**Pruebas:** revisión de la fuente única y commit publicado.
+
+**Resultado:** correcto. Para una versión futura editar únicamente este archivo como fuente de versión, además de actualizar esta bitácora.
+
+**Commit:** 886317ce (documentación asociada: 770f796d).
+
+### REV-0008 — 2026-09-08 — Panel 1.0.87
+
+**Tipo:** Mejora de interfaz.
+
+**Resumen:** el botón Comprobar pasó a mostrar feedback inmediato durante la consulta para evitar la impresión de que el clic no funcionó.
+
+**Archivos modificados:**
+- frontend/src/modules/system-update/UpdateCenter.jsx — estado checking, texto Buscando actualización, icono giratorio y control de clics repetidos.
+- frontend/src/modules/system-update/version.js — changelog 1.0.87.
+
+**Flujo:** clic en Comprobar → GET /api/system-update/status → UI mantiene estado de búsqueda → actualiza el estado o muestra error.
+
+**Pruebas:** revisión de checking, bloqueo del botón y publicación de versión.
+
+**Resultado:** correcto; posteriormente fue reforzado en 1.0.89 y 1.0.90.
+
+**Commits:** 3527f3a8, 189932ca.
+
+### REV-0009 — 2026-09-08 — Panel 1.0.88
+
+**Tipo:** Mejora de registro de clientes.
+
+**Resumen:** al abrir Nuevo Abonado, la fecha de instalación se preselecciona con la fecha actual y continúa siendo editable desde el calendario.
+
+**Archivo modificado:**
+- frontend/src/modules/clientes/Clients.jsx — emptyForm() construye installation_date con la fecha local actual.
+
+**Flujo:** abrir registro → emptyForm() entrega fecha actual → el formulario permite cambiarla antes de guardar.
+
+**Pruebas:** revisión del valor inicial y de que el campo conserva edición manual.
+
+**Resultado:** correcto. No afecta datos existentes ni requiere migración.
+
+**Commit de documentación:** bbe930ba.
+
+### REV-0010 — 2026-09-08 — Panel 1.0.89
+
+**Tipo:** Mejora de interfaz.
+
+**Resumen:** se reforzó el feedback de Comprobar: giro, pulso, resplandor, puntos animados, aviso de consulta al servidor y bloqueo de comprobaciones repetidas.
+
+**Archivo modificado:**
+- frontend/src/modules/system-update/UpdateCenter.jsx — estado visual más explícito mientras la petición está activa.
+
+**Pruebas:** revisión de checking, disabled, aria-busy y aviso visible.
+
+**Resultado:** correcto; fue ajustado nuevamente en 1.0.90 para que la animación tenga duración mínima visible.
+
+**Commits:** 59ca30d3, c351dc55, 94732849.
+
+### REV-0011 — 2026-09-08 — Panel 1.0.90 — estado actual
+
+**Tipo:** Mejora de interfaz / actualización.
+
+**Resumen:** la comprobación de actualizaciones conserva su feedback visual al menos 850 ms, incluso si el servidor responde muy rápido. Esto hace visible la confirmación de clic y evita consultas simultáneas.
+
+**Archivos modificados:**
+- frontend/src/modules/system-update/UpdateCenter.jsx — mide la duración de la consulta, mantiene checking durante el mínimo visual y deshabilita Comprobar durante la comprobación o instalación.
+- frontend/src/modules/system-update/version.js — PANEL_VERSION = 1.0.90 y changelog actual.
+
+**Flujo:** Comprobar → checking=true → consulta GET /api/system-update/status sin caché → espera visual mínima de 850 ms → actualiza estado y habilita el botón.
+
+**Base de datos:** sin cambios. **Integraciones:** ninguna nueva; usa la API existente de actualización.
+
+**Pruebas realizadas:** inspección del código vigente; verificación de versión 1.0.90; verificación del estado visual, la espera mínima, bloqueo de repetición y commits en main. No se ejecutó build local en esta revisión documental.
+
+**Resultado:** correcto según revisión estática. Para validar en servidor: desplegar con bash setup_debian.sh, cerrar/ingresar al panel y probar Comprobar.
+
+**Commits:** ce4ca639, bb7152da; documentación previa a013c224 (esta entrada corrige que ese cambio no permaneció en la bitácora vigente).
+
+### REV-0012 — 2026-09-08 — Documentación / regla de prioridad
+
+**Tipo:** Documentación de continuidad.
+
+**Resumen:** se corrigió el desfase de la bitácora que terminaba en 1.0.84 pese a que el panel está en 1.0.90. Se registraron las versiones 1.0.85–1.0.90 y se estableció el cierre obligatorio: ningún cambio puede considerarse terminado sin actualizar este documento y verificarlo en main.
+
+**Archivo modificado:**
+- docs/CONTINUIDAD_MIKROHUB.md — bitácora, versión vigente, reglas y reconstrucción detallada.
+
+**Pruebas:** comparación de version.js vigente, UpdateCenter.jsx, Clients.jsx y commits históricos de main.
+
+**Resultado:** completado.
+
+**Commit:** se añade con esta actualización documental.
