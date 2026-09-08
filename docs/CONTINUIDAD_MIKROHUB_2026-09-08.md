@@ -4,7 +4,7 @@
 
 ## Versión funcional
 
-**1.1.2**
+**1.1.3**
 
 ## Registro 1.0.98 — Navegación de Facturación
 
@@ -166,6 +166,134 @@ El backup conserva el estado anterior a esta mejora.
 
 **1.1.2 publicada en `main` con backup y continuidad diaria actualizada.** Falta ejecutar build y validación funcional real antes de declarar la versión completamente validada.
 
+## Registro 1.1.3 — Eliminación detallada de servicios
+
+**Tipo:** Corrección / auditoría operativa.
+
+### Causa
+
+Al eliminar un servicio adicional con varios servicios dentro de la misma ficha, el Log registraba únicamente **“Servicio editado”** o un mensaje genérico de operación. No permitía saber qué servicio concreto desapareció ni si junto con él se eliminaron facturas pendientes/deuda.
+
+### Solución
+
+Se creó un endpoint de eliminación auditada que conserva el flujo existente de confirmación de facturas pendientes y, después de ejecutar correctamente la operación, registra en `client_activities`:
+
+- número del servicio eliminado;
+- plan y precio;
+- tipo de conexión;
+- tecnología;
+- MikroTik asociado;
+- IP;
+- usuario PPPoE;
+- zona;
+- estado anterior;
+- cantidad de facturas pendientes eliminadas;
+- monto total de esas facturas;
+- número, monto y estado de cada factura eliminada;
+- o, si no había deuda pendiente, la indicación explícita de que no se eliminó deuda/factura pendiente;
+- cuenta autenticada y rol que ejecutó la eliminación.
+
+Las facturas pagadas o parcialmente pagadas no forman parte de las facturas eliminables por este flujo.
+
+### Archivos modificados
+
+- `backend/app/routers/clientes/service_delete_audit.py` — nuevo endpoint auditado para eliminación de servicios.
+- `backend/server.py` — registra el endpoint auditado antes del endpoint histórico para que la operación del panel quede detallada.
+- `frontend/src/modules/system-update/version.js` — PANEL_VERSION 1.1.3 y CHANGELOG.
+- `docs/CONTINUIDAD_MIKROHUB_2026-09-08.md` — continuidad diaria.
+
+### Flujo
+
+```text
+Administrador / Técnico
+        ↓
+Eliminar servicio
+        ↓
+¿Tiene facturas pendientes?
+   ├── Sí → confirmación explícita
+   └── No → continúa
+        ↓
+limpiar PPPoE / cola MikroTik
+        ↓
+eliminar servicio
+        ↓
+eliminar únicamente facturas pendientes permitidas
+        ↓
+recalcular deuda pendiente del cliente
+        ↓
+ClientActivity
+        ├── servicio exacto
+        ├── configuración relevante
+        ├── deuda/facturas eliminadas
+        ├── importes
+        ├── cuenta
+        └── rol
+        ↓
+Log del cliente
+```
+
+### Ejemplo esperado
+
+```text
+Servicio eliminado
+Servicio 2 eliminado | Plan: PLAN50 | Precio: S/. 50.00 |
+Conexión: PPPoE | Tecnología: fiber | MikroTik: RB-01 |
+IP: 10.0.0.25 | Usuario PPPoE: cliente002 | Zona: Zona Norte |
+Estado anterior: active |
+Deuda/facturas pendientes eliminadas: 1 por S/. 50.00 |
+Facturas eliminadas: REC-202609-ABCD: S/. 50.00 (unpaid) |
+Cuenta: tecnico@ejemplo.pe | Rol: tecnico
+```
+
+Si no había deuda:
+
+```text
+Deuda/facturas pendientes del servicio: ninguna eliminada.
+```
+
+### Protección
+
+La confirmación existente sigue siendo obligatoria cuando hay facturas pendientes. Si la operación falla al limpiar MikroTik, el servicio no se registra como eliminado y no se genera el evento de eliminación completada.
+
+### Backup
+
+Antes de esta modificación se creó:
+
+`backup/pre-log-servicio-detallado-2026-09-08`
+
+Además se conserva el respaldo documental:
+
+`docs/BACKUP_LOG_SERVICIO_ELIMINADO_2026-09-08.md`
+
+### Pruebas
+
+- [x] backup creado antes del cambio;
+- [x] endpoint auditado creado;
+- [x] registro de servicio, plan, precio, conexión, tecnología, router, IP, PPPoE, zona y estado;
+- [x] registro de cantidad y total de facturas pendientes eliminadas;
+- [x] registro individual de cada factura eliminada;
+- [x] registro explícito cuando no existe deuda pendiente;
+- [x] cuenta autenticada y rol incluidos;
+- [x] confirmación de facturas pendientes conservada;
+- [x] facturas pagadas/parcialmente pagadas protegidas por el flujo existente;
+- [x] versión 1.1.3 y CHANGELOG actualizados;
+- [ ] `yarn build`;
+- [ ] prueba real eliminando servicio sin deuda;
+- [ ] prueba real eliminando servicio con factura pendiente;
+- [ ] verificar Log con administrador;
+- [ ] verificar Log con técnico;
+- [ ] confirmar que ya no aparezca el evento genérico para eliminación de servicio.
+
+### Riesgos / pendientes
+
+- El build React/backend y la prueba real en servidor siguen pendientes.
+- Debe verificarse que el orden de rutas de FastAPI mantenga el endpoint auditado como primera coincidencia para DELETE del servicio.
+- La auditoría de eliminación se genera después de completar la operación; una eliminación histórica anterior no puede reconstruirse automáticamente.
+
+### Resultado
+
+**1.1.3 publicada en `main` con backup y continuidad diaria actualizada.** Falta ejecutar build y validación funcional real antes de declarar la versión completamente validada.
+
 ## Despliegue
 
 ```bash
@@ -192,3 +320,4 @@ No borrar la base de datos ni datos existentes para solucionar problemas visuale
 - Backup de transición de versión: `backup/pre-version-1.1.0-2026-09-08`
 - Backup de Log: `backup/pre-log-cliente-2026-09-08`
 - Backup de Log detallado: `backup/pre-log-detallado-2026-09-08`
+- Backup de auditoría de servicio: `backup/pre-log-servicio-detallado-2026-09-08`
