@@ -1,0 +1,83 @@
+name: MikroHub location picker patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-location-picker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch client location picker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          client = Path('frontend/src/modules/clientes/ClientDetail.jsx')
+          text = client.read_text()
+
+          text = text.replace(
+              'import ClientCommunications from "./editor/ClientCommunications";\n',
+              'import ClientCommunications from "./editor/ClientCommunications";\nimport CoordinatesPicker from "../red/components/CoordinatesPicker";\n',
+              1,
+          )
+          text = text.replace(
+              '  const [summarySuccess, setSummarySuccess] = useState("");\n',
+              '  const [summarySuccess, setSummarySuccess] = useState("");\n  const [showLocationPicker, setShowLocationPicker] = useState(false);\n',
+              1,
+          )
+
+          old = '''  const openGoogleMaps = () => {\n    const lat = summaryFormData.latitude.trim();\n    const lng = summaryFormData.longitude.trim();\n    let query = "";\n    if (lat && lng) {\n      query = `${lat},${lng}`;\n    } else {\n      const zone = zones.find(item => String(item.id) === String(summaryFormData.zone_id));\n      query = [summaryFormData.address.trim(), summaryFormData.reference.trim(), zone?.name || ""]\n        .filter(Boolean)\n        .join(", ");\n    }\n    if (!query) {\n      setSummaryError("Ingresa una dirección o coordenadas GPS para abrir Google Maps.");\n      return;\n    }\n    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;\n    window.open(url, "_blank", "noopener,noreferrer");\n  };\n'''
+          new = '''  const openGoogleMaps = () => {\n    setSummaryError("");\n    setShowLocationPicker(true);\n  };\n\n  const applyLocation = ({ lat, lng }) => {\n    setSummaryFormData(prev => ({\n      ...prev,\n      latitude: lat.toFixed(6),\n      longitude: lng.toFixed(6)\n    }));\n    setShowLocationPicker(false);\n  };\n'''
+          if old not in text:
+              raise SystemExit('No se encontró la función openGoogleMaps esperada; no se modifica el archivo.')
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+              'onClick={openGoogleMaps} className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40',
+              'onClick={openGoogleMaps} className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40',
+              1,
+          )
+
+          marker = '''      <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
+          replacement = '''      {showLocationPicker && (\n        <CoordinatesPicker\n          title={`Ubicación · ${client?.full_name || "Cliente"}`}\n          latitude={summaryFormData.latitude}\n          longitude={summaryFormData.longitude}\n          onApply={applyLocation}\n          onClose={() => setShowLocationPicker(false)}\n        />\n      )}\n\n      <div\n      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6"'''
+          if marker not in text:
+              raise SystemExit('No se encontró el contenedor principal de ClientDetail; no se modifica el archivo.')
+          text = text.replace(marker, replacement, 1)
+
+          client.write_text(text)
+
+          version = Path('frontend/src/modules/system-update/version.js')
+          v = version.read_text()
+          v = v.replace('PANEL_VERSION = "1.0.27"', 'PANEL_VERSION = "1.0.28"', 1)
+          v = v.replace(
+              'export const CHANGELOG = [\n',
+              'export const CHANGELOG = [\n  { type: "Mejora", text: "La ubicación del cliente abre un selector de Google Maps dentro de MikroHub para mover el marcador, seleccionar el punto y guardar automáticamente latitud y longitud." },\n',
+              1,
+          )
+          version.write_text(v)
+          PY
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/src/modules/clientes/ClientDetail.jsx frontend/src/modules/system-update/version.js
+          git commit -m 'feat(clientes): selector de ubicacion en Google Maps'
+          git push origin HEAD:main
