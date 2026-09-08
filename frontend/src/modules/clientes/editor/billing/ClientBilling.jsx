@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/billing/ClientBilling.jsx
- * Actualización: 2026-09-08 — integra Facturación con el submódulo aislado de Saldos.
+ * Actualización: 2026-09-08 — refuerzo visual de la navegación interna de Facturación.
  * Función: coordina datos/API/estado; la UI de filtros, tabla, acciones y saldos vive en submódulos independientes.
  * Recibe de: ClientDetail.jsx mediante el wrapper estable del módulo de Clientes.
  * Entrega a: subcomponentes de billing y endpoints existentes.
@@ -8,13 +8,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../../context/AuthContext";
-import { DollarSign, CalendarDays, MessageSquare, Save, X, Mail, Smartphone, Printer } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, FileText, MessageSquare, Save, Settings2, WalletCards, X, Mail, Smartphone, Printer } from "lucide-react";
 import { toast } from "sonner";
 import ClientBillingFilters from "./ClientBillingFilters";
 import ClientBillingTable from "./ClientBillingTable";
 import ClientBillingBalances from "./ClientBillingBalances";
 import { ClientBillingHeaderActions } from "./ClientBillingActions";
 import { DEFAULT_CONFIG, INPUT_CLASS, periodNow, today } from "./clientBillingUtils";
+
+const BILLING_TABS = [
+  { key: "invoices", label: "Facturas", Icon: FileText },
+  { key: "transactions", label: "Transacciones", Icon: ArrowLeftRight },
+  { key: "balances", label: "Saldos", Icon: WalletCards },
+  { key: "config", label: "Configuración", Icon: Settings2 },
+];
 
 function Field({ label, children }) {
   return <label className="block text-xs text-slate-300"><span className="font-semibold">{label}</span>{children}</label>;
@@ -158,10 +165,26 @@ export default function ClientBilling({ clientId, onBalanceUpdate }) {
   const cobrar = invoices.filter(item => !["paid", "canceled"].includes(item.status)).reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0) - Number(item.paid_amount || 0)), 0);
   const transactions = invoices.filter(item => Number(item.paid_amount || 0) > 0);
 
-  return <div className="space-y-4">
-    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-100 flex items-center gap-2"><DollarSign className="w-5 h-5 text-emerald-400" /> Facturación del cliente</h3><p className="text-[11px] text-slate-500">Toda la cobranza queda ligada a este cliente y a su servicio.</p></div><ClientBillingHeaderActions openInvoice={openInvoice} setTab={setTab} /></div>
-    <div className="grid grid-cols-3 gap-3"><div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3"><p className="text-[10px] text-slate-500 uppercase font-bold">Facturado</p><p className="text-lg font-black mt-1">S/. {facturado.toFixed(2)}</p></div><div className="bg-emerald-900/20 border border-emerald-500/40 rounded-xl p-3"><p className="text-[10px] text-emerald-400 uppercase font-bold">Pagado</p><p className="text-lg font-black text-emerald-400 mt-1">S/. {pagado.toFixed(2)}</p></div><div className="bg-rose-900/20 border border-rose-500/40 rounded-xl p-3"><p className="text-[10px] text-rose-400 uppercase font-bold">Por cobrar</p><p className="text-lg font-black text-rose-400 mt-1">S/. {cobrar.toFixed(2)}</p></div></div>
-    <div className="flex gap-1 overflow-x-auto border-b border-slate-800">{[["invoices", "Facturas"], ["transactions", "Transacciones"], ["balances", "Saldos"], ["config", "Configuración"]].map(([key, label]) => <button key={key} type="button" onClick={() => setTab(key)} className={`px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap ${tab === key ? "border-cyan-400 text-cyan-300" : "border-transparent text-slate-500"}`}>{label}</button>)}</div>
+  return <div className="space-y-5">
+    <div className="rounded-2xl border border-cyan-500/40 bg-slate-950/60 p-1.5 shadow-[0_0_30px_rgba(6,182,212,0.08)]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
+        {BILLING_TABS.map(({ key, label, Icon }) => {
+          const active = tab === key;
+          return <button key={key} type="button" onClick={() => setTab(key)} aria-current={active ? "page" : undefined} className={`group relative flex items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-black transition-all duration-200 ${active ? "bg-cyan-500/20 text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.18)] ring-1 ring-cyan-400/70" : "text-slate-400 hover:bg-slate-800/70 hover:text-slate-100"}`}><Icon className={`w-5 h-5 transition-transform ${active ? "text-cyan-300 scale-110" : "text-slate-500 group-hover:text-cyan-400"}`} /><span>{label}</span>{active && <span className="absolute inset-x-5 -bottom-1 h-0.5 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)]" />}</button>;
+        })}
+      </div>
+    </div>
+
+    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div><p className="text-[10px] uppercase tracking-[0.22em] font-black text-cyan-400">Facturación</p><h3 className="text-xl font-black text-slate-100 flex items-center gap-2"><FileText className="w-5 h-5 text-cyan-400" /> Facturación del cliente</h3><p className="text-[11px] text-slate-500">Gestiona facturas, pagos, saldos y configuración desde las pestañas superiores.</p></div>
+      <ClientBillingHeaderActions openInvoice={openInvoice} setTab={setTab} />
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="bg-slate-800/50 border border-cyan-500/40 rounded-xl p-4"><p className="text-[10px] text-slate-500 uppercase font-bold">Facturado</p><p className="text-xl font-black mt-1 text-slate-100">S/. {facturado.toFixed(2)}</p></div>
+      <div className="bg-emerald-900/20 border border-emerald-500/40 rounded-xl p-4"><p className="text-[10px] text-emerald-400 uppercase font-bold">Pagado</p><p className="text-xl font-black text-emerald-400 mt-1">S/. {pagado.toFixed(2)}</p></div>
+      <div className="bg-rose-900/20 border border-rose-500/40 rounded-xl p-4"><p className="text-[10px] text-rose-400 uppercase font-bold">Por cobrar</p><p className="text-xl font-black text-rose-400 mt-1">S/. {cobrar.toFixed(2)}</p></div>
+    </div>
 
     {tab === "invoices" && <><ClientBillingFilters search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} /><ClientBillingTable invoices={shown} loading={loading} openEdit={openEdit} viewPdf={viewPdf} deleteInvoice={deleteInvoice} annulInvoice={annulInvoice} openSend={openSend} startPayment={startPayment} paying={paying} pay={pay} setPay={setPay} cancelPayment={cancelPayment} registerPayment={registerPayment} processing={processing} /></>}
     {tab === "transactions" && <div className="border border-slate-800 rounded-xl overflow-hidden"><table className="w-full text-left text-xs"><thead className="bg-slate-950 text-slate-400"><tr><th className="p-3">Fecha</th><th className="p-3">Recibo</th><th className="p-3">Servicio</th><th className="p-3">Método</th><th className="p-3">Referencia</th><th className="p-3 text-right">Monto</th></tr></thead><tbody className="divide-y divide-slate-800">{transactions.length ? transactions.map(item => <tr key={item.id}><td className="p-3">{item.payment_date || "—"}</td><td className="p-3 font-mono font-bold">{item.invoice_number}</td><td className="p-3 text-cyan-300">{item.service_label || "Servicio 1"}</td><td className="p-3">{item.payment_method || "—"}</td><td className="p-3 font-mono text-slate-400">{item.operation_reference || "—"}</td><td className="p-3 text-right font-bold text-emerald-400">S/. {Number(item.paid_amount || 0).toFixed(2)}</td></tr>) : <tr><td colSpan="6" className="p-8 text-center text-slate-500">No hay transacciones registradas.</td></tr>}</tbody></table></div>}
