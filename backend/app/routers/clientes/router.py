@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/router.py (actualizado 2026-09-08)
-Actualización: agrega endpoints /clients/{client_id}/communications para Email y SMS.
+Actualización: 2026-09-08 — separa guardado de Resumen y Servicio para preservar datos y evitar errores de validación.
 Función: CRUD de abonados (/api/clients): listar con búsqueda y filtro, detalle con
          facturas y tickets, crear (aprovisiona PPPoE/cola en el MikroTik y emite la
          primera factura), editar (re-aprovisiona), eliminar (limpia el MikroTik) y
@@ -40,7 +40,7 @@ from app.models.zone import Zone
 from app.models.monitoring_equipment import MonitoringEquipment
 from app.models.client_activity import ClientActivity
 from app.models.client_communication import ClientCommunication
-from app.routers.clientes.schemas import ClientIn
+from app.routers.clientes.schemas import ClientIn, ClientServiceUpdate, ClientSummaryUpdate
 
 router = APIRouter(prefix="/clients", tags=["Clientes"], dependencies=[Depends(get_current_user)])
 
@@ -361,6 +361,68 @@ async def create_client(data: ClientIn, db: AsyncSession = Depends(get_db), curr
     _activity(db, c.id, "Cliente registrado", f"Servicio {c.plan_name} creado y aprovisionado en {rtr.name}.")
     await db.commit()
     return {**c.to_dict(), "mikrotik": result}
+
+
+@router.patch("/{client_id}/summary")
+async def update_client_summary(client_id: str, data: ClientSummaryUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Recibe datos personales desde Resumen y entrega el cliente actualizado sin aprovisionar MikroTik."""
+    c = await _get_visible_client(db, client_id, current_user)
+    updates = data.model_dump(exclude_unset=True)
+
+    if "full_name" in updates and not (updates["full_name"] or "").strip():
+        raise HTTPException(status_code=422, detail="El nombre del cliente es obligatorio.")
+    if "dni_ruc" in updates and not (updates["dni_ruc"] or "").strip():
+        raise HTTPException(status_code=422, detail="El DNI/RUC es obligatorio.")
+
+    if "zone_id" in updates:
+        zone_id = updates["zone_id"] or ""
+        if zone_id:
+            zone = await db.get(Zone, zone_id)
+            if not zone:
+                raise HTTPException(status_code=422, detail="La zona seleccionada ya no existe.")
+            updates["zone_name"] = zone.name
+        else:
+            updates["zone_name"] = ""
+
+    # Los campos numéricos del modelo no son nulos; vacío en el formulario equivale a sin coordenadas.
+    for field in ("latitude", "longitude"):
+        if field in updates and updates[field] is None:
+            updates[field] = 0.0
+    for field in ("phone", "email", "address", "reference", "installation_date", "zone_id"):
+        if field in updates and updates[field] is None:
+            updates[field] = ""
+
+    apply_updates(c, updates)
+    _activity(db, c.id, "Datos personales actualizados", "Se actualizó la información de Resumen sin modificar el servicio.")
+    await db.commit()
+    return c.to_dict()
+
+
+@router.patch("/{client_id}/service")
+async def update_client_service(client_id: str, data: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Recibe configuración técnica desde Servicio y entrega cambios validados y aprovisionados."""
+    c = await _get_visible_client(db, client_id, current_user)
+    updates = data.model_dump(exclude_unset=True)
+
+    # Normaliza campos de texto vacíos antes de las validaciones del servicio.
+    for field in (
+        "plan_id", "router_id", "connection_type", "ipv4_network_id", "ip_address",
+        "pppoe_user", "pppoe_password", "technology", "zone_id", "nap_box_id",
+        "onu_sn", "monitoring_equipment_id", "antenna_type", "management_ip",
+    ):
+        if field in updates and updates[field] is None:
+            updates[field] = ""
+
+    apply_updates(c, updates)
+    plan, rtr = await _attach_plan_router(db, c)
+    result = await mt.provision_client(c, rtr, plan)
+    if not result["ok"]:
+        await db.rollback()
+        raise HTTPException(status_code=502, detail=f"No se pudo actualizar el abonado en MikroTik: {result['message']}")
+    _activity(db, c.id, "Servicio actualizado", f"Servicio actualizado y sincronizado con {rtr.name}.")
+    await db.commit()
+    return {**c.to_dict(), "mikrotik": result}
+
 
 
 @router.put("/{client_id}")
