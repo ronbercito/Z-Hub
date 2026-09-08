@@ -1,5 +1,6 @@
 """
 Archivo: backend/app/routers/red/ipv4_networks.py
+Actualización: 2026-09-08 — corrige el cálculo de disponibilidad IPv4 para que el inventario y el selector de Servicio usen el mismo criterio de hosts asignables.
 Función: API de inventario IPv4 (/api/ipv4-networks): crea, lista, edita y elimina
          redes vinculadas a MikroTiks, y calcula los clientes registrados por red.
 Alcance: administra planificación y validación de direcciones; no altera /ip address,
@@ -42,6 +43,12 @@ def _network(data: IPv4NetworkIn) -> ipaddress.IPv4Network:
     return value
 
 
+def _assignable_addresses(network: ipaddress.IPv4Network):
+    """Hosts que el inventario permite asignar: excluye red, gateway .1 y broadcast."""
+    gateway = network.network_address + 1
+    return (address for address in network.hosts() if address != gateway)
+
+
 async def _router(db: AsyncSession, router_id: str) -> Router:
     rtr = await get_or_404(db, Router, router_id, "MikroTik")
     if rtr.device_type != "mikrotik":
@@ -77,7 +84,7 @@ async def _public_rows(db: AsyncSession):
 
 
 @router.get("")
-async def list_ipv4_networks(db: AsyncSession = Depends(get_db)):
+async def list_ipv4_networks(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     return await _public_rows(db)
 
 
@@ -87,6 +94,7 @@ async def list_available_addresses(
     exclude_client_id: str = "",
     limit: int = Query(default=1024, ge=1, le=4096),
     db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     """Devuelve IPs libres del inventario, excluyendo las registradas en otros abonados."""
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
@@ -98,21 +106,22 @@ async def list_available_addresses(
     if exclude_client_id:
         assigned_query = assigned_query.where(Client.id != exclude_client_id)
     assigned = set((await db.execute(assigned_query)).scalars().all())
-    gateway = network.network_address + 1
+
     addresses = []
-    for address in network.hosts():
+    total_free = 0
+    for address in _assignable_addresses(network):
         value = str(address)
-        if address != gateway and value not in assigned:
-            addresses.append(value)
-            if len(addresses) >= limit:
-                break
-    total_free = max(network.num_addresses - 3 - len(assigned), 0)
+        if value not in assigned:
+            total_free += 1
+            if len(addresses) < limit:
+                addresses.append(value)
+
     return {"network_id": row.id, "cidr": row.cidr, "addresses": addresses,
             "total_free": total_free, "truncated": total_free > len(addresses)}
 
 
 @router.post("")
-async def create_ipv4_network(data: IPv4NetworkIn, db: AsyncSession = Depends(get_db)):
+async def create_ipv4_network(data: IPv4NetworkIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     value = _network(data)
     rtr = await _router(db, data.router_id)
     await _ensure_no_overlap(db, value, rtr.id)
@@ -126,7 +135,7 @@ async def create_ipv4_network(data: IPv4NetworkIn, db: AsyncSession = Depends(ge
 
 
 @router.put("/{network_id}")
-async def update_ipv4_network(network_id: str, data: IPv4NetworkIn, db: AsyncSession = Depends(get_db)):
+async def update_ipv4_network(network_id: str, data: IPv4NetworkIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
     assigned = await db.scalar(select(func.count(Client.id)).where(Client.ipv4_network_id == row.id))
     value = _network(data)
@@ -146,7 +155,7 @@ async def update_ipv4_network(network_id: str, data: IPv4NetworkIn, db: AsyncSes
 
 
 @router.delete("/{network_id}")
-async def delete_ipv4_network(network_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_ipv4_network(network_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     row = await get_or_404(db, IPv4Network, network_id, "Red IPv4")
     assigned = await db.scalar(select(func.count(Client.id)).where(Client.ipv4_network_id == row.id))
     if assigned:
