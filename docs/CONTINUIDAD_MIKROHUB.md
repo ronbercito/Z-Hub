@@ -47,6 +47,7 @@ Orden obligatorio de trabajo:
 
 Si se detecta un cambio previo sin documentación, la primera tarea será reconstruirla desde los commits y archivos reales antes de continuar con nuevas funciones.
 
+
 Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 
 1. Actualizar esta bitácora.
@@ -77,7 +78,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
 - Versión funcional actual verificada en main el 2026-09-08: **1.0.90**. La versión 1.0.63 se conserva abajo únicamente como referencia histórica de creación de esta bitácora.
 
-La versión 1.0.63 está confirmada en `version.js` y corresponde a las acciones de facturas: editar, ver documento, eliminar, anular y enviar. Las facturas pagadas/con pagos quedan protegidas. El envío actualmente prepara correo/WhatsApp desde el navegador.
+La versión 1.0.63 está confirmada en `version.js` y corresponde a las acciones de facturas: editar, ver documento, eliminar, anular y enviar. Las facturas pagadas/con pagos quedan protegidas. El envío actualmente prepara correo/WhatsApp desde el navegador. 
 
 ---
 
@@ -382,7 +383,7 @@ En el listado de clientes:
 Actualmente:
 
 ```text
-PANEL_VERSION = 1.0.91
+PANEL_VERSION = 1.0.90
 ```
 
 Este archivo es parte del panel y **sí** debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -588,7 +589,7 @@ Entrega:
 
 ### `frontend/src/modules/system-update/version.js`
 
-Actualizado a 1.0.63 en el histórico; actualmente el panel está en 1.0.91.
+Actualizado a 1.0.63.
 
 ---
 
@@ -626,9 +627,9 @@ La UI muestra `service_label`, pero comprobar si el buscador backend de facturas
 
 ### P5 — ClientBilling
 
-**Estado:** actualizado en 1.0.91.
+**Estado:** revisar.
 
-La ficha del cliente ahora incorpora el ordenamiento interactivo de las columnas de facturación, manteniendo las acciones existentes.
+La implementación reciente de acciones completas se hizo en la facturación global (`modules/facturacion/Billing.jsx`). `ClientBilling.jsx` puede necesitar recibir las mismas acciones si se desea exactamente el mismo comportamiento dentro de la ficha del cliente.
 
 ### P6 — Documentos físicos
 
@@ -774,6 +775,7 @@ SHA: ...
 - Pruebas: pendiente
 - Commit: pendiente
 
+
 ---
 
 ### REV-0002 — 2026-09-08 — Panel 1.0.79
@@ -788,6 +790,7 @@ SHA: ...
 
 **Prueba pendiente:** Actualizar el panel, recargar con Ctrl+F5 y abrir la eliminación del cliente con dos servicios y dos facturas pendientes. Debe mostrar sus cantidades y saldo reales antes de aceptar `SI`.
 
+
 ### REV-0003 — 2026-09-08 — Panel 1.0.80
 
 **Corrección definitiva de ruta:** en producción, Axios usa URLs relativas como `/api/clients/{id}` sin `baseURL`. La versión 1.0.79 construía el resumen como `/clients/{id}/deletion-summary`, omitiendo `/api`; Nginx devolvía la aplicación React en lugar del JSON, de ahí que el modal mostrara “Cliente” y valores 0.
@@ -795,6 +798,7 @@ SHA: ...
 `clientDeleteGuard.js` ahora toma la URL DELETE original y añade `/deletion-summary`, conservando el prefijo `/api`: `/api/clients/{id}/deletion-summary`.
 
 **Prueba requerida:** actualizar a 1.0.80, Ctrl+F5 y abrir el modal. Debe mostrar datos reales; no confirmar la eliminación durante la verificación.
+
 
 ### REV-0004 — 2026-09-08 — Panel 1.0.81
 
@@ -804,6 +808,7 @@ SHA: ...
 
 **Prueba requerida:** tras instalar 1.0.81, abrir Eliminar para `prueba`: el modal debe mostrar cliente `prueba`, 2 servicios, 2 facturas y S/.100.00 antes de confirmar.
 
+
 ### REV-0005 — 2026-09-08 — Panel 1.0.84
 
 **Diagnóstico final:** el guardia global de Axios cambiaba las rutas reales de Servicios y Facturación por rutas incompletas. Por eso el diálogo recibía listas vacías o mostraba el UUID como nombre.
@@ -811,6 +816,7 @@ SHA: ...
 **Corrección:** el guardia global queda sin interceptores. Clients.jsx, propietario del botón Eliminar, consulta directamente ambas APIs reales con el ID y nombre de la fila; muestra el resumen en el diálogo nativo y solo permite el DELETE cuando se escribe SI. Si una consulta falla, cancela el borrado.
 
 **Verificación estática realizada:** versión 1.0.84; Clientes llama las dos rutas exactas; no existe interceptor global ni reemplazo de window.confirm.
+
 
 ---
 
@@ -905,7 +911,7 @@ SHA: ...
 
 **Commits:** 59ca30d3, c351dc55, 94732849.
 
-### REV-0011 — 2026-09-08 — Panel 1.0.90 — estado anterior
+### REV-0011 — 2026-09-08 — Panel 1.0.90 — estado actual
 
 **Tipo:** Mejora de interfaz / actualización.
 
@@ -913,7 +919,7 @@ SHA: ...
 
 **Archivos modificados:**
 - frontend/src/modules/system-update/UpdateCenter.jsx — mide la duración de la consulta, mantiene checking durante el mínimo visual y deshabilita Comprobar durante la comprobación o instalación.
-- frontend/src/modules/system-update/version.js — PANEL_VERSION = 1.0.90 y changelog anterior.
+- frontend/src/modules/system-update/version.js — PANEL_VERSION = 1.0.90 y changelog actual.
 
 **Flujo:** Comprobar → checking=true → consulta GET /api/system-update/status sin caché → espera visual mínima de 850 ms → actualiza estado y habilita el botón.
 
@@ -929,7 +935,7 @@ SHA: ...
 
 **Tipo:** Documentación de continuidad.
 
-**Resumen:** se corrigió el desfase de la bitácora que terminaba en 1.0.84 pese a que el panel estaba en 1.0.90. Se registraron las versiones 1.0.85–1.0.90 y se estableció el cierre obligatorio: ningún cambio puede considerarse terminado sin actualizar este documento y verificarlo en main.
+**Resumen:** se corrigió el desfase de la bitácora que terminaba en 1.0.84 pese a que el panel está en 1.0.90. Se registraron las versiones 1.0.85–1.0.90 y se estableció el cierre obligatorio: ningún cambio puede considerarse terminado sin actualizar este documento y verificarlo en main.
 
 **Archivo modificado:**
 - docs/CONTINUIDAD_MIKROHUB.md — bitácora, versión vigente, reglas y reconstrucción detallada.
@@ -938,44 +944,4 @@ SHA: ...
 
 **Resultado:** completado.
 
-**Commit:** documentación publicada en main.
-
----
-
-## 18. REV-0013 — 2026-09-08 — Panel 1.0.91 — Ordenamiento de facturación del cliente
-
-**Tipo:** Nueva función / mejora de interfaz.
-
-**Resumen:** en la pestaña **Facturación** dentro de la ficha del cliente, las columnas **Recibo, Servicio, Período, Monto, Vencimiento y Estado** ahora son completamente cliqueables para ordenar las facturas. Cada clic alterna entre orden ascendente y descendente y el encabezado activo queda visualmente resaltado con su flecha.
-
-**Archivo modificado:**
-- `frontend/src/modules/clientes/editor/ClientBilling.jsx` — agrega estado de ordenamiento, comparación por tipo de dato y encabezados interactivos.
-
-**Archivo de versión:**
-- `frontend/src/modules/system-update/version.js` — aumenta `PANEL_VERSION` de 1.0.90 a **1.0.91** y registra el cambio en `CHANGELOG`.
-
-**Comportamiento:**
-- **Recibo:** orden alfanumérico natural.
-- **Servicio:** orden alfanumérico por etiqueta del servicio.
-- **Período:** orden cronológico/alfanumérico por período `YYYY-MM`.
-- **Monto:** orden numérico de menor a mayor o mayor a menor.
-- **Vencimiento:** orden cronológico por fecha.
-- **Estado:** orden operativo definido `ANULADO → VENCIDO → PENDIENTE → PAGADO`, reversible con el segundo clic.
-- El ordenamiento se ejecuta sobre las facturas ya cargadas y respeta la búsqueda y los filtros existentes.
-- Las acciones de cada factura (Editar, Ver, Eliminar, Anular, Enviar y Pagar) se mantienen sin cambios.
-
-**Flujo:** usuario hace clic en un encabezado → `toggleSort()` cambia la dirección → `shown` recalcula las filas → la tabla refleja el nuevo orden.
-
-**Base de datos:** sin cambios. No requiere migración.
-
-**Integraciones:** ninguna nueva.
-
-**Pruebas realizadas:** revisión estática del archivo actualizado, verificación de que las seis columnas tienen handler de clic y dirección visual, y verificación de que el ordenamiento no altera las acciones existentes. **No se ejecutó build local ni prueba funcional en servidor en esta entrega.**
-
-**Resultado:** publicado en `main`; pendiente validación visual después de desplegar 1.0.91.
-
-**Riesgos/pendientes:** si posteriormente se requiere un orden específico diferente para Estado, ajustar únicamente el mapa `status` de `sortValue()` y documentar la nueva regla.
-
-**Commit funcional:** `f8a19f2f964a670cc9df6b9021d1c1f03637c06e`
-**Commit de versión:** `9e8193789e5de7f63200207888b46451d76ef73f`
-**Commit de documentación:** esta actualización de continuidad.
+**Commit:** se añade con esta actualización documental.
