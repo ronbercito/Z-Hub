@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/invoice.py
-Actualización: 2026-09-08 — conserva y genera automáticamente la identificación del servicio en cada factura.
+Actualización: 2026-09-08 — conserva y genera automáticamente la identificación del servicio y plan en cada factura.
 Función: Tabla `invoices` — facturas / recibos mensuales de cada abonado con su estado y pago,
          permitiendo identificar si corresponde al servicio principal o a un servicio adicional
          incluso si posteriormente se elimina el servicio.
@@ -42,9 +42,11 @@ class Invoice(Base):
 
 @event.listens_for(Invoice, "before_insert")
 def _snapshot_service_identity(mapper, connection, target):
-    """Guarda una etiqueta estable para que una factura pagada conserve su servicio histórico."""
+    """Guarda una etiqueta estable para que una factura conserve su servicio histórico."""
+    plan = (target.plan_name or "").strip()
+    plan_suffix = f" · {plan}" if plan else ""
     if not target.service_id:
-        target.service_label = target.service_label or "Servicio 1 · Principal"
+        target.service_label = f"Servicio 1 · Principal{plan_suffix}"
         target.service_type = "principal"
         return
 
@@ -53,7 +55,7 @@ def _snapshot_service_identity(mapper, connection, target):
         {"service_id": target.service_id},
     ).mappings().first()
     if not row:
-        target.service_label = target.service_label or "Servicio adicional"
+        target.service_label = f"Servicio adicional{plan_suffix}"
         target.service_type = "adicional"
         return
 
@@ -62,5 +64,5 @@ def _snapshot_service_identity(mapper, connection, target):
         {"client_id": row["client_id"]},
     ).mappings().all()
     number = next((index for index, item in enumerate(rows, start=2) if item["id"] == target.service_id), 2)
-    target.service_label = f"Servicio {number} · Adicional"
+    target.service_label = f"Servicio {number} · Adicional{plan_suffix}"
     target.service_type = "adicional"
