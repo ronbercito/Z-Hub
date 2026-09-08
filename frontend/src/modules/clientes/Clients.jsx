@@ -1,7 +1,7 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — la dirección del listado abre un minimapa con la ubicación GPS guardada.
- * Función: listado, alta/edición y gestión operativa de abonados; la dirección permite consultar su ubicación en un minimapa sin modificar coordenadas.
+ * Actualización: 2026-09-08 — la dirección del listado se reemplaza por un botón Ubicación y el minimapa muestra dirección y referencia.
+ * Función: listado, alta/edición y gestión operativa de abonados; la ubicación se consulta desde un botón sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
 import React, { useState, useEffect } from "react";
@@ -197,7 +197,17 @@ export default function Clients({ onSelectClient }) {
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
             {loading ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">Cargando abonados...</td></tr> : clients.length === 0 ? <tr><td colSpan="6" className="py-8 text-center text-slate-500">No se encontraron abonados con los filtros aplicados.</td></tr> : clients.map((c) => (
               <tr key={c.id} className="hover:bg-slate-800/40 transition">
-                <td className="py-3 px-4"><div className="font-bold text-slate-100 flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c.is_online ? "bg-emerald-400" : "bg-rose-400"}`}></span>{c.full_name}</div><div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5"><span>DNI: {c.dni_ruc}</span><span>•</span><span className="flex items-center gap-1 text-slate-300"><Phone className="w-3 h-3 text-cyan-400" /> {c.phone}</span></div><div className="text-[10px] mt-0.5 truncate max-w-xs">{c.address ? <button type="button" disabled={!c.latitude || !c.longitude} onClick={() => setLocationClient(c)} title={c.latitude && c.longitude ? "Ver ubicación en el mapa" : "El abonado no tiene coordenadas registradas"} className={`inline-flex items-center gap-1 text-left truncate max-w-xs ${c.latitude && c.longitude ? "text-cyan-300 hover:text-cyan-200 hover:underline cursor-pointer" : "text-slate-400 cursor-default"}`}><MapPin className="w-2.5 h-2.5 shrink-0" />{c.address}</button> : <span className="text-slate-500">Sin dirección registrada</span>}</div></td>
+                <td className="py-3 px-4">
+                  <div className="font-bold text-slate-100 flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c.is_online ? "bg-emerald-400" : "bg-rose-400"}`}></span>{c.full_name}</div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5"><span>DNI: {c.dni_ruc}</span><span>•</span><span className="flex items-center gap-1 text-slate-300"><Phone className="w-3 h-3 text-cyan-400" /> {c.phone}</span></div>
+                  <div className="mt-1">
+                    {c.address ? (
+                      <button type="button" disabled={!c.latitude || !c.longitude} onClick={() => setLocationClient(c)} title={c.latitude && c.longitude ? "Ver ubicación y dirección" : "El abonado no tiene coordenadas registradas"} className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 disabled:cursor-default disabled:border-slate-700 disabled:bg-slate-800/60 disabled:text-slate-500">
+                        <MapPin className="h-3 w-3" /> Ubicación
+                      </button>
+                    ) : <span className="text-[10px] text-slate-500">Sin dirección registrada</span>}
+                  </div>
+                </td>
                 <td className="py-3 px-4"><div className="font-semibold text-cyan-300">{c.plan_name}</div><div className="text-[11px] font-bold text-emerald-400">S/. {Number(c.plan_price || 0).toFixed(2)} / mes</div><div className="text-[10px] text-slate-500">Día de cobro: {c.billing_day} de cada mes</div></td>
                 <td className="py-3 px-4"><button type="button" onClick={() => window.open(`http://${c.ip_address}`, "_blank")} title="Abrir MikroTik / equipo en una nueva pestaña" className="font-mono text-slate-200 hover:text-cyan-300 cursor-pointer">{c.ip_address}</button><div className="text-[11px] text-slate-400">{c.connection_type}: <span className="font-mono text-cyan-400">{c.pppoe_user || "estática"}</span></div><div className="text-[10px] text-slate-500">Router: {c.router_name}</div></td>
                 <td className="py-3 px-4"><div className="text-slate-200">{c.nap_box || "NAP Central"}</div><div className="text-[11px] font-mono mt-0.5"><span className={`px-1.5 py-0.5 rounded ${(c.optical_power_dbm ?? -20) > -24 ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>{c.optical_power_dbm != null ? `${c.optical_power_dbm} dBm` : "— dBm"}</span></div></td>
@@ -216,7 +226,7 @@ export default function Clients({ onSelectClient }) {
         </table></div>
       </div>
 
-      {locationClient && <CoordinatesPicker title={`Ubicación de ${locationClient.full_name}`} latitude={locationClient.latitude} longitude={locationClient.longitude} readOnly onClose={() => setLocationClient(null)} />}
+      {locationClient && <CoordinatesPicker title={`Ubicación de ${locationClient.full_name}`} latitude={locationClient.latitude} longitude={locationClient.longitude} address={locationClient.address} reference={locationClient.reference} readOnly onClose={() => setLocationClient(null)} />}
       {detailClientId && <ClientDetail clientId={detailClientId} api={API} token={token} onClose={() => setDetailClientId(null)} onClientUpdated={fetchData} />}
       {showAddModal && <ClientRegistrationWizard selectedClient={selectedClient} formData={formData} setFormData={setFormData} plans={plans} routers={routers} ipv4Networks={ipv4Networks} napBoxes={napBoxes} onClose={() => { setShowAddModal(false); setSelectedClient(null); }} onSubmit={handleSaveClient} api={API} token={token} />}
     </div>
