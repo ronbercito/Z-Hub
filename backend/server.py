@@ -18,6 +18,7 @@ from app.routers.ajustes.staff.router import router as staff_router
 from app.routers.almacen.router import router as almacen_router
 from app.routers.auth.router import router as auth_router
 from app.routers.clientes.router import router as clientes_router
+from app.routers.clientes.services import router as client_services_router
 from app.routers.clientes.zones import router as zones_router
 from app.routers.facturacion.router import router as facturacion_router
 from app.routers.hotspot.router import router as hotspot_router
@@ -65,7 +66,7 @@ api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
 for router, module in (
-    (inicio_router, "dashboard"), (clientes_router, "clients"), (zones_router, "clients"),
+    (inicio_router, "dashboard"), (clientes_router, "clients"), (client_services_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
