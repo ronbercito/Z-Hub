@@ -16,6 +16,7 @@ from app.integrations.mikrotik import service as mt
 from app.integrations.olt import service as olt
 from app.models.client import Client
 from app.models.client_service import ClientService
+from app.models.plan import Plan
 from app.models.router import Router
 from app.routers.clientes.router import _attach_plan_router, _get_visible_client
 from app.routers.clientes.schemas import ClientServiceUpdate
@@ -57,7 +58,7 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     return temp
 
 
-async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan) -> dict:
+async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan: Optional[Plan]) -> dict:
     """Aprovisiona un servicio adicional sin reutilizar el identificador global del cliente."""
     if not router_obj or router_obj.device_type != "mikrotik" or not router_obj.password:
         return {"ok": False, "message": "El servicio fue validado, pero el MikroTik no tiene credenciales API configuradas."}
@@ -111,7 +112,7 @@ async def create_client_service(client_id: str, payload: ClientServiceUpdate, db
     db.add(row)
     await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
-    plan = await db.get(__import__("app.models.plan", fromlist=["Plan"]).Plan, row.plan_id) if row.plan_id else None
+    plan = await db.get(Plan, row.plan_id) if row.plan_id else None
     result = await _provision_service(row, temp, router_obj, plan)
     if not result["ok"]:
         await db.rollback()
@@ -131,7 +132,7 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
     for field, value in _service_payload(temp).items(): setattr(row, field, value)
     await db.flush()
     router_obj = await db.get(Router, row.router_id) if row.router_id else None
-    plan = await db.get(__import__("app.models.plan", fromlist=["Plan"]).Plan, row.plan_id) if row.plan_id else None
+    plan = await db.get(Plan, row.plan_id) if row.plan_id else None
     result = await _provision_service(row, temp, router_obj, plan)
     if not result["ok"]:
         await db.rollback()
