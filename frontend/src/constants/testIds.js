@@ -1,8 +1,41 @@
 /**
  * Archivo: frontend/src/constants/testIds.js
- * Función: Registro central de atributos data-testid usados por las pruebas automatizadas de la interfaz.
- * Trabaja con: todos los modules/* y components/layout/*
+ * Actualización: 2026-09-08 — las IP visibles en la tabla de abonados se pueden abrir en una pestaña nueva.
+ * Función: registro central de atributos data-testid y comportamiento ligero de navegación
+ *          para IPs mostradas en el listado de clientes.
+ * Trabaja con: todos los modules/* y components/layout/*; la navegación IP se limita a filas de tablas.
  */
+
+const IPV4_RE = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+
+function enableClientIpLinks() {
+  if (typeof document === "undefined" || window.__mikrohubClientIpLinks) return;
+  window.__mikrohubClientIpLinks = true;
+
+  document.addEventListener("click", (event) => {
+    const element = event.target?.closest?.("td, span, div, a");
+    if (!element || !element.closest("tbody")) return;
+
+    const text = (element.textContent || "").trim();
+    if (!IPV4_RE.test(text)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    window.open(`http://${text}`, "_blank", "noopener,noreferrer");
+  }, true);
+
+  document.addEventListener("mouseover", (event) => {
+    const element = event.target?.closest?.("td, span, div, a");
+    if (!element || !element.closest("tbody")) return;
+    const text = (element.textContent || "").trim();
+    if (!IPV4_RE.test(text)) return;
+    element.style.cursor = "pointer";
+    element.title = `Abrir http://${text} en una nueva pestaña`;
+  });
+}
+
+enableClientIpLinks();
+
 export const TEST_IDS = {
   NAV_INICIO: "nav-inicio",
   NAV_RED: "nav-red",
