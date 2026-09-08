@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/client_workspace/router.py
-Actualización: 2026-09-08 — evita registrar el evento genérico de Facturación cuando ya existe auditoría específica.
+Actualización: 2026-09-08 — versión 1.1.5: el Log reconstruye con datos reales la creación de servicios adicionales.
 Función: registra comunicaciones, documentos y acciones operativas del editor de cliente.
 Recibe: ClientDetail.jsx, usuario autenticado y archivos multipart.
 Entrega: datos persistentes para las pestañas Email y SMS, Documentos y Log.
@@ -18,6 +18,7 @@ from app.models.client import Client
 from app.models.client_activity import ClientActivity
 from app.models.client_communication import ClientCommunication
 from app.models.client_document import ClientDocument
+from app.models.client_service import ClientService
 
 router = APIRouter(prefix="/clients", tags=["Editor de cliente"])
 UPLOAD_ROOT = Path(os.environ.get("MIKROHUB_UPLOADS", "/var/www/mikrohub/uploads/client-documents"))
@@ -43,6 +44,31 @@ async def _client(db: AsyncSession, client_id: str) -> Client:
 def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: dict):
     db.add(ClientActivity(client_id=client_id, action=action, detail=detail, operator_name=user.get("name") or user.get("email") or "Sistema"))
 
+def _money(value) -> str:
+    return f"S/. {float(value or 0):.2f}"
+
+def _technology(value: str) -> str:
+    return {"fiber": "Fibra óptica", "wireless": "Inalámbrico"}.get(value, value or "Sin especificar")
+
+def _connection(value: str) -> str:
+    return value or "Sin especificar"
+
+def _service_created_detail(service: ClientService) -> str:
+    """Construye un registro legible usando los valores persistidos del servicio recién creado."""
+    pppoe = service.pppoe_user if service.connection_type == "PPPoE" else "No aplica"
+    ip = service.ip_address or "No asignada"
+    return (
+        "Se creó un servicio adicional correctamente. "
+        f"Plan: {service.plan_name or 'Sin plan'} · "
+        f"Precio mensual: {_money(service.plan_price)} · "
+        f"Conexión: {_connection(service.connection_type)} · "
+        f"Tecnología: {_technology(service.technology)} · "
+        f"IP: {ip} · "
+        f"Usuario PPPoE: {pppoe} · "
+        f"MikroTik: {service.router_name or 'Sin asignar'} · "
+        f"Zona: {service.zone_name or 'Sin zona'}."
+    )
+
 @router.get("/{client_id}/communications")
 async def communications(client_id: str, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
     await _client(db, client_id)
@@ -65,6 +91,10 @@ async def create_activity(client_id: str, data: ActivityIn, db: AsyncSession = D
     Las acciones de Facturación ya generan auditoría específica desde sus endpoints.
     El antiguo callback genérico 'Facturación actualizada' se ignora para evitar
     duplicados y para que el Log conserve únicamente eventos descriptivos.
+
+    La creación de servicios adicionales se normaliza aquí con los datos reales
+    guardados en ClientService, evitando registrar precios en cero, IDs técnicos
+    como nombres o textos ambiguos provenientes del formulario.
     """
     await _client(db, client_id)
     action = data.action.strip()
@@ -73,6 +103,15 @@ async def create_activity(client_id: str, data: ActivityIn, db: AsyncSession = D
         not detail or detail == "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."
     ):
         return {"ok": True, "skipped": True, "reason": "La operación de Facturación se registra con detalle específico."}
+    if action == "Servicio creado":
+        service = (await db.execute(
+            select(ClientService)
+            .where(ClientService.client_id == client_id)
+            .order_by(ClientService.created_at.desc(), ClientService.id.desc())
+            .limit(1)
+        )).scalar_one_or_none()
+        if service:
+            detail = _service_created_detail(service)
     operator = user.get("name") or user.get("email") or "Sistema"
     if user.get("email"):
         detail = f"{detail} | Cuenta: {user['email']} | Rol: {user.get('role') or 'sin rol'}".strip(" |")
