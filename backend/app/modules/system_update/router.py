@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-08 — la detección depende del commit remoto; la versión es informativa.
+Actualización: 2026-09-08 — muestra también errores detallados del instalador 1.0.65.
 Función: consulta la rama remota, compara versiones y ejecuta run_update.sh con manejo de errores.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
 Entrega: estado, fase, porcentaje y errores mediante /api/system-update para el centro de actualizaciones.
@@ -90,20 +90,19 @@ def _progress_from_log(log: str, state: str) -> tuple[int, str]:
 
 
 def _extract_error_message(error_log: str) -> str:
-    """Extrae mensaje de error legible del log de errores"""
+    """Extrae el paso/comando exacto o un resumen útil del log de errores."""
     if not error_log.strip():
         return "Error desconocido. Revisa los logs del servidor."
 
-    lines = error_log.strip().split("\n")
+    lines = [line.strip() for line in error_log.strip().split("\n") if line.strip()]
     for line in lines:
-        if "ERROR en paso" in line:
-            return line.strip()
-    return "\n".join(lines[-3:]).strip()
+        if "ERROR_SETUP:" in line or "ERROR en paso:" in line:
+            return line
+    return "\n".join(lines[-5:]).strip()
 
 
 @router.get("/status", dependencies=[Depends(require_role("admin"))])
 async def update_status(response: Response):
-    # No permite que navegador o proxy reutilicen una comprobación anterior.
     response.headers["Cache-Control"] = "no-store, max-age=0"
     response.headers["Pragma"] = "no-cache"
     try:
@@ -126,8 +125,6 @@ async def update_status(response: Response):
         error_message = _extract_error_message(error_log)
 
     return {
-        # El commit es la fuente de verdad: cualquier cambio publicado en main
-        # debe aparecer como actualización aunque version.js no haya cambiado.
         "available": current_commit != remote_commit,
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
         "remote": {"version": remote_version, "commit": remote_commit[:12], "changelog": remote_changelog},
@@ -136,7 +133,7 @@ async def update_status(response: Response):
             "running": running,
             "progress": progress,
             "phase": phase,
-            "error": error_message
+            "error": error_message,
         },
     }
 
