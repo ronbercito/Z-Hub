@@ -13,6 +13,7 @@ Trabaja con: backend/app/integrations/mikrotik/client.py, backend/app/models/rou
              backend/app/routers/clientes/router.py, backend/app/routers/red/router.py
 """
 import logging
+import re
 
 from app.core.database import now_iso
 from app.integrations.mikrotik.client import MikroTikClient, MikroTikError, tcp_latency_ms
@@ -25,6 +26,13 @@ logger = logging.getLogger("fibraz.mikrotik")
 
 def connect(router: Router) -> MikroTikClient:
     return MikroTikClient(router.ip_address, router.username, router.password, router.port, router.use_ssl)
+
+
+def service_queue_name(dni_ruc: str, ip_address: str) -> str:
+    """Genera un nombre legible para las colas de servicios adicionales."""
+    dni = re.sub(r"[^A-Za-z0-9_-]", "", (dni_ruc or "").strip()) or "SIN-DNI"
+    ip = re.sub(r"[^0-9A-Fa-f:.]", "", (ip_address or "").strip()) or "SIN-IP"
+    return f"svc-{dni}-{ip}"[:100]
 
 
 def plan_rate_limit(plan: Plan) -> str:
@@ -144,9 +152,23 @@ async def remove_client(client: Client, router: Router | None, cut_list: str) ->
             if client.ip_address:
                 await mt.remove_simple_queue(f"cli-{client.dni_ruc}")
                 await mt.address_list_remove(cut_list, client.ip_address)
+
+            # Limpia también servicios adicionales creados por MikroHub para este cliente.
+            dni_marker = f"| {client.dni_ruc} |"
+            name_marker = client.full_name.strip()
+            for secret in await mt.ppp_secrets():
+                comment = str(secret.get("comment") or "")
+                if dni_marker in comment and secret.get("name") != client.pppoe_user:
+                    await mt.remove_ppp_secret(secret.get("name") or "")
+            for queue in await mt.simple_queues():
+                name = str(queue.get("name") or "")
+                comment = str(queue.get("comment") or "")
+                if (name.startswith(f"svc-{re.sub(r'[^A-Za-z0-9_-]', '', (client.dni_ruc or '').strip())}-") or
+                        (name.startswith("svc-") and name_marker and name_marker in comment and "Servicio" in comment)):
+                    await mt.remove_simple_queue(name)
     except MikroTikError as e:
         return {"ok": False, "message": str(e)}
-    return {"ok": True, "message": f"Configuración del cliente eliminada en {router.name}"}
+    return {"ok": True, "message": f"Configuración del cliente y sus servicios eliminada en {router.name}"}
 
 
 async def sync_plans(router: Router, plans: list[Plan]) -> dict:
