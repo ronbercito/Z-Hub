@@ -1,8 +1,8 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios de Internet agrupados por cliente y editables desde ventana emergente.
+Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik y consulta de potencia óptica por servicio.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
-Trabaja con: backend/app/models/client_service.py, clientes/router.py y ClientServiceEditor.jsx.
+Trabaja con: backend/app/models/client_service.py, clientes/router.py, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
 from typing import Optional
 
@@ -12,8 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.integrations.mikrotik import service as mt
+from app.integrations.olt import service as olt
 from app.models.client import Client
 from app.models.client_service import ClientService
+from app.models.router import Router
 from app.routers.clientes.router import _attach_plan_router, _get_visible_client
 from app.routers.clientes.schemas import ClientServiceUpdate
 
@@ -54,6 +57,41 @@ async def _prepare(db: AsyncSession, client_id: str, data: dict, current_service
     return temp
 
 
+async def _provision_service(row: ClientService, temp: Client, router_obj: Router, plan) -> dict:
+    """Aprovisiona un servicio adicional sin reutilizar el identificador global del cliente."""
+    if not router_obj or router_obj.device_type != "mikrotik" or not router_obj.password:
+        return {"ok": False, "message": "El servicio fue validado, pero el MikroTik no tiene credenciales API configuradas."}
+    try:
+        async with mt.connect(router_obj) as mikrotik:
+            if row.connection_type == "PPPoE" and row.pppoe_user:
+                profile = mt.plan_profile_name(plan) if plan else "default"
+                if plan:
+                    await mikrotik.upsert_ppp_profile(profile, mt.plan_rate_limit(plan))
+                action = await mikrotik.upsert_ppp_secret(
+                    row.pppoe_user,
+                    row.pppoe_password or row.pppoe_user,
+                    profile,
+                    comment=f"{temp.full_name} | {temp.dni_ruc} | Servicio {row.id[:8]}",
+                    remote_address=row.ip_address,
+                    disabled=(row.status == "suspended"),
+                )
+                return {"ok": True, "message": f"PPP secret '{row.pppoe_user}' {action} en {router_obj.name} (perfil {profile})."}
+            if row.ip_address:
+                max_limit = mt.plan_rate_limit(plan) if plan else "1M/1M"
+                queue_name = f"svc-{row.id}"
+                action = await mikrotik.upsert_simple_queue(
+                    queue_name,
+                    f"{row.ip_address}/32",
+                    max_limit.split(" ")[0],
+                    comment=f"{temp.full_name} | {row.plan_name} | Servicio {row.id[:8]}",
+                    burst_limit=plan.burst_limit if plan and "/" in (plan.burst_limit or "") else "",
+                )
+                return {"ok": True, "message": f"Cola simple '{queue_name}' {action} en {router_obj.name} ({max_limit})."}
+            return {"ok": False, "message": "El servicio no tiene usuario PPPoE ni IP para aprovisionar."}
+    except mt.MikroTikError as exc:
+        return {"ok": False, "message": f"MikroTik no respondió: {exc}"}
+
+
 @router.get("/{client_id}/services")
 async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     client = await _get_visible_client(db, client_id, current_user)
@@ -67,24 +105,39 @@ async def list_client_services(client_id: str, db: AsyncSession = Depends(get_db
 
 @router.post("/{client_id}/services")
 async def create_client_service(client_id: str, payload: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    await _get_visible_client(db, client_id, current_user)
+    client = await _get_visible_client(db, client_id, current_user)
     temp = await _prepare(db, client_id, payload.model_dump(exclude_unset=True))
     row = ClientService(client_id=client_id, **_service_payload(temp))
-    db.add(row); await db.commit(); await db.refresh(row)
-    return {**row.to_dict(), "service_id": row.id, "is_primary": False}
+    db.add(row)
+    await db.flush()
+    router_obj = await db.get(Router, row.router_id) if row.router_id else None
+    plan = await db.get(__import__("app.models.plan", fromlist=["Plan"]).Plan, row.plan_id) if row.plan_id else None
+    result = await _provision_service(row, temp, router_obj, plan)
+    if not result["ok"]:
+        await db.rollback()
+        raise HTTPException(status_code=502, detail=f"No se pudo crear el servicio en MikroTik: {result['message']}")
+    await db.commit(); await db.refresh(row)
+    return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result}
 
 
 @router.patch("/{client_id}/services/{service_id}")
 async def update_client_service(client_id: str, service_id: str, payload: ClientServiceUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    await _get_visible_client(db, client_id, current_user)
+    client = await _get_visible_client(db, client_id, current_user)
     row = await db.get(ClientService, service_id)
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
     current = row.to_dict(); current.update(payload.model_dump(exclude_unset=True))
     temp = await _prepare(db, client_id, current, service_id)
     for field, value in _service_payload(temp).items(): setattr(row, field, value)
+    await db.flush()
+    router_obj = await db.get(Router, row.router_id) if row.router_id else None
+    plan = await db.get(__import__("app.models.plan", fromlist=["Plan"]).Plan, row.plan_id) if row.plan_id else None
+    result = await _provision_service(row, temp, router_obj, plan)
+    if not result["ok"]:
+        await db.rollback()
+        raise HTTPException(status_code=502, detail=f"No se pudo actualizar el servicio en MikroTik: {result['message']}")
     await db.commit(); await db.refresh(row)
-    return {**row.to_dict(), "service_id": row.id, "is_primary": False}
+    return {**row.to_dict(), "service_id": row.id, "is_primary": False, "mikrotik": result}
 
 
 @router.delete("/{client_id}/services/{service_id}")
@@ -93,6 +146,16 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
     row = await db.get(ClientService, service_id)
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
+    router_obj = await db.get(Router, row.router_id) if row.router_id else None
+    if router_obj and router_obj.device_type == "mikrotik" and router_obj.password:
+        try:
+            async with mt.connect(router_obj) as mikrotik:
+                if row.pppoe_user:
+                    await mikrotik.remove_ppp_secret(row.pppoe_user)
+                if row.ip_address:
+                    await mikrotik.remove_simple_queue(f"svc-{row.id}")
+        except mt.MikroTikError as exc:
+            raise HTTPException(status_code=502, detail=f"No se pudo eliminar el servicio de MikroTik: {exc}")
     await db.delete(row); await db.commit()
     return {"ok": True}
 
@@ -104,3 +167,31 @@ async def get_client_service(client_id: str, service_id: str, db: AsyncSession =
     if not row or row.client_id != client_id:
         raise HTTPException(status_code=404, detail="Servicio no encontrado.")
     return {**row.to_dict(), "service_id": row.id, "is_primary": False}
+
+
+@router.get("/{client_id}/services/{service_id}/onu-status")
+async def client_service_onu_status(client_id: str, service_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Busca la ONU del servicio en las OLT y devuelve su potencia óptica."""
+    await _get_visible_client(db, client_id, current_user)
+    row = await db.get(ClientService, service_id)
+    if not row or row.client_id != client_id:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado.")
+    if not row.onu_sn:
+        raise HTTPException(status_code=400, detail="El servicio no tiene ONU SN registrado.")
+    olts = (await db.execute(select(Router).where(Router.device_type == "olt"))).scalars().all()
+    if not olts:
+        raise HTTPException(status_code=400, detail="No hay ninguna OLT registrada en Gestión de Red.")
+    results = []
+    for olt_router in olts:
+        try:
+            res = await olt.find_onu(olt_router, row.onu_sn)
+            results.append(res)
+            if res.get("found"):
+                power = res.get("optical_power_dbm")
+                if power is not None:
+                    row.optical_power_dbm = power
+                await db.commit()
+                return {"ok": True, "service_id": row.id, "onu_sn": row.onu_sn, "power_dbm": power, "result": res, "olt": olt_router.name}
+        except Exception as exc:
+            results.append({"found": False, "olt": olt_router.name, "error": str(exc)})
+    return {"ok": False, "service_id": row.id, "onu_sn": row.onu_sn, "message": "ONU no encontrada en las OLT registradas.", "results": results}
