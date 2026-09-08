@@ -1,8 +1,8 @@
 """
 Archivo: backend/app/routers/facturacion/invoice_actions.py
-Actualización: 2026-09-08 — acciones completas de factura y sincronización del saldo del cliente.
+Actualización: 2026-09-08 — auditoría detallada de edición, eliminación y anulación de facturas.
 Función: operaciones seguras sobre facturas individuales sin borrar facturas pagadas y manteniendo actualizado el resumen del cliente.
-Trabaja con: invoice.py, client.py, client_service.py y Billing.jsx.
+Trabaja con: invoice.py, client.py, client_service.py, client_activity.py y Billing.jsx.
 """
 from datetime import datetime
 from typing import Optional
@@ -15,6 +15,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.invoice import Invoice
 from app.models.client import Client
+from app.models.client_activity import ClientActivity
 from app.models.client_service import ClientService
 
 router = APIRouter(tags=["Acciones de facturas"])
@@ -38,19 +39,15 @@ async def _refresh_client_balance(db: AsyncSession, client_id: str):
     client = await db.get(Client, client_id)
     if not client:
         return
-    unpaid = (
-        await db.execute(
-            select(Invoice).where(
-                Invoice.client_id == client_id,
-                Invoice.status.in_(["unpaid", "overdue"]),
-            )
-        )
-    ).scalars().all()
+    unpaid = (await db.execute(select(Invoice).where(Invoice.client_id == client_id, Invoice.status.in_(["unpaid", "overdue"])))) .scalars().all()
     client.unpaid_invoices_count = len(unpaid)
-    client.balance_due = round(
-        sum(float(x.amount or 0) - float(x.paid_amount or 0) for x in unpaid),
-        2,
-    )
+    client.balance_due = round(sum(float(x.amount or 0) - float(x.paid_amount or 0) for x in unpaid), 2)
+
+def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: dict):
+    name = user.get("name") or user.get("username") or user.get("email") or "Sistema"
+    account = user.get("email") or user.get("username") or name
+    role = user.get("role") or "sin rol"
+    db.add(ClientActivity(client_id=client_id, action=action, detail=f"{detail} | Cuenta: {account} | Rol: {role}", operator_name=name))
 
 @router.put("/invoices/{invoice_id}")
 async def update_invoice(invoice_id: str, data: InvoiceUpdateIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
@@ -61,11 +58,21 @@ async def update_invoice(invoice_id: str, data: InvoiceUpdateIn, db: AsyncSessio
         raise HTTPException(409, "Una factura anulada no se puede editar.")
     if data.amount is not None and data.amount <= 0:
         raise HTTPException(422, "El monto debe ser mayor que cero.")
-    for field in ("plan_name", "amount", "month_period", "issue_date", "due_date", "notes"):
+    before = {field: getattr(inv, field) for field in ("plan_name", "amount", "month_period", "issue_date", "due_date", "notes")}
+    for field in before:
         value = getattr(data, field)
         if value is not None:
             setattr(inv, field, value)
     await _refresh_client_balance(db, inv.client_id)
+    changes = []
+    for field, old in before.items():
+        new = getattr(inv, field)
+        if old != new:
+            label = {"plan_name":"plan", "amount":"monto", "month_period":"período", "issue_date":"fecha de emisión", "due_date":"vencimiento", "notes":"observaciones"}[field]
+            changes.append(f"{label}: '{old}' → '{new}'")
+    if not changes:
+        changes.append("sin cambios detectados")
+    _activity(db, inv.client_id, "Factura editada", f"Factura {inv.invoice_number}. {'; '.join(changes)}.", current_user)
     await db.commit()
     await db.refresh(inv)
     return inv.to_dict()
@@ -76,6 +83,10 @@ async def delete_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), cu
     if inv.status == "paid" or float(inv.paid_amount or 0) > 0:
         raise HTTPException(409, "Protección activa: las facturas pagadas o con pagos registrados no se pueden eliminar.")
     client_id = inv.client_id
+    number = inv.invoice_number
+    amount = float(inv.amount or 0)
+    period = inv.month_period or ""
+    _activity(db, client_id, "Factura eliminada", f"Se eliminó definitivamente la factura {number}. Monto: S/. {amount:.2f}. Período: {period}.", current_user)
     await db.delete(inv)
     await db.flush()
     await _refresh_client_balance(db, client_id)
@@ -91,6 +102,7 @@ async def annul_invoice(invoice_id: str, db: AsyncSession = Depends(get_db), cur
         return {"message": "La factura ya estaba anulada", "invoice": inv.to_dict()}
     inv.status = "canceled"
     await _refresh_client_balance(db, inv.client_id)
+    _activity(db, inv.client_id, "Factura anulada", f"Se anuló la factura {inv.invoice_number}. Monto: S/. {float(inv.amount or 0):.2f}. Período: {inv.month_period or '—'}.", current_user)
     await db.commit()
     await db.refresh(inv)
     return {"message": "Factura anulada correctamente", "invoice": inv.to_dict()}
@@ -121,4 +133,6 @@ async def invoice_send(invoice_id: str, channel: str, db: AsyncSession = Depends
         raise HTTPException(422, "Canal no válido. Use email o whatsapp.")
     if channel == "email" and not (inv.client_phone or inv.client_name):
         raise HTTPException(422, "La factura no tiene datos del cliente para preparar el envío.")
+    _activity(db, inv.client_id, "Factura preparada para envío", f"Factura {inv.invoice_number} preparada para canal {channel.upper()}.", current_user)
+    await db.commit()
     return {"ok": True, "channel": channel, "invoice_number": inv.invoice_number, "recipient": inv.client_phone if channel == "whatsapp" else "", "message": f"Factura {inv.invoice_number} lista para enviar por {channel}."}
