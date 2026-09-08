@@ -1,9 +1,11 @@
 """
 Punto de entrada FastAPI. Monta rutas bajo /api y aplica permisos por módulo.
 Las rutas OLT específicas se registran antes del router genérico de red.
+Actualización: 2026-09-08 — al guardar Resumen, sincroniza nombre/DNI con MikroTik sin reprovisionar servicios.
 """
 from app.core.config import CORS_ORIGINS
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
@@ -13,12 +15,14 @@ from app.core.database import init_db
 from app.core import database
 from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
+from app.models.client import Client
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
 from app.routers.ajustes.staff.router import router as staff_router
 from app.routers.almacen.router import router as almacen_router
 from app.routers.auth.router import router as auth_router
 from app.routers.clientes.router import router as clientes_router
 from app.routers.clientes.services import router as client_services_router
+from app.routers.clientes.identity_sync import sync_client_identity
 from app.routers.clientes.zones import router as zones_router
 from app.routers.facturacion.router import router as facturacion_router
 from app.routers.hotspot.router import router as hotspot_router
@@ -41,6 +45,7 @@ from app.modules.system_update.router import router as system_update_router
 from app.modules.client_workspace.router import router as client_workspace_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("fibraz.server")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -51,6 +56,29 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="FibraZ / MikroSmart ISP API", version="3.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials="*" not in CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
+
+@app.middleware("http")
+async def sync_summary_identity(request, call_next):
+    """Después de guardar Resumen, actualiza comentarios MikroTik sobre los mismos recursos."""
+    match = re.fullmatch(r"/api/clients/([^/]+)/summary", request.url.path) if request.method == "PATCH" else None
+    previous = None
+    if match:
+        async with database.SessionLocal() as db:
+            client = await db.get(Client, match.group(1))
+            if client:
+                previous = (client.dni_ruc or "", client.full_name or "")
+
+    response = await call_next(request)
+
+    if match and previous and 200 <= response.status_code < 300:
+        async with database.SessionLocal() as db:
+            client = await db.get(Client, match.group(1))
+            if client:
+                result = await sync_client_identity(db, client, previous[0], previous[1])
+                if not result["ok"]:
+                    logger.warning("%s %s", result["message"], result["routers"])
+    return response
+
 api = APIRouter(prefix="/api")
 
 # OLT: rutas específicas antes de /routers genérico.
