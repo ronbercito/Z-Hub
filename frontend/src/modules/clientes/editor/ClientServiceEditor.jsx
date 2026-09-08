@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-08 — orden visual del formulario y selector de routers limitado a MikroTik.
+ * Actualización: 2026-09-08 — formulario de Servicio reorganizado en dos columnas siguiendo la referencia visual.
  * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
  * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
  * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
@@ -13,6 +13,7 @@ import { AlertCircle, CheckCircle2, Loader, Save, X } from "lucide-react";
 const inputClass = "w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-60";
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400";
 const sectionClass = "rounded-2xl border border-slate-800 bg-slate-900/35 p-4 sm:p-5";
+const sectionTitleClass = "mb-4 flex items-center gap-2 border-b border-slate-800 pb-3 text-base font-bold text-white";
 
 export default function ClientServiceEditor({ clientId, api, token, onSave, onSaveSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -198,6 +199,14 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
     );
   }
 
+  const Field = ({ label, children, hint }) => (
+    <div className="min-w-0">
+      <label className={labelClass}>{label}</label>
+      {children}
+      {hint && <p className="mt-1.5 text-[11px] text-slate-500">{hint}</p>}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {error && (
@@ -214,168 +223,141 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onSa
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <section className={sectionClass}>
-          <div className="mb-4">
-            <h3 className="text-base font-bold text-white">Configuración básica</h3>
-            <p className="mt-1 text-xs text-slate-500">Define el plan y el router MikroTik que atenderá este servicio.</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Plan</label>
-              <select name="plan_id" value={formData.plan_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Selecciona un plan</option>
-                {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} - S/. {plan.price}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Router MikroTik</label>
-              <select name="router_id" value={formData.router_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Selecciona un MikroTik</option>
-                {routers.map((router) => <option key={router.id} value={router.id}>{router.name}</option>)}
-              </select>
-              <p className="mt-1.5 text-[11px] text-slate-500">Solo se muestran equipos MikroTik. Las OLT no aparecen aquí.</p>
-            </div>
-          </div>
-        </section>
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+          <div className="space-y-4">
+            <section className={sectionClass}>
+              <h3 className={sectionTitleClass}>Internet y MikroTik</h3>
+              <div className="space-y-4">
+                <Field label="MikroTik">
+                  <select name="router_id" value={formData.router_id} onChange={handleChange} required className={inputClass}>
+                    <option value="">Selecciona un MikroTik</option>
+                    {routers.map((router) => <option key={router.id} value={router.id}>{router.name}</option>)}
+                  </select>
+                </Field>
 
-        <section className={sectionClass}>
-          <div className="mb-4">
-            <h3 className="text-base font-bold text-white">Tecnología y conexión</h3>
-            <p className="mt-1 text-xs text-slate-500">Selecciona cómo se conectará el abonado a la red.</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Tecnología</label>
-              <select name="technology" value={formData.technology} onChange={handleChange} required className={inputClass}>
-                <option value="fiber">Fibra óptica</option>
-                <option value="wireless">Inalámbrico</option>
-              </select>
-            </div>
-            {formData.technology === "fiber" && (
-              <div>
-                <label className={labelClass}>Tipo de conexión</label>
-                <select name="connection_type" value={formData.connection_type} onChange={handleChange} className={inputClass}>
-                  <option value="PPPoE">PPPoE</option>
-                  <option value="IP Estática">IP Estática</option>
-                  <option value="DHCP">DHCP</option>
-                </select>
+                <Field label="Plan de internet">
+                  <select name="plan_id" value={formData.plan_id} onChange={handleChange} required className={inputClass}>
+                    <option value="">Selecciona un plan</option>
+                    {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} — S/. {plan.price}</option>)}
+                  </select>
+                </Field>
+
+                <Field label="Tipo de conexión">
+                  <select name="connection_type" value={formData.connection_type} onChange={handleChange} className={inputClass}>
+                    <option value="PPPoE">PPPoE</option>
+                    <option value="IP Estática">IP estática</option>
+                    <option value="DHCP">DHCP</option>
+                  </select>
+                </Field>
+
+                {formData.technology === "fiber" && formData.connection_type !== "PPPoE" && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Red IP estática">
+                      <select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))} className={inputClass}>
+                        <option value="">Selecciona una red</option>
+                        {compatibleNetworks.map((net) => <option key={net.id} value={net.id}>{net.name} — {net.cidr}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="IP disponible del cliente" hint="Solo se muestran direcciones libres de la red seleccionada.">
+                      <select name="ip_address" value={formData.ip_address} disabled={!formData.ipv4_network_id || loadingAddresses} onChange={handleChange} className={inputClass}>
+                        <option value="">{loadingAddresses ? "Consultando IPs disponibles…" : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>
+                        {formData.ip_address && !availableAddresses.includes(formData.ip_address) && <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>}
+                        {availableAddresses.map((address) => <option key={address} value={address}>{address}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                )}
+
+                {formData.technology === "fiber" && formData.connection_type === "PPPoE" && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Usuario PPPoE">
+                      <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} />
+                    </Field>
+                    <Field label="Contraseña PPPoE">
+                      <input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña" className={inputClass} />
+                    </Field>
+                  </div>
+                )}
               </div>
+            </section>
+
+            {formData.technology === "fiber" && formData.connection_type === "PPPoE" && (
+              <section className={sectionClass}>
+                <h3 className={sectionTitleClass}>Credenciales PPPoE</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Usuario PPPoE">
+                    <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} />
+                  </Field>
+                  <Field label="Contraseña PPPoE">
+                    <input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña" className={inputClass} />
+                  </Field>
+                </div>
+              </section>
             )}
           </div>
-        </section>
 
-        {formData.technology === "fiber" && formData.connection_type !== "PPPoE" && (
-          <section className={sectionClass}>
-            <div className="mb-4">
-              <h3 className="text-base font-bold text-white">Red y dirección IP</h3>
-              <p className="mt-1 text-xs text-slate-500">La red se filtra automáticamente según el MikroTik y el tipo de conexión.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>Red IPv4</label>
-                <select name="ipv4_network_id" value={formData.ipv4_network_id} onChange={(e) => setFormData((prev) => ({ ...prev, ipv4_network_id: e.target.value, ip_address: "" }))} className={inputClass}>
-                  <option value="">Selecciona una red</option>
-                  {compatibleNetworks.map((net) => <option key={net.id} value={net.id}>{net.name} (${net.cidr})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Dirección IP del cliente</label>
-                <select name="ip_address" value={formData.ip_address} disabled={!formData.ipv4_network_id || loadingAddresses} onChange={handleChange} className={inputClass}>
-                  <option value="">{loadingAddresses ? "Consultando IPs disponibles…" : !formData.ipv4_network_id ? "Primero selecciona una red" : "Selecciona una IP disponible"}</option>
-                  {formData.ip_address && !availableAddresses.includes(formData.ip_address) && <option value={formData.ip_address}>{formData.ip_address} (asignada a este cliente)</option>}
-                  {availableAddresses.map((address) => <option key={address} value={address}>{address}</option>)}
-                </select>
-              </div>
-            </div>
-          </section>
-        )}
+          <div className="space-y-4">
+            <section className={sectionClass}>
+              <h3 className={sectionTitleClass}>Instalación y tecnología</h3>
+              <div className="space-y-4">
+                <Field label="Tecnología">
+                  <select name="technology" value={formData.technology} onChange={handleChange} required className={inputClass}>
+                    <option value="fiber">Fibra óptica</option>
+                    <option value="wireless">Inalámbrico</option>
+                  </select>
+                </Field>
 
-        {formData.technology === "fiber" && formData.connection_type === "PPPoE" && (
-          <section className={sectionClass}>
-            <div className="mb-4">
-              <h3 className="text-base font-bold text-white">Credenciales PPPoE</h3>
-              <p className="mt-1 text-xs text-slate-500">Datos utilizados para autenticar al cliente en el servicio PPPoE.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>Usuario PPPoE</label>
-                <input type="text" name="pppoe_user" value={formData.pppoe_user} onChange={handleChange} placeholder="Ej. cliente001" className={inputClass} />
+                {formData.technology === "fiber" ? (
+                  <>
+                    <Field label="Zona">
+                      <select name="zone_id" value={formData.zone_id} onChange={handleChange} className={inputClass}>
+                        <option value="">Selecciona una zona</option>
+                        {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+                      </select>
+                    </Field>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Caja NAP">
+                        <select name="nap_box_id" value={formData.nap_box_id} onChange={handleChange} className={inputClass}>
+                          <option value="">Selecciona una caja NAP</option>
+                          {napBoxes.filter((nap) => nap.zone_id === formData.zone_id).map((nap) => <option key={nap.id} value={nap.id}>{nap.name} ({nap.ports} puertos)</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Puerto NAP">
+                        <select name="nap_port" value={formData.nap_port} disabled={!selectedNap || availableNapPorts.length === 0} onChange={handleChange} className={inputClass}>
+                          <option value="">{!selectedNap ? "Primero selecciona una caja NAP" : availableNapPorts.length === 0 ? "No hay puertos libres" : "Selecciona un puerto libre"}</option>
+                          {availableNapPorts.map((port) => <option key={port} value={port}>Puerto {port}</option>)}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Serie ONU (opcional)">
+                        <input type="text" name="onu_sn" value={formData.onu_sn} onChange={handleChange} placeholder="Ej. VSOL12345678" className={inputClass} />
+                      </Field>
+                      <Field label="Potencia óptica (dBm, opcional)">
+                        <input type="number" step="0.1" name="optical_power_dbm" value={formData.optical_power_dbm} onChange={handleChange} placeholder="Ej. -19.5" className={inputClass} />
+                      </Field>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Field label="Conectado a">
+                      <select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} className={inputClass}>
+                        <option value="">Selecciona un equipo</option>
+                        {monitoringEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Tipo de antena (opcional)">
+                      <input type="text" name="antenna_type" value={formData.antenna_type} onChange={handleChange} placeholder="Ej. Ubiquiti 5 GHz" className={inputClass} />
+                    </Field>
+                    <Field label="IP de administración (opcional)">
+                      <input type="text" name="management_ip" value={formData.management_ip} onChange={handleChange} placeholder="Ej. 192.168.1.20" className={inputClass} />
+                    </Field>
+                  </>
+                )}
               </div>
-              <div>
-                <label className={labelClass}>Contraseña PPPoE</label>
-                <input type="password" name="pppoe_password" value={formData.pppoe_password} onChange={handleChange} placeholder="Contraseña" className={inputClass} />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {formData.technology === "fiber" && (
-          <section className={sectionClass}>
-            <div className="mb-4">
-              <h3 className="text-base font-bold text-white">Instalación de fibra</h3>
-              <p className="mt-1 text-xs text-slate-500">Ubicación física del abonado y parámetros ópticos de la ONU.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className={labelClass}>Zona</label>
-                <select name="zone_id" value={formData.zone_id} onChange={handleChange} className={inputClass}>
-                  <option value="">Selecciona una zona</option>
-                  {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Caja NAP</label>
-                <select name="nap_box_id" value={formData.nap_box_id} onChange={handleChange} className={inputClass}>
-                  <option value="">Selecciona una caja NAP</option>
-                  {napBoxes.filter((nap) => nap.zone_id === formData.zone_id).map((nap) => <option key={nap.id} value={nap.id}>{nap.name} ({nap.ports} puertos)</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Puerto NAP</label>
-                <select name="nap_port" value={formData.nap_port} disabled={!selectedNap || availableNapPorts.length === 0} onChange={handleChange} className={inputClass}>
-                  <option value="">{!selectedNap ? "Primero selecciona una caja NAP" : availableNapPorts.length === 0 ? "No hay puertos libres" : "Selecciona un puerto libre"}</option>
-                  {availableNapPorts.map((port) => <option key={port} value={port}>Puerto {port}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>Serie ONU <span className="normal-case tracking-normal text-slate-600">(opcional)</span></label>
-                <input type="text" name="onu_sn" value={formData.onu_sn} onChange={handleChange} placeholder="Ej. VSOL12345678" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Potencia óptica <span className="normal-case tracking-normal text-slate-600">(dBm, opcional)</span></label>
-                <input type="number" step="0.1" name="optical_power_dbm" value={formData.optical_power_dbm} onChange={handleChange} placeholder="Ej. -19.5" className={inputClass} />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {formData.technology === "wireless" && (
-          <section className={sectionClass}>
-            <div className="mb-4">
-              <h3 className="text-base font-bold text-white">Instalación inalámbrica</h3>
-              <p className="mt-1 text-xs text-slate-500">Equipo de monitoreo y datos de administración del enlace.</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className={labelClass}>Equipo de monitoreo</label>
-                <select name="monitoring_equipment_id" value={formData.monitoring_equipment_id} onChange={handleChange} className={inputClass}>
-                  <option value="">Selecciona un equipo</option>
-                  {monitoringEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Tipo de antena <span className="normal-case tracking-normal text-slate-600">(opcional)</span></label>
-                <input type="text" name="antenna_type" value={formData.antenna_type} onChange={handleChange} placeholder="Ej. Ubiquiti 5 GHz" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>IP de administración <span className="normal-case tracking-normal text-slate-600">(opcional)</span></label>
-                <input type="text" name="management_ip" value={formData.management_ip} onChange={handleChange} placeholder="Ej. 192.168.1.20" className={inputClass} />
-              </div>
-            </div>
-          </section>
-        )}
+            </section>
+          </div>
+        </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
           <button type="button" onClick={onCancel} disabled={saving} className="flex items-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50">
