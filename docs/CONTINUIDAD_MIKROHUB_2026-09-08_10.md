@@ -1,63 +1,74 @@
-# Continuidad MikroHub — 2026-09-08 — Corrección cruzada de eliminación definitiva
+# Continuidad MikroHub — 2026-09-08 — Corrección 1.0.78 de confirmación de eliminación
 
-## Versión
-- PANEL_VERSION: **1.0.77**
-- Cambio funcional publicado en `main`.
+## 1. Problema confirmado
+Se realizaron nuevas pruebas con `prueba` y `prueba2`. La ventana propia de eliminación continuaba mostrando `Servicios: 0`, `Facturas pendientes: 0` y `S/. 0.00`.
 
-## Problema observado
-Después de actualizar a 1.0.76, la ventana propia de eliminación continuaba mostrando `Servicios: 0`, `Facturas pendientes: 0` y `S/. 0.00`, aunque la ficha del mismo cliente mostraba 2 servicios y 2 facturas pendientes por S/. 100.00.
+La captura de `prueba` vuelve a confirmar que la ficha del cliente contiene información que la ventana no estaba reflejando. En la ficha ya se habían comprobado dos servicios y dos facturas pendientes por S/.100.00.
 
-## Evidencia
-Las capturas del usuario demostraron simultáneamente:
-- Cliente `prueba` con `Principal` y `Servicio 1` en la pestaña Servicios.
-- Dos facturas pendientes de S/. 50.00 en Facturación.
-- La ventana de eliminación mostrando cero en ambos contadores.
+## 2. Revisión de causa raíz
+La versión 1.0.77 seguía usando un flujo indirecto: `Clients.jsx` ejecutaba `window.confirm()` y el guardia esperaba el DELETE para consultar `deletion-summary`.
 
-## Análisis de causa
-El modal dependía de la respuesta de `deletion-summary`. Aunque el endpoint estaba registrado y consultaba `ClientService` e `Invoice`, el resultado consumido por el frontend no coincidía con las fuentes que ya demostraban los datos en la ficha del cliente.
+Aunque `GET /api/clients/{client_id}/deletion-summary` existe y está registrado, esta capa intermedia no era necesaria y no garantizaba que el modal utilizara exactamente las respuestas que ya funcionan en las pestañas del cliente.
 
-La política prioritaria exige comparar el flujo nuevo con los flujos existentes que ya funcionan. La ficha utiliza `/clients/{id}/services` para servicios y Facturación utiliza `/invoices` para recibos. Por ello se agregó una verificación cruzada usando exactamente esas fuentes antes de construir la alerta.
+Las fuentes funcionales existentes son:
+- `GET /api/clients/{client_id}/services` — devuelve el servicio principal y los adicionales.
+- `GET /api/clients/{client_id}/invoices` — devuelve las facturas del cliente.
+- `GET /api/clients/{client_id}` — devuelve el nombre real del cliente.
 
-## Corrección
-Se creó `frontend/src/constants/clientDeleteSummaryFix.js`.
+## 3. Corrección aplicada en 1.0.78
+`frontend/src/constants/clientDeleteGuard.js` fue reestructurado para que, al detectar la solicitud DELETE de un cliente, consulte directamente las tres APIs anteriores antes de permitir el borrado.
 
-Este módulo se carga junto con el guardia de eliminación y, cuando recibe la respuesta de `/clients/{id}/deletion-summary`, consulta:
-- `/clients/{id}/services` para obtener los servicios reales, incluyendo principal y adicionales;
-- `/invoices` para obtener las facturas y filtrar exactamente por `client_id`.
+La ventana ahora recibe:
+- nombre desde el detalle real del cliente;
+- lista completa de servicios desde `/services`;
+- facturas pendientes filtrando estados `unpaid` y `overdue`;
+- saldo pendiente calculado como `amount - paid_amount` por factura;
+- advertencia prioritaria cuando hay más de un servicio y al menos una factura pendiente.
 
-El módulo reemplaza en el resumen los servicios, cantidad de facturas y saldo con los datos cruzados de esas fuentes. El saldo se calcula como `monto - paid_amount`, sin permitir valores negativos por factura.
+Si cualquiera de las consultas necesarias falla, el DELETE se cancela por seguridad.
 
-Se actualizó `frontend/src/constants/testIds.js` para cargar la verificación cruzada después del guardia.
+El `confirm()` nativo solo se neutraliza para la pregunta específica de eliminación de clientes; la decisión real ocurre en el modal de MikroHub y exige escribir `SI`.
 
-## Resultado esperado
-Para el caso probado:
+## 4. Archivos funcionales modificados
+- `frontend/src/constants/clientDeleteGuard.js` — consulta directa y modal crítico.
+- `frontend/src/modules/system-update/version.js` — versión `1.0.78` y changelog visible.
+
+## 5. Backend existente
+Se conserva `backend/app/routers/clientes/deletion_summary.py` y su registro en `backend/server.py` como endpoint de resumen seguro, pero ya no es la fuente utilizada por la ventana de confirmación.
+
+## 6. Commits
+- `38b5a6bfd93d9ff9f1d99a1ad08a4a184acb3676` — consulta directa de servicios y facturas reales antes de eliminar.
+- `520325f14d1bbf6d9c006a35e7b7cfe31b5c7de4` — versión 1.0.78.
+
+## 7. Prueba obligatoria antes de producción
+En worktree aislado:
+
+```bash
+cd /tmp/mikrohub-build-debug
+git fetch origin main
+git checkout --detach origin/main
+cd frontend
+rm -rf node_modules
+yarn install --network-timeout 100000
+DISABLE_ESLINT_PLUGIN=true CI= yarn build 2>&1 | tee /tmp/mikrohub-build-error.log
+```
+
+Debe aparecer `Compiled successfully.`.
+
+## 8. Prueba funcional posterior
+Con 1.0.78 instalada, abrir eliminación de `prueba` y no confirmar el borrado hasta verificar visualmente:
 - Cliente: `prueba`.
-- Servicios: **2**.
-  - Servicio principal · PLAN50.
-  - Servicio 2 · PLAN50 (o etiqueta equivalente devuelta por la ficha).
-- Facturas pendientes: **2**.
-- Saldo pendiente: **S/. 100.00**.
-- Si tiene más de un servicio y deuda, se muestra la advertencia prioritaria.
-- La confirmación continúa exigiendo `SI`.
-- No aparece `192.168.10.250 dice`.
+- Servicios: `2`.
+- Servicio principal · PLAN50.
+- Servicio 2 · PLAN50.
+- Facturas pendientes: `2`.
+- Saldo pendiente: `S/.100.00`.
+- Advertencia prioritaria.
+- Campo obligatorio `SI`.
 
-## Archivos afectados
-- `frontend/src/constants/clientDeleteSummaryFix.js` — nuevo cruce de datos.
-- `frontend/src/constants/testIds.js` — carga el módulo nuevo.
-- `frontend/src/modules/system-update/version.js` — versión 1.0.77.
+También probar un cliente sin servicios adicionales ni facturas pendientes.
 
-## Historial
-- `83b38f3` — módulo de verificación cruzada.
-- `d7938f1` — carga del módulo en el frontend.
-- `df14767` — versión 1.0.77.
+**No eliminar ningún cliente durante la prueba hasta verificar visualmente el resumen.**
 
-## Prueba obligatoria antes de producción
-1. Compilar en worktree aislado con `DISABLE_ESLINT_PLUGIN=true CI= yarn build`.
-2. Cliente con 2 servicios y 2 facturas pendientes por S/. 100.00: comprobar que la ventana muestre exactamente esos datos.
-3. Cliente sin servicios adicionales y sin deuda: comprobar 1 servicio principal, 0 facturas y S/. 0.00.
-4. Cancelar con `NO`, cancelar con botón, `X`, clic exterior y `ESC`.
-5. Confirmar solamente con `SI`.
-6. Verificar que no aparezca ningún diálogo nativo del navegador.
-
-## Política aplicada
-Se aplicó la política prioritaria de errores de actualización: primero se revisó el código modificado, se comparó con los flujos existentes que ya entregan correctamente servicios y facturación, se aisló la discrepancia y se implementó una corrección específica antes de solicitar otra actualización de producción.
+## 9. Política aplicada
+Se revisó el código que seguía ejecutándose, se comparó con las APIs que ya funcionan en las pestañas Servicios y Facturación y se corrigió el flujo en su punto de entrada, evitando otra capa intermedia. La compilación aislada sigue siendo obligatoria antes de producción.
