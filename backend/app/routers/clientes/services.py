@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/clientes/services.py
-Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza de recursos al eliminar y nombres visibles por DNI.
+Actualización: 2026-09-08 — servicios de Internet agrupados por cliente, con aprovisionamiento real en MikroTik, limpieza al eliminar y nombres visibles por DNI.
 Función: CRUD de servicios adicionales sin alterar el servicio principal histórico guardado en `clients`.
 Trabaja con: backend/app/models/client_service.py, clientes/router.py, integraciones/mikrotik/service.py, integraciones/olt/service.py y ClientServiceEditor.jsx.
 """
@@ -75,7 +75,7 @@ async def _provision_service(row: ClientService, temp: Client, router_obj: Route
                 return {"ok": True, "message": f"PPP secret '{row.pppoe_user}' {action} en {router_obj.name} (perfil {profile})."}
             if row.ip_address:
                 max_limit = mt.plan_rate_limit(plan) if plan else "1M/1M"
-                queue_name = mt.service_queue_name(temp.dni_ruc, row.ip_address)
+                queue_name = mt.service_queue_name(temp.dni_ruc)
                 action = await mikrotik.upsert_simple_queue(queue_name, f"{row.ip_address}/32", max_limit.split(" ")[0], comment=f"{temp.full_name} | {temp.dni_ruc} | {row.plan_name} | Servicio {row.id[:8]}", burst_limit=plan.burst_limit if plan and "/" in (plan.burst_limit or "") else "")
                 return {"ok": True, "message": f"Cola simple '{queue_name}' {action} en {router_obj.name} ({max_limit})."}
             return {"ok": False, "message": "El servicio no tiene usuario PPPoE ni IP para aprovisionar."}
@@ -164,7 +164,7 @@ async def update_client_service(client_id: str, service_id: str, payload: Client
                     if old_pppoe_user and old_connection_type == "PPPoE":
                         await old_mikrotik.remove_ppp_secret(old_pppoe_user)
                     if old_ip_address and old_connection_type != "PPPoE":
-                        await old_mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc, old_ip_address))
+                        await old_mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc))
                         await old_mikrotik.remove_simple_queue(f"svc-{row.id}")
             except mt.MikroTikError as exc:
                 await db.rollback(); raise HTTPException(status_code=502, detail=f"Servicio actualizado, pero no se pudo limpiar la configuración anterior en MikroTik: {exc}")
@@ -185,7 +185,7 @@ async def delete_client_service(client_id: str, service_id: str, db: AsyncSessio
                 if row.pppoe_user:
                     await mikrotik.remove_ppp_secret(row.pppoe_user)
                 if row.ip_address:
-                    await mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc, row.ip_address))
+                    await mikrotik.remove_simple_queue(mt.service_queue_name(client.dni_ruc))
                     await mikrotik.remove_simple_queue(f"svc-{row.id}")
         except mt.MikroTikError as exc:
             raise HTTPException(status_code=502, detail=f"No se pudo eliminar el servicio de MikroTik: {exc}")
