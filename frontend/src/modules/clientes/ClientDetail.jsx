@@ -1,19 +1,17 @@
 /**
  * Archivo: frontend/src/modules/clientes/ClientDetail.jsx
- * Actualización: 2026-09-08 — versión 1.0.28: selector de ubicación integrado en MikroHub.
- * Función: ficha operativa del cliente con pestañas editables: Resumen, Servicio, Facturación, Email y SMS.
+ * Actualización: 2026-09-08 — versión 1.1.1: Log operativo con cuenta autenticada.
+ * Función: ficha operativa del cliente con pestañas editables: Resumen, Servicio, Facturación, Email y SMS y Log.
  * Recibe de: backend/app/routers/clientes/router.py mediante GET /api/clients/{id}.
- * Entrega a: Clients.jsx y al operador una ficha editable para datos personales, servicio, facturas y comunicaciones.
+ * Entrega a: Clients.jsx y al operador una ficha editable y un historial de acciones.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Activity, BarChart3, FileText, Mail, ReceiptText, Ticket, UserRound, Wifi,
-  X, AlertCircle, CheckCircle2, Loader, Save, MapPin
-} from "lucide-react";
+import { Activity, BarChart3, FileText, Mail, ReceiptText, Ticket, UserRound, Wifi, X, AlertCircle, CheckCircle2, Loader, Save, MapPin } from "lucide-react";
 import ClientServiceEditor from "./editor/ClientServiceEditor";
 import ClientBilling from "./editor/ClientBilling";
 import ClientCommunications from "./editor/ClientCommunications";
+import ClientActivityLog from "./ClientActivityLog";
 import CoordinatesPicker from "../red/components/CoordinatesPicker";
 
 const tabs = [
@@ -51,14 +49,25 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
   const [summarySuccess, setSummarySuccess] = useState("");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
+  const headers = { Authorization: `Bearer ${token}` };
+  const logActivity = async (action, detail) => {
+    try { await axios.post(`${api}/clients/${clientId}/activity`, { action, detail }, { headers }); }
+    catch (err) { console.error("No se pudo registrar actividad del cliente:", err); }
+  };
+  const reloadClient = async () => {
+    const response = await axios.get(`${api}/clients/${clientId}`, { headers });
+    setClient(response.data);
+    return response.data;
+  };
+
   useEffect(() => {
     let alive = true;
     const load = async () => {
       setLoading(true); setError("");
       try {
         const [clientRes, zonesRes] = await Promise.all([
-          axios.get(`${api}/clients/${clientId}`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${api}/zones`, { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${api}/clients/${clientId}`, { headers }),
+          axios.get(`${api}/zones`, { headers })
         ]);
         if (!alive) return;
         const clientData = clientRes.data;
@@ -71,12 +80,8 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
   }, [api, clientId, token]);
 
   const handleSummaryFormChange = (e) => { const { name, value } = e.target; setSummaryFormData(prev => ({ ...prev, [name]: value })); };
-
   const openGoogleMaps = () => { setSummaryError(""); setShowLocationPicker(true); };
-  const applyLocation = ({ lat, lng }) => {
-    setSummaryFormData(prev => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }));
-    setShowLocationPicker(false);
-  };
+  const applyLocation = ({ lat, lng }) => { setSummaryFormData(prev => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) })); setShowLocationPicker(false); };
 
   const handleSaveSummary = async (e) => {
     e.preventDefault(); setSummarySaving(true); setSummaryError(""); setSummarySuccess("");
@@ -93,17 +98,21 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
         if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new Error("Coordenadas fuera de rango válido.");
       }
       const payload = { full_name: fullName, dni_ruc: dniRuc, phone, email: summaryFormData.email.trim(), address: summaryFormData.address.trim(), reference: summaryFormData.reference.trim(), installation_date: summaryFormData.installation_date || null, zone_id: summaryFormData.zone_id || null, latitude: summaryFormData.latitude ? parseFloat(summaryFormData.latitude) : null, longitude: summaryFormData.longitude ? parseFloat(summaryFormData.longitude) : null };
-      await axios.patch(`${api}/clients/${clientId}/summary`, payload, { headers: { Authorization: `Bearer ${token}` } });
-      setSummarySuccess("Datos del cliente actualizados correctamente."); onClientUpdated?.(); onClose?.();
+      await axios.patch(`${api}/clients/${clientId}/summary`, payload, { headers });
+      await logActivity("Datos personales editados", "Se actualizaron los datos de Resumen del cliente.");
+      await reloadClient();
+      setSummarySuccess("Datos del cliente actualizados correctamente."); onClientUpdated?.();
     } catch (err) { setSummaryError(err.response?.data?.detail || err.message || "Error al guardar los cambios."); }
     finally { setSummarySaving(false); }
   };
 
-  const handleServiceSaveSuccess = () => {
-    axios.get(`${api}/clients/${clientId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => { setClient(r.data); onClientUpdated?.(); }).catch(err => console.error("Error recargando cliente:", err));
+  const handleServiceSaveSuccess = async () => {
+    try { await reloadClient(); await logActivity("Servicio editado", "Se actualizó la configuración del servicio del cliente y se sincronizó con el equipo de red."); onClientUpdated?.(); }
+    catch (err) { console.error("Error recargando cliente:", err); }
   };
-  const handleBalanceUpdate = () => {
-    axios.get(`${api}/clients/${clientId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => setClient(r.data)).catch(err => console.error("Error recargando cliente:", err));
+  const handleBalanceUpdate = async () => {
+    try { await reloadClient(); await logActivity("Facturación actualizada", "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."); }
+    catch (err) { console.error("Error recargando cliente:", err); }
   };
 
   const content = () => {
@@ -116,19 +125,9 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
           {summaryError && <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4"><AlertCircle className="h-5 w-5 shrink-0 text-rose-300" /><p className="text-sm text-rose-300">{summaryError}</p></div>}
           {summarySuccess && <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" /><p className="text-sm text-emerald-300">{summarySuccess}</p></div>}
           <form onSubmit={handleSaveSummary} className="space-y-5">
-            <div><h3 className="mb-3 text-base font-bold text-white">Datos de identidad</h3><div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-xs text-slate-400">{requiredLabel("Nombre completo o razón social")}<input type="text" name="full_name" value={summaryFormData.full_name} onChange={handleSummaryFormChange} placeholder="Nombre completo o razón social" required className={`w-full ${inputClass}`} /></label>
-              <label className="space-y-1 text-xs text-slate-400">{requiredLabel("DNI / RUC")}<input type="text" name="dni_ruc" value={summaryFormData.dni_ruc} onChange={handleSummaryFormChange} placeholder="DNI / RUC" required className={`w-full ${inputClass}`} /></label>
-            </div></div>
-            <div><h3 className="mb-3 text-base font-bold text-white">Contacto</h3><div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-xs text-slate-400">{requiredLabel("Celular / WhatsApp")}<input type="tel" name="phone" value={summaryFormData.phone} onChange={handleSummaryFormChange} placeholder="Celular / WhatsApp" required className={`w-full ${inputClass}`} /></label>
-              <label className="space-y-1 text-xs text-slate-400">Correo electrónico<input type="email" name="email" value={summaryFormData.email} onChange={handleSummaryFormChange} placeholder="Correo electrónico" className={`w-full ${inputClass}`} /></label>
-            </div></div>
-            <div><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-base font-bold text-white">Ubicación</h3><button type="button" onClick={openGoogleMaps} className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20"><MapPin className="h-4 w-4" /> Seleccionar ubicación</button></div><div className="space-y-3">
-              <input type="text" name="address" value={summaryFormData.address} onChange={handleSummaryFormChange} placeholder="Dirección de instalación" className={`w-full ${inputClass}`} />
-              <input type="text" name="reference" value={summaryFormData.reference} onChange={handleSummaryFormChange} placeholder="Referencia (ej: frente a la tienda, después de la casa roja)" className={`w-full ${inputClass}`} />
-              <select name="zone_id" value={summaryFormData.zone_id} onChange={handleSummaryFormChange} className={`w-full ${inputClass}`}><option value="">-- Selecciona una zona --</option>{zones.map(zone => <option key={zone.id} value={zone.id}>{zone.name}</option>)}</select>
-            </div></div>
+            <div><h3 className="mb-3 text-base font-bold text-white">Datos de identidad</h3><div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1 text-xs text-slate-400">{requiredLabel("Nombre completo o razón social")}<input type="text" name="full_name" value={summaryFormData.full_name} onChange={handleSummaryFormChange} placeholder="Nombre completo o razón social" required className={`w-full ${inputClass}`} /></label><label className="space-y-1 text-xs text-slate-400">{requiredLabel("DNI / RUC")}<input type="text" name="dni_ruc" value={summaryFormData.dni_ruc} onChange={handleSummaryFormChange} placeholder="DNI / RUC" required className={`w-full ${inputClass}`} /></label></div></div>
+            <div><h3 className="mb-3 text-base font-bold text-white">Contacto</h3><div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1 text-xs text-slate-400">{requiredLabel("Celular / WhatsApp")}<input type="tel" name="phone" value={summaryFormData.phone} onChange={handleSummaryFormChange} placeholder="Celular / WhatsApp" required className={`w-full ${inputClass}`} /></label><label className="space-y-1 text-xs text-slate-400">Correo electrónico<input type="email" name="email" value={summaryFormData.email} onChange={handleSummaryFormChange} placeholder="Correo electrónico" className={`w-full ${inputClass}`} /></label></div></div>
+            <div><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-base font-bold text-white">Ubicación</h3><button type="button" onClick={openGoogleMaps} className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20"><MapPin className="h-4 w-4" /> Seleccionar ubicación</button></div><div className="space-y-3"><input type="text" name="address" value={summaryFormData.address} onChange={handleSummaryFormChange} placeholder="Dirección de instalación" className={`w-full ${inputClass}`} /><input type="text" name="reference" value={summaryFormData.reference} onChange={handleSummaryFormChange} placeholder="Referencia (ej: frente a la tienda, después de la casa roja)" className={`w-full ${inputClass}`} /><select name="zone_id" value={summaryFormData.zone_id} onChange={handleSummaryFormChange} className={`w-full ${inputClass}`}><option value="">-- Selecciona una zona --</option>{zones.map(zone => <option key={zone.id} value={zone.id}>{zone.name}</option>)}</select></div></div>
             <div><h3 className="mb-3 text-base font-bold text-white">Coordenadas GPS</h3><div className="grid gap-3 sm:grid-cols-2"><input type="number" name="latitude" value={summaryFormData.latitude} onChange={handleSummaryFormChange} placeholder="Latitud (-90 a 90)" step="0.000001" min="-90" max="90" className={inputClass} /><input type="number" name="longitude" value={summaryFormData.longitude} onChange={handleSummaryFormChange} placeholder="Longitud (-180 a 180)" step="0.000001" min="-180" max="180" className={inputClass} /></div></div>
             <div><h3 className="mb-3 text-base font-bold text-white">Instalación</h3><input type="date" name="installation_date" value={summaryFormData.installation_date} onChange={handleSummaryFormChange} className={inputClass} /></div>
             <div className="flex justify-end pt-4"><button type="submit" disabled={summarySaving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50">{summarySaving ? <><Loader className="h-4 w-4 animate-spin" /> Guardando…</> : <><Save className="h-4 w-4" /> Guardar cambios</>}</button></div>
@@ -141,14 +140,13 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
     if (activeTab === "billing") return <ClientBilling clientId={clientId} api={api} token={token} onBalanceUpdate={handleBalanceUpdate} />;
     if (activeTab === "messages") return <ClientCommunications clientId={clientId} api={api} token={token} />;
     if (activeTab === "tickets") return <EmptyState title="Tickets" description="Módulo de tickets disponible desde la gestión general del cliente." />;
-    if (activeTab === "documents") return <EmptyState title="Documentos" description="El módulo de documentos se encuentra disponible para integrar en esta ficha." />;
+    if (activeTab === "documents") return <EmptyState title="Documentos" description="El módulo de documentos se encuentra disponible para integrar en la ficha." />;
     if (activeTab === "stats") return <EmptyState title="Estadísticas" description="Las estadísticas del cliente se mostrarán aquí." />;
-    return <EmptyState title="Log" description="El historial de cambios del cliente se mostrará aquí." />;
+    if (activeTab === "log") return <ClientActivityLog activities={client.activities || []} />;
+    return null;
   };
 
-  if (showLocationPicker) {
-    return <CoordinatesPicker title={`Ubicación · ${client?.full_name || "Cliente"}`} latitude={summaryFormData.latitude} longitude={summaryFormData.longitude} onApply={applyLocation} onClose={() => setShowLocationPicker(false)} />;
-  }
+  if (showLocationPicker) return <CoordinatesPicker title={`Ubicación · ${client?.full_name || "Cliente"}`} latitude={summaryFormData.latitude} longitude={summaryFormData.longitude} onApply={applyLocation} onClose={() => setShowLocationPicker(false)} />;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget && !summarySaving) onClose?.(); }}>
