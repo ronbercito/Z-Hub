@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-07 — expone progreso seguro de instalación con logs de error detallados.
+Actualización: 2026-09-08 — evita respuestas cacheadas y comunica fallos de consulta remota.
 Función: consulta la rama remota, compara versiones y ejecuta run_update.sh con manejo de errores.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
 Entrega: estado, fase, porcentaje y errores mediante /api/system-update para el centro de actualizaciones.
@@ -11,7 +11,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.core.security import require_role
 
@@ -105,20 +105,30 @@ def _extract_error_message(error_log: str) -> str:
 
 
 @router.get("/status", dependencies=[Depends(require_role("admin"))])
-async def update_status():
-    current_commit = _git("rev-parse", "HEAD")
-    _git("fetch", "origin", "main")
-    remote_commit = _git("rev-parse", "origin/main")
-    current_version, current_changelog = _version_and_changelog(_source_for("HEAD"))
-    remote_version, remote_changelog = _version_and_changelog(_source_for("origin/main"))
+async def update_status(response: Response):
+    # No permite que navegador o proxy reutilicen una comprobación anterior.
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    try:
+        current_commit = _git("rev-parse", "HEAD")
+        _git("fetch", "origin", "main")
+        remote_commit = _git("rev-parse", "origin/main")
+        current_version, current_changelog = _version_and_changelog(_source_for("HEAD"))
+        remote_version, remote_changelog = _version_and_changelog(_source_for("origin/main"))
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo consultar GitHub. Revisa la conexión y el repositorio configurado en el servidor.",
+        ) from exc
+
     state, log, error_log, running = _log_state()
     progress, phase = _progress_from_log(log, state)
-    
+
     # Agregar info de error si existe
     error_message = ""
     if state in {"rolled_back", "rollback_failed"}:
         error_message = _extract_error_message(error_log)
-    
+
     return {
         "available": current_commit != remote_commit,
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
