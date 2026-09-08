@@ -1,9 +1,9 @@
 /**
  * Archivo: frontend/src/modules/clientes/editor/ClientServiceEditor.jsx
- * Actualización: 2026-09-07 — editor completo de servicio del cliente.
+ * Actualización: 2026-09-08 — usa la ruta técnica aislada para evitar sobrescribir datos personales.
  * Función: formulario editable para plan, router, tipo conexión, IP, tecnología (fibra/inalámbrico), NAP, ONU.
  * Recibe de: ClientDetail.jsx cuando el usuario está en la pestaña "service".
- * Entrega a: backend/app/routers/clientes/router.py mediante PUT /api/clients/{client_id}.
+ * Entrega a: backend/app/routers/clientes/router.py mediante PATCH /api/clients/{client_id}/service.
  * No modifica: datos personales, facturación, tickets ni comunicaciones; solo configuración de servicio.
  */
 import React, { useState, useEffect } from "react";
@@ -165,7 +165,7 @@ export default function ClientServiceEditor({ clientId, api, token, onSave, onCa
         management_ip: formData.management_ip || null,
       };
 
-      await axios.put(`${api}/clients/${clientId}`, payload, {
+      await axios.patch(`${api}/clients/${clientId}/service`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
