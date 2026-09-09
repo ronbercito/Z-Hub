@@ -1896,3 +1896,19 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se conservan colores de puertos libres/ocupados y las acciones de editar/eliminar con buena visibilidad.
 - Alcance: solo presentación; no se modifican redes, IPs, MikroTik, zonas, NAPs, puertos, asignaciones ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.57–1.1.58 — Reconciliación de continuidad: submenús de Red
+
+- Se incorpora el registro que faltaba para la revisión visual de los submenús **Redes IPv4** y **Cajas NAP** en el modo Claro Suave.
+- Se verificó el estado del lateral y de las rutas de ambos submódulos; la corrección preparó la base de estilo clara para que no heredaran superficies oscuras del tema anterior.
+- Esta intervención fue visual: no alteró navegación, permisos, datos, API, MikroTik, zonas, cajas ni asignaciones.
+
+### 1.1.60 — Bitácora maestra actualizada y cierre de la etapa visual
+
+- Se leyó y revisó el archivo maestro `docs/CONTINUIDAD_Z-HUB.md`.
+- Se registró el trabajo realizado desde la versión 1.1.32 hasta la 1.1.59: Dashboard, Gestión de Red, OLT, ONUs, consola, planes, clientes, ficha del abonado, facturación, mensajería, ajustes, Redes IPv4 y Cajas NAP.
+- Se confirma el patrón aplicado: tema `zhub-light` con superficies claras, tarjetas de color sólido cuando corresponde, tipografía de mayor peso, estados con contraste y tablas operativas legibles.
+- Se documenta también el ajuste de distribución de Ajustes: columnas compactas en pantallas amplias y una columna en pantallas menores.
+- Regla obligatoria vigente: **cada cambio futuro debe actualizar la versión del panel y este único documento maestro de continuidad**, detallando archivos, alcance, validación y lo que no fue modificado.
+- Validación realizada: se comprobó el historial de versiones y se completaron las entradas que faltaban de la etapa 1.1.57–1.1.58.
