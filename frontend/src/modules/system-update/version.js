@@ -1,10 +1,12 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.85: menú lateral con desplazamiento vertical independiente.
+ * Actualización: 2026-09-09 — versión 1.1.86: ventana de actualizaciones con desplazamiento vertical independiente.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.85";
+export const PANEL_VERSION = "1.1.86";
 export const CHANGELOG = [
+  { type: "Interfaz", text: "La ventana de Actualizaciones ahora permite desplazarse verticalmente cuando el changelog es más largo que el espacio disponible en pantalla." },
+  { type: "Interfaz", text: "El encabezado y los botones de la ventana se mantienen accesibles mientras se recorre el contenido de cambios." },
   { type: "Interfaz", text: "El menú lateral ahora permite desplazarse verticalmente cuando contiene más opciones de las que caben en la pantalla." },
   { type: "Navegación", text: "El área de navegación mantiene visibles el encabezado, la cuenta y el botón de cerrar sesión mientras se recorre el menú." },
   { type: "Google Maps", text: "Se recupera Google Maps y APIs como opción visible dentro del submenú Ajustes para configurar la clave de Maps JavaScript API." },
