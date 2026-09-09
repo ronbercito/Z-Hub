@@ -1,0 +1,14 @@
+# LICENCIAS Z-HUB
+#
+# Cada licencia se define en un bloque. Para agregar una nueva licencia,
+# copia el bloque y cambia sus datos.
+
+LICENCIA: ZHUB-2026-DEMO-001
+NOMBRE: Empresa Demo SAC
+CORREO: admin@empresademo.com
+ESTADO: ACTIVA
+
+LICENCIA: ZHUB-2026-DEMO-002
+NOMBRE: Juan Pérez
+CORREO: juan@ejemplo.com
+ESTADO: ACTIVA
