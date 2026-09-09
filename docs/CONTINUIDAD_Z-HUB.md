@@ -2972,3 +2972,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Color por tecnología:** Fibra Óptica GPON usa azul, Radioenlace usa violeta y Hotspot usa ámbar; el color se obtiene del tipo seleccionado al crear o editar el plan.
 - **Compatibilidad:** se mantienen datos, velocidades, precios y las acciones de editar/eliminar; la geometría se conserva entre los temas claro y oscuro.
 - **Pruebas:** validada la clasificación de los tres tipos, cuadrícula responsive, acciones CRUD y reglas de color en ambos temas.
+
+
+### 1.2.07 — Tarjetas de planes compactas y colores reforzados
+
+- **Cambio visual:** las tarjetas de planes se reducen aproximadamente un 30 %, con ancho de 260–290 px, altura mínima compacta y espaciados/tipografías reducidos.
+- **Color por tecnología:** Fibra Óptica GPON queda azul, Radioenlace violeta y Hotspot ámbar. Las reglas ahora tienen prioridad suficiente para verse también en el tema claro.
+- **Compatibilidad:** el color sigue siendo automático según la tecnología elegida al crear o editar; no cambia ningún dato ni acción de los planes.
+- **Pruebas:** validados el tamaño compacto, cuadrícula adaptable, clases de tecnología y las tres reglas de color.
