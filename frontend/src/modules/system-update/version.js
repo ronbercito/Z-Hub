@@ -1,15 +1,15 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-08 — versión 1.1.9: configuración de facturación por cliente y reglas reales de vencimiento/corte.
+ * Actualización: 2026-09-08 — versión 1.1.10: identidad Z-Hub y selector de templates visuales.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG para frontend y sistema de actualización.
  * Regla: el ciclo 1.1.x continúa después de 1.0.99.
  */
-export const PANEL_VERSION = "1.1.9";
+export const PANEL_VERSION = "1.1.10";
 export const CHANGELOG = [
-  { type: "Facturación", text: "La ficha del cliente ahora carga Configuración desde las reglas reales guardadas durante el registro, no desde la configuración global del ISP." },
-  { type: "Vencimiento", text: "El día de pago y la anticipación para crear factura calculan emisión y vencimiento de forma coherente para el abonado." },
-  { type: "Corte", text: "La regla de meses vencidos usada por el corte en MikroTik ahora se toma del abonado." },
-  { type: "Mensajería", text: "El aviso de nueva factura, canal de recordatorios y días de recordatorio se guardan directamente en la configuración del abonado." },
-  { type: "Seguridad", text: "La configuración se guarda mediante un endpoint específico y no reprovisiona el servicio técnico ni modifica la configuración global." },
-  { type: "Validación", text: "Pendiente de ejecutar build y prueba funcional real en navegador/servidor con un abonado registrado con valores distintos a los globales." },
+  { type: "Identidad", text: "La identidad visible del producto cambia de MikroHub a Z-Hub sin renombrar rutas, repositorio ni claves internas necesarias para compatibilidad." },
+  { type: "Apariencia", text: "Ajustes > General incorpora un selector entre el template oscuro actual y el nuevo template Z-Hub Blanco con azul, cian y turquesa." },
+  { type: "Persistencia", text: "El template elegido se guarda en la configuración del sistema y se aplica también al inicio de sesión y a las sesiones siguientes." },
+  { type: "Diseño", text: "Se incorpora un logotipo vectorial Z-Hub por defecto cuando no existe un logo personalizado del ISP." },
+  { type: "Seguridad", text: "La actualización visual no modifica clientes, facturación, MikroTik, OLT, permisos ni rutas de backend." },
+  { type: "Respaldo", text: "Se creó una rama de respaldo previa a la actualización para poder volver al estado 1.1.9 si fuera necesario." },
 ];
