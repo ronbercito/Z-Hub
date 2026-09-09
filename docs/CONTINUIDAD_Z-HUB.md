@@ -1654,3 +1654,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: se conservan datos, series, porcentajes, API /api/dashboard/summary, rutas, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
 - Pruebas: revisión estática de clase, selectores y PANEL_VERSION 1.1.27. Build y validación visual real pendientes.
 - Resultado esperado: textos, escalas y métricas del gráfico se ven más gruesos, oscuros y notorios sin alterar la gráfica ni sus datos.
+
+
+### 1.1.28 — 2026-09-09 — Versión visible en Dashboard
+- Objetivo y causa: mostrar la versión instalada junto al botón Actualizar para facilitar la comprobación visual del panel sin buscar el pie de página.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (importa y presenta PANEL_VERSION), frontend/src/modules/appearance/panel-theme.css (etiqueta dashboard-version-badge), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: la etiqueta usa la fuente única PANEL_VERSION, por lo que cambia automáticamente en cada publicación. No modifica el mecanismo de actualización, API, datos, permisos, autenticación ni el tema oscuro.
+- Pruebas: revisión estática de importación, presentación de PANEL_VERSION, selector y versión 1.1.28. Build y validación visual real pendientes.
+- Resultado esperado: el Dashboard muestra “Versión 1.1.28” inmediatamente a la izquierda de “Actualizar”.
