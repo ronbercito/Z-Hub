@@ -1944,3 +1944,11 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Como resultado, una futura modificación de orden, tamaño, iconos o posiciones realizada en `Sidebar.jsx` se verá de forma idéntica en los dos temas.
 - Prueba realizada: revisión estática de clases comunes y confirmación de que el componente no contiene selectores de tema.
 - Alcance: no se modifican rutas, permisos, opciones de menú, navegación ni datos.
+
+
+### 1.1.63 — Tarjeta MikroTik con geometría compartida entre temas
+
+- El ancho de la tarjeta MikroTik se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, que usan los dos temas.
+- En escritorio conserva 290 px y en móvil ocupa el ancho disponible, tanto en claro como en oscuro.
+- El tema claro conserva su gradiente azul y el oscuro conserva su paleta oscura/cian; el cambio solo unifica medidas y no altera datos, acciones ni navegación.
+- Prueba realizada: comprobación estática de la clase compartida y ausencia de reglas de ancho específicas del tema claro.
