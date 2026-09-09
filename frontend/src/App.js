@@ -10,6 +10,7 @@ import Layout from "./components/layout/Layout";
 import { Toaster } from "sonner";
 import "./App.css";
 import "./modules/appearance/panel-theme.css";
+import "./modules/appearance/settings-layout.css";
 import { bootstrapPanelTheme, getToastTheme } from "./modules/appearance/panelThemes";
 
 bootstrapPanelTheme();
