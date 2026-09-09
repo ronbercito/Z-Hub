@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../../context/AuthContext";
-import { ArrowDown, ArrowUp, RefreshCw, Plus, Trash2, Power } from "lucide-react";
+import { ArrowDown, ArrowUp, RefreshCw, Plus, Trash2, Power, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const TABS = [
@@ -55,6 +55,10 @@ export default function RouterLiveTabs({ router }) {
   const [auto, setAuto] = useState(false);
   const [listName, setListName] = useState("morosos");
   const [newIp, setNewIp] = useState("");
+  const [queueSearch, setQueueSearch] = useState("");
+  const visibleRows = tab === "queues" && queueSearch.trim()
+    ? rows.filter((row) => [row.name, row.target, row.comment].some((value) => String(value || "").toLowerCase().includes(queueSearch.trim().toLowerCase())))
+    : rows;
 
   const load = useCallback(async () => {
     const t = TABS.find((x) => x.id === tab);
@@ -112,6 +116,16 @@ export default function RouterLiveTabs({ router }) {
           </button>
         </div>
       </div>
+
+      {tab === "queues" && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input value={queueSearch} onChange={(e) => setQueueSearch(e.target.value)} placeholder="Buscar por nombre, comentario o IP..." className="w-full py-2 pl-8 pr-3 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 font-mono" data-testid="queue-search" />
+          </div>
+          <span className="text-[11px] text-slate-400 whitespace-nowrap">{visibleRows.length} cola(s)</span>
+        </div>
+      )}
 
       {tab === "address_list" && (
         <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
@@ -189,7 +203,7 @@ export default function RouterLiveTabs({ router }) {
               <>
                 <Head cols={["Comentario", "Nombre", "Target", "Max-limit (sub/baj)", "Queue type", "Tráfico actual", "Estado"]} />
                 <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                  {rows.map((r) => (
+                  {visibleRows.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-800/40">
                       <td className="py-2 px-3 w-[19%] text-slate-400 truncate" title={r.comment}>{r.comment || "—"}</td>
                       <td className="py-2 px-3 w-[14%] font-mono font-bold text-slate-100 truncate" title={r.name}>{r.name}</td>
