@@ -1638,3 +1638,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Backup: rama backup-pre-layout-ampliado-1.1.25 creada antes de modificar el layout compartido.
 - Pruebas: revisión estática de la clase de Layout, PANEL_VERSION y continuidad. Build y revisión visual real en servidor pendientes.
 - Resultado esperado: tras el menú lateral, las tarjetas KPI, gráfico, resumen y tablas se extienden hasta el borde útil del contenido, con márgenes laterales compactos equivalentes a la segunda referencia.
+
+
+### 1.1.26 — 2026-09-09 — Legibilidad del Resumen del sistema
+- Objetivo y causa: ajustar la tipografía del Resumen del sistema para que tenga la misma lectura azul tinta, más nítida y con peso alto de la referencia. Los números de los indicadores circulares requerían mayor contraste respecto de su color de fondo.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-system-summary), frontend/src/modules/appearance/panel-theme.css (tipografía, filas y contadores), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se preservan /api/dashboard/summary, todos los valores, navegación, permisos, autenticación y tema oscuro; el cambio solo actúa en zhub-light.
+- Pruebas: revisión estática de selectores, clase del panel y PANEL_VERSION 1.1.26. Build y validación visual real pendientes.
+- Resultado esperado: etiquetas y título en azul tinta con peso consistente; cada contador redondo conserva su color pero muestra un número oscuro, grueso y visible.
