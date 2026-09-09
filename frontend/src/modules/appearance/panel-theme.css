@@ -1995,3 +1995,22 @@ html[data-panel-theme="zhub-light"] .sidebar-account-avatar {
 }
 html[data-panel-theme="zhub-light"] .sidebar-account-info h4 { color: #163f68 !important; font-weight: 900 !important; }
 html[data-panel-theme="zhub-light"] .sidebar-account-info p { color: #087fab !important; font-weight: 800 !important; }
+
+
+/* Router 1.1.75 — edición compacta y legible en Claro Suave. */
+html[data-panel-theme="zhub-light"] .router-form-modal { background: #ffffff !important; border-color: #9acbea !important; box-shadow: 0 18px 44px rgba(24, 67, 104, .22) !important; }
+html[data-panel-theme="zhub-light"] .router-form-header { border-color: #cbddea !important; }
+html[data-panel-theme="zhub-light"] .router-form-header h3 { color: #123d67 !important; font-weight: 800 !important; }
+html[data-panel-theme="zhub-light"] .router-form-label,
+html[data-panel-theme="zhub-light"] .router-form-ssl { color: #345b80 !important; font-weight: 800 !important; }
+html[data-panel-theme="zhub-light"] .router-form-input { background: #f9fcff !important; border-color: #b7d1e5 !important; color: #173b63 !important; font-weight: 600 !important; }
+html[data-panel-theme="zhub-light"] .router-form-input:focus { border-color: #1688c8 !important; box-shadow: 0 0 0 2px rgba(22,136,200,.14) !important; }
+html[data-panel-theme="zhub-light"] .router-form-map-button { background: #147fc1 !important; border-color: #147fc1 !important; color: #ffffff !important; box-shadow: 0 3px 8px rgba(20,127,193,.2) !important; }
+html[data-panel-theme="zhub-light"] .router-form-map-button svg { color: #ffffff !important; }
+html[data-panel-theme="zhub-light"] .router-form-help { background: #f2f8fd !important; border-color: #c8e1f1 !important; color: #4d6d89 !important; font-weight: 600 !important; }
+html[data-panel-theme="zhub-light"] .router-form-help .text-slate-300 { color: #1c517d !important; }
+html[data-panel-theme="zhub-light"] .router-form-footer { border-color: #d8e6f0 !important; }
+html[data-panel-theme="zhub-light"] .router-form-cancel { background: #edf4f9 !important; color: #315775 !important; }
+html[data-panel-theme="zhub-light"] .router-form-save { background: #147fc1 !important; color: #ffffff !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-edit-button { background: #ffffff !important; border-color: #bce0f4 !important; color: #12659a !important; box-shadow: 0 3px 8px rgba(7,81,132,.16) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-edit-button:hover { background: #e7f5fc !important; color: #075982 !important; }
