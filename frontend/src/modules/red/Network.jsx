@@ -271,7 +271,7 @@ export default function Network({ focus = "mikrotik" }) {
 }
 
 const Stat = ({ icon: Icon, label, value, valueClass = "text-slate-100", compact = false }) => (
-  <div className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} bg-slate-950/60 border border-slate-800 min-w-0`}>
+  <div className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} border border-slate-800 min-w-0`}>
     <p className={`${compact ? "text-[9px]" : "text-[10px]"} uppercase tracking-wider text-slate-500 flex items-center gap-1`}><Icon className="w-3 h-3" /> {label}</p>
     <p className={`${compact ? "text-xs" : "text-sm"} font-bold mt-1 font-mono truncate ${valueClass}`} title={String(value ?? "")}>{value}</p>
   </div>
