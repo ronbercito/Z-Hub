@@ -1886,3 +1886,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - En pantallas menores se conserva una única columna ordenada.
 - Alcance: exclusivamente distribución visual; no se cambian campos, valores, reglas ni API.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+
+### 1.1.59 — Redes IPv4 y Cajas NAP adaptadas completamente
+
+- Se adapta de forma completa la presentación de **Redes IPv4** y **Cajas NAP** al tema claro Z-Hub.
+- Redes IPv4: indicadores sólidos azul, verde y violeta; buscador claro, tabla blanca con cabecera azul oscuro, filas alternadas y texto operativo grueso.
+- Cajas NAP: filtros claros, panel de fondo suave y tarjetas NAP blancas con borde azul, sombra y realce al pasar el cursor.
+- Se conservan colores de puertos libres/ocupados y las acciones de editar/eliminar con buena visibilidad.
+- Alcance: solo presentación; no se modifican redes, IPs, MikroTik, zonas, NAPs, puertos, asignaciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
