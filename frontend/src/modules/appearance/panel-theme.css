@@ -887,3 +887,33 @@ html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric:hover {
   transform: translateY(-3px);
   box-shadow: 0 11px 22px rgba(21, 81, 126, .30) !important;
 }
+
+
+/* Gestión de red 1.1.40 — contraste y tamaño compacto para tarjetas MikroTik. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik.border-cyan-500 {
+  width: min(100%, 290px) !important;
+  background: linear-gradient(135deg, #126eac, #084b80) !important;
+  border-color: #138ed1 !important;
+  box-shadow: 0 7px 17px rgba(8, 79, 133, .28) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik .text-slate-100,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik .text-slate-400,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik .text-slate-500,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik .text-slate-200,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik h3,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik svg {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik:hover {
+  background: linear-gradient(135deg, #239de3, #0967ad) !important;
+  border-color: #76d2ff !important;
+  box-shadow: 0 13px 27px rgba(5, 108, 183, .42), 0 0 0 3px rgba(78, 190, 245, .18) !important;
+}
+@media (max-width: 767px) {
+  html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik {
+    width: 100% !important;
+  }
+}
