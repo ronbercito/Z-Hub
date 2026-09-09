@@ -6,7 +6,7 @@ export const roleDefaults = {
 export const permissionsByTab = {
   inicio:"dashboard", red:"network", routers:"router_menu", olts:"olt", red_ipv4:"network",
   nap_boxes:"network", monitoring:"monitoring", servicios:"plans", clientes:"clients",
-  client_users:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing",
+  client_users:"clients", client_installations:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing",
   hotspot:"hotspot", tareas:"tasks", almacen:"inventory", tickets:"tickets",
   mensajeria:"messaging", ajustes:"settings", settings_google:"settings",
 };
