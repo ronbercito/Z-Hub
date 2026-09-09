@@ -1741,3 +1741,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se ajustó texto, iconos, separadores y botones internos para mantener legibilidad sobre el nuevo fondo.
 - Alcance: solo apariencia del tema `zhub-light`; sin cambios en monitoreo, estados ni acciones del router.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.39 — Puertos PON OLT adaptados al tema de color
+- Se añadieron clases visuales propias al encabezado y a las métricas de Puertos PON.
+- El encabezado del diagnóstico óptico utiliza azul técnico; las métricas se diferencian por tipo: temperatura naranja, voltaje violeta, corriente láser azul y potencia óptica verde.
+- Texto, iconos, barras y etiqueta de lectura se ajustaron a alto contraste; las tarjetas resaltan suavemente al pasar el cursor.
+- Alcance: únicamente presentación; no se modificó el parser de métricas, las consultas OLT ni la selección de PON.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
