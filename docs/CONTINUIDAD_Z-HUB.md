@@ -2914,21 +2914,21 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Prueba: revisión estática de `table-fixed`, anchos de columnas, `truncate` y títulos.
 
 
-### 1.1.100 — Límites de velocidad legibles en Colas simples
+### 1.2.00 — Límites de velocidad legibles en Colas simples
 
 - La columna Max-limit convierte los valores técnicos de RouterOS a Mbps o Gbps, en el orden Subida / Bajada.
 - Los valores `0/0` se muestran como Sin límite y el valor completo se mantiene en el título al pasar el cursor.
 - Prueba: revisión estática de conversión bps/K/M/G, orden de dos direcciones y caso sin límite.
 
 
-### 1.1.101 — Comentario primero en Colas simples
+### 1.2.01 — Comentario primero en Colas simples
 
 - La primera columna de Colas simples es Comentario; continúan Nombre, Target, Max-limit, Tráfico actual y Estado.
 - Se redistribuyeron los anchos fijos sin afectar el ajuste de la tabla a pantalla.
 - Prueba: revisión estática del orden de cabeceras y celdas.
 
 
-### 1.1.102 — Queue type visible en Colas simples
+### 1.2.02 — Queue type visible en Colas simples
 
 - Se añade la columna Queue type junto a Max-limit, con el valor real del campo `queue` de RouterOS.
 - Las colas PCQ se identifican por su tipo configurado; si no existe valor, se muestra default.
@@ -2936,9 +2936,16 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Prueba: revisión estática de lectura de `queue`, respuesta API y columna UI.
 
 
-### 1.1.103 — Buscador de Colas simples
+### 1.2.03 — Buscador de Colas simples
 
 - Se añade un buscador compacto en la pestaña Colas simples.
 - Filtra localmente por nombre de cola, comentario o IP/target y muestra el total de coincidencias.
 - No agrega consultas ni cambios a las colas del MikroTik.
 - Prueba: revisión estática de estado, criterios de filtro, input y listado filtrado.
+
+
+### Política de numeración corregida — 2026-09-09
+
+- Cada segmento menor llega hasta 99: después de `1.1.99` continúa `1.2.00`; después de `1.2.99`, `1.3.00`.
+- La secuencia reciente queda corregida a 1.2.00, 1.2.01, 1.2.02 y **1.2.03**.
+- El comparador del actualizador interpreta los segmentos como números, por lo que `1.2.03` se ordena correctamente.
