@@ -2066,3 +2066,10 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-s
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background:#129d8c !important; border-color:#129d8c !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background:#d8890b !important; border-color:#d8890b !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat[class*="clientes-"] p,html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat[class*="clientes-"] svg { color:#fff !important; opacity:1 !important; }
+
+
+/* 1.1.96: las métricas de clientes no heredan ninguna superficie bg-slate. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-colas-simples { background-color:#197ed4 !important; background-image:none !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp { background-color:#7045c8 !important; background-image:none !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background-color:#129d8c !important; background-image:none !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background-color:#d8890b !important; background-image:none !important; }
