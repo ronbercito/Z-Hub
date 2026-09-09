@@ -1,5 +1,14 @@
 {
   "licenses": [
-    "ZHUB-2026-DEMO-001"
+    {
+      "key": "ZHUB-2026-DEMO-001",
+      "name": "Licencia de demostración",
+      "active": true
+    },
+    {
+      "key": "ZHUB-2026-DEMO-002",
+      "name": "Segunda licencia de prueba",
+      "active": true
+    }
   ]
 }
