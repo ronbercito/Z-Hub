@@ -1912,3 +1912,18 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se documenta también el ajuste de distribución de Ajustes: columnas compactas en pantallas amplias y una columna en pantallas menores.
 - Regla obligatoria vigente: **cada cambio futuro debe actualizar la versión del panel y este único documento maestro de continuidad**, detallando archivos, alcance, validación y lo que no fue modificado.
 - Validación realizada: se comprobó el historial de versiones y se completaron las entradas que faltaban de la etapa 1.1.57–1.1.58.
+
+
+### 1.1.61 — Protocolo obligatorio de trabajo y publicación
+
+Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
+
+1. **Cambio:** implementar únicamente lo solicitado.
+2. **Pruebas:** comprobar de forma segura el cambio realizado.
+3. **Bitácora:** actualizar este único archivo maestro con el detalle del cambio, alcance, archivos, pruebas y exclusiones.
+4. **Verificación:** confirmar que código, bitácora y resultado esperado están presentes.
+5. **Cambio de versión:** actualizar `PANEL_VERSION` y su descripción.
+6. **Actualización:** publicar los archivos al repositorio para que el panel pueda actualizarse.
+
+- No se debe cambiar la versión ni publicar antes de registrar y verificar la bitácora.
+- Esta regla aplica incluso a cambios exclusivamente visuales o documentales.
