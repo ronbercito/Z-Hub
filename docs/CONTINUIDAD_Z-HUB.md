@@ -1621,3 +1621,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Backup: rama backup-pre-dashboard-claro-1.1.23 creada antes del cambio.
 - Pruebas: revisión estática de JSX, selectores y versión; build y validación visual real en servidor pendientes.
 - Resultado esperado: tarjetas KPI coloreadas, recaudación, resumen, últimas tablas y tooltip se presentan en claro como la referencia, eliminando las grandes superficies oscuras del Dashboard.
+
+
+### 1.1.24 — 2026-09-09 — Tarjetas KPI del Dashboard según referencia
+- Objetivo y causa: corregir la franja superior del Dashboard claro. La regla global de tema no reconocía el color sky y además reemplazaba los textos blancos de las tarjetas por tonos oscuros, por eso la tarjeta de transacciones aparecía blanca y con bajo contraste.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases visuales propias de cada KPI), frontend/src/modules/appearance/panel-theme.css (colores, tipografía, contraste, altura y ancho de las cuatro tarjetas), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: los valores se siguen obteniendo de /api/dashboard/summary; no se cambian API, datos, navegación, permisos, facturación, autenticación ni el tema oscuro.
+- Pruebas: revisión estática de las cuatro clases KPI, selectores de tema y PANEL_VERSION 1.1.24. Build y validación visual en el servidor siguen pendientes.
+- Resultado esperado: las tarjetas llenan completamente su recuadro, con verde, azul, violeta y azul oscuro; texto e iconos blancos legibles, títulos con peso alto y sin superficies blancas dentro de la franja KPI.
