@@ -1,0 +1,234 @@
+name: Finalize Z-Hub 1.1.10
+
+on:
+  push:
+    branches:
+      - update-zhub-theme-1.1.10
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'Finalize Z-Hub 1.1.10'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: update-zhub-theme-1.1.10
+
+      - name: Update canonical continuity and detailed handover
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('docs/CONTINUIDAD_MIKROHUB.md')
+          s = p.read_text()
+          s = s.replace('# MikroHub — Bitácora maestra de continuidad', '# Z-Hub (MikroHub internamente) — Bitácora maestra de continuidad', 1)
+          s = s.replace('- Nombre del sistema: **MikroHub**', '- Nombre público del sistema desde 1.1.10: **Z-Hub**\n- Nombre/rutas técnicas heredadas: **MikroHub** (se conservan por compatibilidad)', 1)
+          old_version = '- Versión funcional actual: **1.1.9**, correspondiente a la configuración de facturación individual por cliente y sus reglas de vencimiento/corte/mensajería.'
+          new_version = '- Versión funcional actual: **1.1.10**, correspondiente a la identidad visible Z-Hub y al selector de templates Oscuro clásico / Z-Hub Blanco, manteniendo intacta la lógica 1.1.9 de facturación individual.'
+          if old_version not in s:
+              raise SystemExit('No se encontró la línea de versión actual en continuidad')
+          s = s.replace(old_version, new_version, 1)
+          s = s.replace('PANEL_VERSION = 1.1.9', 'PANEL_VERSION = 1.1.10', 1)
+
+          section = r'''
+
+---
+
+## 21. Registro de continuidad — 2026-09-08 — Panel 1.1.10
+
+**Tipo:** Identidad / UX / templates visuales / compatibilidad / seguridad de despliegue.
+
+### Objetivo
+
+Cambiar la identidad visible del producto de MikroHub a **Z-Hub** y añadir un template claro inspirado en la propuesta visual aprobada, conservando el template oscuro actual y evitando cambios funcionales en Clientes, Facturación, MikroTik, OLT, permisos o rutas internas.
+
+### Decisión de compatibilidad
+
+El cambio de marca es **visible**, no una migración destructiva de nombres internos.
+
+Se conserva deliberadamente:
+
+- repositorio `ronbercito/mirkohub`;
+- ruta de despliegue `/var/www/mikrohub`;
+- claves locales heredadas `fibraz_*`;
+- nombres técnicos/integraciones que usen MikroHub internamente.
+
+Esto evita romper actualizaciones, sesiones, integraciones o automatizaciones existentes.
+
+El campo `company_name` sigue siendo configurable. Si el ISP ya tiene un nombre guardado (por ejemplo FIBRA Z), **no se sobrescribe**. Z-Hub funciona como identidad/fallback del producto.
+
+### Backup obligatorio creado
+
+Antes de tocar archivos delicados se creó la rama:
+
+`backup-pre-zhub-theme-1.1.10`
+
+Base del backup:
+
+`9c269d9d39add24e860ba9c2ed7e8e9ffa21274b` — Panel 1.1.9.
+
+Rama de desarrollo/validación:
+
+`update-zhub-theme-1.1.10`
+
+### Templates disponibles
+
+1. `dark` — **Oscuro clásico**: conserva la apariencia actual del panel.
+2. `zhub-light` — **Z-Hub Blanco**: superficies blancas y azul muy claro, texto azul tinta y acentos azul/cian/turquesa.
+
+El selector se ubica en:
+
+`Ajustes → General → Apariencia del panel`
+
+La selección se persiste como `panel_theme` dentro del JSON existente de `settings` y también se refleja en `localStorage` para evitar parpadeos al arrancar.
+
+### Arquitectura del tema
+
+```text
+Ajustes > General
+  ↓
+panel_theme
+  ↓
+/api/settings
+  ↓
+settings.data JSON
+  ↓
+Layout / Login
+  ↓
+applyPanelTheme()
+  ↓
+html[data-panel-theme="dark|zhub-light"]
+  ↓
+panel-theme.css
+```
+
+El template claro es una **capa CSS scopeada**. No reescribe la lógica de negocio ni cada módulo individualmente.
+
+### Archivos nuevos
+
+- `frontend/src/modules/appearance/panelThemes.js` — catálogo, normalización, persistencia y aplicación del tema.
+- `frontend/src/modules/appearance/PanelThemeSelector.jsx` — selector visual mostrado en Ajustes > General.
+- `frontend/src/modules/appearance/panel-theme.css` — capa de colores del template Z-Hub Blanco.
+- `frontend/public/zhub-logo.svg` — logotipo vectorial Z-Hub de fallback.
+
+### Archivos modificados
+
+- `frontend/src/modules/ajustes/Settings.jsx` — añade `panel_theme`, selector y aplicación al guardar; se reaplicó el cambio sobre el archivo vigente de `main` para evitar perder funciones existentes.
+- `frontend/src/components/layout/Layout.jsx` — carga/sincroniza el tema persistido, usa fallback Z-Hub y muestra Z-Hub en título/pie.
+- `frontend/src/components/layout/Sidebar.jsx` — fallback Z-Hub y logo vectorial si no existe logo personalizado.
+- `frontend/src/modules/auth/Login.jsx` — obtiene el tema desde `/settings/public`, lo aplica antes de iniciar sesión y usa identidad Z-Hub.
+- `frontend/src/App.js` — inicializa el tema al arrancar y adapta el Toaster al modo claro/oscuro.
+- `frontend/src/modules/system-update/UpdateCenter.jsx` — texto visible “Panel Z-Hub”.
+- `frontend/src/modules/system-update/version.js` — `PANEL_VERSION = 1.1.10` y CHANGELOG.
+- `backend/app/models/setting.py` — añade `panel_theme: dark` al valor por defecto y fallback Z-Hub.
+- `backend/app/routers/ajustes/router.py` — `/settings/public` expone el tema y los textos de prueba SMTP usan Z-Hub.
+- `docs/CONTINUIDAD_MIKROHUB.md` — esta actualización obligatoria.
+- `docs/CONTINUIDAD_MIKROHUB_1.1.10_ZHUB_TEMAS.md` — continuidad complementaria de esta entrega.
+
+### Base de datos
+
+No se crea tabla ni columna SQL.
+
+`settings` ya almacena un objeto JSON; se agrega únicamente la clave:
+
+```text
+panel_theme = dark | zhub-light
+```
+
+Los registros existentes siguen siendo válidos porque el backend combina `DEFAULT_SETTINGS` con los datos guardados.
+
+### API
+
+`GET /api/settings/public` ahora puede devolver:
+
+```text
+company_name
+logo_data
+panel_theme
+```
+
+No se modificaron rutas existentes de Clientes, Facturación, MikroTik, OLT, permisos ni autenticación.
+
+### Pruebas realizadas
+
+- [x] rama backup creada antes de publicar;
+- [x] rama aislada de desarrollo creada;
+- [x] archivos sensibles `Settings.jsx`, `Layout.jsx` y `Login.jsx` restaurados desde el `main` vigente y cambios Z-Hub reaplicados de forma mínima;
+- [x] comparación contra `main` revisada: después de la reaplicación, los diffs de esos archivos quedaron pequeños y específicos;
+- [x] instalación de dependencias frontend en GitHub Actions;
+- [x] `yarn build` de producción ejecutado correctamente en GitHub Actions;
+- [x] `python -m py_compile backend/app/models/setting.py backend/app/routers/ajustes/router.py` correcto;
+- [x] `PANEL_VERSION`/CHANGELOG actualizado a 1.1.10;
+- [x] continuidad canónica actualizada en la misma entrega;
+- [ ] instalación real desde el Actualizador del servidor;
+- [ ] validación visual real en navegador del template oscuro;
+- [ ] validación visual real en navegador del template Z-Hub Blanco;
+- [ ] prueba real de guardar/cambiar tema, cerrar sesión y volver a ingresar.
+
+### Validación automatizada
+
+La validación temporal en GitHub Actions confirmó build React de producción + sintaxis Python antes de publicación. Los workflows temporales usados exclusivamente para validar/reaplicar cambios **no forman parte de la actualización final** y se eliminan antes de publicar `main`.
+
+### Resultado
+
+La versión 1.1.10 queda preparada para publicación por el sistema normal de actualizaciones. El código compila en validación automatizada, pero **no debe declararse instalado en el servidor** hasta que el administrador ejecute Actualizaciones → Comprobar → Actualizar y confirme visualmente ambos templates.
+
+### Rollback
+
+Existen dos niveles de protección:
+
+1. rollback automático del actualizador si falla build/despliegue;
+2. rama manual `backup-pre-zhub-theme-1.1.10` para volver al estado exacto 1.1.9 previo a esta entrega.
+
+### Riesgos / pendientes
+
+- El template blanco usa overrides visuales scopeados; algún componente muy específico puede necesitar un ajuste fino de contraste después de verlo en producción.
+- Si aparece un detalle de color, corregir únicamente la capa `modules/appearance/` cuando sea posible; no tocar lógica de negocio para resolver un problema visual.
+- No renombrar rutas/repositorio/claves internas solo por la nueva marca Z-Hub.
+- Validar siempre la navegación completa y Ajustes después de instalar.
+
+### Estado de cierre
+
+**Código validado por build y documentación actualizada. Preparado para publicación como 1.1.10; instalación real en servidor pendiente de ejecutar desde el Actualizador.**
+'''
+          if '## 21. Registro de continuidad — 2026-09-08 — Panel 1.1.10' not in s:
+              s += section
+          p.write_text(s)
+
+          detail = Path('docs/CONTINUIDAD_MIKROHUB_1.1.10_ZHUB_TEMAS.md')
+          detail.write_text('''# Continuidad complementaria — Z-Hub 1.1.10\n\nEste documento complementa `docs/CONTINUIDAD_MIKROHUB.md`. La bitácora maestra sigue siendo la fuente obligatoria.\n\n## Alcance\n\nVersión 1.1.10: identidad visible Z-Hub + selector de template Oscuro clásico / Z-Hub Blanco en Ajustes → General.\n\n## Protección\n\n- Backup previo: `backup-pre-zhub-theme-1.1.10`.\n- Desarrollo: `update-zhub-theme-1.1.10`.\n- Base preservada: 1.1.9 (`9c269d9d39add24e860ba9c2ed7e8e9ffa21274b`).\n- Rutas internas/repo/claves heredadas no se renombran.\n- `company_name` existente del ISP no se pisa.\n\n## Persistencia\n\n`panel_theme` se guarda en el JSON de `settings`, sin migración SQL. Valores admitidos: `dark`, `zhub-light`.\n\n## Validación\n\nSe ejecutó build React de producción y `py_compile` de los dos archivos Python modificados mediante GitHub Actions. Los archivos delicados de frontend se reconstruyeron desde `main` y los cambios se reaplicaron mínimamente antes del build final.\n\n## Instalación\n\nPublicar en `main` hace visible 1.1.10 para el Centro de Actualizaciones. La instalación en servidor se considera terminada solo después de usar Actualizaciones → Comprobar → Actualizar y validar ambos templates.\n\n## Regla para el futuro\n\nCada cambio posterior debe actualizar primero la bitácora maestra `docs/CONTINUIDAD_MIKROHUB.md` antes de comunicarse como terminado.\n''')
+          PY
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install
+
+      - name: Production build
+        working-directory: frontend
+        env:
+          CI: 'false'
+        run: yarn build
+
+      - name: Validate backend syntax
+        run: python -m py_compile backend/app/models/setting.py backend/app/routers/ajustes/router.py
+
+      - name: Remove temporary validation workflows and commit final tree
+        run: |
+          git rm .github/workflows/validate-zhub-1.1.10.yml
+          git rm .github/workflows/rebase-zhub-safe.yml
+          git rm .github/workflows/finalize-zhub-1.1.10.yml
+          git config user.name "ronbercito"
+          git config user.email "rj.ston1985@gmail.com"
+          git add docs/CONTINUIDAD_MIKROHUB.md docs/CONTINUIDAD_MIKROHUB_1.1.10_ZHUB_TEMAS.md
+          git commit -m "Continuidad: cerrar Z-Hub 1.1.10 con build validado"
+          git push origin update-zhub-theme-1.1.10
