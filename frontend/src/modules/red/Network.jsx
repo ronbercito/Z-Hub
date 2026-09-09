@@ -1,6 +1,7 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Actualización: 2026-09-09 — versión 1.1.79, resumen de clientes operativos por router.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
+ * Actualización: 2026-09-09 — versión 1.1.89, tarjetas MikroTik con estado real al cargar.
+ * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
  *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
@@ -46,8 +47,24 @@ export default function Network({ focus = "mikrotik" }) {
   const fetchRouters = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/routers`, { headers });
-      setRouters(res.data);
-      setSelected((prev) => (prev ? res.data.find((r) => r.id === prev.id) || res.data[0] || null : res.data[0] || null));
+      const rows = Array.isArray(res.data) ? res.data : [];
+
+      // Las tarjetas necesitan datos de estado reales del MikroTik. El listado /routers
+      // puede contener valores históricos/default (CPU, memoria y ping). Al cargar la página
+      // sincronizamos cada MikroTik con el endpoint existente de prueba de conexión, que ya
+      // ejecuta snapshot_router() y devuelve el router actualizado. Las OLT no se modifican.
+      const refreshed = await Promise.all(rows.map(async (row) => {
+        if (row.device_type !== "mikrotik") return row;
+        try {
+          const snapshot = await axios.post(`${API}/routers/${row.id}/test-connection`, {}, { headers });
+          return snapshot.data?.router || row;
+        } catch (e) {
+          return row;
+        }
+      }));
+
+      setRouters(refreshed);
+      setSelected((prev) => (prev ? refreshed.find((r) => r.id === prev.id) || refreshed[0] || null : refreshed[0] || null));
     } catch (e) {
       toast.error("Error al cargar los equipos de red");
     } finally {
