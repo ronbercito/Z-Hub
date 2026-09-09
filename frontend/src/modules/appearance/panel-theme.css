@@ -1906,3 +1906,25 @@ html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-200 {
 html[data-panel-theme="zhub-light"] .update-center-dialog .bg-slate-700 {
   background: #d9e6ef !important;
 }
+
+
+/* Barra superior 1.1.68 — versión junto al botón global de actualizaciones. */
+.navbar-version-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(34, 211, 238, .42);
+  border-radius: 10px;
+  background: rgba(8, 47, 73, .48);
+  color: #a5f3fc;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+html[data-panel-theme="zhub-light"] .navbar-version-badge {
+  border-color: #b7d5e8;
+  background: #f7fbfe;
+  color: #173f68;
+  box-shadow: 0 2px 6px rgba(20, 77, 116, .08);
+}
