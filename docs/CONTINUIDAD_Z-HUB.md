@@ -2934,3 +2934,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Las colas PCQ se identifican por su tipo configurado; si no existe valor, se muestra default.
 - Archivos: cliente MikroTik y tabla de pestañas vivas.
 - Prueba: revisión estática de lectura de `queue`, respuesta API y columna UI.
+
+
+### 1.1.103 — Buscador de Colas simples
+
+- Se añade un buscador compacto en la pestaña Colas simples.
+- Filtra localmente por nombre de cola, comentario o IP/target y muestra el total de coincidencias.
+- No agrega consultas ni cambios a las colas del MikroTik.
+- Prueba: revisión estática de estado, criterios de filtro, input y listado filtrado.
