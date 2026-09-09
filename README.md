@@ -17,14 +17,12 @@ Panel de gestión para operación ISP: clientes, red, routers/OLT, IPv4, factura
 Antes de realizar cualquier modificación en MikroHub, una nueva sesión de ChatGPT/Copilot o cualquier colaborador debe revisar estos dos documentos:
 
 1. **[README.md](README.md)** — Entrada general del proyecto, reglas de publicación y documentación principal.
-2. **[Bitácora maestra de continuidad](docs/CONTINUIDAD_MIKROHUB.md)** — Historial interno de cambios, versiones, ubicación de funcionalidades, decisiones técnicas, correcciones, pruebas, pendientes y contexto necesario para continuar el desarrollo.
+2. **[Bitácora maestra de continuidad](docs/CONTINUIDAD_MIKROHUB.md)** — **Único archivo de continuidad del repositorio.** Historial interno, versiones, decisiones, pruebas y pendientes. Cada actualización debe agregarse allí; no se deben crear documentos complementarios de continuidad.
 
 **Orden recomendado:** README → Bitácora maestra → archivo/módulo específico que se vaya a modificar.
 
 ### Documentación técnica
 
-- **[Guía de Continuidad para Copilot](docs/CONTINUIDAD_PARA_COPILOT_2026-09-07.md)** — Arquitectura, módulos, método de corrección, pruebas, troubleshooting y checklist de despliegue.
-- **[Continuidad detallada 2026-09-08](docs/CONTINUIDAD_MIKROHUB_2026-09-08.md)** — Detalle del cambio 1.0.64 de Facturación dentro de la ficha del cliente y pruebas pendientes.
 
 ### Instalación y despliegue
 
