@@ -24,6 +24,30 @@ html, body {
   box-shadow: 0 0 0 1px #06b6d4;
 }
 
+.update-center-dialog {
+  scrollbar-width: thin;
+  scrollbar-color: #64748b #0f172a;
+}
+
+.update-center-dialog::-webkit-scrollbar {
+  width: 10px;
+}
+
+.update-center-dialog::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 999px;
+}
+
+.update-center-dialog::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #0f172a;
+  border-radius: 999px;
+}
+
+.update-center-dialog::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 @media print {
   body {
     background: white !important;
