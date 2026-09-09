@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-09 — versión 1.1.73, tarjeta MikroTik compacta con edición.\n * Área: Gestión de Red > tarjetas de equipos.
+ * Actualización: 2026-09-09 — versión 1.1.74, memoria visible en la tarjeta MikroTik.\n * Área: Gestión de Red > tarjetas de equipos.
  * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline
  *          real, IP, modelo y latencia. En MikroTik muestra CPU; en OLT muestra puertos PON.
  * Alcance: Diferencia visualmente MikroTik (cyan) y OLT VSOL (violeta).
@@ -8,7 +8,7 @@
  * Trabaja con: modules/red/Network.jsx, backend/app/models/router.py (campos mostrados)
  */
 import React from "react";
-import { Server, Cpu, Activity, Radio, Zap, MapPin } from "lucide-react";
+import { Server, Cpu, HardDrive, Activity, Radio, Zap, MapPin } from "lucide-react";
 
 const STATUS = {
   online: { label: "ONLINE", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400 animate-pulse" },
@@ -60,7 +60,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-slate-800">
+      <div className={`grid ${isOlt ? "grid-cols-2" : "grid-cols-3"} gap-2 text-[11px] pt-3 border-t border-slate-800`}>
         {isOlt ? (
           <div className="flex items-center gap-1.5 text-slate-400">
             <Zap className={`w-3.5 h-3.5 ${tone.metric}`} /> PON: <span className="text-slate-200 font-bold">{router.pon_ports || "—"} {router.pon_type || ""}</span>
@@ -68,6 +68,12 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         ) : (
           <div className="flex items-center gap-1.5 text-slate-400">
             <Cpu className="w-3.5 h-3.5 text-slate-500" /> CPU: <span className="text-slate-200 font-bold">{router.cpu_usage_pct}%</span>
+          </div>
+        )}
+
+        {!isOlt && (
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <HardDrive className="w-3.5 h-3.5 text-violet-400" /> Mem: <span className="text-slate-200 font-bold">{router.memory_usage_pct}%</span>
           </div>
         )}
 
