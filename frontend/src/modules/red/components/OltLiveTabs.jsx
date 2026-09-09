@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/OltLiveTabs.jsx
- * Pertenece a: Red > OLT.
+ * Actualización: 2026-09-09 — versión 1.1.34, pestañas OLT adaptadas al tema claro.\n * Pertenece a: Red > OLT.
  * Función: ORQUESTADOR de pestañas OLT. Sólo controla pestaña activa, PON, carga API,
  *          acciones comunes y enlaza cada pestaña con su archivo independiente.
  * Regla de arquitectura: NO implementar aquí el contenido de una pestaña. Cada menú,
@@ -161,7 +161,7 @@ export default function OltLiveTabs({ router, routers = [] }) {
   };
 
   return (
-    <div data-testid="olt-live-tabs">
+    <div className="olt-live-tabs" data-testid="olt-live-tabs">
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-800 mb-3">
         {TABS.map((item) => (
           <button
