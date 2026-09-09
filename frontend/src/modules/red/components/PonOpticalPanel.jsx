@@ -119,7 +119,7 @@ function MetricCard({ metric }) {
   const percent = meterPercent(metric);
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70 p-4 transition hover:border-cyan-700/60 hover:bg-slate-950">
+    <div className={`olt-pon-metric olt-pon-metric--${metric.key} group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70 p-4 transition hover:border-cyan-700/60 hover:bg-slate-950`}>
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-500/5 blur-2xl" />
 
       <div className="relative flex items-start justify-between gap-3">
@@ -162,8 +162,8 @@ export default function PonOpticalPanel({ res, pon, loading }) {
   const metrics = readMetrics(res);
 
   return (
-    <div className="space-y-3" data-testid="olt-pon-visual-panel">
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950/90 to-cyan-950/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="olt-pon-panel space-y-3" data-testid="olt-pon-visual-panel">
+      <div className="olt-pon-header flex flex-col gap-3 rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950/90 to-cyan-950/20 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-700/40 bg-cyan-500/10 text-cyan-300">
             <RadioTower className="h-5 w-5" />
