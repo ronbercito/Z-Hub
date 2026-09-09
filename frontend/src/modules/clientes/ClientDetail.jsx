@@ -141,7 +141,7 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
     if (!client) return null;
     if (activeTab === "summary") return (
       <div className="grid gap-5 lg:grid-cols-3">
-        <section className="space-y-5 lg:col-span-2">
+        <section className="client-detail-summary space-y-5 lg:col-span-2">
           {summaryError && <div className="flex gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4"><AlertCircle className="h-5 w-5 shrink-0 text-rose-300" /><p className="text-sm text-rose-300">{summaryError}</p></div>}
           {summarySuccess && <div className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" /><p className="text-sm text-emerald-300">{summarySuccess}</p></div>}
           <form onSubmit={handleSaveSummary} className="space-y-5">
@@ -153,7 +153,7 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
             <div className="flex justify-end pt-4"><button type="submit" disabled={summarySaving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-50">{summarySaving ? <><Loader className="h-4 w-4 animate-spin" /> Guardando…</> : <><Save className="h-4 w-4" /> Guardar cambios</>}</button></div>
           </form>
         </section>
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/55 p-5"><h3 className="text-base font-bold text-white">Estado de cuenta</h3><div className="mt-4 space-y-3"><div className={`rounded-xl px-3 py-2 text-sm font-semibold ${client.status === "active" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>Servicio {prettyStatus(client.status)}</div><Value label="Plan contratado">{client.plan_name}</Value><Value label="Pago mensual">{money(client.plan_price)}</Value><Value label="Deuda actual">{money(client.balance_due)}</Value><Value label="Facturas pendientes">{client.unpaid_invoices_count || 0}</Value><Value label="Día de pago">Día {client.billing_day || "Sin registrar"}</Value></div></section>
+        <section className="client-detail-account rounded-2xl border border-slate-800 bg-slate-950/55 p-5"><h3 className="text-base font-bold text-white">Estado de cuenta</h3><div className="mt-4 space-y-3"><div className={`rounded-xl px-3 py-2 text-sm font-semibold ${client.status === "active" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>Servicio {prettyStatus(client.status)}</div><Value label="Plan contratado">{client.plan_name}</Value><Value label="Pago mensual">{money(client.plan_price)}</Value><Value label="Deuda actual">{money(client.balance_due)}</Value><Value label="Facturas pendientes">{client.unpaid_invoices_count || 0}</Value><Value label="Día de pago">Día {client.billing_day || "Sin registrar"}</Value></div></section>
       </div>
     );
     if (activeTab === "service") return <ClientServiceEditor clientId={clientId} api={api} token={token} onSaveSuccess={handleServiceSaveSuccess} />;
@@ -170,7 +170,7 @@ export default function ClientDetail({ clientId, api, token, onClose, onClientUp
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget && !summarySaving) onClose?.(); }}>
-      <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="client-detail-modal flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
         <header className="flex shrink-0 items-center justify-between border-b border-slate-800 px-5 py-4"><div><h2 className="text-lg font-bold text-white">{client?.full_name || "Cliente"}</h2><p className="text-xs text-slate-500">Ficha del cliente</p></div><button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></header>
         <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-800 px-4 py-2">{tabs.map(tab => { const Icon = tab.icon; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${activeTab === tab.id ? "bg-cyan-500/15 text-cyan-300" : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"}`}><Icon className="h-4 w-4" />{tab.label}</button>; })}</nav>
         <main className="min-h-0 flex-1 overflow-y-auto p-5">{content()}</main>
