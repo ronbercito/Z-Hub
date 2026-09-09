@@ -83,7 +83,7 @@ export default function Plans() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="plans-page space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
@@ -119,7 +119,7 @@ export default function Plans() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {plans.map((p) => (
-          <div key={p.id} className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
+          <div key={p.id} className="plan-card bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
             <div>
               <div className="flex justify-between items-start mb-3">
                 <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[11px] font-bold border border-cyan-500/20">
