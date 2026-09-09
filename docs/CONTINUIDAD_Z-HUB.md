@@ -1678,3 +1678,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: el clic manual llama a /api/dashboard/summary como antes y confirma al terminar. El refresco automático de 15 segundos permanece silencioso. No cambia API, datos, rutas, permisos, autenticación ni tema oscuro.
 - Pruebas: revisión estática del flujo silent/manual, estado refreshing, texto del botón y PANEL_VERSION 1.1.30. Build y validación visual real pendientes.
 - Resultado esperado: al pulsar el botón se ve “Actualizando…” con icono girando y después el aviso “Dashboard actualizado”; si falla, se conserva el aviso de error existente.
+
+
+### 1.1.31 — 2026-09-09 — Navbar clara y tipografía reforzada
+- Objetivo y causa: adaptar Moneda, notificaciones y perfil de la barra superior al tema claro; anteriormente conservaban fondos oscuros y un peso visual inconsistente con el resto del Dashboard.
+- Archivos modificados: frontend/src/components/layout/Navbar.jsx (clases propias navbar-currency, navbar-notifications y navbar-user), frontend/src/modules/appearance/panel-theme.css (fondos claros, texto azul tinta y peso alto), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: búsqueda, enlace a facturación de notificaciones, centro de actualizaciones y datos del usuario se conservan sin cambios. No afecta API, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.31. Build y validación visual real pendientes.
+- Resultado esperado: la barra superior clara muestra moneda, alerta y usuario con superficies claras, bordes discretos y texto más grueso como el resto del panel.
