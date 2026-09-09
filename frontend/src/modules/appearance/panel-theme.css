@@ -827,3 +827,63 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-card .bg-
   border-color: rgba(255,255,255,.38) !important;
   color: #ffffff !important;
 }
+
+
+/* OLT 1.1.39 — Puertos PON alineados al tema con tarjetas operativas de color. */
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header {
+  background: linear-gradient(135deg, #16496f, #0d789d) !important;
+  border-color: transparent !important;
+  box-shadow: 0 7px 16px rgba(9, 94, 135, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header * {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header .border-cyan-700\/40,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header .border-cyan-800\/40 {
+  border-color: rgba(255,255,255,.36) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header .bg-cyan-500\/10,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-header .bg-cyan-950\/40 {
+  background: rgba(255,255,255,.14) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric {
+  border-color: transparent !important;
+  box-shadow: 0 5px 13px rgba(31, 74, 112, .16) !important;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric--temperature {
+  background: linear-gradient(135deg, #df6d3b, #b94625) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric--voltage {
+  background: linear-gradient(135deg, #6d55cc, #4936a5) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric--txbias {
+  background: linear-gradient(135deg, #178fbc, #0e679b) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric--txpower,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric--rxpower {
+  background: linear-gradient(135deg, #119d83, #08715f) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric p,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .border-cyan-800\/40,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .border-emerald-800\/40 {
+  border-color: rgba(255,255,255,.36) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .bg-cyan-950\/40,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .bg-emerald-950\/30,
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .bg-slate-800 {
+  background: rgba(255,255,255,.16) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric .bg-cyan-400\/80 {
+  background: rgba(255,255,255,.86) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric:hover {
+  filter: brightness(1.10) saturate(1.12);
+  transform: translateY(-3px);
+  box-shadow: 0 11px 22px rgba(21, 81, 126, .30) !important;
+}
