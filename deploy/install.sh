@@ -75,13 +75,13 @@ run_visual() {
   if [ "$rc" -eq 0 ]; then
     ok "$label completado"
   else
-    printf '%b      ✗ %s falló (código %s)%b\n' "$COLOR_ERROR" "$label" "$rc" "$COLOR_RESET" >&3
-    printf '%b      Revisa: %s%b\n' "$COLOR_ERROR" "$LOG_FILE" "$COLOR_RESET" >&3
+    printf '%b      ✗ El proceso falló (código %s)%b\n' "$COLOR_ERROR" "$rc" "$COLOR_RESET" >&3
+    printf '%b      Revisa el registro técnico de instalación%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
     return "$rc"
   fi
 }
 
-trap 'rc=$?; ui ""; printf "%b╔════════════════════════════════════════════════════════════╗%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b║                 ❌ INSTALACIÓN DETENIDA                   ║%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b╚════════════════════════════════════════════════════════════╝%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; ui "  Paso: $STEP"; ui "  Línea: $LINENO"; ui "  Código: $rc"; ui "  Log técnico: $LOG_FILE"; ui "  Últimas líneas del log:"; tail -n 18 "$LOG_FILE" >&3 2>&3 || true; exit $rc' ERR
+trap 'rc=$?; ui ""; printf "%b╔════════════════════════════════════════════════════════════╗%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b║                 ❌ INSTALACIÓN DETENIDA                   ║%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b╚════════════════════════════════════════════════════════════╝%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; ui "  Paso: $STEP"; ui "  Línea: $LINENO"; ui "  Código: $rc"; ui "  Registro técnico disponible"; ui "  Últimas líneas del registro:"; tail -n 18 "$LOG_FILE" >&3 2>&3 || true; exit $rc' ERR
 
 ui ""
 printf '%b%s%b\n' "$COLOR_TITLE" "╔════════════════════════════════════════════════════════════╗" "$COLOR_RESET" >&3
@@ -103,43 +103,41 @@ export DEBIAN_FRONTEND=noninteractive
 
 STEP="Preparando el entorno"
 section "[1/7] Preparando el entorno"
-run_visual "Actualizando paquetes" apt-get update
-run_visual "Instalando dependencias del sistema" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
-ok "Paquetes del sistema listos"
+run_visual "Actualizando componentes" apt-get update
+run_visual "Preparando recursos necesarios" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
+ok "Entorno preparado"
 
 STEP="Configurando el sistema"
 section "[2/7] Configurando el sistema"
 if ! command -v node >/dev/null; then
-  run_visual "Configurando repositorio Node.js 20 LTS" bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash -'
-  run_visual "Instalando Node.js" apt-get install -y nodejs
+  run_visual "Preparando componentes del sistema" bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash -'
+  run_visual "Configurando herramientas" apt-get install -y nodejs
 fi
 if ! command -v yarn >/dev/null; then
-  run_visual "Instalando Yarn" npm install --global yarn
+  run_visual "Configurando herramientas" npm install --global yarn
 fi
-ok "Node.js: $(node --version)"
-ok "Yarn: $(yarn --version)"
+ok "Sistema configurado"
 
 STEP="Inicializando componentes"
 section "[3/7] Inicializando componentes"
-run_visual "Activando servicio MariaDB" systemctl enable --now mariadb
-ok "Servicio MariaDB activo"
+run_visual "Inicializando servicios" systemctl enable --now mariadb
+ok "Componentes inicializados"
 
 if [ -f "$APP_DIR/backend/.env" ] && grep -q "^DATABASE_URL=" "$APP_DIR/backend/.env"; then
   DB_PASS="$(grep '^DATABASE_URL=' "$APP_DIR/backend/.env" | sed -E 's#.*://[^:]+:([^@]+)@.*#\1#')"
-  info "backend/.env existente: se conserva la contraseña de la base de datos"
+  info "Configuración existente: se conserva la configuración actual"
 else
   DB_PASS="$(python3 - <<'PY'
 import secrets
 print(secrets.token_urlsafe(18)[:24])
 PY
 )"
-  important "Se generó una contraseña segura para MariaDB"
+  important "Se generó una credencial segura para el sistema"
 fi
 
 export DB_NAME DB_USER DB_PASS
-run_visual "Preparando base de datos y usuario MariaDB" bash -c 'envsubst < "$1/mariadb/init.sql.template" | mariadb' _ "$DEPLOY_DIR"
-ok "Base de datos '$DB_NAME' preparada"
-ok "Usuario MariaDB '$DB_USER' preparado"
+run_visual "Preparando datos y configuración" bash -c 'envsubst < "$1/mariadb/init.sql.template" | mariadb' _ "$DEPLOY_DIR"
+ok "Configuración de acceso preparada"
 
 STEP="Preparando la aplicación"
 section "[4/7] Preparando la aplicación"
@@ -152,78 +150,78 @@ PY
 )"
   export JWT_SECRET
   envsubst < "$DEPLOY_DIR/env/backend.env.example" > .env
-  ok "backend/.env generado"
+  ok "Configuración de la aplicación generada"
 else
-  ok "backend/.env existente conservado"
+  ok "Configuración de la aplicación conservada"
 fi
 if [ ! -d venv ]; then
-  run_visual "Creando entorno virtual Python" python3 -m venv venv
+  run_visual "Preparando entorno de ejecución" python3 -m venv venv
 fi
-run_visual "Actualizando pip" ./venv/bin/pip install --upgrade pip
-run_visual "Instalando dependencias Python del backend" ./venv/bin/pip install -r requirements.txt
-ok "Entorno virtual y dependencias del backend listos"
+run_visual "Actualizando herramientas" ./venv/bin/pip install --upgrade pip
+run_visual "Preparando dependencias" ./venv/bin/pip install -r requirements.txt
+ok "Entorno de ejecución y dependencias listos"
 
 STEP="Procesando la aplicación"
 section "[5/7] Procesando la aplicación"
 cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
 rm -rf build
-run_visual "Instalando dependencias frontend con Yarn" yarn install --network-timeout 100000
-ok "Dependencias frontend instaladas"
-run_visual "Compilando frontend React" env DISABLE_ESLINT_PLUGIN=true CI= yarn build
-ok "Frontend compilado correctamente"
+run_visual "Preparando recursos de la aplicación" yarn install --network-timeout 100000
+ok "Dependencias preparadas"
+run_visual "Procesando componentes" env DISABLE_ESLINT_PLUGIN=true CI= yarn build
+ok "Recursos de la aplicación generados correctamente"
 mkdir -p "$WEB_ROOT"
 rm -rf "$WEB_ROOT"/*
-run_visual "Publicando frontend en $WEB_ROOT" cp -r build/. "$WEB_ROOT"/
-run_visual "Ajustando permisos de Z-Hub" chown -R www-data:www-data "$APP_DIR"
-run_visual "Aplicando permisos de archivos" chmod -R 755 "$APP_DIR"
+run_visual "Publicando recursos" cp -r build/. "$WEB_ROOT"/
+run_visual "Ajustando permisos" chown -R www-data:www-data "$APP_DIR"
+run_visual "Aplicando configuración de seguridad" chmod -R 755 "$APP_DIR"
 git config --system --add safe.directory "$APP_DIR"
-ok "Archivos publicados en $WEB_ROOT"
-ok "Git safe.directory configurado para $APP_DIR"
+ok "Recursos publicados correctamente"
+ok "Configuración de seguridad aplicada"
 
 STEP="Activando el sistema"
 section "[6/7] Activando el sistema"
 cd "$APP_DIR"
 export APP_DIR WEB_ROOT
 envsubst < "$DEPLOY_DIR/supervisor/zhub_backend.conf.template" | tee /etc/supervisor/conf.d/zhub_backend.conf >/dev/null
-run_visual "Recargando configuración de Supervisor" bash -c 'supervisorctl reread'
-run_visual "Actualizando grupos de Supervisor" bash -c 'supervisorctl update'
-run_visual "Reiniciando backend Z-Hub" bash -c 'supervisorctl restart zhub_backend'
-ok "Supervisor configurado"
+run_visual "Actualizando configuración de servicios" bash -c 'supervisorctl reread'
+run_visual "Aplicando configuración" bash -c 'supervisorctl update'
+run_visual "Reiniciando componentes" bash -c 'supervisorctl restart zhub_backend'
+ok "Servicios configurados"
 
-info "Esperando respuesta del backend..."
+info "Comprobando respuesta del sistema..."
 BACKEND_OK=0
 for i in $(seq 1 20); do
-  printf '\r%b  ⟳ Healthcheck backend: intento %02d/20 ... %b' "$COLOR_WORK" "$i" "$COLOR_RESET" >&3
+  printf '\r%b  ⟳ Comprobación: intento %02d/20 ... %b' "$COLOR_WORK" "$i" "$COLOR_RESET" >&3
   if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then BACKEND_OK=1; break; fi
   sleep 2
 done
 printf '\r' >&3
 if [ "$BACKEND_OK" -ne 1 ]; then
-  printf '%b✗ Backend no responde%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
+  printf '%b✗ El servicio principal no responde%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
   exit 1
 fi
-ok "Backend Z-Hub respondiendo en 127.0.0.1:8001"
+ok "Servicio principal respondiendo correctamente"
 
 rm -f /etc/nginx/sites-enabled/default
 envsubst '$WEB_ROOT' < "$DEPLOY_DIR/nginx/zhub.conf.template" | tee /etc/nginx/sites-available/zhub >/dev/null
 ln -sf /etc/nginx/sites-available/zhub /etc/nginx/sites-enabled/zhub
-run_visual "Validando configuración Nginx" nginx -t
-run_visual "Reiniciando Nginx" systemctl restart nginx
-ok "Nginx configurado y activo"
+run_visual "Validando configuración" nginx -t
+run_visual "Activando acceso web" systemctl restart nginx
+ok "Acceso web activado"
 
 STEP="Finalizando instalación"
 section "[7/7] Finalizando instalación"
 if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then
-  ok "Backend: OK"
+  ok "Servicio principal: OK"
 else
-  printf '%b✗ Healthcheck final del backend falló%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
+  printf '%b✗ Comprobación final del servicio falló%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
   exit 1
 fi
-if systemctl is-active --quiet mariadb; then ok "MariaDB: OK"; else printf '%b✗ MariaDB inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
-if supervisorctl status zhub_backend 2>/dev/null | grep -q RUNNING; then ok "Supervisor: OK"; else printf '%b✗ Supervisor no está RUNNING%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
-if systemctl is-active --quiet nginx; then ok "Nginx: OK"; else printf '%b✗ Nginx inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
-ok "Git Update: OK"
+if systemctl is-active --quiet mariadb; then ok "Datos: OK"; else printf '%b✗ Servicio de datos inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+if supervisorctl status zhub_backend 2>/dev/null | grep -q RUNNING; then ok "Servicios: OK"; else printf '%b✗ Los servicios no están activos%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+if systemctl is-active --quiet nginx; then ok "Acceso web: OK"; else printf '%b✗ Acceso web inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+ok "Actualización: OK"
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 END_TIME="$(date +%s)"
@@ -234,19 +232,14 @@ printf '%b%s%b\n' "$COLOR_OK" "╔═══════════════�
 printf '%b%s%b\n' "$COLOR_OK" "║                  ✓ Z-HUB INSTALADO                        ║" "$COLOR_RESET" >&3
 printf '%b%s%b\n' "$COLOR_OK" "╚════════════════════════════════════════════════════════════╝" "$COLOR_RESET" >&3
 ui ""
-ok "Backend:     OK"
-ok "MariaDB:     OK"
-ok "Supervisor:  OK"
-ok "Nginx:       OK"
-ok "Git Update:  OK"
-ok "Duración:    ${ELAPSED}s"
+ok "Servicio principal: OK"
+ok "Datos:              OK"
+ok "Servicios:          OK"
+ok "Acceso web:         OK"
+ok "Actualización:      OK"
+ok "Duración:           ${ELAPSED}s"
 ui ""
 important "🌐 Panel:          http://${IP:-IP_DEL_SERVIDOR}/"
-info "📂 Z-Hub:          $APP_DIR"
-info "🗄️  Base:           $DB_NAME"
-info "👤 Usuario BD:      $DB_USER"
-info "📜 Log técnico:     $LOG_FILE"
-info "📜 Log backend:     /var/log/zhub_backend.err.log"
 ui ""
 important "Credenciales iniciales:"
 important "🔑 Email:           $(grep '^ADMIN_EMAIL=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
