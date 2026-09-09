@@ -1823,3 +1823,66 @@ html[data-panel-theme="zhub-light"] .nap-box-card h3 { color: #153f69 !important
 html[data-panel-theme="zhub-light"] .nap-box-card p,
 html[data-panel-theme="zhub-light"] .nap-box-card > div:last-child { color: #537593 !important; font-weight: 700 !important; }
 html[data-panel-theme="zhub-light"] .nap-box-card .bg-slate-800 { background: #e6f0f6 !important; color: #18517c !important; }
+
+
+/* Actualizaciones 1.1.65 — presentación clara independiente del modal oscuro. */
+html[data-panel-theme="zhub-light"] .update-center-overlay,
+html[data-panel-theme="zhub-light"] .update-confirm-overlay {
+  background: rgba(22, 49, 75, .38) !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog,
+html[data-panel-theme="zhub-light"] .update-confirm-dialog {
+  background: #ffffff !important;
+  border-color: #9fc9e3 !important;
+  box-shadow: 0 22px 52px rgba(17, 63, 101, .28) !important;
+  color: #153e66 !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog b,
+html[data-panel-theme="zhub-light"] .update-confirm-dialog b {
+  color: #087fb8 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-400,
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-300,
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-200,
+html[data-panel-theme="zhub-light"] .update-confirm-dialog .text-slate-200 {
+  color: #456b8d !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .update-current-status {
+  background: #e7f6fd !important;
+  border-color: #91d0ed !important;
+}
+html[data-panel-theme="zhub-light"] .update-current-status .text-emerald-200 {
+  color: #087d63 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .update-success-status {
+  background: #dff7ed !important;
+  border-color: #7ed7b8 !important;
+  color: #087554 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .update-changelog {
+  background: #f2f8fc !important;
+  border: 1px solid #d2e5f0 !important;
+}
+html[data-panel-theme="zhub-light"] .update-changelog b { color: #087fb8 !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .update-changelog p { color: #456b8d !important; font-weight: 700 !important; }
+html[data-panel-theme="zhub-light"] .update-check-button {
+  background: #ffffff !important;
+  border-color: #8dbedb !important;
+  color: #17618d !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .update-check-button:hover:not(:disabled) {
+  background: #e8f6fd !important;
+  border-color: #159ad3 !important;
+}
+html[data-panel-theme="zhub-light"] .update-install-button {
+  background: linear-gradient(135deg, #129ecc, #0879b6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 12px rgba(9, 127, 183, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .update-install-button:disabled { background: #b9d9e9 !important; color: #5e8299 !important; }
