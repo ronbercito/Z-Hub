@@ -2988,3 +2988,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Legibilidad:** el cuadro blanco de velocidades tiene ahora clases propias y colores de alto contraste para Bajada y Subida; ya no hereda texto blanco de la tarjeta.
 - **Compatibilidad:** editar y eliminar se preservan para todos los planes; no cambia la información almacenada ni la tecnología seleccionada.
 - **Pruebas:** validados el filtrado por tipo, las tres secciones, contraste de velocidades y acciones CRUD.
+
+
+### 1.2.09 — Pie y fondo del tema claro
+
+- **Corrección visual:** se identifica el contenedor principal y el pie del panel con clases propias para que no hereden el fondo oscuro.
+- **Tema claro:** el área final y el pie usan el mismo tono claro `#edf2f7`, borde suave y texto legible.
+- **Compatibilidad:** no se modifica el tema oscuro ni la lógica del panel.
+- **Pruebas:** comprobadas las clases del contenedor/pie y las reglas exclusivas del tema claro.
