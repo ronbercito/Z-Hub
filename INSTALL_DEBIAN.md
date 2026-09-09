@@ -1,4 +1,4 @@
-# Guía de Instalación — FibraZ / MikroSmart ISP (Debian 13 / 12 / Ubuntu)
+# Guía de Instalación — Z-Hub (Debian 13 / 12 / Ubuntu)
 
 Panel de gestión ISP: **React (frontend) + FastAPI (backend) + MariaDB (base de datos) + API MikroTik RouterOS (v6/v7)**.
 
