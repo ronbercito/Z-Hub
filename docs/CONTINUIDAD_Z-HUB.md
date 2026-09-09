@@ -1769,3 +1769,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se corrigió el botón “Probar conexión CLI”: ahora usa fondo azul, borde claro, texto e icono blancos y realce al pasar el cursor.
 - Alcance: solo apariencia de la tarjeta OLT; no se modifican la prueba de conexión, permisos, llamadas API ni otros controles.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.43 — Monitor óptico de ONUs adaptado al tema
+- Se añadieron clases visuales al panel de Potencia Óptica ONU y a sus tres métricas.
+- El bloque “Monitor óptico” ahora tiene fondo azul técnico, selector claramente visible, botón de consulta turquesa y botón Detener con contraste.
+- RX usa azul, TX violeta y ONUs con lectura válida verde, todos con texto blanco de alto contraste.
+- Alcance: solo presentación; no cambian el escaneo secuencial, las lecturas ópticas, temporizadores, API ni la tabla de resultados.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
