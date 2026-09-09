@@ -1,10 +1,12 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.84: recuperación del acceso Google Maps en el submenú Ajustes.
+ * Actualización: 2026-09-09 — versión 1.1.85: menú lateral con desplazamiento vertical independiente.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.84";
+export const PANEL_VERSION = "1.1.85";
 export const CHANGELOG = [
+  { type: "Interfaz", text: "El menú lateral ahora permite desplazarse verticalmente cuando contiene más opciones de las que caben en la pantalla." },
+  { type: "Navegación", text: "El área de navegación mantiene visibles el encabezado, la cuenta y el botón de cerrar sesión mientras se recorre el menú." },
   { type: "Google Maps", text: "Se recupera Google Maps y APIs como opción visible dentro del submenú Ajustes para configurar la clave de Maps JavaScript API." },
   { type: "Configuración", text: "El acceso Google Maps conserva la configuración existente y permite guardar la clave desde Ajustes sin cambiar el funcionamiento del mapa." },
   { type: "Login", text: "El formulario de acceso permite al navegador recordar y autocompletar las credenciales mediante los atributos estándar de autofill." },
