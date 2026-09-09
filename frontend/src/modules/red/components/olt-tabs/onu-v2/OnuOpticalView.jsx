@@ -34,8 +34,8 @@ export default function OnuOpticalView({ onus = [], routerId }) {
   const halt = () => { setAuto(false); stop(); };
   const change = (e) => { setAuto(false); setSelected(e.target.value); };
   return (
-    <section className="space-y-4" aria-label="Panel de potencia óptica">
-      <div className="rounded-2xl border border-cyan-900/50 bg-gradient-to-br from-cyan-950/30 to-slate-950 p-5">
+    <section className="onu-optical-view space-y-4" aria-label="Panel de potencia óptica">
+      <div className="onu-optical-monitor rounded-2xl border border-cyan-900/50 bg-gradient-to-br from-cyan-950/30 to-slate-950 p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-300"><Radio className="w-6 h-6" /></div>
           <div><h3 className="text-base font-semibold text-slate-100">Monitor óptico</h3>
@@ -67,10 +67,10 @@ export default function OnuOpticalView({ onus = [], routerId }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          [selected === "all" ? "RX promedio leído" : "RX recibido en ONU", dbm(rx), "text-cyan-300"],
-          [selected === "all" ? "TX promedio leído" : "TX transmitido", dbm(tx), "text-violet-300"],
-          ["ONUs con lectura válida", measured.length + " / " + targets.length, "text-slate-100"],
-        ].map(([label, value, color]) => <div key={label} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+          [selected === "all" ? "RX promedio leído" : "RX recibido en ONU", dbm(rx), "text-cyan-300", "rx"],
+          [selected === "all" ? "TX promedio leído" : "TX transmitido", dbm(tx), "text-violet-300", "tx"],
+          ["ONUs con lectura válida", measured.length + " / " + targets.length, "text-slate-100", "valid"],
+        ].map(([label, value, color, tone]) => <div key={label} className={`onu-optical-stat onu-optical-stat--${tone} rounded-xl border border-slate-800 bg-slate-950/60 p-4`}>
           <p className="text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
           <p className={"mt-2 text-2xl font-mono font-semibold " + color}>{value}</p>
         </div>)}
