@@ -1470,3 +1470,54 @@ No se modifican lógica funcional, base de datos, Clientes, Facturación, MikroT
 ### Resultado esperado
 
 El template debe seguir siendo claro, pero notablemente menos brillante, con una base gris-azulada suave y sin grandes superficies blancas que fatiguen la vista.
+
+
+---
+
+## 25. Nota operativa — Política de ramas Git
+
+**Tipo:** Documentación / flujo de trabajo Git.
+
+### Estructura de ramas
+
+Para cada actualización importante se puede trabajar temporalmente con ramas separadas dentro del mismo repositorio `ronbercito/Z-Hub`. Esto **no crea otro panel ni otra copia física del proyecto**; cada rama es una referencia Git al historial del mismo repositorio y por eso muestra la misma estructura de carpetas (`backend`, `frontend`, `docs`, etc.).
+
+Política vigente:
+
+- `main` = rama oficial, estable y fuente de publicación/actualización del panel.
+- `update-*` = rama temporal de desarrollo y validación de una actualización.
+- `backup-*` = rama de respaldo creada antes de modificar archivos delicados o críticos.
+
+### Flujo recomendado
+
+```text
+main estable
+  ↓
+crear backup-*
+  ↓
+crear update-*
+  ↓
+aplicar cambios
+  ↓
+validar / compilar / probar
+  ↓
+promover a main
+  ↓
+confirmar instalación real
+  ↓
+eliminar update-* cuando ya no sea necesaria
+```
+
+### Regla importante
+
+El panel debe buscar e instalar actualizaciones desde `main`. Las ramas `update-*` no son una segunda instalación ni una fuente permanente de actualización.
+
+Cuando una rama `update-*` ya fue promovida y queda idéntica a `main`, puede eliminarse para mantener limpio el repositorio. Las ramas `backup-*` se conservan mientras sean útiles para rollback y pueden depurarse posteriormente de forma controlada.
+
+### Estado comprobado en 1.1.13
+
+La rama `update-soft-light-1.1.13` quedó idéntica a `main` después de la publicación de la versión 1.1.13. La diferencia era únicamente temporal durante el desarrollo/validación.
+
+### Versionado
+
+Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no debe generar una actualización funcional del panel.
