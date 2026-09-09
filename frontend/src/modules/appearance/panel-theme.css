@@ -1,50 +1,46 @@
 /**
  * Archivo: frontend/src/modules/appearance/panel-theme.css
- * Actualización: 2026-09-09 — versión 1.1.15: tema claro sobrio y plano.
- * Función: capa visual no destructiva para `zhub-light`, alineada a la referencia
- *          aprobada: blanco limpio, azul tinta, color sólido y cero brillo/neón.
+ * Actualización: 2026-09-09 — versión 1.1.16: template claro alineado a la referencia visual aprobada.
+ * Función: capa visual no destructiva para `zhub-light`.
+ * Objetivo: fondo blanco/gris muy claro, superficies blancas, azul tinta, líneas sobrias,
+ *           colores sólidos y sombras neutras mínimas; sin glow, neón ni gradientes.
  * Regla: no modifica el tema oscuro ni la lógica funcional del panel.
  */
 
 /* ================================================================
-   Z-HUB LIGHT — PALETA PLANA, SOBRIA Y DE BAJA LUMINANCIA
+   Z-HUB LIGHT — REFERENCIA: BLANCO LIMPIO + AZUL TINTA + COLOR SOBRIO
    ================================================================ */
 html[data-panel-theme="zhub-light"],
 html[data-panel-theme="zhub-light"] body,
 html[data-panel-theme="zhub-light"] #root {
   color-scheme: light !important;
-  background: #f5f7fa !important;
-  color: #18324d !important;
+  background: #eef3f8 !important;
+  color: #17365b !important;
 }
 
 html[data-panel-theme="zhub-light"] body,
 html[data-panel-theme="zhub-light"] main {
+  background-color: #eef3f8 !important;
   background-image: none !important;
 }
 
-html[data-panel-theme="zhub-light"] body {
-  background-color: #f5f7fa !important;
-}
-
-/* Superficies: blanco real, sin azul luminoso. */
-html[data-panel-theme="zhub-light"] aside,
-html[data-panel-theme="zhub-light"] header,
-html[data-panel-theme="zhub-light"] main .bg-white,
-html[data-panel-theme="zhub-light"] main .bg-slate-950,
-html[data-panel-theme="zhub-light"] main .bg-slate-900,
-html[data-panel-theme="zhub-light"] main .bg-slate-800,
-html[data-panel-theme="zhub-light"] main .bg-slate-700 {
-  background: #ffffff !important;
-}
-
+/* Barra superior y navegación: blanco limpio con separación fina. */
 html[data-panel-theme="zhub-light"] aside,
 html[data-panel-theme="zhub-light"] header {
-  border-color: #d8e0e8 !important;
+  background: #ffffff !important;
+  border-color: #d8e2ec !important;
   box-shadow: none !important;
 }
 
-/* Utilidades oscuras heredadas: convertirlas a superficies limpias. */
-html[data-panel-theme="zhub-light"] .bg-slate-950,
+/* Superficies principales: blanco, sin tinte azul fuerte. */
+html[data-panel-theme="zhub-light"] main .bg-white,
+html[data-panel-theme="zhub-light"] main .bg-slate-950,
+html[data-panel-theme="zhub-light"] main .bg-slate-900,
+html[data-panel-theme="zhub-light"] main .bg-slate-800 {
+  background-color: #ffffff !important;
+}
+
+/* Fondos secundarios: solo una diferencia muy leve respecto al blanco. */
 html[data-panel-theme="zhub-light"] .bg-slate-950\/35,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/45,
@@ -54,7 +50,6 @@ html[data-panel-theme="zhub-light"] .bg-slate-950\/60,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/70,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/80,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/85,
-html[data-panel-theme="zhub-light"] .bg-slate-900,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/45,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/50,
@@ -63,7 +58,6 @@ html[data-panel-theme="zhub-light"] .bg-slate-900\/65,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/70,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/80,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/90,
-html[data-panel-theme="zhub-light"] .bg-slate-800,
 html[data-panel-theme="zhub-light"] .bg-slate-800\/30,
 html[data-panel-theme="zhub-light"] .bg-slate-800\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-800\/50,
@@ -75,27 +69,34 @@ html[data-panel-theme="zhub-light"] .bg-slate-800\/80 {
 html[data-panel-theme="zhub-light"] .bg-slate-700,
 html[data-panel-theme="zhub-light"] .bg-slate-700\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-700\/50 {
-  background-color: #eef2f6 !important;
+  background-color: #e8eef4 !important;
 }
 
 html[data-panel-theme="zhub-light"] .bg-slate-600,
 html[data-panel-theme="zhub-light"] .bg-slate-600\/40,
+html[data-panel-theme="zhub-light"] .bg-slate-600\/50,
 html[data-panel-theme="zhub-light"] .bg-slate-500,
 html[data-panel-theme="zhub-light"] .bg-slate-500\/30 {
-  background-color: #e7edf3 !important;
+  background-color: #dfe7ef !important;
 }
 
-/* Texto: azul tinta sólido, sin blanco brillante sobre superficies claras. */
+/* ================================================================
+   TEXTO — AZUL TINTA, SIN BLANQUEAR KPIs NI DESLAVAR CONTENIDO
+   ================================================================ */
 html[data-panel-theme="zhub-light"] .text-white,
-html[data-panel-theme="zhub-light"] .text-slate-100 { color: #18324d !important; }
-html[data-panel-theme="zhub-light"] .text-slate-200 { color: #29445f !important; }
+html[data-panel-theme="zhub-light"] .text-slate-100 {
+  color: #17365b !important;
+}
+html[data-panel-theme="zhub-light"] .text-slate-200 { color: #28496d !important; }
 html[data-panel-theme="zhub-light"] .text-slate-300,
-html[data-panel-theme="zhub-light"] .text-slate-300\/90 { color: #3c5871 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-400 { color: #58718a !important; }
-html[data-panel-theme="zhub-light"] .text-slate-500 { color: #6b8196 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-600 { color: #7b8e9f !important; }
+html[data-panel-theme="zhub-light"] .text-slate-300\/90 { color: #496582 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-400 { color: #607b96 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-500 { color: #7188a0 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-600 { color: #8295a8 !important; }
 
-/* Bordes y líneas: finos, grises y visibles. */
+/* ================================================================
+   BORDES / DIVISORES — LÍNEAS FINAS COMO LA REFERENCIA
+   ================================================================ */
 html[data-panel-theme="zhub-light"] .border-slate-800,
 html[data-panel-theme="zhub-light"] .border-slate-800\/40,
 html[data-panel-theme="zhub-light"] .border-slate-800\/50,
@@ -106,128 +107,164 @@ html[data-panel-theme="zhub-light"] .border-slate-700,
 html[data-panel-theme="zhub-light"] .border-slate-700\/50,
 html[data-panel-theme="zhub-light"] .border-slate-700\/70,
 html[data-panel-theme="zhub-light"] .border-slate-700\/80 {
-  border-color: #d5dee7 !important;
+  border-color: #d6e0e9 !important;
 }
 
 html[data-panel-theme="zhub-light"] .border-slate-600,
 html[data-panel-theme="zhub-light"] .border-slate-600\/40,
 html[data-panel-theme="zhub-light"] .border-slate-600\/50 {
-  border-color: #c4d0dc !important;
+  border-color: #c5d2df !important;
 }
 
 html[data-panel-theme="zhub-light"] .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
 html[data-panel-theme="zhub-light"] .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
 html[data-panel-theme="zhub-light"] .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #dbe3ea !important;
+  border-color: #dce4ec !important;
 }
 
-/* Formularios: blanco sólido y texto oscuro. */
+/* ================================================================
+   FORMULARIOS — BLANCO REAL + BORDE GRIS AZULADO
+   ================================================================ */
 html[data-panel-theme="zhub-light"] input,
 html[data-panel-theme="zhub-light"] textarea,
 html[data-panel-theme="zhub-light"] select,
 html[data-panel-theme="zhub-light"] .field {
-  color: #18324d !important;
-}
-
-html[data-panel-theme="zhub-light"] input,
-html[data-panel-theme="zhub-light"] textarea,
-html[data-panel-theme="zhub-light"] select,
-html[data-panel-theme="zhub-light"] .field {
+  color: #17365b !important;
   background-color: #ffffff !important;
-  border-color: #b9c8d6 !important;
+  border-color: #b9c9d9 !important;
   box-shadow: none !important;
 }
 
 html[data-panel-theme="zhub-light"] input::placeholder,
 html[data-panel-theme="zhub-light"] textarea::placeholder {
-  color: #71869a !important;
+  color: #7b8fa4 !important;
 }
 
-/* Eliminar TODOS los gradientes del template claro. */
-html[data-panel-theme="zhub-light"] [class*="bg-gradient"],
-html[data-panel-theme="zhub-light"] [class*="from-"],
-html[data-panel-theme="zhub-light"] [class*="via-"],
-html[data-panel-theme="zhub-light"] [class*="to-"] {
+/* ================================================================
+   KPI — LOS CUATRO BLOQUES CONSERVAN COLOR SÓLIDO Y CONTRASTE
+   ================================================================ */
+html[data-panel-theme="zhub-light"] [class*="from-teal-"],
+html[data-panel-theme="zhub-light"] [class*="from-emerald-"] {
+  background-color: #079879 !important;
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="from-blue-"],
+html[data-panel-theme="zhub-light"] [class*="from-cyan-"] {
+  background-color: #1d73c6 !important;
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="from-purple-"],
+html[data-panel-theme="zhub-light"] [class*="from-violet-"],
+html[data-panel-theme="zhub-light"] [class*="from-indigo-"] {
+  background-color: #6949c7 !important;
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="from-slate-"] {
+  background-color: #2d3b50 !important;
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="from-rose-"],
+html[data-panel-theme="zhub-light"] [class*="from-red-"] {
+  background-color: #bd5368 !important;
   background-image: none !important;
 }
 
-/* KPI: colores sólidos, sobrios y consistentes con la referencia. */
-html[data-panel-theme="zhub-light"] [class*="from-teal-"],
-html[data-panel-theme="zhub-light"] [class*="from-emerald-"] { background-color: #079879 !important; }
-html[data-panel-theme="zhub-light"] [class*="from-blue-"],
-html[data-panel-theme="zhub-light"] [class*="from-cyan-"] { background-color: #2478c8 !important; }
-html[data-panel-theme="zhub-light"] [class*="from-purple-"],
-html[data-panel-theme="zhub-light"] [class*="from-violet-"] { background-color: #7050c4 !important; }
-html[data-panel-theme="zhub-light"] [class*="from-slate-"] { background-color: #334155 !important; }
-html[data-panel-theme="zhub-light"] [class*="from-rose-"],
-html[data-panel-theme="zhub-light"] [class*="from-red-"] { background-color: #bd4b62 !important; }
-html[data-panel-theme="zhub-light"] [class*="from-amber-"],
-html[data-panel-theme="zhub-light"] [class*="from-orange-"] { background-color: #b87922 !important; }
-
-/* Botones/accentos: sólidos, sin brillo. */
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-500"],
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-600"] { background-color: #128eaf !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-blue-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-blue-700"] { background-color: #2473bb !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-emerald-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-green-600"] { background-color: #16805f !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-purple-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-indigo-600"] { background-color: #5e55a9 !important; }
-
-/* Texto de color: saturación controlada. */
-html[data-panel-theme="zhub-light"] [class*="text-cyan-"] { color: #087c9f !important; }
-html[data-panel-theme="zhub-light"] [class*="text-blue-"] { color: #1e5f99 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-emerald-"],
-html[data-panel-theme="zhub-light"] [class*="text-green-"] { color: #167052 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-purple-"],
-html[data-panel-theme="zhub-light"] [class*="text-violet-"] { color: #62509d !important; }
-html[data-panel-theme="zhub-light"] [class*="text-rose-"],
-html[data-panel-theme="zhub-light"] [class*="text-red-"] { color: #a83f56 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-amber-"],
-html[data-panel-theme="zhub-light"] [class*="text-orange-"] { color: #91621d !important; }
-
-/* Hovers: solo cambio de superficie, nunca brillo. */
-html[data-panel-theme="zhub-light"] [class*="hover\\:bg-slate-"]:hover {
-  background-color: #edf2f6 !important;
-}
-html[data-panel-theme="zhub-light"] [class*="hover\\:text-slate-"]:hover {
-  color: #18324d !important;
-}
-
-/* Cero glow: ninguna sombra coloreada ni sombra intensa. */
-html[data-panel-theme="zhub-light"] [class*="shadow-"],
-html[data-panel-theme="zhub-light"] [class*="drop-shadow"],
-html[data-panel-theme="zhub-light"] [class*="glow"] {
-  box-shadow: none !important;
-  filter: none !important;
-}
-
-/* Opacidad heredada que produce textos casi blancos: estabilizarla. */
-html[data-panel-theme="zhub-light"] [class*="text-white\\/"] {
-  color: #18324d !important;
-}
-
-/* Texto blanco solo se conserva dentro de superficies de acción saturadas. */
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-blue-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-emerald-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-green-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-purple-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-violet-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-indigo-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-rose-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-red-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-slate-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-"] .text-white {
+/* KPI: todos los textos e iconos internos vuelven a blanco sólido. */
+html[data-panel-theme="zhub-light"] [class*="from-teal-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-emerald-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-blue-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-cyan-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-purple-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-violet-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-indigo-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-slate-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-rose-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="from-red-"] .text-white {
   color: #ffffff !important;
 }
 
-/* Focus visible: línea sólida, no halo. */
+/* Opacidades heredadas del tema oscuro: el texto de KPI sigue legible. */
+html[data-panel-theme="zhub-light"] [class*="from-teal-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-emerald-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-blue-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-cyan-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-purple-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-violet-"] [class*="text-white\/"],
+html[data-panel-theme="zhub-light"] [class*="from-slate-"] [class*="text-white\/" ] {
+  color: rgba(255,255,255,.82) !important;
+}
+
+/* ================================================================
+   ACENTOS / ESTADOS — COLOR SÓLIDO, SATURACIÓN MODERADA
+   ================================================================ */
+html[data-panel-theme="zhub-light"] [class*="bg-cyan-500"],
+html[data-panel-theme="zhub-light"] [class*="bg-cyan-600"] { background-color: #1698bb !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-blue-600"],
+html[data-panel-theme="zhub-light"] [class*="bg-blue-700"] { background-color: #2477c2 !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-emerald-600"],
+html[data-panel-theme="zhub-light"] [class*="bg-green-600"] { background-color: #148261 !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-purple-600"],
+html[data-panel-theme="zhub-light"] [class*="bg-indigo-600"] { background-color: #6253ad !important; }
+
+html[data-panel-theme="zhub-light"] [class*="text-cyan-"] { color: #087da1 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-blue-"] { color: #1f609c !important; }
+html[data-panel-theme="zhub-light"] [class*="text-emerald-"],
+html[data-panel-theme="zhub-light"] [class*="text-green-"] { color: #147252 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-purple-"],
+html[data-panel-theme="zhub-light"] [class*="text-violet-"],
+html[data-panel-theme="zhub-light"] [class*="text-indigo-"] { color: #5c4d99 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-rose-"],
+html[data-panel-theme="zhub-light"] [class*="text-red-"] { color: #a33f55 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-amber-"],
+html[data-panel-theme="zhub-light"] [class*="text-orange-"] { color: #91631f !important; }
+
+/* ================================================================
+   NAVEGACIÓN / SELECCIÓN — AZUL CLARO SÓLIDO, NO NEÓN
+   ================================================================ */
+html[data-panel-theme="zhub-light"] [class*="hover\\:bg-slate-"]:hover {
+  background-color: #edf3f8 !important;
+}
+html[data-panel-theme="zhub-light"] [class*="hover\\:text-slate-"]:hover {
+  color: #17365b !important;
+}
+
+/* ================================================================
+   SOMBRAS — SOLO SOMBRA NEUTRA MUY DISCRETA, NUNCA COLOR/BRILLO
+   ================================================================ */
+html[data-panel-theme="zhub-light"] [class*="shadow-"],
+html[data-panel-theme="zhub-light"] [class*="drop-shadow"],
+html[data-panel-theme="zhub-light"] [class*="glow"] {
+  box-shadow: 0 2px 8px rgba(23,54,91,.08) !important;
+  filter: none !important;
+}
+
+/* Ningún gradiente decorativo del template claro. */
+html[data-panel-theme="zhub-light"] [class*="bg-gradient"] {
+  background-image: none !important;
+}
+
+/* Focus: borde definido sin halo luminoso. */
 html[data-panel-theme="zhub-light"] input:focus,
 html[data-panel-theme="zhub-light"] textarea:focus,
 html[data-panel-theme="zhub-light"] select:focus,
 html[data-panel-theme="zhub-light"] button:focus-visible {
-  outline: 2px solid #7aa9c2 !important;
+  outline: 2px solid #8aa9c2 !important;
   outline-offset: 1px !important;
   box-shadow: none !important;
+}
+
+/* Iconos y elementos sobre superficies claras: tono azul sólido. */
+html[data-panel-theme="zhub-light"] aside svg,
+html[data-panel-theme="zhub-light"] header svg {
+  color: #355b80 !important;
+}
+
+/* Excepción: iconos/texto blancos dentro de botones y KPI con fondo de color. */
+html[data-panel-theme="zhub-light"] button[class*="bg-cyan-"] svg,
+html[data-panel-theme="zhub-light"] button[class*="bg-blue-"] svg,
+html[data-panel-theme="zhub-light"] button[class*="bg-emerald-"] svg,
+html[data-panel-theme="zhub-light"] button[class*="bg-green-"] svg,
+html[data-panel-theme="zhub-light"] button[class*="bg-purple-"] svg,
+html[data-panel-theme="zhub-light"] button[class*="bg-indigo-"] svg {
+  color: #ffffff !important;
 }
