@@ -1,8 +1,8 @@
 """
 Archivo: backend/app/models/setting.py
-Actualización: 2026-09-08 — agrega reglas globales de facturación, gracia, corte y notificaciones.
+Actualización: 2026-09-08 — agrega template visual persistente y conserva reglas globales de facturación.
 Función: Tabla `settings` — configuración general del ISP en una sola fila guardada como JSON.
-Trabaja con: backend/app/routers/ajustes/router.py y frontend/src/modules/facturacion/Billing.jsx.
+Trabaja con: backend/app/routers/ajustes/router.py, Ajustes > General y frontend/src/modules/appearance/.
 """
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,8 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 DEFAULT_SETTINGS = {
-    "company_name": "",
+    "company_name": "Z-Hub",
     "logo_data": "",
+    "panel_theme": "dark",
     "ruc": "",
     "phone": "",
     "email": "",
