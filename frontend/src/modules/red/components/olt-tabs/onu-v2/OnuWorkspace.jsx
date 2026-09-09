@@ -23,8 +23,8 @@ const SUBTABS = [
   { id: "optical", label: "Potencia Óptica ONU" },
 ];
 
-const Stat = ({ label, value, className = "text-slate-100" }) => (
-  <div className="rounded-xl border border-slate-800 bg-slate-950/45 px-4 py-3">
+const Stat = ({ label, value, className = "text-slate-100", tone = "" }) => (
+  <div className={`onu-stat onu-stat--${tone} rounded-xl border border-slate-800 bg-slate-950/45 px-4 py-3`}>
     <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
     <p className={`mt-1 text-xl font-bold font-mono ${className}`}>{value}</p>
   </div>
@@ -67,7 +67,7 @@ export default function OnuWorkspace({ router, pon, onAction, refreshSeq = 0, sh
   const counts = data?.counts || { total: 0, online: 0, offline: 0, unknown: 0 };
 
   return (
-    <div className="space-y-4" data-testid="onu-workspace-v2">
+    <div className="onu-workspace space-y-4" data-testid="onu-workspace-v2">
       <div className="rounded-2xl border border-slate-800 bg-slate-950/35 overflow-hidden">
         <div className="flex flex-wrap items-center gap-1 px-3 pt-2 border-b border-slate-800">
           {SUBTABS.map((item) => (
@@ -97,10 +97,10 @@ export default function OnuWorkspace({ router, pon, onAction, refreshSeq = 0, sh
 
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Stat label="Total ONU" value={counts.total} />
-            <Stat label="En línea" value={counts.online} className="text-emerald-300" />
-            <Stat label="Fuera de línea" value={counts.offline} className="text-rose-300" />
-            <Stat label="Sin estado" value={counts.unknown} className="text-amber-300" />
+            <Stat label="Total ONU" value={counts.total} tone="total" />
+            <Stat label="En línea" value={counts.online} className="text-emerald-300" tone="online" />
+            <Stat label="Fuera de línea" value={counts.offline} className="text-rose-300" tone="offline" />
+            <Stat label="Sin estado" value={counts.unknown} className="text-amber-300" tone="unknown" />
           </div>
 
           {!data?.ok && (
