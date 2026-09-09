@@ -1092,3 +1092,45 @@ html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat p:first
 html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat p:last-child {
   font-weight: 900 !important;
 }
+
+
+/* OLT 1.1.44 — Consola CLI con presentación de terminal y controles visibles. */
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-panel {
+  padding: 14px;
+  border: 1px solid #cbddea;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eef7fc, #f8fbfe) !important;
+  box-shadow: 0 4px 12px rgba(31, 74, 112, .08);
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form {
+  align-items: center;
+  padding: 9px;
+  border: 1px solid #9ccbe6;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #195278, #0b769d) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form > span,
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form > span svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form input {
+  background: #ffffff !important;
+  color: #163b5e !important;
+  border-color: #8fcbe9 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form button {
+  background: linear-gradient(135deg, #16b49f, #078879) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 9px rgba(2, 93, 83, .26) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-form button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #27c6ae, #079b8a) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-console-panel pre[data-testid="olt-raw"] {
+  background: #10263a !important;
+  color: #d6f3ff !important;
+  border-color: #226486 !important;
+  box-shadow: inset 0 0 0 1px rgba(112, 210, 255, .08);
+}
