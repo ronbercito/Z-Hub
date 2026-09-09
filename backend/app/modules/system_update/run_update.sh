@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Archivo: backend/app/modules/system_update/run_update.sh
-# Actualización: 2026-09-08 — mejora el diagnóstico de fallos durante instalación y rollback.
-# Función: instala origin/main de forma transaccional y restaura la versión anterior si falla.
-# Recibe: ejecución iniciada por system_update/router.py dentro de /var/www/mikrohub.
-# Entrega: progreso, paso exacto del fallo y detalle de las últimas líneas del instalador.
+# Actualización: 2026-09-09 — versión 1.1.12: instala desde Z-Hub o MikroHub según selección del backend.
+# Función: instala main del repositorio elegido de forma transaccional y restaura la versión anterior si falla.
+# Recibe: MIKROHUB_UPDATE_REPOSITORY / MIKROHUB_UPDATE_SOURCE desde system_update/router.py.
+# Entrega: progreso, fuente usada, paso exacto del fallo y detalle de las últimas líneas del instalador.
 set -euo pipefail
 ROOT="${MIKROHUB_ROOT:-/var/www/mikrohub}"
-REPOSITORY_URL="${MIKROHUB_REPOSITORY:-https://github.com/ronbercito/mirkohub.git}"
+PRIMARY_REPOSITORY="${ZHUB_REPOSITORY:-https://github.com/ronbercito/Z-Hub.git}"
+LEGACY_REPOSITORY="${MIKROHUB_LEGACY_REPOSITORY:-${MIKROHUB_REPOSITORY:-https://github.com/ronbercito/mirkohub.git}}"
+REPOSITORY_URL="${MIKROHUB_UPDATE_REPOSITORY:-$PRIMARY_REPOSITORY}"
+UPDATE_SOURCE="${MIKROHUB_UPDATE_SOURCE:-zhub}"
 BACKUP_FILE="$ROOT/.mikrohub-update-backup"
 LOG="/tmp/mikrohub-update.log"
 ERROR_LOG="/tmp/mikrohub-update-error.log"
@@ -18,13 +21,14 @@ STEP="Preparando la actualización"
 trap 'rc=$?; echo "ERROR en paso: $STEP" >> "$LOG"; echo "Comando: $BASH_COMMAND" >> "$LOG"; echo "Código: $rc" >> "$LOG"; tail -n 80 "$LOG" > "$ERROR_LOG" || true; exit $rc' ERR
 
 echo "PROGRESS:5:Preparando la actualización" >> "$LOG"
+echo "SOURCE:$UPDATE_SOURCE:$REPOSITORY_URL" >> "$LOG"
 PREVIOUS="$(git rev-parse HEAD)"
 printf '%s\n' "$PREVIOUS" > "$BACKUP_FILE"
 
 STEP="Descargando la nueva versión"
-echo "PROGRESS:20:Descargando la nueva versión" >> "$LOG"
+echo "PROGRESS:20:Descargando la nueva versión desde $UPDATE_SOURCE" >> "$LOG"
 git remote set-url origin "$REPOSITORY_URL"
-if git fetch origin main >> "$LOG" 2>&1; then
+if git fetch --force origin main >> "$LOG" 2>&1; then
   STEP="Aplicando archivos nuevos"
   echo "PROGRESS:45:Aplicando archivos nuevos" >> "$LOG"
   if git reset --hard origin/main >> "$LOG" 2>&1; then
@@ -34,7 +38,7 @@ if git fetch origin main >> "$LOG" 2>&1; then
       trap - ERR
       echo "PROGRESS:100:Actualización terminada" >> "$LOG"
       rm -f "$BACKUP_FILE"
-      echo "SUCCESS: actualización instalada correctamente." >> "$LOG"
+      echo "SUCCESS: actualización instalada correctamente desde $UPDATE_SOURCE." >> "$LOG"
       exit 0
     fi
   fi
