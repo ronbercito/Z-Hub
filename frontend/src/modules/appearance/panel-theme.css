@@ -1546,3 +1546,53 @@ html[data-panel-theme="zhub-light"] .billing-page .billing-config-save button {
   font-weight: 900 !important;
   box-shadow: 0 5px 12px rgba(7, 113, 148, .27) !important;
 }
+
+
+/* Log de cliente 1.1.53 — historial claro, eventos y operadores destacados. */
+html[data-panel-theme="zhub-light"] .client-activity-log {
+  background: linear-gradient(180deg, #f7fbfe 0%, #edf6fb 100%) !important;
+  border-color: #bad8eb !important;
+  box-shadow: 0 8px 21px rgba(28, 76, 112, .15) !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-header h3 {
+  color: #143f69 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-header p {
+  color: #4a7191 !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-count {
+  background: linear-gradient(135deg, #1db8d1, #1670b8) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 8px rgba(14, 106, 171, .25) !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-event {
+  background: #ffffff !important;
+  border-color: #c3d9e8 !important;
+  box-shadow: 0 3px 9px rgba(29, 76, 111, .08) !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-event:hover {
+  background: #e9f7fc !important;
+  border-color: #46acd1 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-event h4 {
+  color: #183f68 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-event p {
+  color: #426b8d !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-operator {
+  background: linear-gradient(135deg, #e1f5ff, #cbeaff) !important;
+  color: #09658c !important;
+  border: 1px solid #8acde8 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-activity-log-event .text-\[11px\] {
+  color: #52799a !important;
+  font-weight: 700 !important;
+}
