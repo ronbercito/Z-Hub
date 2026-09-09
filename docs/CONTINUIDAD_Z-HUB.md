@@ -1703,3 +1703,12 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: no cambia la lectura de RouterOS/OLT, métricas, estados, API, datos, permisos ni tema oscuro. Solo se presenta color bajo zhub-light.
 - Pruebas: revisión estática de identificadores, selectores y PANEL_VERSION 1.1.33. Build y validación visual real pendientes.
 - Resultado esperado: CPU azul, memoria violeta, uptime turquesa, latencia ámbar, PPPoE verde y colas índigo; tráfico y estados resaltan claramente sin volver a fondos oscuros.
+
+
+### 1.1.34 — 2026-09-09 — Tablero OLT claro con color operativo
+- Objetivo y causa: el resumen de OLT conservaba módulos completos en oscuro pese a que la vista general de Gestión de red ya se adaptó al tema claro.
+- Archivos modificados: frontend/src/modules/red/components/OltLiveTabs.jsx (contenedor visual OLT), frontend/src/modules/red/components/olt-tabs/OltSummaryTab.jsx (clase propia del tablero), frontend/src/modules/appearance/panel-theme.css (superficies claras y acentos de estado), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: no se modifica ningún endpoint /api/routers/{id}/olt/*, comando CLI, consulta de PON, ONU, conteo ni acción de la OLT. No cambia permisos, autenticación, datos ni tema oscuro.
+- Backup: rama backup-pre-olt-clara-1.1.34 creada antes del ajuste.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.34. Build, revisión visual y validación de lecturas reales pendientes.
+- Resultado esperado: Resumen OLT, salud, disponibilidad, estado y actividad usan blanco, bordes azul-gris y colores funcionales: verde/turquesa para línea, índigo para autorización, ámbar para alerta y rojo para fuera de línea.
