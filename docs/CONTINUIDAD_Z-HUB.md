@@ -2898,3 +2898,9 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Las cuatro tarjetas del resumen Router ahora usan atributos y estilos inyectados desde `Network.jsx`, cargados junto al componente.
 - Sus colores ya no dependen de la cascada de `panel-theme.css`; azul, violeta, turquesa y ámbar se aplican con prioridad propia.
 - Prueba: revisión estática de los cuatro atributos, los estilos locales y las cuatro tarjetas.
+
+
+### 1.1.98 — Color forzado desde el DOM en métricas Router
+
+- Se aplica el color como estilo inline con prioridad `!important` al montar cada tarjeta, eliminando cualquier dependencia restante de la cascada CSS.
+- La corrección es exclusiva de las cuatro métricas de clientes y no afecta otros recuadros.
