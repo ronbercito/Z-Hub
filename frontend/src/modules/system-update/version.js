@@ -1,14 +1,15 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.11: ajuste visual del template Z-Hub Blanco.
+ * Actualización: 2026-09-09 — versión 1.1.12: transición de repositorio y actualizador dual.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG para frontend y sistema de actualización.
- * Regla: el ciclo 1.1.x continúa después de 1.0.99.
+ * Regla: Z-Hub es el repositorio principal desde 1.1.12; MikroHub queda como respaldo legado.
  */
-export const PANEL_VERSION = "1.1.11";
+export const PANEL_VERSION = "1.1.12";
 export const CHANGELOG = [
-  { type: "Apariencia", text: "Se ajusta el template Z-Hub Blanco para reducir la iluminación general y dejar un acabado más sobrio y cómodo visualmente." },
-  { type: "Diseño", text: "Se suavizan fondos, bordes, sombras, hovers y gradientes del tema claro manteniendo la combinación blanco, azul, cian y turquesa." },
-  { type: "Compatibilidad", text: "No se modifica la lógica funcional del panel ni el template oscuro clásico; solo se refina el acabado visual del tema claro." },
-  { type: "Persistencia", text: "El selector de templates sigue disponible en Ajustes > General y la preferencia del usuario se conserva sin cambios." },
-  { type: "Continuidad", text: "Se registra esta corrección visual en el documento maestro de continuidad y se crea un respaldo previo en GitHub." },
+  { type: "Repositorio", text: "Z-Hub pasa a ser el repositorio principal de desarrollo y actualizaciones del panel." },
+  { type: "Actualizador", text: "El panel consulta ahora ronbercito/Z-Hub y ronbercito/mirkohub y selecciona automáticamente la versión más reciente disponible." },
+  { type: "Prioridad", text: "Si ambos repositorios publican la misma versión, Z-Hub tiene prioridad; MikroHub queda disponible como fuente de respaldo." },
+  { type: "Migración", text: "La instalación cambia el origin del servidor al repositorio desde el que se instala la actualización, permitiendo migrar de MikroHub a Z-Hub sin reinstalar el panel." },
+  { type: "Seguridad", text: "Se conserva rollback al commit anterior y se creó una rama de respaldo previa a la transición 1.1.12." },
+  { type: "Continuidad", text: "Se actualiza la bitácora maestra indicando que todo trabajo futuro debe realizarse en ronbercito/Z-Hub." },
 ];
