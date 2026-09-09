@@ -17,7 +17,7 @@ IMPORTANTE:
 
 ## 0. Regla principal para futuras sesiones
 
-**Antes de modificar MikroHub, leer este archivo completo y revisar el estado real de `main`.**
+**Antes de modificar Z-Hub, leer este archivo completo y revisar el estado real de `main` en `ronbercito/Z-Hub`.**
 
 Este documento es la memoria técnica del proyecto. Su objetivo es que una nueva ventana de ChatGPT/Copilot pueda saber:
 
@@ -47,7 +47,7 @@ Orden obligatorio de trabajo:
 
 Si se detecta un cambio previo sin documentación, la primera tarea será reconstruirla desde los commits y archivos reales antes de continuar con nuevas funciones.
 
-Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
+Cada vez que se **agregue, modifique o corrija** algo en Z-Hub:
 
 1. Actualizar esta bitácora.
 2. Registrar fecha y una **revisión interna de continuidad**.
@@ -77,7 +77,7 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.1.12**, correspondiente a la migración del desarrollo a `ronbercito/Z-Hub` y al actualizador con consulta dual Z-Hub/MikroHub.
+- Versión funcional actual: **1.1.13**, correspondiente al refinamiento de baja luminancia del template Z-Hub Claro Suave. El repositorio principal y autoritativo es `ronbercito/Z-Hub`.
 
 ---
 
@@ -377,7 +377,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.1.11
+PANEL_VERSION = 1.1.13
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -1406,3 +1406,67 @@ Desde este punto:
 ### Cierre de migración de repositorio
 
 **Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.
+
+
+---
+
+## 24. Registro de continuidad — 2026-09-09 — Panel 1.1.13
+
+**Tipo:** UX visual / reducción de luminancia / continuidad / repositorio definitivo.
+
+### Regla definitiva de repositorio
+
+A partir de esta entrega, **todo trabajo nuevo se realiza en `ronbercito/Z-Hub`**: desarrollo, correcciones, documentación, pruebas y publicación.
+
+`ronbercito/mirkohub` queda exclusivamente como repositorio legado/fallback del actualizador dual. No debe recibir nuevas funciones salvo rollback o emergencia expresamente documentada.
+
+### Motivo
+
+El administrador confirmó que el template claro seguía teniendo demasiado brillo blanco y resultaba molesto para la vista durante uso prolongado.
+
+### Solución
+
+El tema persistido `zhub-light` se conserva para no perder preferencias existentes, pero su presentación visible cambia a **Z-Hub Claro Suave**.
+
+Se reduce la luminancia de manera más marcada:
+
+- fondo general `#d7e0e9`;
+- tarjetas/superficies `#e7edf3`;
+- superficies secundarias `#dde5ed`;
+- sidebar/header `#e3e9f0`;
+- campos `#e8edf3`;
+- bordes gris-azulados más sobrios;
+- hovers menos luminosos;
+- sombras y gradientes casi neutros.
+
+No se usa blanco puro como superficie normal del template claro. El blanco se reserva para texto sobre acciones/estados de color cuando aporta contraste.
+
+### Archivos modificados
+
+- `frontend/src/modules/appearance/panel-theme.css`;
+- `frontend/src/modules/appearance/panelThemes.js`;
+- `frontend/src/modules/system-update/version.js`;
+- `docs/CONTINUIDAD_MIKROHUB.md`;
+- `docs/CONTINUIDAD_MIKROHUB_1.1.13_TEMA_CLARO_SUAVE.md`.
+
+### Backup
+
+Rama previa: `backup-pre-soft-light-1.1.13`, creada desde `ff71f9ae621cf196dff4cd21fd217f3a87eab602`.
+
+### Compatibilidad
+
+No se modifican lógica funcional, base de datos, Clientes, Facturación, MikroTik, OLT, permisos, autenticación ni el tema oscuro clásico. El identificador persistido `zhub-light` permanece sin cambios.
+
+### Pruebas
+
+- [x] backup previo creado en `ronbercito/Z-Hub`;
+- [x] cambios aislados en rama `update-soft-light-1.1.13`;
+- [x] `PANEL_VERSION` actualizado a 1.1.13;
+- [x] identificador interno `zhub-light` preservado;
+- [x] build React de producción ejecutado en GitHub Actions;
+- [x] continuidad maestra actualizada en la misma entrega;
+- [ ] validación visual real después de instalar 1.1.13 en el servidor.
+
+### Resultado esperado
+
+El template debe seguir siendo claro, pero notablemente menos brillante, con una base gris-azulada suave y sin grandes superficies blancas que fatiguen la vista.
