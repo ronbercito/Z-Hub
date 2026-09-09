@@ -1493,3 +1493,56 @@ html[data-panel-theme="zhub-light"] .client-services-table .client-service-statu
   color: #ffffff !important;
   font-weight: 900 !important;
 }
+
+
+/* Facturación 1.1.52 — configuración legible y alineada con el tema Z-Hub. */
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card {
+  background: #ffffff !important;
+  border-color: #bed7e9 !important;
+  box-shadow: 0 7px 18px rgba(28, 77, 113, .14) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card--cut {
+  border-top: 4px solid #168fc4 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card--reminders {
+  border-top: 4px solid #11a982 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card h3 {
+  color: #163f68 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card p {
+  color: #477293 !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card > div:first-child {
+  border-color: #c8dce9 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card label {
+  color: #1c4c79 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card input:not([type="checkbox"]),
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card select {
+  background: #f4f9fc !important;
+  border-color: #bcd6e7 !important;
+  color: #173f67 !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 1px 2px rgba(31, 82, 118, .06) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card input:focus,
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card select:focus {
+  border-color: #159bd2 !important;
+  box-shadow: 0 0 0 3px rgba(21, 155, 210, .16) !important;
+  outline: none !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-card input[type="checkbox"] {
+  accent-color: #0fa98a !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-config-save button {
+  background: linear-gradient(135deg, #10b5b7, #087eae) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 5px 12px rgba(7, 113, 148, .27) !important;
+}
