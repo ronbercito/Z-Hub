@@ -24,6 +24,14 @@ import EquipmentMapModal from "./components/EquipmentMapModal";
 
 const errMsg = (e, fallback) => e?.response?.data?.detail || fallback;
 
+const CLIENT_METRIC_STYLES = `
+  [data-router-client-metric="queues"] { background: #197ed4 !important; border-color: #197ed4 !important; }
+  [data-router-client-metric="dhcp"] { background: #7045c8 !important; border-color: #7045c8 !important; }
+  [data-router-client-metric="pppoe"] { background: #129d8c !important; border-color: #129d8c !important; }
+  [data-router-client-metric="suspended"] { background: #d8890b !important; border-color: #d8890b !important; }
+  [data-router-client-metric] p, [data-router-client-metric] svg { color: #fff !important; opacity: 1 !important; }
+`;
+
 export default function Network({ focus = "mikrotik" }) {
   const { API, token, user } = useAuth();
   const canViewRouter = canPermission(user, "network", "view");
@@ -152,6 +160,7 @@ export default function Network({ focus = "mikrotik" }) {
 
   return (
     <div className="network-reference space-y-6 animate-in fade-in duration-200" data-testid="network-page">
+      <style>{CLIENT_METRIC_STYLES}</style>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
@@ -237,10 +246,10 @@ export default function Network({ focus = "mikrotik" }) {
         <div className="network-detail bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
           {selected.device_type === "mikrotik" && (
             <div className="network-router-summary-stats grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <Stat compact icon={ListChecks} label="Clientes colas simples" value={clientCounts?.simple_queues ?? "—"} />
-              <Stat compact icon={Users} label="Clientes DHCP" value={clientCounts?.dhcp ?? "—"} />
-              <Stat compact icon={Users} label="Clientes PPPoE" value={clientCounts?.pppoe ?? "—"} />
-              <Stat compact icon={UserX} label="Clientes suspendidos" value={clientCounts?.suspended ?? "—"} />
+              <Stat compact icon={ListChecks} label="Clientes colas simples" value={clientCounts?.simple_queues ?? "—"} tone="queues" />
+              <Stat compact icon={Users} label="Clientes DHCP" value={clientCounts?.dhcp ?? "—"} tone="dhcp" />
+              <Stat compact icon={Users} label="Clientes PPPoE" value={clientCounts?.pppoe ?? "—"} tone="pppoe" />
+              <Stat compact icon={UserX} label="Clientes suspendidos" value={clientCounts?.suspended ?? "—"} tone="suspended" />
             </div>
           )}
 
@@ -270,8 +279,8 @@ export default function Network({ focus = "mikrotik" }) {
   );
 }
 
-const Stat = ({ icon: Icon, label, value, valueClass = "text-slate-100", compact = false }) => (
-  <div className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} border border-slate-800 min-w-0`}>
+const Stat = ({ icon: Icon, label, value, valueClass = "text-slate-100", compact = false, tone }) => (
+  <div data-router-client-metric={tone} className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} border border-slate-800 min-w-0`}>
     <p className={`${compact ? "text-[9px]" : "text-[10px]"} uppercase tracking-wider text-slate-500 flex items-center gap-1`}><Icon className="w-3 h-3" /> {label}</p>
     <p className={`${compact ? "text-xs" : "text-sm"} font-bold mt-1 font-mono truncate ${valueClass}`} title={String(value ?? "")}>{value}</p>
   </div>
