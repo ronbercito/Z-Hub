@@ -2,7 +2,7 @@
 # Función: Servicio Supervisor que mantiene el backend FastAPI de Z-Hub corriendo.
 [program:zhub_backend]
 directory=${APP_DIR}/backend
-command=${APP_DIR}/backend/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8001 --workers 2
+command=${APP_DIR}/backend/venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8001 --workers 2
 autostart=true
 autorestart=true
 startretries=5
