@@ -1,226 +1,37 @@
+
 /**
  * Archivo: frontend/src/modules/appearance/panel-theme.css
- * Actualización: 2026-09-09 — versión 1.1.18: ajuste del panel derecho del dashboard.
+ * Actualización: 2026-09-09 — versión 1.1.20: tipografía y resaltado del menú lateral en tema claro.
  * Función: capa visual exclusiva para `zhub-light`.
- * Objetivo: reproducir la referencia aprobada con blanco suave, azul tinta, bordes finos,
- *           sombras neutras y colores sólidos moderados. Sin glow ni gradientes.
- * Regla: no modifica el tema oscuro ni la lógica funcional.
+ * Objetivo: aproximar la tipografía del ejemplo con texto más firme y activo claramente destacado.
  */
 
-html[data-panel-theme="zhub-light"],
-html[data-panel-theme="zhub-light"] body,
-html[data-panel-theme="zhub-light"] #root {
-  color-scheme: light !important;
-  background: #edf2f7 !important;
+/* Navegación lateral: tipografía más compacta, firme y legible en Z-Hub Claro. */
+html[data-panel-theme="zhub-light"] aside nav button {
+  font-family: Inter, "Segoe UI", Arial, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Sección activa: peso alto para que destaque como en la referencia. */
+html[data-panel-theme="zhub-light"] aside nav button.bg-cyan-500\/15 {
+  font-weight: 800 !important;
   color: #173b63 !important;
 }
 
-html[data-panel-theme="zhub-light"] body,
-html[data-panel-theme="zhub-light"] main,
-html[data-panel-theme="zhub-light"] #root {
-  background-color: #edf2f7 !important;
-  background-image: none !important;
-}
-
-html[data-panel-theme="zhub-light"] header,
-html[data-panel-theme="zhub-light"] aside {
-  background: #ffffff !important;
-  border-color: #d7e1eb !important;
-  box-shadow: none !important;
-}
-
-html[data-panel-theme="zhub-light"] main .bg-white,
-html[data-panel-theme="zhub-light"] main .bg-slate-950,
-html[data-panel-theme="zhub-light"] main .bg-slate-900,
-html[data-panel-theme="zhub-light"] main .bg-slate-800,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/35,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/40,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/50,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/60,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/70,
-html[data-panel-theme="zhub-light"] .bg-slate-900\/40,
-html[data-panel-theme="zhub-light"] .bg-slate-900\/50,
-html[data-panel-theme="zhub-light"] .bg-slate-900\/60,
-html[data-panel-theme="zhub-light"] .bg-slate-800\/40,
-html[data-panel-theme="zhub-light"] .bg-slate-800\/50 {
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
-html[data-panel-theme="zhub-light"] .bg-slate-700,
-html[data-panel-theme="zhub-light"] .bg-slate-700\/40,
-html[data-panel-theme="zhub-light"] .bg-slate-700\/50 {
-  background-color: #e6edf4 !important;
-  background-image: none !important;
-}
-html[data-panel-theme="zhub-light"] .bg-slate-600,
-html[data-panel-theme="zhub-light"] .bg-slate-600\/40,
-html[data-panel-theme="zhub-light"] .bg-slate-500\/30 {
-  background-color: #dde6ee !important;
-  background-image: none !important;
-}
-
-html[data-panel-theme="zhub-light"] .text-white,
-html[data-panel-theme="zhub-light"] .text-slate-100 { color: #173b63 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-200 { color: #294b70 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-300 { color: #456581 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-400 { color: #5e7892 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-500 { color: #6f879e !important; }
-html[data-panel-theme="zhub-light"] .text-slate-600 { color: #7f92a5 !important; }
-
-html[data-panel-theme="zhub-light"] [class*="border-slate-"],
-html[data-panel-theme="zhub-light"] [class*="border-gray-"] {
-  border-color: #d1dde8 !important;
-}
-html[data-panel-theme="zhub-light"] [class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]) {
-  border-color: #dce5ed !important;
-}
-
-html[data-panel-theme="zhub-light"] input,
-html[data-panel-theme="zhub-light"] textarea,
-html[data-panel-theme="zhub-light"] select {
-  color: #173b63 !important;
-  background-color: #ffffff !important;
-  border-color: #b8c9d9 !important;
-  box-shadow: none !important;
-}
-html[data-panel-theme="zhub-light"] input::placeholder,
-html[data-panel-theme="zhub-light"] textarea::placeholder {
-  color: #788da1 !important;
-}
-
-html[data-panel-theme="zhub-light"] [class*="from-emerald-"],
-html[data-panel-theme="zhub-light"] [class*="from-teal-"] {
-  background: #109a7b !important;
-  background-image: none !important;
-}
-html[data-panel-theme="zhub-light"] [class*="from-blue-"],
-html[data-panel-theme="zhub-light"] [class*="from-cyan-"] {
-  background: #2477c4 !important;
-  background-image: none !important;
-}
-html[data-panel-theme="zhub-light"] [class*="from-violet-"],
-html[data-panel-theme="zhub-light"] [class*="from-purple-"],
-html[data-panel-theme="zhub-light"] [class*="from-indigo-"] {
-  background: #6849c4 !important;
-  background-image: none !important;
-}
-html[data-panel-theme="zhub-light"] [class*="from-slate-"] {
-  background: #334257 !important;
-  background-image: none !important;
-}
-
-html[data-panel-theme="zhub-light"] [class*="from-emerald-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-teal-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-blue-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-cyan-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-violet-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-purple-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-indigo-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="from-slate-"] .text-white {
-  color: #ffffff !important;
-}
-
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-500"],
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-600"] { background-color: #1596b5 !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-blue-500"],
-html[data-panel-theme="zhub-light"] [class*="bg-blue-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-blue-700"] { background-color: #2477c4 !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-emerald-500"],
-html[data-panel-theme="zhub-light"] [class*="bg-emerald-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-green-600"] { background-color: #159577 !important; }
-html[data-panel-theme="zhub-light"] [class*="bg-purple-500"],
-html[data-panel-theme="zhub-light"] [class*="bg-purple-600"],
-html[data-panel-theme="zhub-light"] [class*="bg-indigo-600"] { background-color: #6849c4 !important; }
-
-html[data-panel-theme="zhub-light"] [class*="text-cyan-"] { color: #087c9d !important; }
-html[data-panel-theme="zhub-light"] [class*="text-blue-"] { color: #1e5f9a !important; }
-html[data-panel-theme="zhub-light"] [class*="text-emerald-"],
-html[data-panel-theme="zhub-light"] [class*="text-green-"] { color: #147153 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-purple-"],
-html[data-panel-theme="zhub-light"] [class*="text-violet-"],
-html[data-panel-theme="zhub-light"] [class*="text-indigo-"] { color: #5c4b98 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-rose-"],
-html[data-panel-theme="zhub-light"] [class*="text-red-"] { color: #a44155 !important; }
-html[data-panel-theme="zhub-light"] [class*="text-amber-"],
-html[data-panel-theme="zhub-light"] [class*="text-orange-"] { color: #90631f !important; }
-
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-500\/"],
-html[data-panel-theme="zhub-light"] [class*="bg-blue-500\/"],
-html[data-panel-theme="zhub-light"] [class*="bg-blue-600\/"],
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-600\/" ] {
-  background-color: #dcecf7 !important;
-  background-image: none !important;
-}
-
-html[data-panel-theme="zhub-light"] aside svg,
-html[data-panel-theme="zhub-light"] header svg {
-  color: #315b82 !important;
-}
-
-html[data-panel-theme="zhub-light"] [class*="bg-gradient"],
-html[data-panel-theme="zhub-light"] [class*="gradient-"] {
-  background-image: none !important;
-  filter: none !important;
-}
-
-html[data-panel-theme="zhub-light"] [class*="shadow-"],
-html[data-panel-theme="zhub-light"] [class*="drop-shadow"],
-html[data-panel-theme="zhub-light"] [class*="glow"] {
-  box-shadow: 0 2px 7px rgba(23,59,99,.09) !important;
-  filter: none !important;
-}
-
-html[data-panel-theme="zhub-light"] input:focus,
-html[data-panel-theme="zhub-light"] textarea:focus,
-html[data-panel-theme="zhub-light"] select:focus,
-html[data-panel-theme="zhub-light"] button:focus-visible {
-  outline: 1px solid #8ca6bd !important;
-  outline-offset: 1px !important;
-  box-shadow: none !important;
-}
-
-html[data-panel-theme="zhub-light"] button[class*="bg-cyan-"],
-html[data-panel-theme="zhub-light"] button[class*="bg-blue-"],
-html[data-panel-theme="zhub-light"] button[class*="bg-emerald-"],
-html[data-panel-theme="zhub-light"] button[class*="bg-green-"],
-html[data-panel-theme="zhub-light"] button[class*="bg-purple-"],
-html[data-panel-theme="zhub-light"] button[class*="bg-indigo-"] {
-  color: #ffffff !important;
-}
-
-/*
- * Panel derecho del Dashboard: `Resumen del sistema`.
- * Se apunta únicamente al segundo panel de la fila que contiene el gráfico,
- * evitando convertir el gráfico de la izquierda en una tarjeta clara.
- */
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 {
-  background: #ffffff !important;
-  background-image: none !important;
-  border-color: #d5e0ea !important;
-  box-shadow: 0 2px 7px rgba(23,59,99,.08) !important;
+/* Texto del elemento activo y submenú activo: máximo contraste sin brillo. */
+html[data-panel-theme="zhub-light"] aside nav button.bg-cyan-500\/15 span {
+  font-weight: 800 !important;
   color: #173b63 !important;
 }
 
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 > h3 {
+/* El submenú activo conserva el fondo suave, pero la etiqueta queda claramente en negrita. */
+html[data-panel-theme="zhub-light"] aside nav div.border-l button.bg-cyan-500\/15 {
+  font-weight: 800 !important;
   color: #173b63 !important;
-  border-color: #d5e0ea !important;
 }
 
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 .bg-slate-950\/50 {
-  background: #f6f9fc !important;
-  border: 1px solid #e0e8ef !important;
-  color: #294b70 !important;
-}
-
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 .bg-slate-950\/50:hover {
-  background: #eef4f8 !important;
-}
-
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 .text-slate-300 {
-  color: #294b70 !important;
-}
-
-html[data-panel-theme="zhub-light"] .lg\:col-span-8.bg-slate-900\/90 + .lg\:col-span-4.bg-slate-900\/90 a {
-  color: #087c9d !important;
+html[data-panel-theme="zhub-light"] aside nav div.border-l button.bg-cyan-500\/15 span {
+  font-weight: 800 !important;
+  color: #173b63 !important;
 }
