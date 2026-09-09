@@ -10,6 +10,7 @@ export default function SetupWizard() {
   const [step, setStep] = useState(1);
   const [licenseKey, setLicenseKey] = useState("");
   const [licenseValid, setLicenseValid] = useState(false);
+  const [licenseOwner, setLicenseOwner] = useState(null);
   const [admin, setAdmin] = useState({ name: "", email: "", password: "", password_confirmation: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,8 +31,9 @@ export default function SetupWizard() {
   };
 
   const validateLicense = () => run(async () => {
-    await axios.post(`${API}/setup/license`, { license_key: licenseKey });
+    const response = await axios.post(`${API}/setup/license`, { license_key: licenseKey });
     setLicenseValid(true);
+    setLicenseOwner({ name: response.data.owner, email: response.data.email });
     toast.success("Licencia válida");
   }, 2);
 
@@ -79,6 +81,13 @@ export default function SetupWizard() {
         {step === 2 && (
           <section>
             <div className="flex items-center gap-3 mb-5"><UserRound className="text-cyan-400" /><div><h2 className="font-semibold">Crear cuenta de administrador</h2><p className="text-xs text-slate-400">Esta será la cuenta utilizada para ingresar al panel.</p></div></div>
+            {licenseOwner && (
+              <div className="mb-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm">
+                <div className="font-semibold text-emerald-300">Licencia registrada</div>
+                <div className="mt-1 text-slate-200">{licenseOwner.name || "Sin nombre registrado"}</div>
+                {licenseOwner.email && <div className="text-slate-400">{licenseOwner.email}</div>}
+              </div>
+            )}
             <div className="space-y-4">
               <input className={input} placeholder="Nombre completo" value={admin.name} onChange={(e) => setAdmin({ ...admin, name: e.target.value })} />
               <div className="relative"><Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" /><input className={`${input} pl-10`} type="email" placeholder="Correo electrónico" value={admin.email} onChange={(e) => setAdmin({ ...admin, email: e.target.value })} /></div>
