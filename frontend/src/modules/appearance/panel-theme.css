@@ -2134,3 +2134,37 @@ html[data-panel-theme] .plans-page .plan-card.plan-card--hotspot {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Planes 1.2.08 — secciones por tecnología y velocidades legibles. */
+.plans-page .plan-speed {
+  background: #ffffff !important;
+  border-color: rgba(255, 255, 255, .66) !important;
+}
+html[data-panel-theme] .plans-page .plan-card .plan-speed .plan-speed-label {
+  color: #173e63 !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme] .plans-page .plan-card .plan-speed .plan-speed-value--download {
+  color: #0879b9 !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme] .plans-page .plan-card .plan-speed .plan-speed-value--upload {
+  color: #078466 !important;
+  opacity: 1 !important;
+}
+.plans-page .plan-group-title {
+  color: #163b5e;
+}
+.plans-page .plan-group-marker {
+  width: .55rem;
+  height: 2rem;
+  border-radius: 999px;
+}
+.plans-page .plan-group-marker--fiber { background: #168bd3; }
+.plans-page .plan-group-marker--radio { background: #7c4dce; }
+.plans-page .plan-group-marker--hotspot { background: #e89a09; }
+html[data-panel-theme="zhub-dark"] .plans-page .plan-group-title,
+html[data-panel-theme="zhub-dark"] .plans-page .plan-group p {
+  color: #d7e6f6 !important;
+}
