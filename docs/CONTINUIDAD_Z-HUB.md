@@ -2081,3 +2081,9 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 
 - Se fuerza el color y trazo del SVG del servidor dentro de la tarjeta MikroTik para que no herede blanco del contenedor.
 - No se modifican tamaño, permisos ni otras acciones.
+
+
+### 1.1.78 — Icono explícito de servidor MikroTik
+
+- Se reemplazó el icono dependiente de estilos por un SVG de servidor/engranaje con trazo azul explícito.
+- No se modifican tamaño, datos, permisos ni acciones.
