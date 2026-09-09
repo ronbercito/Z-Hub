@@ -6,7 +6,7 @@ Recibe de: documentación versionada dentro del repositorio.
 Entrega a: desarrolladores, Copilot y mantenedores rutas de lectura antes de modificar el sistema.
 -->
 
-# MikroHub
+# Z-Hub
 
 Panel de gestión para operación ISP: clientes, red, routers/OLT, IPv4, facturación, tickets, mensajería, tareas, ajustes y actualizaciones.
 
