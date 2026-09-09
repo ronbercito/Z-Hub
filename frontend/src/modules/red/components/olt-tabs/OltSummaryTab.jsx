@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/olt-tabs/OltSummaryTab.jsx
- * Pertenece a: Red > OLT > pestaña "Resumen".
+ * Actualización: 2026-09-09 — versión 1.1.34, tablero OLT claro con colores operativos.\n * Pertenece a: Red > OLT > pestaña "Resumen".
  * Función: Tablero operativo: primero salud de red y estado de OLTs; después
  *          salud técnica de la OLT seleccionada.
  * Regla: Las métricas sin fuente real se muestran como no disponibles.
@@ -59,7 +59,7 @@ export default function OltSummaryTab({ res, router, routers = [], onuCounts, on
   const uptime = info["Running Time"] || info.Uptime || "—";
 
   return (
-    <div className="space-y-3" data-testid="olt-summary-dashboard">
+    <div className="olt-summary-dashboard space-y-3" data-testid="olt-summary-dashboard">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <Metric label="OLTs en línea" value={`${onlineOlts}/${oltTotal}`} tone="text-emerald-300" />
         <Metric label="ONUs en línea" value={onusLoading ? "…" : counts.online} hint={onusLoading ? "Consultando todos los PON…" : `de ${counts.total} autorizadas`} tone="text-emerald-300" />
