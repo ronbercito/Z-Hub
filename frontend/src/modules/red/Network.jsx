@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
+ * Actualización: 2026-09-09 — versión 1.1.32, presentación clara de Gestión de red.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
  *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
@@ -113,7 +113,7 @@ export default function Network({ focus = "mikrotik" }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200" data-testid="network-page">
+    <div className="network-reference space-y-6 animate-in fade-in duration-200" data-testid="network-page">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
@@ -187,7 +187,7 @@ export default function Network({ focus = "mikrotik" }) {
       )}
 
       {selected && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
+        <div className="network-detail bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
           {selected.device_type === "mikrotik" && (
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
               <Stat icon={Cpu} label="CPU" value={`${selected.cpu_usage_pct}%`} />
