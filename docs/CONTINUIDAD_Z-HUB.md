@@ -2087,3 +2087,15 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 
 - Se reemplazó el icono dependiente de estilos por un SVG de servidor/engranaje con trazo azul explícito.
 - No se modifican tamaño, datos, permisos ni acciones.
+
+
+
+### 1.1.79 — Resumen de clientes operativos por router
+
+- En **Gestión de Red → Routers MikroTik**, los cuatro recuadros de resumen reemplazan CPU, memoria, uptime y latencia por: **Clientes colas simples**, **Clientes DHCP**, **Clientes PPPoE** y **Clientes suspendidos**.
+- Colas simples, DHCP y PPPoE se consultan directamente al MikroTik al seleccionar el router, en una única conexión API; las colas deshabilitadas no se cuentan, DHCP solo considera concesiones enlazadas y PPPoE cuenta sesiones activas.
+- Clientes suspendidos se cuenta desde los abonados asignados a ese router en el panel, para reflejar el estado administrativo real.
+- Las cuatro tarjetas conservan la geometría compartida y reciben colores distinguibles en ambos temas.
+- Archivos funcionales: `backend/app/routers/red/router.py`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: verificación estática de endpoint, una sola conexión MikroTik, criterios de conteo, consulta al seleccionar y estilos de los cuatro recuadros.
+- Alcance: no se modifican clientes, servicios, cortes, credenciales, sesiones, pestañas ni aprovisionamiento.
