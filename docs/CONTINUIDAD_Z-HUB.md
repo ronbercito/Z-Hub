@@ -2072,3 +2072,815 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - En Claro Suave se restauran los colores sólidos y el texto blanco legible de las cuatro tarjetas de clientes del router.
 - Se mantiene la geometría compartida y no se cambian datos ni lecturas.
 - Prueba: revisión estática de los cuatro selectores de tarjeta y contraste.
+
+
+---
+
+# Anexo documental consolidado — 2026-09-09
+
+Los siguientes registros históricos se integran aquí para mantener una única bitácora de continuidad. Son antecedentes; las reglas vigentes de este documento prevalecen sobre cualquier instrucción anterior en conflicto.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD-INSTALADOR-Z-HUB.md
+
+# Z-Hub — Continuidad del instalador
+
+## Comando oficial de instalación limpia
+
+```bash
+apt-get update && apt-get install -y git && mkdir -p /var/www && rm -rf /var/www/z-hub && git clone https://github.com/ronbercito/Z-Hub.git /var/www/z-hub && cd /var/www/z-hub && chmod +x install.sh deploy/install.sh && ./install.sh
+```
+
+## Flujo técnico
+
+1. Actualiza los índices de paquetes.
+2. Instala Git.
+3. Crea `/var/www` si no existe.
+4. Elimina el checkout anterior `/var/www/z-hub`.
+5. Clona `ronbercito/Z-Hub` desde `main`.
+6. Da permisos de ejecución a `install.sh` y `deploy/install.sh`.
+7. Ejecuta `./install.sh`.
+8. El instalador raíz lanza `deploy/install.sh` en primer plano.
+9. Al terminar intenta abrir el panel mediante `xdg-open` cuando existe entorno gráfico.
+
+## Configuración inicial web
+
+Una instalación nueva no crea ni muestra credenciales administrativas automáticas.
+
+El panel presenta el asistente de primera configuración mientras `initial_setup_completed` sea falso:
+
+1. **Licencia** — introduce una serie y el backend la valida contra el registro privado.
+2. **Administrador** — crea la cuenta admin real con nombre, correo y contraseña elegidos por el operador.
+3. **Finalizar** — muestra licencia activada, administrador configurado y la versión actual; `FINALIZADO` marca el proceso como terminado y vuelve al panel/login.
+
+Cuando la licencia es válida, el asistente también muestra el **nombre y correo del titular registrado** para identificar a quién pertenece la licencia. El administrador del panel sigue pudiendo elegir sus propios datos de acceso.
+
+El archivo `install.sh` no se elimina. El asistente se desactiva mediante estado persistente.
+
+## Registro interno de licencias
+
+El archivo fuente para preparar nuevas instalaciones está en:
+
+```text
+licencia/licencias.txt
+```
+
+El formato es deliberadamente sencillo y editable como texto normal. Cada licencia utiliza un bloque:
+
+```text
+# LICENCIAS Z-HUB
+
+LICENCIA: ZHUB-2026-001
+NOMBRE: Empresa Demo SAC
+CORREO: admin@empresademo.com
+ESTADO: ACTIVA
+
+LICENCIA: ZHUB-2026-002
+NOMBRE: Juan Pérez
+CORREO: juan@ejemplo.com
+ESTADO: ACTIVA
+```
+
+Para agregar otra licencia, basta con copiar un bloque y cambiar sus datos. Para desactivarla sin borrarla, cambia:
+
+```text
+ESTADO: INACTIVA
+```
+
+Las licencias inactivas no pueden validarse en el asistente.
+
+### Ubicación privada en el servidor
+
+Durante la instalación, el registro se copia a:
+
+```text
+/etc/zhub/licencia/licencias.txt
+```
+
+El backend prioriza esta copia privada mediante `ZHUB_LICENSE_FILE`. Si ya existe, el instalador no la reemplaza, permitiendo que el administrador del servidor mantenga sus licencias locales.
+
+Después de copiarla, el instalador elimina la carpeta `licencia` del checkout `/var/www/z-hub`. Por tanto:
+
+- no forma parte del frontend;
+- no se copia al `webroot`;
+- no es descargable desde el panel;
+- no queda expuesta por Nginx;
+- queda como información interna del servidor/contenedor y del administrador.
+
+La carpeta `licencia` del repositorio funciona solamente como **plantilla temporal para preparar instalaciones nuevas**. El mecanismo definitivo de licenciamiento seguirá siendo responsabilidad del backend y no depende de exponer este archivo al navegador.
+
+## Compatibilidad con instalaciones anteriores
+
+Si ya existe un usuario con rol `admin`, el seed marca la instalación como completada para no bloquear instalaciones existentes ni reemplazar su administrador actual.
+
+## Seguridad y salida de terminal
+
+- No se muestran contraseñas administrativas.
+- No existen credenciales `admin@fibraz.pe / admin123` automáticas.
+- La salida técnica continúa en `/var/log/zhub_install.log` con permisos restringidos.
+- El registro privado de licencias queda con permisos `root:www-data` y modo `640`.
+- La interfaz de terminal mantiene las 7 etapas neutrales y su esquema de colores.
+
+## Advertencia de instalación limpia
+
+`rm -rf /var/www/z-hub` reemplaza los archivos del checkout local antes de clonar nuevamente. No ejecutar sobre una instalación existente sin confirmar que se desea reemplazar ese checkout y que los datos necesarios están conservados/respaldados.
+
+La contraseña de base de datos no se documenta aquí ni en ningún documento de continuidad. En instalaciones nuevas se genera aleatoriamente; si existe una configuración válida, se conserva.
+
+## Fecha de revisión
+
+2026-09-09
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_LOGIN_RECORDAR_CUENTA.md
+
+# Z-Hub — Continuidad: Recordar mi cuenta en Login
+
+**Fecha:** 2026-09-09  
+**Versión funcional:** 1.1.82  
+**Repositorio:** `ronbercito/Z-Hub`  
+**Rama:** `main`
+
+## Objetivo
+
+Agregar al formulario de inicio de sesión una opción voluntaria para que el operador pueda recordar su cuenta y no tenga que volver a escribir el correo en el siguiente acceso.
+
+## Comportamiento implementado
+
+En:
+
+```text
+frontend/src/modules/auth/Login.jsx
+```
+
+se agregó la casilla:
+
+```text
+Recordar mi cuenta
+```
+
+La opción es voluntaria y aparece debajo del campo de contraseña.
+
+### Si está activada
+
+Después de un inicio de sesión exitoso se guardan localmente:
+
+```text
+zhub_remember_account=true
+zhub_remembered_email=<correo>
+```
+
+En el siguiente acceso, el correo se precarga automáticamente.
+
+### Si está desactivada
+
+No se conserva la cuenta recordada. Las claves utilizadas por esta función se eliminan después del inicio de sesión exitoso.
+
+## Seguridad
+
+**La contraseña NO se guarda.**
+
+Esta funcionalidad solamente recuerda el identificador de la cuenta (correo electrónico). No cambia el mecanismo existente de autenticación ni crea credenciales automáticas.
+
+El token JWT existente continúa administrándose mediante:
+
+```text
+fibraz_token
+```
+
+en:
+
+```text
+frontend/src/context/AuthContext.js
+```
+
+No se modificó el flujo JWT para implementar esta preferencia.
+
+## Archivos involucrados
+
+### Cambio funcional
+
+```text
+frontend/src/modules/auth/Login.jsx
+```
+
+Responsable de:
+- mostrar la casilla;
+- cargar el correo recordado;
+- mantener el estado del checkbox;
+- guardar/eliminar la preferencia después del login.
+
+### Compatibilidad revisada
+
+```text
+frontend/src/context/AuthContext.js
+```
+
+Se verificó para mantener intacto el flujo de autenticación y almacenamiento del token.
+
+## Commit funcional
+
+```text
+51d1318b5cc4b0a7adb2df5303aee8e2fbdc1eb6
+```
+
+Mensaje:
+
+```text
+feat: add optional remember account on login
+```
+
+## Pruebas / validación
+
+Se revisó el flujo de `Login.jsx` y la interacción con `AuthContext.js` para asegurar que:
+
+1. La cuenta se pueda recordar de forma opcional.
+2. El correo se precargue cuando existe la preferencia.
+3. La contraseña no se almacene por esta funcionalidad.
+4. El token JWT existente continúe funcionando sin cambios.
+5. Desactivar la opción elimine las claves de recuerdo.
+
+### Pendiente de validación en instalación real
+
+Realizar una prueba visual en navegador:
+
+1. Entrar al login.
+2. Escribir correo y contraseña.
+3. Activar `Recordar mi cuenta`.
+4. Iniciar sesión.
+5. Cerrar sesión.
+6. Volver al login y comprobar que el correo aparezca precargado.
+7. Desactivar la casilla y volver a iniciar sesión.
+8. Comprobar que el correo ya no quede recordado.
+
+## Reglas para futuras modificaciones
+
+- No guardar la contraseña para implementar esta función.
+- No cambiar `fibraz_token` sin revisar primero todo el flujo de autenticación.
+- Mantener la casilla como una preferencia opcional.
+- Si se cambia el comportamiento de esta función, actualizar este documento y la bitácora maestra `docs/CONTINUIDAD_Z-HUB.md`.
+- Los cambios funcionales deben actualizar `PANEL_VERSION` y `CHANGELOG` según las reglas del proyecto.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-2.md
+
+# Z-Hub — Continuidad 2
+
+## Versión actual
+
+**PANEL_VERSION: 1.1.82**
+
+Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
+
+## Actualización registrada — 2026-09-09
+
+### Registro de licencias
+- El registro de licencias utiliza `licencia/licencias.txt` en formato de texto plano y amigable.
+- Cada bloque contiene `LICENCIA`, `NOMBRE`, `CORREO` y `ESTADO`.
+- Las licencias pueden activarse o desactivarse editando el bloque correspondiente.
+- Durante la instalación, el archivo se copia al almacenamiento privado `/etc/zhub/licencia/licencias.txt`.
+- El registro privado no se expone desde el panel ni desde el directorio público web.
+
+### Asistente inicial
+- La instalación nueva muestra el asistente web de configuración inicial.
+- Primero valida la serie/licencia.
+- Luego permite crear el administrador con el correo y contraseña elegidos por el instalador.
+- La contraseña requiere confirmación y mínimo 10 caracteres.
+- Al finalizar, el estado de instalación queda persistido y el asistente no vuelve a mostrarse.
+- Las instalaciones nuevas ya no crean credenciales administrativas predeterminadas.
+
+### Login — Recordar mi cuenta
+- Se agregó el checkbox opcional **Recordar mi cuenta** en el formulario de acceso.
+- Si está activado, se recuerda únicamente el correo de la cuenta.
+- Si está desactivado, se eliminan los datos recordados.
+- La contraseña nunca se guarda mediante esta función.
+- Las claves utilizadas son `zhub_remember_account` y `zhub_remembered_email`.
+- El token de autenticación existente (`fibraz_token`) mantiene su comportamiento independiente.
+
+### Commit funcional
+`51d1318b5cc4b0a7adb2df5303aee8e2fbdc1eb6` — `feat: add optional remember account on login`
+
+## Regla para la siguiente continuidad
+
+Los nuevos cambios de esta etapa deberán continuar en `CONTINUIDAD_Z-HUB-3.md`, manteniendo este esquema de numeración secuencial y registrando siempre la versión actual de `PANEL_VERSION` y las modificaciones realizadas.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-3.md
+
+# Z-Hub — Continuidad 3
+
+## Versión actual
+
+**PANEL_VERSION: 1.1.83**
+
+Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
+
+## Actualización registrada — 2026-09-09
+
+### Login — recordar credenciales
+- Se mejoró el formulario de Login para permitir el autocompletado estándar de credenciales del navegador.
+- El formulario usa `autoComplete="on"`.
+- El campo de correo usa `name="email"` y `autoComplete="username"`.
+- El campo de contraseña usa `name="password"` y `autoComplete="current-password"`.
+- Esto permite que Chrome y otros navegadores compatibles ofrezcan guardar y reutilizar las credenciales mediante su propio administrador de contraseñas.
+- Z-Hub no guarda la contraseña en `localStorage`.
+- La opción existente **Recordar mi cuenta** continúa recordando únicamente el correo mediante `zhub_remembered_email`.
+- El token `fibraz_token` mantiene su funcionamiento independiente.
+
+### Seguridad
+- No se implementó almacenamiento directo de contraseñas en el panel.
+- El recuerdo de contraseña queda delegado al administrador de credenciales del navegador.
+- La funcionalidad existente de recordar cuenta no altera el mecanismo JWT.
+
+### Archivos actualizados
+- `frontend/src/modules/auth/Login.jsx`
+- `frontend/src/modules/system-update/version.js`
+
+### Commits
+- `12a90a32b82d29dc0be443b17eec41bc828cb26d` — `fix: enable browser credential remembering on login`
+- `9c69258d1cf904602fc1e2edd905df66881f3c6a` — `chore: bump panel version to 1.1.83`
+
+## Validación recomendada
+
+1. Abrir el Login en Chrome u otro navegador compatible.
+2. Introducir correo y contraseña válidos.
+3. Iniciar sesión y aceptar el aviso del navegador para guardar la contraseña, si aparece.
+4. Cerrar sesión.
+5. Volver al Login y comprobar que el navegador ofrezca/autocomplete la credencial guardada.
+6. Comprobar que **Recordar mi cuenta** siga funcionando para recordar el correo independientemente del administrador de contraseñas.
+
+## Regla para la siguiente continuidad
+
+Los siguientes cambios deberán continuar en `CONTINUIDAD_Z-HUB-4.md`, manteniendo la numeración secuencial y registrando siempre la versión actual de `PANEL_VERSION`, las modificaciones, seguridad y commits correspondientes.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-4.md
+
+# Z-Hub — Continuidad 4
+
+## Versión actual
+
+**PANEL_VERSION: 1.1.84**
+
+Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
+
+## Actualizaciones registradas — 2026-09-09
+
+### Corrección de actualización — `zhub_backend` spawn error
+
+Durante la actualización se confirmó que el frontend terminaba correctamente su build. El error aparecía al intentar reiniciar el proceso Supervisor del backend:
+
+`zhub_backend: stopped`  
+`zhub_backend: ERROR (spawn error)`
+
+Se corrigió `deploy/supervisor/zhub_backend.conf.template` para ejecutar Uvicorn mediante el intérprete Python del entorno virtual:
+
+`backend/venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8001 --workers 2`
+
+Esto evita depender de la resolución directa del ejecutable `venv/bin/uvicorn` y mantiene el mismo backend, puerto, host y número de workers.
+
+### Recuperación de Google Maps en Ajustes
+
+La configuración de Google Maps ya existía en `Settings.jsx`, incluyendo `google_maps_api_key`, pero el acceso debía quedar disponible de forma explícita dentro del submenú Ajustes.
+
+Se mantiene la sección:
+
+`Google Maps y APIs`
+
+Al seleccionarla, Z-Hub abre la configuración de **Google Maps** para introducir y guardar la clave de **Maps JavaScript API**. El acceso usa el mismo módulo de permisos de Ajustes y el icono del submenú identifica visualmente Google Maps.
+
+No se modificó la lógica de carga de mapas ni la estructura de la clave existente.
+
+### Archivos relacionados
+
+- `frontend/src/modules/ajustes/navigation/settingsSections.js`
+- `frontend/src/modules/ajustes/staff/permissions.js`
+- `frontend/src/components/layout/Sidebar.jsx`
+- `frontend/src/modules/ajustes/Settings.jsx` (configuración Google Maps existente, sin cambios funcionales)
+- `frontend/src/modules/system-update/version.js`
+- `deploy/supervisor/zhub_backend.conf.template`
+
+### Commits de esta continuidad
+
+- `bdb526c8adb8711188cee720a4a46322751017b9` — `fix: prevent supervisor backend spawn error`
+- `ef4bd0b17cd3cae384a7f3ade1722649cd0a3262` — `fix: allow Google Maps settings submenu`
+- `9d880e128509227c7564d648b630be2d6ab3f4c4` — `ui: show Google Maps icon in settings submenu`
+- `ccc7b9a0c30d8d68a2f9f3590633f82bc61801dc` — `chore: bump panel version to 1.1.84`
+
+### Validación recomendada en el servidor
+
+Después de actualizar:
+
+1. Recargar la configuración de Supervisor.
+2. Confirmar que `zhub_backend` quede en `RUNNING`.
+3. Abrir **Ajustes → Google Maps y APIs**.
+4. Introducir la clave de Maps JavaScript API y guardar.
+5. Confirmar que el mapa de clientes y el selector de coordenadas continúen cargando correctamente.
+6. Revisar `/var/log/zhub_backend.err.log` si vuelve a aparecer un error de backend.
+
+## Regla para la siguiente continuidad
+
+Los siguientes cambios deberán continuar en `CONTINUIDAD_Z-HUB-5.md`, manteniendo la numeración secuencial y registrando la versión actual, modificaciones, seguridad, validaciones y commits correspondientes.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-5.md
+
+# Z-Hub — Continuidad 5
+
+## Versión actual
+
+**PANEL_VERSION: 1.1.85**
+
+Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
+
+## Actualización registrada — 2026-09-09
+
+### Menú lateral con desplazamiento vertical
+
+Se corrigió el menú lateral para que las opciones y submenús que superen la altura visible de la pantalla puedan recorrerse verticalmente mediante una barra de desplazamiento, como una página larga.
+
+El desplazamiento se aplica únicamente al área de navegación. El encabezado con logo, la cuenta del usuario y el botón de cerrar sesión permanecen fijos y visibles.
+
+### Alcance
+
+- Se mantiene la estructura actual de menús y submenús.
+- Se mantiene el submenú `Ajustes → Google Maps y APIs`.
+- No se modifican rutas ni permisos.
+- No se modifica la lógica de autenticación.
+- No se modifica la funcionalidad de mapas.
+- El cambio es visual y de navegación del Sidebar.
+
+### Archivo actualizado
+
+- `frontend/src/components/layout/Sidebar.jsx`
+- `frontend/src/modules/system-update/version.js`
+
+### Commit
+
+- `697c9400a1e1cdac5afc8f0aa36f2c92a94dfe49` — `fix: add scrollable sidebar menu`
+- `e669df59b1d931dfce89259a13288703823d7da0` — `chore: bump panel version to 1.1.85`
+
+### Validación recomendada en el servidor
+
+Después de actualizar:
+
+1. Actualizar Z-Hub a la versión **1.1.85**.
+2. Abrir el menú lateral y expandir **Ajustes**.
+3. Confirmar que aparezca la barra de desplazamiento vertical cuando el contenido no quepa en pantalla.
+4. Desplazarse hasta las opciones inferiores, incluyendo Google Maps, Base de datos, Sistema y Licencia.
+5. Confirmar que el encabezado y el botón de cerrar sesión permanezcan visibles.
+
+## Regla para la siguiente continuidad
+
+Los siguientes cambios deberán continuar en `CONTINUIDAD_Z-HUB-6.md`, manteniendo la numeración secuencial y registrando la versión actual, modificaciones, seguridad, validaciones y commits correspondientes.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-6.md
+
+# Z-Hub — Continuidad 6
+
+## Versión actual
+
+**PANEL_VERSION: 1.1.87**
+
+Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
+
+## Actualización registrada — 2026-09-09
+
+### Ventana de Actualizaciones con desplazamiento vertical
+
+Se corrigió la ventana modal de **Actualizaciones** para que pueda mostrar changelogs largos sin obligar al usuario a reducir el zoom del navegador.
+
+### Menú lateral de Ajustes con barra visible
+
+Se corrigió el menú lateral para que, al abrir **Ajustes** y desplegar sus numerosos submenús, exista una barra de desplazamiento vertical visible y utilizable.
+
+El área de navegación usa `overflow-y-scroll`, por lo que la barra queda disponible para recorrer de arriba hacia abajo las opciones que superan la altura de la pantalla. El usuario ya no necesita reducir el zoom para acceder a las opciones inferiores.
+
+El encabezado con logo, la cuenta del usuario y el botón **Cerrar sesión** permanecen fuera del área desplazable.
+
+### Alcance y seguridad
+
+- No se modificaron rutas.
+- No se modificaron permisos.
+- No se modificó autenticación.
+- No se modificó la configuración de Google Maps.
+- No se modificó la lógica de Ajustes.
+- No se modificó la lógica del backend de actualizaciones.
+- Los cambios son exclusivamente de presentación y navegación.
+
+### Archivos actualizados
+
+- `frontend/src/components/layout/Sidebar.jsx`
+- `frontend/src/modules/system-update/version.js`
+- `frontend/src/modules/system-update/UpdateCenter.jsx` (cambio anterior de la versión 1.1.86)
+
+### Commits
+
+- `9f12f1e62603c0e22c31473bf00f9275edba193e` — `fix: show sidebar scrollbar for long settings submenu`
+- `370da19d36017eb146b601e74e0d8e42b4942066` — `chore: bump panel version to 1.1.87`
+- `b5a0ab8b0c09891ef6f1b44952b7aaa87db335c2` — `fix: make update changelog scrollable`
+- `791d5f3563ed8d6c4f9dcc469775ef925e5142f2` — `chore: bump panel version to 1.1.86`
+
+### Validación recomendada en el servidor
+
+1. Actualizar Z-Hub a la versión **1.1.87**.
+2. Abrir **Ajustes** en el menú lateral y desplegar todas sus opciones.
+3. Confirmar que la barra vertical sea visible.
+4. Arrastrar la barra desde arriba hasta abajo y comprobar el acceso a Google, Base de datos, Crontab, Logs, Sistema, Servidor, Migrar, FreeRADIUS y Licencia.
+5. Confirmar que logo, usuario y Cerrar sesión permanezcan visibles.
+6. Abrir **Actualizaciones** y comprobar que un changelog largo también pueda recorrerse verticalmente.
+
+## Regla para la siguiente continuidad
+
+Los siguientes cambios deberán continuar en `CONTINUIDAD_Z-HUB-7.md`, manteniendo la numeración secuencial y registrando versión, modificaciones, seguridad, validaciones y commits correspondientes.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-7.md
+
+# Continuidad Z-Hub 7
+
+**Fecha:** 2026-09-09  
+**Versión:** 1.1.88
+
+## Cambio
+Se corrigió definitivamente la barra de desplazamiento vertical de la ventana **Actualizaciones**.
+
+## Archivos
+- `frontend/src/modules/system-update/UpdateCenter.jsx`
+- `frontend/src/App.css`
+- `frontend/src/modules/system-update/version.js`
+
+## Implementación
+- La ventana usa `overflow-y-scroll` y `scrollbar-gutter: stable`.
+- Se agregó estilo explícito de scrollbar para que sea visible y usable en Chromium/Chrome y Firefox.
+- El encabezado y los botones de la ventana siguen accesibles mientras se recorre el changelog.
+- No se modificó la lógica de instalación, progreso, backup ni rollback del actualizador.
+
+## Commits relacionados
+- `a2449856bb179c882c8a4161fa97a4db0f2c9469` — estilo visible de scrollbar en `App.css`.
+- `b0ed64f86792eba96925079ddeafadf9694e87ca` — versión 1.1.88.
+
+## Estado
+La corrección fue probada por el usuario y confirmó que la barra de desplazamiento quedó funcionando correctamente.
+
+## Siguiente
+La siguiente continuidad corresponde a `CONTINUIDAD_Z-HUB-8.md`.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-8.md
+
+# Continuidad Z-Hub 8
+
+**Fecha:** 2026-09-09  
+**Versión:** 1.1.89
+
+## Cambio
+Se corrigió la información de las tarjetas de **Gestión de Red → Routers MikroTik** para que CPU, Mem y Ping muestren datos reales del router agregado.
+
+## Problema encontrado
+`RouterCard.jsx` mostraba directamente `cpu_usage_pct`, `memory_usage_pct` y `ping_ms` del objeto recibido por `GET /routers`. Esos campos podían contener valores históricos o predeterminados aunque las pestañas inferiores ya estuvieran consultando correctamente el MikroTik en vivo.
+
+## Solución
+`frontend/src/modules/red/Network.jsx` ahora, al cargar la lista de equipos, consulta automáticamente el endpoint existente `POST /routers/{router_id}/test-connection` para cada MikroTik. El endpoint ejecuta `snapshot_router()` y devuelve el objeto del router actualizado.
+
+La tarjeta recibe así los datos reales de:
+- CPU
+- Memoria
+- Ping/latencia TCP
+- Estado online/offline
+- Identidad
+- Versión RouterOS
+- Modelo/board
+- Uptime
+
+Las OLT no pasan por esta sincronización automática.
+
+## Alcance
+No se modificaron las pestañas ni sus consultas en vivo de Interfaces, PPPoE, Colas, DHCP, address-list o Hotspot. Tampoco se modificó la lógica de credenciales, permisos, cortes, aprovisionamiento ni actualización del sistema.
+
+## Commits
+- `f55e78dfeea4809e4ae67ff4e4d1bccdef3608b9` — tarjetas MikroTik con estado real al cargar.
+- `fb46a31fe53fc217b61d1f080cceba862fc574d9` — versión 1.1.89.
+- `bbf3bc4bebc0763183407e52eff7344ed80a947a` — continuidad 7 incorporada para mantener la secuencia documental.
+
+## Próxima continuidad
+`CONTINUIDAD_Z-HUB-9.md`.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-9.md
+
+# CONTINUIDAD Z-HUB 9
+
+## Fecha
+2026-09-09
+
+## Versión
+**1.1.90**
+
+## Corrección
+Se corrigió la apariencia de los cuatro recuadros de Gestión de Red que muestran:
+- Clientes colas simples
+- Clientes DHCP
+- Clientes PPPoE
+- Clientes suspendidos
+
+### Causa
+La capa visual del tema Claro Suave aplicaba una regla global que convertía superficies `bg-slate-950/60` en blanco. La regla específica de las cuatro métricas existía, pero podía quedar sobreescrita por el orden de carga de estilos.
+
+### Solución
+- Se creó `frontend/src/modules/appearance/network-metrics.css`.
+- El archivo se importa después de `panel-theme.css` para darle prioridad a las métricas.
+- Se conservaron los cuatro colores diferenciados: azul, violeta, turquesa y ámbar.
+- Texto e iconos permanecen blancos para mantener contraste.
+- La solución aplica al tema oscuro y al tema Claro Suave.
+- No se modificó ninguna lógica de datos, conexión MikroTik ni funcionalidad de las pestañas en vivo.
+
+## Archivos
+- `frontend/src/modules/appearance/network-metrics.css`
+- `frontend/src/App.js`
+- `frontend/src/modules/system-update/version.js`
+
+## Commit
+`f7290a0d417fef68180b7de4f35f393b045335d4`
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-10.md
+
+# CONTINUIDAD Z-HUB 10
+
+## Fecha
+2026-09-09
+
+## Versión
+**1.1.91**
+
+## Incidencia
+Durante la actualización a 1.1.90, el build de producción reportó:
+`SyntaxError: /var/www/z-hub/frontend/src/App.js: Unexpected token (47:2)`
+
+El error apuntaba a la declaración `const [theme, setTheme] = useState(() => getToastTheme());` dentro de `ThemedToaster`.
+
+## Corrección
+Se reestructuró `frontend/src/App.js` sin cambiar su funcionalidad:
+- JSX de los estados de carga pasado a bloques multilínea.
+- `useEffect` de comprobación de setup conservado.
+- `ThemedToaster` conservado con sincronización del tema.
+- `AuthProvider`, `MainApp` y `Toaster` conservados.
+- Se mantiene la importación de `network-metrics.css` después de `panel-theme.css`.
+
+La intención es eliminar la ambigüedad de parseo que estaba provocando el fallo de compilación y permitir que el instalador vuelva a construir el frontend.
+
+## Archivos modificados
+- `frontend/src/App.js`
+- `frontend/src/modules/system-update/version.js`
+
+## Commits
+- `e29c091f886d4b43957f05d2937be0212d7cb6d1` — reparación de App.js.
+- `2929a9035babbe497e2529593dad29bd66aa9c15` — versión 1.1.91.
+
+## Estado
+El commit más reciente de `main` debe ser **1.1.91**. El siguiente paso es ejecutar nuevamente la actualización desde el panel y confirmar que `yarn build` complete sin el SyntaxError de `App.js`.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-11.md
+
+# CONTINUIDAD Z-HUB 11
+
+## Fecha
+2026-09-09
+
+## Versión
+**1.1.92**
+
+## Problema reportado
+Después de actualizar a 1.1.91, las cuatro tarjetas de resumen de Gestión de Red seguían viéndose blancas en **Z-Hub Claro Suave**, aunque en el tema oscuro sí mostraban correctamente sus colores.
+
+Tarjetas afectadas:
+- Clientes colas simples
+- Clientes DHCP
+- Clientes PPPoE
+- Clientes suspendidos
+
+## Diagnóstico
+`panel-theme.css` contiene reglas globales del tema Claro Suave que convierten las superficies `bg-slate-*` a blanco y neutralizan los degradados con `background-image: none !important`. La hoja específica `network-metrics.css` no era suficiente para garantizar prioridad durante el build/carga final de CSS.
+
+## Solución
+Se añadió una excepción **al final de `frontend/src/modules/appearance/panel-theme.css`**, después de las reglas globales del tema claro.
+
+La excepción usa selectores específicos y `!important` para restaurar:
+- azul para Clientes colas simples;
+- violeta para Clientes DHCP;
+- turquesa para Clientes PPPoE;
+- ámbar para Clientes suspendidos.
+
+También se mantiene texto e iconos blancos.
+
+El bloque está condicionado a `html[data-panel-theme="zhub-light"]`, por lo que no altera el tema oscuro ni la funcionalidad de Gestión de Red.
+
+## Versión
+`frontend/src/modules/system-update/version.js` → **1.1.92**
+
+## Commits
+- `4ce6700d09708a8a8dd6c0ed32edadda814b4d22` — fix: force network metric colors after light theme overrides
+- `6404fb8005b2690aa5f6cb9f025c89ecbb74048b` — release: bump Z-Hub to 1.1.92
+
+## Nota
+La corrección no cambia consultas al MikroTik, conteos, permisos, navegación ni funcionalidad de las pestañas en vivo. Es exclusivamente una corrección de precedencia CSS para Claro Suave.
+
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-12.md
+
+# CONTINUIDAD Z-HUB 12
+
+Fecha: 2026-09-09
+Versión: 1.1.93
+
+## Incidente
+Después de actualizar a 1.1.92, las cuatro métricas de Gestión de Red ya mostraban sus colores en Claro Suave, pero el resto de la vista de Gestión de Red aparecía oscuro, como si estuviera heredando el template del tema oscuro.
+
+## Diagnóstico
+La hoja `frontend/src/modules/appearance/panel-theme.css` que quedó en `main` estaba recortada: conservaba la capa base de Claro Suave y la excepción de las cuatro métricas, pero había perdido gran parte de las reglas específicas que habían construido progresivamente la apariencia clara de Gestión de Red, OLT, clientes, facturación, ajustes y otros módulos.
+
+La versión completa anterior estaba disponible en el commit `d95b094ab259da5fe0a57af6cf854aee2f21cc7f`, con blob histórico `b680b81b9b95ed8fcaf65d593690a009a76de89a`.
+
+## Corrección aplicada
+Se restauró `frontend/src/modules/appearance/panel-theme.css` a la versión completa del commit histórico, conservando las reglas existentes de color para:
+- Clientes colas simples: azul.
+- Clientes DHCP: violeta.
+- Clientes PPPoE: turquesa.
+- Clientes suspendidos: ámbar.
+
+Esto recupera las reglas específicas del tema Claro Suave para la vista completa de Gestión de Red y evita que el contenido restante aparezca con superficies oscuras.
+
+No se modificó `Network.jsx` ni la lógica funcional de MikroTik/OLT en esta corrección.
+
+## Commits
+- `611b234c2de8ad9c1e7d3bcc6cc6960b4cd007f` — `fix: restore complete light theme styles and keep network metric colors`
+- `93fa237dd487ab0b9c8ee8aab3f64ed7d81e23ec` — `release: bump Z-Hub to 1.1.93`
+
+## Estado esperado
+Al actualizar el panel a **1.1.93**:
+1. Tema oscuro: permanece sin cambios.
+2. Tema Claro Suave: recupera la apariencia clara completa de Gestión de Red.
+3. Las cuatro métricas mantienen sus colores diferenciados.
+4. Router cards, detalle, pestañas en vivo y áreas OLT vuelven a utilizar sus estilos claros específicos.
+5. No se altera la funcionalidad ni los datos.
+
+## Próximo paso
+Actualizar el panel a 1.1.93 y revisar Gestión de Red en Claro Suave antes de realizar cualquier otra modificación visual.
+
+---
+
+## Registro histórico consolidado — CONTINUIDAD_Z-HUB-13.md
+
+# CONTINUIDAD Z-HUB — 13
+
+## Fecha
+2026-09-09
+
+## Cambio
+La ventana **Actualizaciones** debe mostrar únicamente los cambios correspondientes a la versión que se está ofreciendo para instalar, no el historial acumulado de versiones anteriores.
+
+## Diagnóstico
+`UpdateCenter.jsx` ya consume `status.remote.changelog`, por lo que el origen del problema estaba en `frontend/src/modules/system-update/version.js`: `CHANGELOG` contenía entradas acumuladas de varias versiones. El backend (`backend/app/modules/system_update/router.py`) entrega ese arreglo como `remote.changelog`.
+
+## Solución
+Se cambió `version.js` para que `CHANGELOG` sea exclusivamente el changelog de la versión actual. La ventana existente sigue mostrando `status.remote.changelog`, por lo que al consultar una nueva versión recibe solamente sus cambios.
+
+## Versión
+- Nueva versión: **1.1.94**
+- Commit: `98fecda16bbc33fbf1810652b24d89ac80862219`
+- Blob `version.js`: `503c52dc3602a32ab2e773b73dd1ee7ff6658c15`
+
+## Funcionalidad preservada
+No se modificó la lógica de comprobación, descarga, instalación, progreso, cierre de sesión ni rollback. El cambio afecta únicamente al contenido informativo mostrado en la ventana de actualización.
+
+## Regla para futuras versiones
+Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión únicamente. El historial puede conservarse en los documentos de continuidad/commits, pero no debe acumularse dentro de `version.js`.
