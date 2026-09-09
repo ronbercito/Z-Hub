@@ -1845,3 +1845,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El botón Guardar cambios se refuerza con degradado turquesa/azul.
 - Alcance: solo presentación; no se modifican fechas de pago, reglas de corte, recordatorios, generación automática, facturas ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.53 — Log del cliente adaptado al tema
+
+- Se adapta la pestaña **Log** de la ficha del cliente al tema claro Z-Hub.
+- El historial usa fondo claro y el contador de eventos se muestra en azul sólido con texto blanco.
+- Cada evento ahora es una tarjeta blanca con borde azul suave, título y detalle más gruesos, además de efecto visual al pasar el cursor.
+- El operador responsable queda destacado con una etiqueta azul clara de alto contraste; la fecha conserva buena legibilidad.
+- Alcance: solo presentación; no se modifican acciones, detalle, operador, fecha, registros históricos ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
