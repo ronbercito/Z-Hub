@@ -66,11 +66,11 @@ git config --system --add safe.directory "$ROOT_DIR" 2>/dev/null || true
 if [[ "${ZHUB_SKIP_GIT_SYNC:-0}" != "1" ]] && git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   ui ""
   ui "────────────────────────────────────────────────────────────"
-  ui "  Sincronizando Z-Hub con origin/main"
+  ui "  Sincronizando con servidor Z-Hub"
   ui "────────────────────────────────────────────────────────────"
-  run_visual "Descargando actualizaciones de Git" git -C "$ROOT_DIR" fetch origin main
-  run_visual "Ajustando checkout a main" git -C "$ROOT_DIR" checkout main 2>/dev/null || true
-  run_visual "Aplicando versión actual de origin/main" git -C "$ROOT_DIR" reset --hard origin/main
+  run_visual "Descargando actualizaciones" git -C "$ROOT_DIR" fetch origin main
+  run_visual "Ajustando y verificando" git -C "$ROOT_DIR" checkout main 2>/dev/null || true
+  run_visual "Aplicando versión actual" git -C "$ROOT_DIR" reset --hard origin/main
 fi
 
 ui ""
