@@ -1662,3 +1662,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: la etiqueta usa la fuente única PANEL_VERSION, por lo que cambia automáticamente en cada publicación. No modifica el mecanismo de actualización, API, datos, permisos, autenticación ni el tema oscuro.
 - Pruebas: revisión estática de importación, presentación de PANEL_VERSION, selector y versión 1.1.28. Build y validación visual real pendientes.
 - Resultado esperado: el Dashboard muestra “Versión 1.1.28” inmediatamente a la izquierda de “Actualizar”.
+
+
+### 1.1.29 — 2026-09-09 — Tablas recientes con lectura reforzada
+- Objetivo y causa: mejorar el peso de letra en Últimos pagos registrados y Últimos conectados, y resaltar los importes cobrados con un verde más vivo.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases propias de ambas tablas), frontend/src/modules/appearance/panel-theme.css (títulos, encabezados, filas e importes), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: conserva los mismos registros, importes, API /api/dashboard/summary, navegación, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.29. Build y validación visual real pendientes.
+- Resultado esperado: toda la información de ambas tablas se lee con mayor presencia y S/. cobrado resalta en verde vivo sin alterar el valor.
