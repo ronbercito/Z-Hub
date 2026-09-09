@@ -1,8 +1,9 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-08 — muestra el detalle útil del fallo de instalación, no solo el código de salida.
-Función: consulta la rama remota, compara versiones y ejecuta run_update.sh con manejo de errores.
+Actualización: 2026-09-09 — versión 1.1.12: consulta dos repositorios y prioriza Z-Hub.
+Función: consulta Z-Hub y MikroHub legado, compara versiones, selecciona la actualización
+         más reciente y ejecuta run_update.sh indicando el repositorio elegido.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
-Entrega: estado, fase, porcentaje y detalle del fallo mediante /api/system-update.
+Entrega: estado, fuente seleccionada, fuentes consultadas, fase, porcentaje y detalle de fallo.
 """
 from __future__ import annotations
 
@@ -22,9 +23,19 @@ ERROR_LOG_FILE = Path("/tmp/mikrohub-update-error.log")
 PID_FILE = Path("/tmp/mikrohub-update.pid")
 VERSION_FILE = "frontend/src/modules/system-update/version.js"
 
+PRIMARY_REPOSITORY = os.environ.get("ZHUB_REPOSITORY", "https://github.com/ronbercito/Z-Hub.git")
+LEGACY_REPOSITORY = os.environ.get(
+    "MIKROHUB_LEGACY_REPOSITORY",
+    os.environ.get("MIKROHUB_REPOSITORY", "https://github.com/ronbercito/mirkohub.git"),
+)
+REPOSITORIES = (
+    {"id": "zhub", "name": "Z-Hub", "url": PRIMARY_REPOSITORY, "priority": 2},
+    {"id": "mirkohub", "name": "MikroHub legado", "url": LEGACY_REPOSITORY, "priority": 1},
+)
+
 
 def _git(*args: str) -> str:
-    result = subprocess.run(["git", "-C", str(ROOT), *args], text=True, capture_output=True, timeout=30)
+    result = subprocess.run(["git", "-C", str(ROOT), *args], text=True, capture_output=True, timeout=45)
     if result.returncode != 0:
         raise RuntimeError((result.stderr or result.stdout or "Error ejecutando git").strip())
     return result.stdout.strip()
@@ -37,7 +48,61 @@ def _source_for(ref: str) -> str:
 def _version_and_changelog(source: str) -> tuple[str, list[dict[str, str]]]:
     version = re.search(r'PANEL_VERSION\s*=\s*["\']([^"\']+)["\']', source)
     entries = re.findall(r'\{\s*type:\s*["\']([^"\']+)["\']\s*,\s*text:\s*["\']([^"\']+)["\']\s*\}', source)
-    return (version.group(1) if version else "sin versión"), [{"type": a, "text": b} for a, b in entries]
+    return (version.group(1) if version else "0.0.0"), [{"type": a, "text": b} for a, b in entries]
+
+
+def _version_key(version: str) -> tuple[int, ...]:
+    parts = [int(piece) for piece in re.findall(r"\d+", version)]
+    return tuple((parts + [0, 0, 0, 0])[:4])
+
+
+def _fetch_candidate(repository: dict[str, object]) -> dict[str, object]:
+    repo_id = str(repository["id"])
+    ref = f"refs/remotes/system-update/{repo_id}/main"
+    _git("fetch", "--force", str(repository["url"]), f"+refs/heads/main:{ref}")
+    commit = _git("rev-parse", ref)
+    version, changelog = _version_and_changelog(_source_for(ref))
+    return {
+        "id": repo_id,
+        "name": str(repository["name"]),
+        "url": str(repository["url"]),
+        "priority": int(repository["priority"]),
+        "ref": ref,
+        "commit": commit,
+        "version": version,
+        "changelog": changelog,
+        "ok": True,
+    }
+
+
+def _available_sources() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    candidates: list[dict[str, object]] = []
+    sources: list[dict[str, object]] = []
+    for repository in REPOSITORIES:
+        try:
+            candidate = _fetch_candidate(repository)
+            candidates.append(candidate)
+            sources.append({
+                "id": candidate["id"],
+                "name": candidate["name"],
+                "ok": True,
+                "version": candidate["version"],
+                "commit": str(candidate["commit"])[:12],
+            })
+        except RuntimeError as exc:
+            sources.append({
+                "id": str(repository["id"]),
+                "name": str(repository["name"]),
+                "ok": False,
+                "error": str(exc)[-500:],
+            })
+    return candidates, sources
+
+
+def _select_candidate(candidates: list[dict[str, object]]) -> dict[str, object]:
+    if not candidates:
+        raise RuntimeError("Ninguno de los repositorios de actualización respondió correctamente")
+    return max(candidates, key=lambda item: (_version_key(str(item["version"])), int(item["priority"])))
 
 
 def _log_state() -> tuple[str, str, str, bool]:
@@ -96,16 +161,28 @@ async def update_status(response: Response):
     response.headers["Pragma"] = "no-cache"
     try:
         current_commit = _git("rev-parse", "HEAD")
-        _git("fetch", "origin", "main")
-        remote_commit = _git("rev-parse", "origin/main")
         current_version, current_changelog = _version_and_changelog(_source_for("HEAD"))
-        remote_version, remote_changelog = _version_and_changelog(_source_for("origin/main"))
+        candidates, sources = _available_sources()
+        selected = _select_candidate(candidates)
     except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail="No se pudo consultar GitHub. Revisa la conexión y el repositorio configurado en el servidor.") from exc
+        raise HTTPException(status_code=502, detail=f"No se pudo consultar los repositorios de actualización: {exc}") from exc
+
     state, log, error_log, running = _log_state()
     progress, phase = _progress_from_log(log, state)
     error_message = _extract_error_message(error_log) if state in {"rolled_back", "rollback_failed"} else ""
-    return {"available": current_commit != remote_commit, "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog}, "remote": {"version": remote_version, "commit": remote_commit[:12], "changelog": remote_changelog}, "installation": {"state": state, "running": running, "progress": progress, "phase": phase, "error": error_message}}
+    return {
+        "available": current_commit != selected["commit"],
+        "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
+        "remote": {
+            "version": selected["version"],
+            "commit": str(selected["commit"])[:12],
+            "changelog": selected["changelog"],
+            "source": selected["id"],
+            "source_name": selected["name"],
+        },
+        "sources": sources,
+        "installation": {"state": state, "running": running, "progress": progress, "phase": phase, "error": error_message},
+    }
 
 
 @router.post("/install", dependencies=[Depends(require_role("admin"))], status_code=status.HTTP_202_ACCEPTED)
@@ -117,14 +194,29 @@ async def install_update():
         raise HTTPException(status_code=500, detail="No se encontró el script de actualización")
     try:
         current_commit = _git("rev-parse", "HEAD")
-        _git("fetch", "origin", "main")
-        remote_commit = _git("rev-parse", "origin/main")
+        candidates, _ = _available_sources()
+        selected = _select_candidate(candidates)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=f"No se pudo consultar GitHub: {exc}") from exc
-    if current_commit == remote_commit:
+    if current_commit == selected["commit"]:
         raise HTTPException(status_code=409, detail="El panel ya está en la versión más reciente")
+
     LOG_FILE.write_text("")
     ERROR_LOG_FILE.write_text("")
-    process = subprocess.Popen(["bash", str(UPDATE_SCRIPT)], cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    env = os.environ.copy()
+    env["MIKROHUB_UPDATE_REPOSITORY"] = str(selected["url"])
+    env["MIKROHUB_UPDATE_SOURCE"] = str(selected["id"])
+    process = subprocess.Popen(
+        ["bash", str(UPDATE_SCRIPT)],
+        cwd=str(ROOT),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+        env=env,
+    )
     PID_FILE.write_text(str(process.pid))
-    return {"message": "Actualización iniciada", "installation": {"state": "running", "pid": process.pid}}
+    return {
+        "message": f"Actualización iniciada desde {selected['name']}",
+        "source": selected["id"],
+        "installation": {"state": "running", "pid": process.pid},
+    }
