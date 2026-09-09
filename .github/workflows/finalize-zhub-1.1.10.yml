@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'Finalize Z-Hub 1.1.10'
+    if: github.event.head_commit.message == 'Finalize Z-Hub 1.1.10 v2'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout staging
@@ -19,197 +19,19 @@ jobs:
           fetch-depth: 0
           ref: update-zhub-theme-1.1.10
 
-      - name: Update canonical continuity and detailed handover
+      - name: Update continuity documents
+        env:
+          CONTINUITY_SCRIPT_B64: "CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKcCA9IFBhdGgoImRvY3MvQ09OVElOVUlEQURfTUlLUk9IVUIubWQiKQpzID0gcC5yZWFkX3RleHQoKQpzID0gcy5yZXBsYWNlKCIjIE1pa3JvSHViIOKAlCBCaXTDoWNvcmEgbWFlc3RyYSBkZSBjb250aW51aWRhZCIsICIjIFotSHViIChNaWtyb0h1YiBpbnRlcm5hbWVudGUpIOKAlCBCaXTDoWNvcmEgbWFlc3RyYSBkZSBjb250aW51aWRhZCIsIDEpCnMgPSBzLnJlcGxhY2UoIi0gTm9tYnJlIGRlbCBzaXN0ZW1hOiAqKk1pa3JvSHViKioiLCAiLSBOb21icmUgcMO6YmxpY28gZGVsIHNpc3RlbWEgZGVzZGUgMS4xLjEwOiAqKlotSHViKipcbi0gTm9tYnJlL3J1dGFzIHTDqWNuaWNhcyBoZXJlZGFkYXM6ICoqTWlrcm9IdWIqKiAoc2UgY29uc2VydmFuIHBvciBjb21wYXRpYmlsaWRhZCkiLCAxKQpvbGRfdmVyc2lvbiA9ICItIFZlcnNpw7NuIGZ1bmNpb25hbCBhY3R1YWw6ICoqMS4xLjkqKiwgY29ycmVzcG9uZGllbnRlIGEgbGEgY29uZmlndXJhY2nDs24gZGUgZmFjdHVyYWNpw7NuIGluZGl2aWR1YWwgcG9yIGNsaWVudGUgeSBzdXMgcmVnbGFzIGRlIHZlbmNpbWllbnRvL2NvcnRlL21lbnNhamVyw61hLiIKbmV3X3ZlcnNpb24gPSAiLSBWZXJzacOzbiBmdW5jaW9uYWwgYWN0dWFsOiAqKjEuMS4xMCoqLCBjb3JyZXNwb25kaWVudGUgYSBsYSBpZGVudGlkYWQgdmlzaWJsZSBaLUh1YiB5IGFsIHNlbGVjdG9yIGRlIHRlbXBsYXRlcyBPc2N1cm8gY2zDoXNpY28gLyBaLUh1YiBCbGFuY28sIG1hbnRlbmllbmRvIGludGFjdGEgbGEgbMOzZ2ljYSAxLjEuOSBkZSBmYWN0dXJhY2nDs24gaW5kaXZpZHVhbC4iCmlmIG9sZF92ZXJzaW9uIG5vdCBpbiBzOgogICAgcmFpc2UgU3lzdGVtRXhpdCgiTm8gc2UgZW5jb250csOzIGxhIGzDrW5lYSBkZSB2ZXJzacOzbiBhY3R1YWwgZW4gY29udGludWlkYWQiKQpzID0gcy5yZXBsYWNlKG9sZF92ZXJzaW9uLCBuZXdfdmVyc2lvbiwgMSkKcyA9IHMucmVwbGFjZSgiUEFORUxfVkVSU0lPTiA9IDEuMS45IiwgIlBBTkVMX1ZFUlNJT04gPSAxLjEuMTAiLCAxKQoKc2VjdGlvbiA9IHInJycKLS0tCgojIyAyMS4gUmVnaXN0cm8gZGUgY29udGludWlkYWQg4oCUIDIwMjYtMDktMDgg4oCUIFBhbmVsIDEuMS4xMAoKKipUaXBvOioqIElkZW50aWRhZCAvIFVYIC8gdGVtcGxhdGVzIHZpc3VhbGVzIC8gY29tcGF0aWJpbGlkYWQgLyBzZWd1cmlkYWQgZGUgZGVzcGxpZWd1ZS4KCiMjIyBPYmpldGl2bwpDYW1iaWFyIGxhIGlkZW50aWRhZCB2aXNpYmxlIGRlbCBwcm9kdWN0byBkZSBNaWtyb0h1YiBhICoqWi1IdWIqKiB5IGHDsWFkaXIgdW4gdGVtcGxhdGUgY2xhcm8gaW5zcGlyYWRvIGVuIGxhIHByb3B1ZXN0YSB2aXN1YWwgYXByb2JhZGEsIGNvbnNlcnZhbmRvIGVsIHRlbXBsYXRlIG9zY3VybyBhY3R1YWwgeSBldml0YW5kbyBjYW1iaW9zIGZ1bmNpb25hbGVzIGVuIENsaWVudGVzLCBGYWN0dXJhY2nDs24sIE1pa3JvVGlrLCBPTFQsIHBlcm1pc29zIG8gcnV0YXMgaW50ZXJuYXMuCgojIyMgRGVjaXNpw7NuIGRlIGNvbXBhdGliaWxpZGFkCkVsIGNhbWJpbyBkZSBtYXJjYSBlcyAqKnZpc2libGUqKiwgbm8gdW5hIG1pZ3JhY2nDs24gZGVzdHJ1Y3RpdmEgZGUgbm9tYnJlcyBpbnRlcm5vcy4KClNlIGNvbnNlcnZhIGRlbGliZXJhZGFtZW50ZToKLSByZXBvc2l0b3JpbyBgcm9uYmVyY2l0by9taXJrb2h1YmA7Ci0gcnV0YSBkZSBkZXNwbGllZ3VlIGAvdmFyL3d3dy9taWtyb2h1YmA7Ci0gY2xhdmVzIGxvY2FsZXMgaGVyZWRhZGFzIGBmaWJyYXpfKmA7Ci0gbm9tYnJlcyB0w6ljbmljb3MvaW50ZWdyYWNpb25lcyBxdWUgdXNlbiBNaWtyb0h1YiBpbnRlcm5hbWVudGUuCgpFbCBjYW1wbyBgY29tcGFueV9uYW1lYCBzaWd1ZSBzaWVuZG8gY29uZmlndXJhYmxlLiBTaSBlbCBJU1AgeWEgdGllbmUgdW4gbm9tYnJlIGd1YXJkYWRvIChwb3IgZWplbXBsbyBGSUJSQSBaKSwgKipubyBzZSBzb2JyZXNjcmliZSoqLiBaLUh1YiBmdW5jaW9uYSBjb21vIGlkZW50aWRhZC9mYWxsYmFjayBkZWwgcHJvZHVjdG8uCgojIyMgQmFja3VwIG9ibGlnYXRvcmlvIGNyZWFkbwotIEJhY2t1cDogYGJhY2t1cC1wcmUtemh1Yi10aGVtZS0xLjEuMTBgCi0gQmFzZTogYDljMjY5ZDlkMzlhZGQyNGU4NjBiYTljMmVkN2U4ZTlmZmEyMTI3NGJgIOKAlCBQYW5lbCAxLjEuOS4KLSBEZXNhcnJvbGxvL3ZhbGlkYWNpw7NuOiBgdXBkYXRlLXpodWItdGhlbWUtMS4xLjEwYAoKIyMjIFRlbXBsYXRlcyBkaXNwb25pYmxlcwoxLiBgZGFya2Ag4oCUICoqT3NjdXJvIGNsw6FzaWNvKiouCjIuIGB6aHViLWxpZ2h0YCDigJQgKipaLUh1YiBCbGFuY28qKiwgY29uIGJsYW5jby9henVsIGNsYXJvIHkgYWNlbnRvcyBhenVsLCBjaWFuIHkgdHVycXVlc2EuCgpTZWxlY3RvcjoKYEFqdXN0ZXMg4oaSIEdlbmVyYWwg4oaSIEFwYXJpZW5jaWEgZGVsIHBhbmVsYAoKUGVyc2lzdGVuY2lhOgpgcGFuZWxfdGhlbWVgIGRlbnRybyBkZWwgSlNPTiBleGlzdGVudGUgZGUgYHNldHRpbmdzYDsgbm8gcmVxdWllcmUgbWlncmFjacOzbiBTUUwuCgojIyMgQXJxdWl0ZWN0dXJhIGRlbCB0ZW1hCmBgYHRleHQKQWp1c3RlcyA+IEdlbmVyYWwKICDihpMKcGFuZWxfdGhlbWUKICDihpMKL2FwaS9zZXR0aW5ncwogIOKGkwpzZXR0aW5ncy5kYXRhIEpTT04KICDihpMKTGF5b3V0IC8gTG9naW4KICDihpMKYXBwbHlQYW5lbFRoZW1lKCkKICDihpMKaHRtbFtkYXRhLXBhbmVsLXRoZW1lPSJkYXJrfHpodWItbGlnaHQiXQogIOKGkwpwYW5lbC10aGVtZS5jc3MKYGBgCgojIyMgQXJjaGl2b3MgbnVldm9zCi0gYGZyb250ZW5kL3NyYy9tb2R1bGVzL2FwcGVhcmFuY2UvcGFuZWxUaGVtZXMuanNgCi0gYGZyb250ZW5kL3NyYy9tb2R1bGVzL2FwcGVhcmFuY2UvUGFuZWxUaGVtZVNlbGVjdG9yLmpzeGAKLSBgZnJvbnRlbmQvc3JjL21vZHVsZXMvYXBwZWFyYW5jZS9wYW5lbC10aGVtZS5jc3NgCi0gYGZyb250ZW5kL3B1YmxpYy96aHViLWxvZ28uc3ZnYAoKIyMjIEFyY2hpdm9zIG1vZGlmaWNhZG9zCi0gYGZyb250ZW5kL3NyYy9tb2R1bGVzL2FqdXN0ZXMvU2V0dGluZ3MuanN4YAotIGBmcm9udGVuZC9zcmMvY29tcG9uZW50cy9sYXlvdXQvTGF5b3V0LmpzeGAKLSBgZnJvbnRlbmQvc3JjL2NvbXBvbmVudHMvbGF5b3V0L1NpZGViYXIuanN4YAotIGBmcm9udGVuZC9zcmMvbW9kdWxlcy9hdXRoL0xvZ2luLmpzeGAKLSBgZnJvbnRlbmQvc3JjL0FwcC5qc2AKLSBgZnJvbnRlbmQvc3JjL21vZHVsZXMvc3lzdGVtLXVwZGF0ZS9VcGRhdGVDZW50ZXIuanN4YAotIGBmcm9udGVuZC9zcmMvbW9kdWxlcy9zeXN0ZW0tdXBkYXRlL3ZlcnNpb24uanNgCi0gYGJhY2tlbmQvYXBwL21vZGVscy9zZXR0aW5nLnB5YAotIGBiYWNrZW5kL2FwcC9yb3V0ZXJzL2FqdXN0ZXMvcm91dGVyLnB5YAotIGBkb2NzL0NPTlRJTlVJREFEX01JS1JPSFVCLm1kYAoKIyMjIEJhc2UgZGUgZGF0b3MgeSBBUEkKTm8gc2UgY3JlYSB0YWJsYSBuaSBjb2x1bW5hIFNRTC4gU2UgYcOxYWRlIGxhIGNsYXZlIEpTT04gYHBhbmVsX3RoZW1lID0gZGFyayB8IHpodWItbGlnaHRgLgoKYEdFVCAvYXBpL3NldHRpbmdzL3B1YmxpY2AgcHVlZGUgZGV2b2x2ZXI6Ci0gYGNvbXBhbnlfbmFtZWAKLSBgbG9nb19kYXRhYAotIGBwYW5lbF90aGVtZWAKCk5vIHNlIG1vZGlmaWNhcm9uIHJ1dGFzIGV4aXN0ZW50ZXMgZGUgQ2xpZW50ZXMsIEZhY3R1cmFjacOzbiwgTWlrcm9UaWssIE9MVCwgcGVybWlzb3MgbmkgYXV0ZW50aWNhY2nDs24uCgojIyMgUHJ1ZWJhcyByZWFsaXphZGFzCi0gW3hdIHJhbWEgYmFja3VwIGNyZWFkYSBhbnRlcyBkZSBwdWJsaWNhcjsKLSBbeF0gcmFtYSBhaXNsYWRhIGRlIGRlc2Fycm9sbG8gY3JlYWRhOwotIFt4XSBgU2V0dGluZ3MuanN4YCwgYExheW91dC5qc3hgIHkgYExvZ2luLmpzeGAgcmVzdGF1cmFkb3MgZGVzZGUgZWwgYG1haW5gIHZpZ2VudGUgeSBjYW1iaW9zIHJlYXBsaWNhZG9zIG3DrW5pbWFtZW50ZTsKLSBbeF0gY29tcGFyYWNpw7NuIGNvbnRyYSBgbWFpbmAgcmV2aXNhZGE7Ci0gW3hdIGluc3RhbGFjacOzbiBkZSBkZXBlbmRlbmNpYXMgZnJvbnRlbmQgZW4gR2l0SHViIEFjdGlvbnM7Ci0gW3hdIGB5YXJuIGJ1aWxkYCBkZSBwcm9kdWNjacOzbiBjb3JyZWN0byBlbiBHaXRIdWIgQWN0aW9uczsKLSBbeF0gYHB5dGhvbiAtbSBweV9jb21waWxlIGJhY2tlbmQvYXBwL21vZGVscy9zZXR0aW5nLnB5IGJhY2tlbmQvYXBwL3JvdXRlcnMvYWp1c3Rlcy9yb3V0ZXIucHlgIGNvcnJlY3RvOwotIFt4XSB2ZXJzacOzbiB5IENIQU5HRUxPRyBlbiAxLjEuMTA7Ci0gW3hdIGNvbnRpbnVpZGFkIGNhbsOzbmljYSBhY3R1YWxpemFkYTsKLSBbIF0gaW5zdGFsYWNpw7NuIHJlYWwgZGVzZGUgZWwgQWN0dWFsaXphZG9yIGRlbCBzZXJ2aWRvcjsKLSBbIF0gdmFsaWRhY2nDs24gdmlzdWFsIHJlYWwgZGUgYW1ib3MgdGVtcGxhdGVzIGRlc3B1w6lzIGRlbCBkZXNwbGllZ3VlOwotIFsgXSBwcnVlYmEgZGUgY2FtYmlhciB0ZW1hLCBjZXJyYXIgc2VzacOzbiB5IHZvbHZlciBhIGluZ3Jlc2FyLgoKIyMjIFJvbGxiYWNrCjEuIHJvbGxiYWNrIGF1dG9tw6F0aWNvIGRlbCBhY3R1YWxpemFkb3IgYW50ZSBmYWxsbzsKMi4gcmFtYSBgYmFja3VwLXByZS16aHViLXRoZW1lLTEuMS4xMGAgcGFyYSB2b2x2ZXIgYWwgZXN0YWRvIGV4YWN0byAxLjEuOS4KCiMjIyBSZWdsYSBkZSBjb250aW51aWRhZApDYWRhIGNhbWJpbyBwb3N0ZXJpb3IgZGViZSBhY3R1YWxpemFyIGBkb2NzL0NPTlRJTlVJREFEX01JS1JPSFVCLm1kYCBhbnRlcyBkZSBjb211bmljYXJzZSBjb21vIHRlcm1pbmFkby4KCiMjIyBFc3RhZG8KKipDw7NkaWdvIHZhbGlkYWRvIHBvciBidWlsZCB5IGRvY3VtZW50YWNpw7NuIGFjdHVhbGl6YWRhLiBQcmVwYXJhZG8gcGFyYSBwdWJsaWNhY2nDs24gY29tbyAxLjEuMTA7IGluc3RhbGFjacOzbiByZWFsIGVuIHNlcnZpZG9yIHBlbmRpZW50ZSBkZSBlamVjdXRhciBkZXNkZSBlbCBBY3R1YWxpemFkb3IuKioKJycnCgppZiAiIyMgMjEuIFJlZ2lzdHJvIGRlIGNvbnRpbnVpZGFkIOKAlCAyMDI2LTA5LTA4IOKAlCBQYW5lbCAxLjEuMTAiIG5vdCBpbiBzOgogICAgcyArPSBzZWN0aW9uCnAud3JpdGVfdGV4dChzKQoKZGV0YWlsID0gUGF0aCgiZG9jcy9DT05USU5VSURBRF9NSUtST0hVQl8xLjEuMTBfWkhVQl9URU1BUy5tZCIpCmRldGFpbC53cml0ZV90ZXh0KCcnJyMgQ29udGludWlkYWQgY29tcGxlbWVudGFyaWEg4oCUIFotSHViIDEuMS4xMAoKRXN0ZSBkb2N1bWVudG8gY29tcGxlbWVudGEgYGRvY3MvQ09OVElOVUlEQURfTUlLUk9IVUIubWRgLiBMYSBiaXTDoWNvcmEgbWFlc3RyYSBzaWd1ZSBzaWVuZG8gbGEgZnVlbnRlIG9ibGlnYXRvcmlhLgoKIyMgQWxjYW5jZQpJZGVudGlkYWQgdmlzaWJsZSBaLUh1YiArIHNlbGVjdG9yIGRlIHRlbXBsYXRlIE9zY3VybyBjbMOhc2ljbyAvIFotSHViIEJsYW5jbyBlbiBBanVzdGVzIOKGkiBHZW5lcmFsLgoKIyMgUHJvdGVjY2nDs24KLSBCYWNrdXAgcHJldmlvOiBgYmFja3VwLXByZS16aHViLXRoZW1lLTEuMS4xMGAuCi0gRGVzYXJyb2xsbzogYHVwZGF0ZS16aHViLXRoZW1lLTEuMS4xMGAuCi0gQmFzZSBwcmVzZXJ2YWRhOiAxLjEuOSAoYDljMjY5ZDlkMzlhZGQyNGU4NjBiYTljMmVkN2U4ZTlmZmEyMTI3NGJgKS4KLSBSdXRhcyBpbnRlcm5hcy9yZXBvL2NsYXZlcyBoZXJlZGFkYXMgbm8gc2UgcmVub21icmFuLgotIGBjb21wYW55X25hbWVgIGV4aXN0ZW50ZSBkZWwgSVNQIG5vIHNlIHBpc2EuCgojIyBQZXJzaXN0ZW5jaWEKYHBhbmVsX3RoZW1lYCBzZSBndWFyZGEgZW4gZWwgSlNPTiBkZSBgc2V0dGluZ3NgLCBzaW4gbWlncmFjacOzbiBTUUwuIFZhbG9yZXMgYWRtaXRpZG9zOiBgZGFya2AsIGB6aHViLWxpZ2h0YC4KCiMjIFZhbGlkYWNpw7NuCkJ1aWxkIFJlYWN0IGRlIHByb2R1Y2Npw7NuIHkgYHB5X2NvbXBpbGVgIGRlIGxvcyBhcmNoaXZvcyBQeXRob24gbW9kaWZpY2Fkb3MgbWVkaWFudGUgR2l0SHViIEFjdGlvbnMuIExvcyBhcmNoaXZvcyBkZWxpY2Fkb3MgZGUgZnJvbnRlbmQgc2UgcmVzdGF1cmFyb24gZGVzZGUgYG1haW5gIHkgbG9zIGNhbWJpb3Mgc2UgcmVhcGxpY2Fyb24gbcOtbmltYW1lbnRlLgoKIyMgSW5zdGFsYWNpw7NuClB1YmxpY2FyIGVuIGBtYWluYCBoYWNlIHZpc2libGUgMS4xLjEwIHBhcmEgZWwgQ2VudHJvIGRlIEFjdHVhbGl6YWNpb25lcy4gTGEgaW5zdGFsYWNpw7NuIGVuIHNlcnZpZG9yIHNvbG8gc2UgY29uc2lkZXJhIHRlcm1pbmFkYSBkZXNwdcOpcyBkZSB1c2FyIEFjdHVhbGl6YWNpb25lcyDihpIgQ29tcHJvYmFyIOKGkiBBY3R1YWxpemFyIHkgdmFsaWRhciBhbWJvcyB0ZW1wbGF0ZXMuCgojIyBSZWdsYSBwYXJhIGVsIGZ1dHVybwpDYWRhIGNhbWJpbyBwb3N0ZXJpb3IgZGViZSBhY3R1YWxpemFyIHByaW1lcm8gYGRvY3MvQ09OVElOVUlEQURfTUlLUk9IVUIubWRgIGFudGVzIGRlIGNvbXVuaWNhcnNlIGNvbW8gdGVybWluYWRvLgonJycpCg=="
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('docs/CONTINUIDAD_MIKROHUB.md')
-          s = p.read_text()
-          s = s.replace('# MikroHub — Bitácora maestra de continuidad', '# Z-Hub (MikroHub internamente) — Bitácora maestra de continuidad', 1)
-          s = s.replace('- Nombre del sistema: **MikroHub**', '- Nombre público del sistema desde 1.1.10: **Z-Hub**\n- Nombre/rutas técnicas heredadas: **MikroHub** (se conservan por compatibilidad)', 1)
-          old_version = '- Versión funcional actual: **1.1.9**, correspondiente a la configuración de facturación individual por cliente y sus reglas de vencimiento/corte/mensajería.'
-          new_version = '- Versión funcional actual: **1.1.10**, correspondiente a la identidad visible Z-Hub y al selector de templates Oscuro clásico / Z-Hub Blanco, manteniendo intacta la lógica 1.1.9 de facturación individual.'
-          if old_version not in s:
-              raise SystemExit('No se encontró la línea de versión actual en continuidad')
-          s = s.replace(old_version, new_version, 1)
-          s = s.replace('PANEL_VERSION = 1.1.9', 'PANEL_VERSION = 1.1.10', 1)
-
-          section = r'''
-
----
-
-## 21. Registro de continuidad — 2026-09-08 — Panel 1.1.10
-
-**Tipo:** Identidad / UX / templates visuales / compatibilidad / seguridad de despliegue.
-
-### Objetivo
-
-Cambiar la identidad visible del producto de MikroHub a **Z-Hub** y añadir un template claro inspirado en la propuesta visual aprobada, conservando el template oscuro actual y evitando cambios funcionales en Clientes, Facturación, MikroTik, OLT, permisos o rutas internas.
-
-### Decisión de compatibilidad
-
-El cambio de marca es **visible**, no una migración destructiva de nombres internos.
-
-Se conserva deliberadamente:
-
-- repositorio `ronbercito/mirkohub`;
-- ruta de despliegue `/var/www/mikrohub`;
-- claves locales heredadas `fibraz_*`;
-- nombres técnicos/integraciones que usen MikroHub internamente.
-
-Esto evita romper actualizaciones, sesiones, integraciones o automatizaciones existentes.
-
-El campo `company_name` sigue siendo configurable. Si el ISP ya tiene un nombre guardado (por ejemplo FIBRA Z), **no se sobrescribe**. Z-Hub funciona como identidad/fallback del producto.
-
-### Backup obligatorio creado
-
-Antes de tocar archivos delicados se creó la rama:
-
-`backup-pre-zhub-theme-1.1.10`
-
-Base del backup:
-
-`9c269d9d39add24e860ba9c2ed7e8e9ffa21274b` — Panel 1.1.9.
-
-Rama de desarrollo/validación:
-
-`update-zhub-theme-1.1.10`
-
-### Templates disponibles
-
-1. `dark` — **Oscuro clásico**: conserva la apariencia actual del panel.
-2. `zhub-light` — **Z-Hub Blanco**: superficies blancas y azul muy claro, texto azul tinta y acentos azul/cian/turquesa.
-
-El selector se ubica en:
-
-`Ajustes → General → Apariencia del panel`
-
-La selección se persiste como `panel_theme` dentro del JSON existente de `settings` y también se refleja en `localStorage` para evitar parpadeos al arrancar.
-
-### Arquitectura del tema
-
-```text
-Ajustes > General
-  ↓
-panel_theme
-  ↓
-/api/settings
-  ↓
-settings.data JSON
-  ↓
-Layout / Login
-  ↓
-applyPanelTheme()
-  ↓
-html[data-panel-theme="dark|zhub-light"]
-  ↓
-panel-theme.css
-```
-
-El template claro es una **capa CSS scopeada**. No reescribe la lógica de negocio ni cada módulo individualmente.
-
-### Archivos nuevos
-
-- `frontend/src/modules/appearance/panelThemes.js` — catálogo, normalización, persistencia y aplicación del tema.
-- `frontend/src/modules/appearance/PanelThemeSelector.jsx` — selector visual mostrado en Ajustes > General.
-- `frontend/src/modules/appearance/panel-theme.css` — capa de colores del template Z-Hub Blanco.
-- `frontend/public/zhub-logo.svg` — logotipo vectorial Z-Hub de fallback.
-
-### Archivos modificados
-
-- `frontend/src/modules/ajustes/Settings.jsx` — añade `panel_theme`, selector y aplicación al guardar; se reaplicó el cambio sobre el archivo vigente de `main` para evitar perder funciones existentes.
-- `frontend/src/components/layout/Layout.jsx` — carga/sincroniza el tema persistido, usa fallback Z-Hub y muestra Z-Hub en título/pie.
-- `frontend/src/components/layout/Sidebar.jsx` — fallback Z-Hub y logo vectorial si no existe logo personalizado.
-- `frontend/src/modules/auth/Login.jsx` — obtiene el tema desde `/settings/public`, lo aplica antes de iniciar sesión y usa identidad Z-Hub.
-- `frontend/src/App.js` — inicializa el tema al arrancar y adapta el Toaster al modo claro/oscuro.
-- `frontend/src/modules/system-update/UpdateCenter.jsx` — texto visible “Panel Z-Hub”.
-- `frontend/src/modules/system-update/version.js` — `PANEL_VERSION = 1.1.10` y CHANGELOG.
-- `backend/app/models/setting.py` — añade `panel_theme: dark` al valor por defecto y fallback Z-Hub.
-- `backend/app/routers/ajustes/router.py` — `/settings/public` expone el tema y los textos de prueba SMTP usan Z-Hub.
-- `docs/CONTINUIDAD_MIKROHUB.md` — esta actualización obligatoria.
-- `docs/CONTINUIDAD_MIKROHUB_1.1.10_ZHUB_TEMAS.md` — continuidad complementaria de esta entrega.
-
-### Base de datos
-
-No se crea tabla ni columna SQL.
-
-`settings` ya almacena un objeto JSON; se agrega únicamente la clave:
-
-```text
-panel_theme = dark | zhub-light
-```
-
-Los registros existentes siguen siendo válidos porque el backend combina `DEFAULT_SETTINGS` con los datos guardados.
-
-### API
-
-`GET /api/settings/public` ahora puede devolver:
-
-```text
-company_name
-logo_data
-panel_theme
-```
-
-No se modificaron rutas existentes de Clientes, Facturación, MikroTik, OLT, permisos ni autenticación.
-
-### Pruebas realizadas
-
-- [x] rama backup creada antes de publicar;
-- [x] rama aislada de desarrollo creada;
-- [x] archivos sensibles `Settings.jsx`, `Layout.jsx` y `Login.jsx` restaurados desde el `main` vigente y cambios Z-Hub reaplicados de forma mínima;
-- [x] comparación contra `main` revisada: después de la reaplicación, los diffs de esos archivos quedaron pequeños y específicos;
-- [x] instalación de dependencias frontend en GitHub Actions;
-- [x] `yarn build` de producción ejecutado correctamente en GitHub Actions;
-- [x] `python -m py_compile backend/app/models/setting.py backend/app/routers/ajustes/router.py` correcto;
-- [x] `PANEL_VERSION`/CHANGELOG actualizado a 1.1.10;
-- [x] continuidad canónica actualizada en la misma entrega;
-- [ ] instalación real desde el Actualizador del servidor;
-- [ ] validación visual real en navegador del template oscuro;
-- [ ] validación visual real en navegador del template Z-Hub Blanco;
-- [ ] prueba real de guardar/cambiar tema, cerrar sesión y volver a ingresar.
-
-### Validación automatizada
-
-La validación temporal en GitHub Actions confirmó build React de producción + sintaxis Python antes de publicación. Los workflows temporales usados exclusivamente para validar/reaplicar cambios **no forman parte de la actualización final** y se eliminan antes de publicar `main`.
-
-### Resultado
-
-La versión 1.1.10 queda preparada para publicación por el sistema normal de actualizaciones. El código compila en validación automatizada, pero **no debe declararse instalado en el servidor** hasta que el administrador ejecute Actualizaciones → Comprobar → Actualizar y confirme visualmente ambos templates.
-
-### Rollback
-
-Existen dos niveles de protección:
-
-1. rollback automático del actualizador si falla build/despliegue;
-2. rama manual `backup-pre-zhub-theme-1.1.10` para volver al estado exacto 1.1.9 previo a esta entrega.
-
-### Riesgos / pendientes
-
-- El template blanco usa overrides visuales scopeados; algún componente muy específico puede necesitar un ajuste fino de contraste después de verlo en producción.
-- Si aparece un detalle de color, corregir únicamente la capa `modules/appearance/` cuando sea posible; no tocar lógica de negocio para resolver un problema visual.
-- No renombrar rutas/repositorio/claves internas solo por la nueva marca Z-Hub.
-- Validar siempre la navegación completa y Ajustes después de instalar.
-
-### Estado de cierre
-
-**Código validado por build y documentación actualizada. Preparado para publicación como 1.1.10; instalación real en servidor pendiente de ejecutar desde el Actualizador.**
-'''
-          if '## 21. Registro de continuidad — 2026-09-08 — Panel 1.1.10' not in s:
-              s += section
-          p.write_text(s)
-
-          detail = Path('docs/CONTINUIDAD_MIKROHUB_1.1.10_ZHUB_TEMAS.md')
-          detail.write_text('''# Continuidad complementaria — Z-Hub 1.1.10\n\nEste documento complementa `docs/CONTINUIDAD_MIKROHUB.md`. La bitácora maestra sigue siendo la fuente obligatoria.\n\n## Alcance\n\nVersión 1.1.10: identidad visible Z-Hub + selector de template Oscuro clásico / Z-Hub Blanco en Ajustes → General.\n\n## Protección\n\n- Backup previo: `backup-pre-zhub-theme-1.1.10`.\n- Desarrollo: `update-zhub-theme-1.1.10`.\n- Base preservada: 1.1.9 (`9c269d9d39add24e860ba9c2ed7e8e9ffa21274b`).\n- Rutas internas/repo/claves heredadas no se renombran.\n- `company_name` existente del ISP no se pisa.\n\n## Persistencia\n\n`panel_theme` se guarda en el JSON de `settings`, sin migración SQL. Valores admitidos: `dark`, `zhub-light`.\n\n## Validación\n\nSe ejecutó build React de producción y `py_compile` de los dos archivos Python modificados mediante GitHub Actions. Los archivos delicados de frontend se reconstruyeron desde `main` y los cambios se reaplicaron mínimamente antes del build final.\n\n## Instalación\n\nPublicar en `main` hace visible 1.1.10 para el Centro de Actualizaciones. La instalación en servidor se considera terminada solo después de usar Actualizaciones → Comprobar → Actualizar y validar ambos templates.\n\n## Regla para el futuro\n\nCada cambio posterior debe actualizar primero la bitácora maestra `docs/CONTINUIDAD_MIKROHUB.md` antes de comunicarse como terminado.\n''')
-          PY
+          printf '%s' "$CONTINUITY_SCRIPT_B64" | base64 -d > /tmp/update_continuity.py
+          python /tmp/update_continuity.py
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         working-directory: frontend
         run: yarn install
 
@@ -222,7 +44,7 @@ Existen dos niveles de protección:
       - name: Validate backend syntax
         run: python -m py_compile backend/app/models/setting.py backend/app/routers/ajustes/router.py
 
-      - name: Remove temporary validation workflows and commit final tree
+      - name: Remove temporary workflows and commit final tree
         run: |
           git rm .github/workflows/validate-zhub-1.1.10.yml
           git rm .github/workflows/rebase-zhub-safe.yml
