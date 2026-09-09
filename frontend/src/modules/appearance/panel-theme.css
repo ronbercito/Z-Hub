@@ -2104,3 +2104,33 @@ html[data-panel-theme="zhub-light"] .plans-page .plan-card {
   width: 100% !important;
   max-width: none !important;
 }
+
+
+/* Planes 1.2.07 — formato compacto y color visible por tecnología. */
+.plans-page .plans-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 290px));
+  justify-content: start;
+}
+.plans-page .plan-card {
+  min-height: 205px;
+}
+html[data-panel-theme] .plans-page .plan-card.plan-card--fiber {
+  background: linear-gradient(145deg, #168bd3, #075a9a) !important;
+  border-color: #55c5fa !important;
+  box-shadow: 0 8px 17px rgba(5, 113, 188, .26) !important;
+}
+html[data-panel-theme] .plans-page .plan-card.plan-card--radio {
+  background: linear-gradient(145deg, #7c4dce, #49299b) !important;
+  border-color: #c3a6ff !important;
+  box-shadow: 0 8px 17px rgba(86, 43, 178, .27) !important;
+}
+html[data-panel-theme] .plans-page .plan-card.plan-card--hotspot {
+  background: linear-gradient(145deg, #e89a09, #ae5c04) !important;
+  border-color: #ffd166 !important;
+  box-shadow: 0 8px 17px rgba(196, 114, 0, .27) !important;
+}
+@media (max-width: 640px) {
+  .plans-page .plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
