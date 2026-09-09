@@ -1,10 +1,13 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.88: corrección definitiva de la barra de desplazamiento en la ventana de actualizaciones.
+ * Actualización: 2026-09-09 — versión 1.1.89: estadísticas reales de MikroTik en tarjetas de Gestión de Red.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.88";
+export const PANEL_VERSION = "1.1.89";
 export const CHANGELOG = [
+  { type: "Routers", text: "Las tarjetas de routers MikroTik actualizan CPU, memoria, ping, identidad, RouterOS, modelo y uptime desde el equipo real al cargar Gestión de Red." },
+  { type: "Datos reales", text: "La tarjeta ya no depende únicamente de valores históricos o predeterminados almacenados en el panel para mostrar el estado del MikroTik." },
+  { type: "Interfaz", text: "Las estadísticas de las tarjetas se sincronizan usando el mismo mecanismo de prueba de conexión existente, sin modificar las pestañas en vivo de Interfaces, PPPoE, Colas, DHCP o Hotspot." },
   { type: "Interfaz", text: "La ventana de Actualizaciones muestra una barra de desplazamiento vertical visible para recorrer changelogs largos sin reducir el zoom." },
   { type: "Interfaz", text: "La barra de desplazamiento de la ventana de Actualizaciones tiene un estilo visible y usable en navegadores Chromium/Chrome y Firefox." },
   { type: "Interfaz", text: "La ventana de Actualizaciones mantiene su tamaño máximo según la pantalla y permite recorrer todo el contenido verticalmente." },
