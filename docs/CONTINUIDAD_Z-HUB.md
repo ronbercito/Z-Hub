@@ -1986,3 +1986,12 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Se reforzó en Claro Suave el contraste de textos, contenedor y barra del progreso para evitar controles o letras blancas poco visibles.
 - Prueba realizada: revisión estática del sondeo silencioso, activación manual, colores de progreso y rutas de estado/instalación.
 - Alcance: no se alteran la frecuencia de sondeo durante instalación, descarga, instalación, sesión ni API.
+
+
+### 1.1.68 — Versión movida al control global de actualizaciones
+
+- Se corrigió la ubicación: la versión deja de mostrarse en el encabezado del Dashboard.
+- Ahora se muestra en la barra superior, inmediatamente antes del botón global de actualizaciones con ícono de descarga, tal como corresponde al control marcado.
+- El indicador lee `PANEL_VERSION` y tiene estilo propio para oscuro y Claro Suave.
+- Prueba realizada: revisión estática del grupo superior, orden versión → botón, eliminación del duplicado en Dashboard y estilos de ambos temas.
+- Alcance: no se modifican las métricas del Dashboard, descarga, instalación, sesión ni API.
