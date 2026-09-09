@@ -2180,3 +2180,10 @@ html[data-panel-theme="zhub-light"] .panel-footer {
   border-color: #d7e1eb !important;
   color: #5e7892 !important;
 }
+
+
+/* Pie 1.2.10 — identificación centrada y visible en tema claro. */
+html[data-panel-theme="zhub-light"] .panel-footer {
+  color: #28577f !important;
+  font-weight: 800 !important;
+}
