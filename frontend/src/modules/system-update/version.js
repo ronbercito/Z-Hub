@@ -1,10 +1,13 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.91: reparación del build de producción de App.js.
+ * Actualización: 2026-09-09 — versión 1.1.92: corrección definitiva de colores en métricas de clientes para Claro Suave.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.91";
+export const PANEL_VERSION = "1.1.92";
 export const CHANGELOG = [
+  { type: "Interfaz", text: "Corrección definitiva de las tarjetas Clientes colas simples, Clientes DHCP, Clientes PPPoE y Clientes suspendidos en el tema Claro Suave." },
+  { type: "Interfaz", text: "Los cuatro recuadros conservan sus colores diferenciados y texto e iconos blancos también en Claro Suave." },
+  { type: "Compatibilidad", text: "La excepción visual se coloca al final de la hoja principal del tema para vencer las reglas globales que neutralizan fondos slate y degradados." },
   { type: "Build", text: "Se reestructura App.js con JSX multilínea para eliminar el error de compilación de producción reportado en ThemedToaster." },
   { type: "Interfaz", text: "Las tarjetas Clientes colas simples, Clientes DHCP, Clientes PPPoE y Clientes suspendidos recuperan sus colores diferenciados en Gestión de Red." },
   { type: "Interfaz", text: "La corrección mantiene texto e iconos en blanco sobre las cuatro tarjetas para conservar el contraste." },
