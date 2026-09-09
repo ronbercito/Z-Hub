@@ -2054,3 +2054,14 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Archivo funcional: `frontend/src/modules/red/components/RouterCard.jsx`.
 - Prueba realizada: revisión estática de icono, dato de memoria, columnas por tipo de equipo y ancho compacto.
 - Alcance: no se modifican lecturas RouterOS, API, permisos, OLT, acciones ni pestañas.
+
+
+### 1.1.75 — Edición de router compacta y con mayor contraste
+
+- Se compactó el modal **Editar equipo**: menor ancho, relleno y separación entre controles, conservando todos los campos.
+- En Claro Suave se reforzaron título, etiquetas, inputs, ayuda y pie del formulario para una lectura consistente.
+- El botón **Elegir coordenadas en el mapa** ahora usa azul sólido, texto e icono blancos y borde visible.
+- El botón **Editar router** de la tarjeta usa superficie blanca, texto azul más oscuro, borde y sombra para destacar sobre la tarjeta azul.
+- Archivos funcionales: `frontend/src/modules/red/components/RouterForm.jsx`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: revisión estática de clases del modal, botón de mapa, botón de edición y selectores Claro Suave.
+- Alcance: no se modifican coordenadas, mapa, API, datos, permisos, RouterOS, OLT ni acciones de guardado.
