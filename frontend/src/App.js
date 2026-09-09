@@ -24,19 +24,32 @@ function MainApp() {
   const [setupRequired, setSetupRequired] = useState(false);
 
   useEffect(() => {
-    axios.get("/api/setup/status")
+    axios
+      .get("/api/setup/status")
       .then((response) => setSetupRequired(Boolean(response.data.setup_required)))
       .catch(() => setSetupRequired(false))
       .finally(() => setSetupLoading(false));
   }, []);
 
   if (setupLoading) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>;
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   if (setupRequired) return <SetupWizard />;
+
   if (loading) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div><p className="text-xs text-slate-400 font-medium">Iniciando Z-Hub ISP...</p></div>;
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-slate-400 font-medium">Iniciando Z-Hub ISP...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) return <Login />;
@@ -45,14 +58,21 @@ function MainApp() {
 
 function ThemedToaster() {
   const [theme, setTheme] = useState(() => getToastTheme());
+
   useEffect(() => {
     const sync = () => setTheme(getToastTheme());
     window.addEventListener("zhub-theme-changed", sync);
     return () => window.removeEventListener("zhub-theme-changed", sync);
   }, []);
+
   return <Toaster position="top-right" richColors theme={theme} />;
 }
 
 export default function App() {
-  return <AuthProvider><MainApp /><ThemedToaster /></AuthProvider>;
+  return (
+    <AuthProvider>
+      <MainApp />
+      <ThemedToaster />
+    </AuthProvider>
+  );
 }
