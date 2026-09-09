@@ -1371,3 +1371,76 @@ html[data-panel-theme="zhub-light"] .client-detail-account .bg-emerald-500\/15 {
   color: #ffffff !important;
   box-shadow: 0 4px 10px rgba(4, 129, 98, .28) !important;
 }
+
+
+/* Facturación 1.1.50 — indicadores, tabla y estados con alto contraste. */
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics > div {
+  border-color: transparent !important;
+  box-shadow: 0 5px 13px rgba(31, 74, 112, .15) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics > div:nth-child(1) {
+  background: linear-gradient(135deg, #267dbe, #155b99) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics > div:nth-child(2) {
+  background: linear-gradient(135deg, #16ad84, #078164) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics > div:nth-child(3) {
+  background: linear-gradient(135deg, #d9576d, #b52c47) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics p {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-metrics p:first-child {
+  opacity: .85 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card {
+  background: #ffffff !important;
+  border-color: #c7dce9 !important;
+  box-shadow: 0 5px 14px rgba(31, 74, 112, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card thead {
+  background: linear-gradient(135deg, #294f77, #1d3857) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card th {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card tbody tr {
+  background: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card tbody tr:nth-child(even) {
+  background: #f3f8fc !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card tbody tr:hover {
+  background: #e1f3ff !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card td,
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card td div {
+  color: #173b63 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card .invoice-status--paid {
+  background: linear-gradient(135deg, #19b886, #078363) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 9px rgba(3, 126, 94, .27) !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card .invoice-status--paid svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card .invoice-status--unpaid {
+  background: linear-gradient(135deg, #ecae47, #cf8517) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .billing-page .billing-table-card .invoice-status--overdue {
+  background: linear-gradient(135deg, #dd5b70, #b52e49) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  font-weight: 900 !important;
+}
