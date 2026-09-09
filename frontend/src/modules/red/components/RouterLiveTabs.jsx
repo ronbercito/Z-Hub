@@ -187,15 +187,16 @@ export default function RouterLiveTabs({ router }) {
             )}
             {tab === "queues" && (
               <>
-                <Head cols={["Comentario", "Nombre", "Target", "Max-limit (sub/baj)", "Tráfico actual", "Estado"]} />
+                <Head cols={["Comentario", "Nombre", "Target", "Max-limit (sub/baj)", "Queue type", "Tráfico actual", "Estado"]} />
                 <tbody className="divide-y divide-slate-800/60 text-slate-300">
                   {rows.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-800/40">
-                      <td className="py-2 px-3 w-[22%] text-slate-400 truncate" title={r.comment}>{r.comment || "—"}</td>
-                      <td className="py-2 px-3 w-[16%] font-mono font-bold text-slate-100 truncate" title={r.name}>{r.name}</td>
-                      <td className="py-2 px-3 w-[25%] font-mono text-cyan-300 truncate" title={r.target}>{r.target}</td>
-                      <td className="py-2 px-3 w-[15%] font-mono truncate" title={formatQueueLimit(r.max_limit)}>{formatQueueLimit(r.max_limit)}</td>
-                      <td className="py-2 px-3 w-[14%] font-mono text-emerald-300 truncate">{r.rate_up_mbps} / {r.rate_down_mbps} Mbps</td>
+                      <td className="py-2 px-3 w-[19%] text-slate-400 truncate" title={r.comment}>{r.comment || "—"}</td>
+                      <td className="py-2 px-3 w-[14%] font-mono font-bold text-slate-100 truncate" title={r.name}>{r.name}</td>
+                      <td className="py-2 px-3 w-[20%] font-mono text-cyan-300 truncate" title={r.target}>{r.target}</td>
+                      <td className="py-2 px-3 w-[14%] font-mono truncate" title={formatQueueLimit(r.max_limit)}>{formatQueueLimit(r.max_limit)}</td>
+                      <td className="py-2 px-3 w-[12%] font-mono text-violet-300 truncate" title={r.queue_type || "default"}>{r.queue_type || "default"}</td>
+                      <td className="py-2 px-3 w-[13%] font-mono text-emerald-300 truncate">{r.rate_up_mbps} / {r.rate_down_mbps} Mbps</td>
                       <td className="py-2 px-3 w-[8%]"><Badge ok={!r.disabled} yes="ACTIVA" no="DESHABILITADA" /></td>
                     </tr>
                   ))}
