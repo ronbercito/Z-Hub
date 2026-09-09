@@ -2032,3 +2032,15 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
 - Prueba realizada: revisión estática de integración de métricas, ausencia de duplicado en el detalle, apertura del formulario, permiso de edición y conservación del ancho OLT.
 - Alcance: no se modifican API, credenciales, lecturas RouterOS, pestañas, eliminación, permisos de backend ni el comportamiento de OLT.
+
+
+
+### 1.1.73 — Resumen compacto de métricas en Routers MikroTik
+
+- Se revierte el ancho expandido: la tarjeta MikroTik seleccionada vuelve a **290 px** en escritorio, igual que las demás tarjetas.
+- Se retiraron los indicadores **PPPoE activos** y **Colas** marcados como no requeridos.
+- CPU, memoria, uptime y latencia se muestran debajo de las tarjetas, en cuatro recuadros compactos.
+- El botón **Editar router** permanece dentro de la tarjeta y conserva su permiso `network → edit`.
+- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de las cuatro métricas, exclusión de PPPoE/colas, edición con permiso, tamaño de tarjeta y cuadrícula.
+- Alcance: no se modifican lecturas RouterOS, API, datos del router, pestañas, OLT, acciones existentes ni permisos de backend.
