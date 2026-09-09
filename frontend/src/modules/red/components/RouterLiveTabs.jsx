@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterLiveTabs.jsx
- * Función: Pestañas de lectura en vivo del MikroTik seleccionado. Cada pestaña consulta un
+ * Actualización: 2026-09-09 — versión 1.1.32, tabla viva compatible con la presentación clara.\n * Función: Pestañas de lectura en vivo del MikroTik seleccionado. Cada pestaña consulta un
  *          endpoint del backend que a su vez lee el RouterOS por API:
  *          Interfaces (tráfico RX/TX), PPPoE activos, PPPoE secrets (habilitar/deshabilitar),
  *          Colas simples, DHCP leases (hacer estático), Address-list (agregar/quitar IP de morosos)
@@ -78,7 +78,7 @@ export default function RouterLiveTabs({ router }) {
   };
 
   return (
-    <div data-testid="router-live-tabs">
+    <div className="network-live-tabs" data-testid="router-live-tabs">
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-800 mb-3">
         {TABS.map((t) => (
           <button key={t.id} data-testid={`tab-${t.id}`} onClick={() => setTab(t.id)}
