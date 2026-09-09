@@ -1,0 +1,96 @@
+name: Rebase Z-Hub changes safely
+
+on:
+  push:
+    branches:
+      - update-zhub-theme-1.1.10
+
+permissions:
+  contents: write
+
+jobs:
+  rebase-safe:
+    if: github.event.head_commit.message == 'Rebase Z-Hub changes safely'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: update-zhub-theme-1.1.10
+
+      - name: Restore sensitive frontend files from current main
+        run: |
+          git fetch origin main
+          git checkout origin/main -- \
+            frontend/src/modules/ajustes/Settings.jsx \
+            frontend/src/components/layout/Layout.jsx \
+            frontend/src/modules/auth/Login.jsx
+
+      - name: Apply minimal Z-Hub/theme changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+
+          # Settings.jsx: preserve the exact current module and add only theme/branding hooks.
+          p = root / 'frontend/src/modules/ajustes/Settings.jsx'
+          s = p.read_text()
+          s = s.replace(
+              'import TechnicianClientVisibility from "./access/TechnicianClientVisibility";',
+              'import TechnicianClientVisibility from "./access/TechnicianClientVisibility";\nimport PanelThemeSelector from "../appearance/PanelThemeSelector";\nimport { applyPanelTheme } from "../appearance/panelThemes";'
+          )
+          s = s.replace('    company_name: "",\n    logo_data: "",', '    company_name: "Z-Hub",\n    logo_data: "",\n    panel_theme: "dark",')
+          s = s.replace('        setSettings(res.data);', '        setSettings((current) => ({ ...current, ...res.data }));')
+          s = s.replace(
+              '      window.dispatchEvent(new CustomEvent("fibraz-branding", { detail: { companyName: response.data.company_name, logoData: response.data.logo_data || "" } }));',
+              '      applyPanelTheme(response.data.panel_theme || "dark");\n      window.dispatchEvent(new CustomEvent("fibraz-branding", { detail: { companyName: response.data.company_name, logoData: response.data.logo_data || "", panelTheme: response.data.panel_theme || "dark" } }));'
+          )
+          s = s.replace('settings.company_name || "MikroHub"', 'settings.company_name || "Z-Hub"')
+          s = s.replace('La firma se añadirá debajo de los correos enviados por MikroHub.', 'La firma se añadirá debajo de los correos enviados por Z-Hub.')
+          marker = '        {/* Payment & Collection Details */}'
+          selector = '''        <PanelThemeSelector\n          value={settings.panel_theme}\n          onChange={(panel_theme) => setSettings({ ...settings, panel_theme })}\n        />\n\n        {/* Payment & Collection Details */}'''
+          if marker not in s:
+              raise SystemExit('Settings.jsx: insertion marker not found')
+          s = s.replace(marker, selector, 1)
+          p.write_text(s)
+
+          # Layout.jsx: preserve routing/layout exactly, only add theme sync and Z-Hub visible fallback.
+          p = root / 'frontend/src/components/layout/Layout.jsx'
+          s = p.read_text()
+          s = s.replace(
+              'import { PANEL_VERSION } from "../../modules/system-update/version";',
+              'import { PANEL_VERSION } from "../../modules/system-update/version";\nimport { applyPanelTheme } from "../../modules/appearance/panelThemes";'
+          )
+          s = s.replace('localStorage.getItem("fibraz_company_name") || "MikroHub"', 'localStorage.getItem("fibraz_company_name") || "Z-Hub"')
+          s = s.replace('response.data.company_name?.trim() || "MikroHub"', 'response.data.company_name?.trim() || "Z-Hub"')
+          s = s.replace('        setCompanyName(name);\n        setLogoData(logo);', '        setCompanyName(name);\n        setLogoData(logo);\n        applyPanelTheme(response.data.panel_theme || "dark");', 1)
+          s = s.replace('event.detail?.companyName?.trim() || "MikroHub"', 'event.detail?.companyName?.trim() || "Z-Hub"')
+          s = s.replace('      setCompanyName(name);\n      setLogoData(logo);', '      setCompanyName(name);\n      setLogoData(logo);\n      if (event.detail?.panelTheme) applyPanelTheme(event.detail.panelTheme);', 1)
+          s = s.replace('useEffect(() => { document.title = `Panel · ${companyName}`; }, [companyName]);', 'useEffect(() => { document.title = `${companyName} · Z-Hub`; }, [companyName]);')
+          s = s.replace('Panel MikroHub · v{PANEL_VERSION}', 'Panel Z-Hub · v{PANEL_VERSION}')
+          p.write_text(s)
+
+          # Login.jsx: preserve current login behavior while applying public theme and Z-Hub identity.
+          p = root / 'frontend/src/modules/auth/Login.jsx'
+          s = p.read_text()
+          s = s.replace('import { toast } from "sonner";', 'import { toast } from "sonner";\nimport { applyPanelTheme } from "../appearance/panelThemes";')
+          s = s.replace('useState({ company_name: "MikroHub", logo_data: "" })', 'useState({ company_name: "Z-Hub", logo_data: "", panel_theme: "dark" })')
+          s = s.replace('response.data.company_name?.trim() || "MikroHub"', 'response.data.company_name?.trim() || "Z-Hub"')
+          s = s.replace('setBranding({ company_name: name, logo_data: response.data.logo_data || "" });', 'setBranding({ company_name: name, logo_data: response.data.logo_data || "", panel_theme: response.data.panel_theme || "dark" });\n      applyPanelTheme(response.data.panel_theme || "dark");')
+          s = s.replace('document.title = `Panel · ${name}`;', 'document.title = `${name} · Z-Hub`;')
+          s = s.replace('document.title = "Panel · MikroHub"', 'document.title = "Panel · Z-Hub"')
+          s = s.replace('<Wifi className="w-7 h-7 text-white" />', '<img src="/zhub-logo.svg" alt="Z-Hub" className="h-full w-full object-contain bg-white" />')
+          s = s.replace('text-2xl font-bold tracking-tight text-white', 'text-2xl font-bold tracking-tight text-slate-100')
+          s = s.replace('Panel de Facturación, Control de Clientes y Gestión MikroTik / OLT', 'Panel de Facturación, Control de Clientes y Gestión · Z-Hub')
+          p.write_text(s)
+          PY
+
+      - name: Commit safe rebased files
+        run: |
+          git config user.name "ronbercito"
+          git config user.email "rj.ston1985@gmail.com"
+          git add frontend/src/modules/ajustes/Settings.jsx frontend/src/components/layout/Layout.jsx frontend/src/modules/auth/Login.jsx
+          git commit -m "Seguridad: reaplicar Z-Hub sobre archivos actuales de main"
+          git push origin update-zhub-theme-1.1.10
