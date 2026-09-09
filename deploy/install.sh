@@ -224,6 +224,7 @@ if systemctl is-active --quiet nginx; then ok "Acceso web: OK"; else printf '%b�
 ok "Actualización: OK"
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+PANEL_URL="http://${IP:-IP_DEL_SERVIDOR}/"
 END_TIME="$(date +%s)"
 ELAPSED=$((END_TIME - START_TIME))
 
@@ -239,7 +240,9 @@ ok "Acceso web:         OK"
 ok "Actualización:      OK"
 ok "Duración:           ${ELAPSED}s"
 ui ""
-important "🌐 Panel:          http://${IP:-IP_DEL_SERVIDOR}/"
+# En terminales compatibles con OSC 8, el enlace se puede abrir con un clic.
+# Si la terminal no soporta enlaces OSC 8, la URL sigue visible como texto normal.
+printf '%b  🌐 Panel:          \033]8;;%s\a%s\033]8;;\a%b\n' "$COLOR_IMPORTANT" "$PANEL_URL" "$PANEL_URL" "$COLOR_RESET" >&3
 ui ""
 important "Credenciales iniciales:"
 important "🔑 Email:           $(grep '^ADMIN_EMAIL=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
