@@ -2025,3 +2025,36 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-status--o
 /* Corrección 1.1.77: el trazo SVG no debe heredar el blanco del contenedor. */
 .network-router-device-icon .network-router-device-glyph { color: #0878aa !important; stroke: currentColor !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-device-icon .network-router-device-glyph { color: #0878aa !important; stroke: currentColor !important; }
+
+
+/* Router 1.1.79 — resumen de clientes por tecnología y estado. */
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples {
+  background: linear-gradient(135deg, #1788df, #1872ca) !important;
+  border-color: rgba(147, 219, 255, .46) !important;
+}
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp {
+  background: linear-gradient(135deg, #7a4bd1, #6335bd) !important;
+  border-color: rgba(211, 185, 255, .46) !important;
+}
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe {
+  background: linear-gradient(135deg, #12aa9b, #0c9088) !important;
+  border-color: rgba(157, 248, 235, .46) !important;
+}
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos {
+  background: linear-gradient(135deg, #db9010, #c97a08) !important;
+  border-color: rgba(255, 225, 159, .50) !important;
+}
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples p,
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp p,
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe p,
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos p {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos p:first-child {
+  color: rgba(255, 255, 255, .87) !important;
+  font-weight: 800 !important;
+}
