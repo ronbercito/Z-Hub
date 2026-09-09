@@ -1,6 +1,6 @@
 """Asistente de configuración inicial de Z-Hub: licencia y administrador."""
-import json
 import os
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,10 +15,10 @@ from .schemas import AdminSetupRequest, LicenseRequest, SetupCompleteRequest
 
 router = APIRouter(prefix="/setup", tags=["Configuración inicial"])
 # El registro de licencias es exclusivamente backend. En producción se prioriza
-# la copia privada del servidor/contenedor; el archivo del repositorio queda como
-# plantilla temporal para preparar una instalación nueva.
-REPO_LICENSE_FILE = Path(__file__).resolve().parents[4] / "licencia" / "licenses.json"
-PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licenses.json"))
+# la copia privada del servidor/contenedor; el archivo del repositorio solo sirve
+# como plantilla temporal para preparar una instalación nueva.
+REPO_LICENSE_FILE = Path(__file__).resolve().parents[4] / "licencia" / "licencias.txt"
+PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licencias.txt"))
 
 
 def _license_file() -> Path:
@@ -27,25 +27,46 @@ def _license_file() -> Path:
     return REPO_LICENSE_FILE
 
 
-def _licenses() -> set[str]:
+def _licenses() -> dict[str, dict[str, str]]:
+    """Lee bloques LICENCIA/NOMBRE/CORREO/ESTADO sin exponer el registro completo."""
     try:
-        data = json.loads(_license_file().read_text(encoding="utf-8"))
-        values = data.get("licenses", [])
-        keys = set()
-        for item in values:
-            if isinstance(item, str):
-                key = item.strip().upper()
-            elif isinstance(item, dict):
-                if not item.get("active", True):
-                    continue
-                key = str(item.get("key", "")).strip().upper()
-            else:
-                continue
-            if key:
-                keys.add(key)
-        return keys
-    except (OSError, ValueError, TypeError):
-        return set()
+        text = _license_file().read_text(encoding="utf-8")
+    except OSError:
+        return {}
+
+    licenses: dict[str, dict[str, str]] = {}
+    current: dict[str, str] = {}
+    fields = {
+        "LICENCIA": "key",
+        "NOMBRE": "name",
+        "CORREO": "email",
+        "ESTADO": "status",
+    }
+
+    def flush() -> None:
+        key = current.get("key", "").strip().upper()
+        status = current.get("status", "ACTIVA").strip().upper()
+        if key and status == "ACTIVA":
+            licenses[key] = {
+                "name": current.get("name", "").strip(),
+                "email": current.get("email", "").strip().lower(),
+            }
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        match = re.match(r"^(LICENCIA|NOMBRE|CORREO|ESTADO)\s*:\s*(.*?)\s*$", line, re.IGNORECASE)
+        if not match:
+            continue
+        field, value = match.groups()
+        field = field.upper()
+        if field == "LICENCIA" and current.get("key"):
+            flush()
+            current = {}
+        current[fields[field]] = value
+    flush()
+    return licenses
 
 
 def _setting_data(setting: Setting | None) -> dict:
@@ -82,13 +103,19 @@ async def validate_license(req: LicenseRequest, db: AsyncSession = Depends(get_d
         raise HTTPException(status_code=409, detail="La configuración inicial ya fue completada")
 
     key = req.license_key.strip().upper()
-    if key not in _licenses():
+    license_data = _licenses().get(key)
+    if not license_data:
         raise HTTPException(status_code=400, detail="La licencia no es válida")
 
     data["license_key"] = key
     setting.data = data
     await db.commit()
-    return {"valid": True, "message": "Licencia válida"}
+    return {
+        "valid": True,
+        "message": "Licencia válida",
+        "owner": license_data["name"],
+        "email": license_data["email"],
+    }
 
 
 @router.post("/admin")
