@@ -132,7 +132,7 @@ export default function Layout() {
         sidebarOpen ? "ml-64" : "ml-20"
       }`}>
         <Navbar setActiveTab={setActiveTab} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">
           {renderContent()}
         </main>
         <footer className="px-6 pb-4 text-right text-[10px] text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
