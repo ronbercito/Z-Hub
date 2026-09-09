@@ -1686,3 +1686,12 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: búsqueda, enlace a facturación de notificaciones, centro de actualizaciones y datos del usuario se conservan sin cambios. No afecta API, permisos, autenticación ni tema oscuro.
 - Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.31. Build y validación visual real pendientes.
 - Resultado esperado: la barra superior clara muestra moneda, alerta y usuario con superficies claras, bordes discretos y texto más grueso como el resto del panel.
+
+
+### 1.1.32 — 2026-09-09 — Gestión de red adaptada al tema claro
+- Objetivo y causa: al ingresar a Gestión de red, tarjetas de equipos, métricas y tabla de interfaces conservaban grandes superficies oscuras que no seguían el estilo ya aplicado al Dashboard.
+- Archivos modificados: frontend/src/modules/red/Network.jsx (contenedores visuales), frontend/src/modules/red/components/RouterCard.jsx (clase de tarjeta), frontend/src/modules/red/components/RouterLiveTabs.jsx (clase de tabla viva), frontend/src/modules/appearance/panel-theme.css (capa clara aislada), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se preservan las llamadas a /api/routers, acciones de prueba, ping, cortes, configuración, RouterOS y OLT. No cambian datos, rutas, permisos, autenticación ni tema oscuro.
+- Backup: rama backup-pre-red-clara-1.1.32 creada antes de modificar la vista operativa.
+- Pruebas: revisión estática de clases, selectores y versión 1.1.32. Build y validación visual/lecturas reales pendientes.
+- Resultado esperado: Gestión de red presenta equipos, métricas, pestañas e interfaces con fondos blancos, cabeceras gris-azul, textos azul tinta, bordes discretos y estados de color legibles, coherentes con Dashboard.
