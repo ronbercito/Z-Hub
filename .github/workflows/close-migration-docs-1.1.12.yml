@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   close-docs:
-    if: github.event.head_commit.message == 'Continuidad: registrar migración completada a Z-Hub'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,16 +36,18 @@ Desde este punto:
 - `ronbercito/mirkohub` queda congelado como fuente legado/fallback de transición;
 - el panel 1.1.12 consulta ambos repositorios y solo ofrece actualización cuando existe una `PANEL_VERSION` superior;
 - cambios exclusivamente documentales con la misma versión no provocan una actualización del panel.'''
-          if old not in s:
-              raise SystemExit('No se encontró el bloque de migración pendiente')
-          s = s.replace(old, new, 1)
-          s = s.replace('- [ ] instalación real 1.1.12 desde un servidor que aún tenga `origin` en MikroHub;', '- [ ] instalación real 1.1.12 desde un servidor que aún tenga `origin` en MikroHub;', 1)
-          s += '''\n\n### Cierre de migración de repositorio\n\n**Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.\n'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          closure = '''\n\n### Cierre de migración de repositorio\n\n**Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.\n'''
+          if '### Cierre de migración de repositorio' not in s:
+              s += closure
           p.write_text(s, encoding='utf-8')
 
           d = Path('docs/CONTINUIDAD_MIKROHUB_1.1.12_REPOSITORIOS.md')
           ds = d.read_text(encoding='utf-8')
-          ds += '''\n## Estado de migración\nMigración del árbol de archivos a `ronbercito/Z-Hub`: **COMPLETADA**.\nCommit inicial promovido: `177e29184ce138469ef0d9d4eb6d5328acf5e409`.\nEl repositorio Z-Hub queda como fuente principal de todo trabajo futuro.\n'''
+          block = '''\n## Estado de migración\nMigración del árbol de archivos a `ronbercito/Z-Hub`: **COMPLETADA**.\nCommit inicial promovido: `177e29184ce138469ef0d9d4eb6d5328acf5e409`.\nEl repositorio Z-Hub queda como fuente principal de todo trabajo futuro.\n'''
+          if '## Estado de migración' not in ds:
+              ds += block
           d.write_text(ds, encoding='utf-8')
           PY
 
