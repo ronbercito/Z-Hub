@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-09 — versión 1.1.74, memoria visible en la tarjeta MikroTik.\n * Área: Gestión de Red > tarjetas de equipos.
+ * Actualización: 2026-09-09 — versión 1.1.76, icono y estado de router reforzados.\n * Área: Gestión de Red > tarjetas de equipos.
  * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline
  *          real, IP, modelo y latencia. En MikroTik muestra CPU; en OLT muestra puertos PON.
  * Alcance: Diferencia visualmente MikroTik (cyan) y OLT VSOL (violeta).
@@ -11,7 +11,7 @@ import React from "react";
 import { Server, Cpu, HardDrive, Activity, Radio, Zap, MapPin } from "lucide-react";
 
 const STATUS = {
-  online: { label: "ONLINE", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400 animate-pulse" },
+  online: { label: "ONLINE", cls: "bg-emerald-500 text-white border-emerald-300 shadow-sm shadow-emerald-950/20", dot: "bg-white animate-pulse" },
   offline: { label: "OFFLINE", cls: "bg-rose-500/20 text-rose-400 border-rose-500/30", dot: "bg-rose-400" },
   unknown: { label: "SIN PROBAR", cls: "bg-slate-700/40 text-slate-300 border-slate-600/40", dot: "bg-slate-400" },
 };
@@ -22,7 +22,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
   const Icon = isOlt ? Radio : Server;
   const tone = isOlt
     ? { accent: "violet", selected: "border-violet-500 shadow-violet-500/10", icon: "bg-violet-500/10 text-violet-400 border-violet-500/20", ip: "text-violet-400", metric: "text-violet-400" }
-    : { accent: "cyan", selected: "border-cyan-500 shadow-cyan-500/10", icon: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", ip: "text-cyan-400", metric: "text-cyan-400" };
+    : { accent: "cyan", selected: "border-cyan-500 shadow-cyan-500/10", icon: "network-router-device-icon bg-white/95 text-cyan-700 border-white shadow-sm", ip: "text-cyan-400", metric: "text-cyan-400" };
 
   return (
     <div
@@ -44,7 +44,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         </div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={(event) => { event.stopPropagation(); onCoordinates?.(router); }} title="Ver coordenadas" className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 text-cyan-300 hover:bg-slate-700"><MapPin className="h-3.5 w-3.5" /></button>
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] border ${st.cls}`}>
+          <span className={`network-router-status network-router-status--${router.status || "unknown"} inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] border ${st.cls}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span> {st.label}
           </span>
         </div>
