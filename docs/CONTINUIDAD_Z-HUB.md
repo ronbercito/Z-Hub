@@ -2065,3 +2065,13 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Archivos funcionales: `frontend/src/modules/red/components/RouterForm.jsx`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
 - Prueba realizada: revisión estática de clases del modal, botón de mapa, botón de edición y selectores Claro Suave.
 - Alcance: no se modifican coordenadas, mapa, API, datos, permisos, RouterOS, OLT ni acciones de guardado.
+
+
+### 1.1.76 — Icono y estado ONLINE más notorios
+
+- El icono principal de MikroTik usa fondo blanco, borde celeste y sombra para destacar sobre la tarjeta azul.
+- El estado **ONLINE** ahora usa verde sólido, texto blanco, punto blanco y borde visible.
+- En Claro Suave se añadieron selectores específicos para preservar el contraste de ambos elementos.
+- Archivos funcionales: `frontend/src/modules/red/components/RouterCard.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: revisión estática de icono, estado y estilos de Claro Suave.
+- Alcance: no se modifican tamaño de tarjeta, datos, RouterOS, acciones, permisos, OLT ni API.
