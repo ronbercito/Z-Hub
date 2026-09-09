@@ -1,10 +1,11 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.90: corrección de color en métricas de clientes de Gestión de Red.
+ * Actualización: 2026-09-09 — versión 1.1.91: reparación del build de producción de App.js.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.90";
+export const PANEL_VERSION = "1.1.91";
 export const CHANGELOG = [
+  { type: "Build", text: "Se reestructura App.js con JSX multilínea para eliminar el error de compilación de producción reportado en ThemedToaster." },
   { type: "Interfaz", text: "Las tarjetas Clientes colas simples, Clientes DHCP, Clientes PPPoE y Clientes suspendidos recuperan sus colores diferenciados en Gestión de Red." },
   { type: "Interfaz", text: "La corrección mantiene texto e iconos en blanco sobre las cuatro tarjetas para conservar el contraste." },
   { type: "Compatibilidad", text: "Los colores se mantienen tanto en el tema oscuro como en Claro Suave sin modificar datos ni funcionalidad." },
