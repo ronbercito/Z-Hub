@@ -4,8 +4,8 @@
  * Función: única fuente de verdad de PANEL_VERSION y del changelog de la versión actual.
  * Nota: CHANGELOG contiene únicamente los cambios de esta versión; no acumula versiones anteriores.
  */
-export const PANEL_VERSION = "1.2.03";
+export const PANEL_VERSION = "1.2.04";
 export const CHANGELOG = [
-  { type: "Colas simples", text: "Se añade búsqueda por nombre, comentario o IP." },
-  { type: "Compatibilidad", text: "No cambian las colas ni la configuración del MikroTik." },
+  { type: "PPPoE", text: "Se añade búsqueda de secrets por usuario, perfil, IP o comentario." },
+  { type: "Compatibilidad", text: "No cambian los secretos ni la configuración del MikroTik." },
 ];
