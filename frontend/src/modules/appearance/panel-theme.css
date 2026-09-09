@@ -2058,3 +2058,11 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-device-ic
   color: rgba(255, 255, 255, .87) !important;
   font-weight: 800 !important;
 }
+
+
+/* 1.1.95: preservar los colores del resumen de clientes en Claro Suave. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-colas-simples { background:#197ed4 !important; border-color:#197ed4 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp { background:#7045c8 !important; border-color:#7045c8 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background:#129d8c !important; border-color:#129d8c !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background:#d8890b !important; border-color:#d8890b !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat[class*="clientes-"] p,html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat[class*="clientes-"] svg { color:#fff !important; opacity:1 !important; }
