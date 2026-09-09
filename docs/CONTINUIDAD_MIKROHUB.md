@@ -77,7 +77,7 @@ Cada vez que se **agregue, modifique o corrija** algo en Z-Hub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.1.13**, correspondiente al refinamiento de baja luminancia del template Z-Hub Claro Suave. El repositorio principal y autoritativo es `ronbercito/Z-Hub`.
+- Versión funcional actual: **1.1.22**, correspondiente al hover transparente azul del menú lateral y submenús del template Z-Hub Claro. El repositorio principal y autoritativo es `ronbercito/Z-Hub`.
 
 ---
 
@@ -377,7 +377,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.1.13
+PANEL_VERSION = 1.1.22
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -1030,7 +1030,6 @@ No se creó una tabla nueva. Se utilizan los campos de facturación ya existente
 - [x] revisión de rutas backend de facturación y corte;
 - [x] actualización de `PANEL_VERSION` a 1.1.9;
 - [x] actualización de esta bitácora maestra;
-- [x] continuidad complementaria creada;
 - [ ] build React — no ejecutado desde este entorno;
 - [ ] prueba funcional real en navegador con un abonado cuyos valores difieran de la configuración global;
 - [ ] prueba real de generación mensual y fechas;
@@ -1447,7 +1446,6 @@ No se usa blanco puro como superficie normal del template claro. El blanco se re
 - `frontend/src/modules/appearance/panelThemes.js`;
 - `frontend/src/modules/system-update/version.js`;
 - `docs/CONTINUIDAD_MIKROHUB.md`;
-- `docs/CONTINUIDAD_MIKROHUB_1.1.13_TEMA_CLARO_SUAVE.md`.
 
 ### Backup
 
