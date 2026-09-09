@@ -352,3 +352,21 @@ html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .tex
 html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .text-\[11px\] {
   font-weight: 800 !important;
 }
+
+
+/* Dashboard 1.1.28 — versión visible junto a Actualizar. */
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-version-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #cddbe8;
+  border-radius: 8px;
+  background: #f6f9fc;
+  color: #173b63 !important;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
