@@ -169,7 +169,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
       {/* Middle Section: Traffic Chart & Bandwidth Donut + Resumen del Sistema */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 8 Cols: Tráfico Clientes últimos 7 días + Donut */}
-        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
+        <div className="dashboard-revenue lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-slate-100">Recaudación Diaria</h3>
