@@ -1646,3 +1646,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: se preservan /api/dashboard/summary, todos los valores, navegación, permisos, autenticación y tema oscuro; el cambio solo actúa en zhub-light.
 - Pruebas: revisión estática de selectores, clase del panel y PANEL_VERSION 1.1.26. Build y validación visual real pendientes.
 - Resultado esperado: etiquetas y título en azul tinta con peso consistente; cada contador redondo conserva su color pero muestra un número oscuro, grueso y visible.
+
+
+### 1.1.27 — 2026-09-09 — Tipografía de Recaudación Diaria reforzada
+- Objetivo y causa: aumentar el peso visual de las letras de Recaudación Diaria para que sea consistente con el Resumen del sistema y la referencia aprobada.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-revenue), frontend/src/modules/appearance/panel-theme.css (título, subtítulo, leyenda, escalas y medidor), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se conservan datos, series, porcentajes, API /api/dashboard/summary, rutas, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
+- Pruebas: revisión estática de clase, selectores y PANEL_VERSION 1.1.27. Build y validación visual real pendientes.
+- Resultado esperado: textos, escalas y métricas del gráfico se ven más gruesos, oscuros y notorios sin alterar la gráfica ni sus datos.
