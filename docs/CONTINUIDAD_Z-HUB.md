@@ -1809,3 +1809,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El estado ACTIVO usa fondo verde sólido, texto e icono blancos y sombra de realce; el estado CORTADO recibe el mismo tratamiento en rojo.
 - Alcance: solo presentación; no se modifican estados reales, deuda, datos ni acciones del abonado.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.49 — Ficha de cliente adaptada al tema
+- Se añadieron clases específicas al modal, formulario de resumen y panel de estado de cuenta.
+- Cabecera y pestañas ahora presentan azul técnico; los títulos, etiquetas e inputs ganan contraste y peso tipográfico.
+- El estado de cuenta usa un panel azul profundo, tarjetas blancas legibles y estado de servicio activo en verde sólido.
+- Alcance: solo presentación; no se modifican guardado, pestañas, datos, facturación, servicios, comunicaciones ni ubicación.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
