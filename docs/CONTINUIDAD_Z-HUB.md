@@ -1995,3 +1995,11 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - El indicador lee `PANEL_VERSION` y tiene estilo propio para oscuro y Claro Suave.
 - Prueba realizada: revisión estática del grupo superior, orden versión → botón, eliminación del duplicado en Dashboard y estilos de ambos temas.
 - Alcance: no se modifican las métricas del Dashboard, descarga, instalación, sesión ni API.
+
+
+### 1.1.69 — Mensaje «Buscando actualización» visible en Claro Suave
+
+- Se corrigió el estado visual del botón «Comprobar»: la regla clara normal anulaba sus colores cuando `aria-busy="true"`.
+- Durante una comprobación manual, el botón ahora muestra fondo azul sólido, texto e ícono blancos y el mensaje «Buscando actualización…» con contraste.
+- Al terminar vuelve a su apariencia clara normal; no se cambia el sondeo silencioso durante instalación.
+- Prueba realizada: revisión estática de estilos normal/ocupado, selector `aria-busy`, color de fondo y texto del ícono.
