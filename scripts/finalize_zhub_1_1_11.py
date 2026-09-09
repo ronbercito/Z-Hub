@@ -1,0 +1,141 @@
+from pathlib import Path
+
+p = Path("docs/CONTINUIDAD_MIKROHUB.md")
+s = p.read_text(encoding="utf-8")
+
+old_version_line = "- Versión funcional actual: **1.1.10**, correspondiente a la identidad visible Z-Hub y al selector de templates Oscuro clásico / Z-Hub Blanco, manteniendo intacta la lógica 1.1.9 de facturación individual."
+new_version_line = "- Versión funcional actual: **1.1.11**, correspondiente al refinamiento visual del template Z-Hub Blanco para reducir brillo e iluminación, manteniendo intacta la lógica funcional 1.1.10."
+if old_version_line in s:
+    s = s.replace(old_version_line, new_version_line, 1)
+
+s = s.replace("PANEL_VERSION = 1.1.10", "PANEL_VERSION = 1.1.11", 1)
+
+marker = "## 22. Registro de continuidad — 2026-09-09 — Panel 1.1.11"
+if marker not in s:
+    s += """
+
+---
+
+## 22. Registro de continuidad — 2026-09-09 — Panel 1.1.11
+
+**Tipo:** UX visual / refinamiento del template claro / continuidad / seguridad de despliegue.
+
+### Objetivo
+
+Reducir la sensación de exceso de brillo del template **Z-Hub Blanco** sin abandonar el estilo claro ni alterar la lógica actual del panel.
+
+### Motivo del cambio
+
+Después de probar la versión 1.1.10, el administrador indicó que el template claro se percibía demasiado iluminado. Se solicitó mantener el blanco como base, pero reducir la luminosidad de fondos, superficies, bordes, sombras y efectos para lograr un acabado más sobrio y cómodo durante uso prolongado.
+
+### Backup previo
+
+Antes de publicar esta corrección se creó la rama de respaldo:
+
+`backup-pre-zhub-light-1.1.11`
+
+Base del respaldo:
+
+`f082580712ce36f312ca9b2555ab8ed4d3c96417` — Z-Hub 1.1.10 validado.
+
+Rama de validación:
+
+`update-zhub-light-1.1.11`
+
+### Cambios realizados
+
+- Fondo general del template claro: pasa de un blanco azulado muy brillante a un gris-azulado claro más sobrio.
+- Superficies y tarjetas: conservan blanco, pero con menor contraste luminoso contra el fondo.
+- Bordes: tonos gris-azulados más neutros.
+- Campos e inputs: blanco suave `#fbfdff` en lugar de blanco puro agresivo.
+- Hovers: menos luminosos y menos azulados.
+- Sombras: reducidas en tamaño e intensidad.
+- Gradientes radiales del área principal: opacidad reducida.
+- Textos y estados: se mantienen legibles y con contraste suficiente.
+
+### Archivos modificados
+
+- `frontend/src/modules/appearance/panel-theme.css`
+- `frontend/src/modules/system-update/version.js`
+- `docs/CONTINUIDAD_MIKROHUB.md`
+- `docs/CONTINUIDAD_MIKROHUB_1.1.11_TEMA_CLARO.md`
+
+### Compatibilidad
+
+No se modificaron:
+
+- Clientes;
+- Facturación;
+- MikroTik;
+- OLT;
+- permisos;
+- autenticación;
+- estructura de base de datos;
+- persistencia del selector de templates;
+- template oscuro clásico.
+
+El cambio es exclusivamente visual sobre `html[data-panel-theme=\"zhub-light\"]`.
+
+### Pruebas de esta entrega
+
+- [x] backup previo creado en GitHub;
+- [x] cambios aislados en rama de actualización;
+- [x] versión subida a 1.1.11;
+- [x] continuidad maestra actualizada;
+- [x] continuidad complementaria creada;
+- [x] build React de producción ejecutado en GitHub Actions;
+- [x] sintaxis Python del backend validada con `py_compile`;
+- [ ] validación visual real en el servidor después de instalar desde el actualizador;
+- [ ] confirmación del administrador de que la luminosidad final es adecuada.
+
+### Resultado esperado
+
+El template **Z-Hub Blanco** debe conservar su apariencia clara y profesional, pero con menor brillo, menor sensación de neón y una lectura más cómoda. La combinación principal continúa siendo blanco, azul, cian y turquesa, solo con un tratamiento más sobrio.
+
+### Pendiente de cierre operativo
+
+Después de instalar 1.1.11 desde el actualizador, revisar visualmente:
+
+1. Inicio / Dashboard.
+2. Ajustes.
+3. Clientes.
+4. Facturación.
+5. Tablas y formularios.
+6. Sidebar y Navbar.
+
+Si aún se considera demasiado claro, preparar una versión posterior sin alterar 1.1.11 hasta recibir capturas del servidor real.
+"""
+
+p.write_text(s, encoding="utf-8")
+
+detail = Path("docs/CONTINUIDAD_MIKROHUB_1.1.11_TEMA_CLARO.md")
+detail.write_text(
+    """# Z-Hub 1.1.11 — Ajuste del template claro
+
+Fecha: 2026-09-09
+
+## Objetivo
+Reducir la iluminación del template `zhub-light` introducido en 1.1.10 sin afectar funciones ni el template oscuro.
+
+## Cambios
+- fondo general `#eef3f8`;
+- superficies blancas suavizadas;
+- bordes más neutros;
+- sombras más discretas;
+- hovers menos brillantes;
+- gradientes decorativos con menor opacidad;
+- versión funcional: `1.1.11`.
+
+## Seguridad
+Backup previo: `backup-pre-zhub-light-1.1.11`.
+
+No se modificaron módulos de clientes, facturación, red, MikroTik, OLT, autenticación, permisos ni base de datos.
+
+## Validación
+La rama de actualización ejecuta build React y validación de sintaxis Python antes de ser promovida a `main`.
+
+## Pendiente
+Validación visual en el servidor real después de instalar desde el centro de actualizaciones.
+""",
+    encoding="utf-8",
+)
