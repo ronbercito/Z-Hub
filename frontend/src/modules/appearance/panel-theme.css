@@ -1255,3 +1255,20 @@ html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td button.
   border-color: #c0d8e9 !important;
   color: #27547b !important;
 }
+
+
+/* Planes 1.1.47 — formato compacto y precio comercial destacado. */
+html[data-panel-theme="zhub-light"] .plans-page .plan-card {
+  width: min(100%, 290px) !important;
+}
+html[data-panel-theme="zhub-light"] .plans-page .plan-card .plan-price {
+  color: #ffe26a !important;
+  font-size: 1.35rem !important;
+  letter-spacing: .01em;
+  text-shadow: 0 1px 0 rgba(0,0,0,.20);
+}
+@media (max-width: 767px) {
+  html[data-panel-theme="zhub-light"] .plans-page .plan-card {
+    width: 100% !important;
+  }
+}
