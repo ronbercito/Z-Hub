@@ -2904,3 +2904,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 
 - Se aplica el color como estilo inline con prioridad `!important` al montar cada tarjeta, eliminando cualquier dependencia restante de la cascada CSS.
 - La corrección es exclusiva de las cuatro métricas de clientes y no afecta otros recuadros.
+
+
+### 1.1.99 — Tabla de Colas simples contenida
+
+- La tabla usa diseño fijo solo en la pestaña Colas simples y distribuye sus seis columnas dentro del ancho disponible.
+- Targets, límites y comentarios extensos se truncan con el valor completo disponible al pasar el cursor.
+- Se evita el desplazamiento horizontal de toda la pantalla; el contenedor conserva scroll local si fuera necesario.
+- Prueba: revisión estática de `table-fixed`, anchos de columnas, `truncate` y títulos.
