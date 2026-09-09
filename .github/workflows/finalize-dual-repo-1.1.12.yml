@@ -1,0 +1,58 @@
+name: Finalize dual repository 1.1.12
+
+on:
+  push:
+    branches:
+      - update-dual-repo-1.1.12
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: update-dual-repo-1.1.12
+
+      - name: Update continuity
+        run: python scripts/finalize_dual_repo_1_1_12.py
+
+      - name: Validate Python syntax
+        run: python -m py_compile backend/app/modules/system_update/router.py
+
+      - name: Validate Bash syntax
+        run: bash -n backend/app/modules/system_update/run_update.sh setup_debian.sh
+
+      - name: Validate dual repository constants
+        run: |
+          grep -q 'ronbercito/Z-Hub.git' backend/app/modules/system_update/router.py
+          grep -q 'ronbercito/mirkohub.git' backend/app/modules/system_update/router.py
+          grep -q 'PANEL_VERSION = "1.1.12"' frontend/src/modules/system-update/version.js
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install
+
+      - name: Production build
+        working-directory: frontend
+        env:
+          CI: 'false'
+        run: yarn build
+
+      - name: Commit validated continuity and clean temporary CI files
+        run: |
+          rm -f .github/workflows/finalize-dual-repo-1.1.12.yml scripts/finalize_dual_repo_1_1_12.py frontend/yarn.lock
+          git config user.name "ronbercito"
+          git config user.email "rj.ston1985@gmail.com"
+          git add -A
+          git commit -m "Continuidad: cerrar transición Z-Hub 1.1.12 validada"
+          git push origin HEAD:update-dual-repo-1.1.12
