@@ -1183,3 +1183,75 @@ html[data-panel-theme="zhub-light"] .plans-page .plan-card > div:last-child butt
 html[data-panel-theme="zhub-light"] .plans-page .plan-card > div:last-child button:hover {
   background: rgba(255,255,255,.25) !important;
 }
+
+
+/* Clientes 1.1.46 — listado de abonados con filtros y estados de alto contraste. */
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls {
+  background: linear-gradient(135deg, #1b537b, #123e65) !important;
+  border-color: transparent !important;
+  box-shadow: 0 7px 17px rgba(21, 72, 112, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls input {
+  background: #ffffff !important;
+  color: #173b63 !important;
+  border-color: #9fd6ef !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls > .flex button {
+  background: rgba(255,255,255,.14) !important;
+  border: 1px solid rgba(255,255,255,.25);
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls > .flex button[class*="bg-cyan-500"] {
+  background: linear-gradient(135deg, #18a8d9, #087ab3) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls > .flex button[class*="bg-emerald-500"] {
+  background: linear-gradient(135deg, #15b486, #078468) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls > .flex button[class*="bg-rose-500"] {
+  background: linear-gradient(135deg, #dd5b70, #b52f49) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card {
+  background: #ffffff !important;
+  border-color: #c9dce9 !important;
+  box-shadow: 0 5px 14px rgba(31, 74, 112, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card thead {
+  background: linear-gradient(135deg, #294f77, #1d3857) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card th {
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,.22) !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody tr {
+  background: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody tr:nth-child(even) {
+  background: #f3f8fc !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody tr:hover {
+  background: #e2f3ff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td,
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td div {
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td .text-cyan-300,
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td .text-cyan-400 {
+  color: #087db7 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td .text-emerald-400 {
+  color: #078466 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td .text-rose-400 {
+  color: #c3314c !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card td button.bg-slate-800 {
+  background: #edf4f9 !important;
+  border-color: #c0d8e9 !important;
+  color: #27547b !important;
+}
