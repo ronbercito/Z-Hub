@@ -1803,3 +1803,9 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se añadió una clase específica al precio mensual y se resaltó en amarillo cálido de alto contraste para una lectura comercial inmediata.
 - Alcance: solo presentación; no se modifican precios guardados, planes, perfiles PPP ni sincronización MikroTik.
 - Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
+
+### 1.1.48 — Estados y datos principales de abonados reforzados
+- La información principal de Abonado/Contacto, Plan/Tarifa e IP/Conexión se muestra con mayor peso tipográfico.
+- El estado ACTIVO usa fondo verde sólido, texto e icono blancos y sombra de realce; el estado CORTADO recibe el mismo tratamiento en rojo.
+- Alcance: solo presentación; no se modifican estados reales, deuda, datos ni acciones del abonado.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
