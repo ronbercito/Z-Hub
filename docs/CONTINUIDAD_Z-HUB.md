@@ -1816,3 +1816,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El estado de cuenta usa un panel azul profundo, tarjetas blancas legibles y estado de servicio activo en verde sólido.
 - Alcance: solo presentación; no se modifican guardado, pestañas, datos, facturación, servicios, comunicaciones ni ubicación.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.50 — Facturación adaptada al tema
+- Se añadieron clases específicas para indicadores, tabla y estados de facturas.
+- Total facturado, cobrado y por cobrar usan tarjetas sólidas azul, verde y rojo.
+- La tabla tiene superficie clara, cabecera azul oscuro, filas alternadas y tipografía operativa más gruesa.
+- El estado PAGADO ahora resalta en verde sólido con texto e icono blancos; Pendiente y Vencido también reciben colores sólidos.
+- Alcance: solo presentación; no se modifican facturas, pagos, montos, acciones, reglas ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
