@@ -35,7 +35,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className={`p-2 rounded-lg ${tone.icon}`}>
-            <Icon className="w-5 h-5" />
+            <Icon className="network-router-device-glyph w-5 h-5" />
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-slate-100 truncate">{router.name}</h3>
