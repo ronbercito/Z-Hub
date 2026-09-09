@@ -2964,3 +2964,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Cambio:** se mueve el submenú **Zonas** desde **Clientes** hacia **Gestión de Red**.
 - **Compatibilidad:** se conserva el identificador `client_zones`, sus permisos existentes y la misma pantalla de gestión; solo cambia su ubicación visual en el menú.
 - **Verificación:** comprobada presencia única dentro de Gestión de Red, ausencia en Clientes y continuidad de la ruta hacia `Zones`.
+
+
+### 1.2.06 — Tarjetas de planes por tecnología
+
+- **Cambio visual:** las tarjetas se disponen en una cuadrícula responsive uniforme, sin espacios amplios entre ellas.
+- **Color por tecnología:** Fibra Óptica GPON usa azul, Radioenlace usa violeta y Hotspot usa ámbar; el color se obtiene del tipo seleccionado al crear o editar el plan.
+- **Compatibilidad:** se mantienen datos, velocidades, precios y las acciones de editar/eliminar; la geometría se conserva entre los temas claro y oscuro.
+- **Pruebas:** validada la clasificación de los tres tipos, cuadrícula responsive, acciones CRUD y reglas de color en ambos temas.
