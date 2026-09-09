@@ -2065,3 +2065,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se eliminaron los archivos restantes de continuidad, políticas y notas documentales de backup de docs/.
 - El único documento maestro, changelog y regla de continuidad es docs/CONTINUIDAD_Z-HUB.md.
 - Esta entrada no incrementa PANEL_VERSION.
+
+
+### 1.1.95 — Colores visibles en el resumen de Routers
+
+- En Claro Suave se restauran los colores sólidos y el texto blanco legible de las cuatro tarjetas de clientes del router.
+- Se mantiene la geometría compartida y no se cambian datos ni lecturas.
+- Prueba: revisión estática de los cuatro selectores de tarjeta y contraste.
