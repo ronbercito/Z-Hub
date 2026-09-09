@@ -889,10 +889,9 @@ html[data-panel-theme="zhub-light"] .network-reference .olt-pon-metric:hover {
 }
 
 
-/* Gestión de red 1.1.40 — contraste y tamaño compacto para tarjetas MikroTik. */
+/* Gestión de red 1.1.63 — colores del MikroTik claro; la geometría vive en RouterCard.jsx y es compartida. */
 html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik,
 html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik.border-cyan-500 {
-  width: min(100%, 290px) !important;
   background: linear-gradient(135deg, #126eac, #084b80) !important;
   border-color: #138ed1 !important;
   box-shadow: 0 7px 17px rgba(8, 79, 133, .28) !important;
@@ -912,12 +911,6 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-card.netw
   border-color: #76d2ff !important;
   box-shadow: 0 13px 27px rgba(5, 108, 183, .42), 0 0 0 3px rgba(78, 190, 245, .18) !important;
 }
-@media (max-width: 767px) {
-  html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--mikrotik {
-    width: 100% !important;
-  }
-}
-
 
 /* OLT 1.1.41 — workspace ONUs claro, coloreado y operativo. */
 html[data-panel-theme="zhub-light"] .network-reference .onu-workspace > div:first-child {
