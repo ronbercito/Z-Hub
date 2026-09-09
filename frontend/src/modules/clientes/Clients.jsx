@@ -189,7 +189,7 @@ export default function Clients({ onSelectClient }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="clients-page space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2"><Users className="w-6 h-6 text-cyan-400" /> Control de Abonados y Clientes</h2>
@@ -198,7 +198,7 @@ export default function Clients({ onSelectClient }) {
         <button data-testid={TEST_IDS.BTN_NEW_CLIENT} onClick={startNew} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold rounded-xl shadow-lg flex items-center gap-2"><UserPlus className="w-4 h-4" /> Nuevo Abonado</button>
       </div>
 
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="clients-controls bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96"><Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" /><input data-testid={TEST_IDS.CLIENT_SEARCH} type="text" placeholder="Buscar por nombre, DNI/RUC, IP, teléfono o dirección..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500" /></div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button onClick={() => setStatusFilter("all")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${statusFilter === "all" ? "bg-cyan-500 text-white" : "bg-slate-800 text-slate-400"}`}>Todos ({clients.length})</button>
@@ -207,7 +207,7 @@ export default function Clients({ onSelectClient }) {
         </div>
       </div>
 
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+      <div className="clients-table-card bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto"><table className="w-full text-left text-xs">
           <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800"><tr>
             <th className="py-3 px-4">Abonado / Contacto</th><th className="py-3 px-4">Plan / Tarifa</th><th className="py-3 px-4">IP / Conexión</th><th className="py-3 px-4">Estado / Deuda</th><th className="py-3 px-4 text-center">Acciones</th>
