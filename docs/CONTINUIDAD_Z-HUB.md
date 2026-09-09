@@ -2996,3 +2996,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Tema claro:** el área final y el pie usan el mismo tono claro `#edf2f7`, borde suave y texto legible.
 - **Compatibilidad:** no se modifica el tema oscuro ni la lógica del panel.
 - **Pruebas:** comprobadas las clases del contenedor/pie y las reglas exclusivas del tema claro.
+
+
+### 1.2.10 — Identificación centrada en el pie
+
+- **Cambio visual:** `Panel Z-Hub · vX` se mueve al centro del pie de página, con tamaño mayor, peso seminegrita y espaciado para una lectura rápida.
+- **Tema claro:** se aumenta el contraste del texto del pie manteniendo el fondo claro incorporado en 1.2.09.
+- **Compatibilidad:** se conserva la versión dinámica y no se altera el tema oscuro.
+- **Pruebas:** validadas posición centrada, tamaño, referencia a `PANEL_VERSION` y contraste del tema claro.
