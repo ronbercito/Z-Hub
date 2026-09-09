@@ -1944,3 +1944,38 @@ html[data-panel-theme="zhub-light"] .update-check-button[aria-busy="true"] span 
   opacity: 1 !important;
   font-weight: 800 !important;
 }
+
+
+/* Inicio de sesión 1.1.70 — Claro Suave coherente con el tema seleccionado. */
+html[data-panel-theme="zhub-light"] .login-shell {
+  background: radial-gradient(circle at 18% 18%, rgba(38, 174, 222, .18), transparent 30%), linear-gradient(135deg, #edf6fb 0%, #f8fcfe 52%, #e5f2fa 100%) !important;
+  color: #163f68 !important;
+}
+html[data-panel-theme="zhub-light"] .login-glow--primary { background: rgba(22, 162, 211, .18) !important; }
+html[data-panel-theme="zhub-light"] .login-glow--secondary { background: rgba(91, 102, 214, .13) !important; }
+html[data-panel-theme="zhub-light"] .login-card {
+  background: rgba(255,255,255,.94) !important;
+  border-color: #b6d9eb !important;
+  box-shadow: 0 22px 52px rgba(23, 78, 116, .20) !important;
+}
+html[data-panel-theme="zhub-light"] .login-title { color: #123f68 !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .login-subtitle,
+html[data-panel-theme="zhub-light"] .login-demo-label { color: #587896 !important; font-weight: 700 !important; }
+html[data-panel-theme="zhub-light"] .login-label { color: #285a81 !important; font-weight: 800 !important; }
+html[data-panel-theme="zhub-light"] .login-input {
+  background: #ffffff !important;
+  border-color: #b9d7e8 !important;
+  color: #183f67 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .login-input::placeholder { color: #7896ae !important; }
+html[data-panel-theme="zhub-light"] .login-demo { border-color: #d4e4ef !important; }
+html[data-panel-theme="zhub-light"] .login-demo-button {
+  background: #f5faff !important;
+  border-color: #c3dce9 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .login-demo-button:hover { background: #e3f4fc !important; border-color: #42a9d2 !important; }
+html[data-panel-theme="zhub-light"] .login-demo-button--admin { color: #087fb8 !important; }
+html[data-panel-theme="zhub-light"] .login-demo-button--tech { color: #078363 !important; }
+html[data-panel-theme="zhub-light"] .login-demo-button--billing { color: #6845b3 !important; }
