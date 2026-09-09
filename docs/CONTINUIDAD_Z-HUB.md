@@ -1866,3 +1866,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Los botones Copiar y Enviar por WhatsApp quedan reforzados con color y contraste.
 - Alcance: solo presentación; no se modifican plantillas, clientes, teléfonos, contenido de mensajes, copiado ni envío por WhatsApp.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.55 — Ajustes adaptados y distribuidos en dos columnas
+
+- Se adapta la sección **Ajustes → General** al tema claro Z-Hub.
+- Las tarjetas de configuración cambian a superficie blanca, bordes coloridos y textos más gruesos.
+- En pantallas amplias, las tarjetas se distribuyen en **dos columnas** para aprovechar el espacio y reducir el ancho de cada recuadro; en pantallas menores vuelven a una columna.
+- Los campos, selector de apariencia y botón Guardar cambios reciben contraste, foco visible y colores coherentes con el tema.
+- Alcance: solo presentación y distribución; no se modifican datos de empresa, logo, temas, canales de cobro, reglas, notificaciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
