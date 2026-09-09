@@ -29,7 +29,7 @@ export default function RouterForm({ initial, onClose, onSaved }) {
     return <OltForm initial={isEdit ? initial : { name: form.name, ip_address: form.ip_address }} onClose={onClose} onSaved={onSaved} onSwitchType={() => changeType("mikrotik")} />;
   }
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const input = "w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-cyan-500 outline-none";
+  const input = "router-form-input w-full p-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 text-xs focus:border-cyan-500 outline-none";
 
   const submit = async (e) => {
     e.preventDefault();
@@ -54,22 +54,22 @@ export default function RouterForm({ initial, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4" data-testid="router-form-modal">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="router-form-modal bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3" data-testid="router-form-modal">
+        <div className="router-form-header flex items-center justify-between border-b border-slate-800 pb-2.5">
           <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
             <Server className="w-5 h-5 text-cyan-400" /> {isEdit ? "Editar equipo" : "Registrar MikroTik / OLT"}
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200" data-testid="router-form-close">✕</button>
         </div>
 
-        <form onSubmit={submit} className="space-y-3 text-xs">
+        <form onSubmit={submit} className="router-form-body space-y-2.5 text-xs">
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className="block text-slate-300 font-semibold mb-1">Nombre descriptivo *</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Nombre descriptivo *</label>
               <input data-testid="router-name-input" required value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Ej. MikroTik Core Nodo Central" className={input} />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Tipo</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Tipo</label>
               <select data-testid="router-type-select" value={form.device_type} onChange={(e) => changeType(e.target.value)} className={input}>
                 <option value="mikrotik">MikroTik (API RouterOS)</option>
                 <option value="olt">OLT VSOL (CLI Telnet/SSH)</option>
@@ -79,11 +79,11 @@ export default function RouterForm({ initial, onClose, onSaved }) {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className="block text-slate-300 font-semibold mb-1">Dirección IP *</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Dirección IP *</label>
               <input data-testid="router-ip-input" required value={form.ip_address} onChange={(e) => set("ip_address", e.target.value)} placeholder="192.168.88.1" className={`${input} font-mono text-cyan-300`} />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Puerto API</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Puerto API</label>
               <input data-testid="router-port-input" type="number" value={form.port} onChange={(e) => set("port", parseInt(e.target.value) || 8728)} className={`${input} font-mono`} />
             </div>
           </div>
@@ -91,44 +91,44 @@ export default function RouterForm({ initial, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Usuario API</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Usuario API</label>
               <input data-testid="router-user-input" value={form.username} onChange={(e) => set("username", e.target.value)} className={`${input} font-mono`} />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Contraseña {isEdit && <span className="text-slate-500">(vacío = mantener)</span>}</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Contraseña {isEdit && <span className="text-slate-500">(vacío = mantener)</span>}</label>
               <input data-testid="router-password-input" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} className={`${input} font-mono`} />
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <label className="router-form-ssl flex items-center gap-2 text-slate-300 cursor-pointer font-semibold">
             <input data-testid="router-ssl-checkbox" type="checkbox" checked={form.use_ssl} onChange={(e) => { set("use_ssl", e.target.checked); set("port", e.target.checked ? 8729 : 8728); }} className="accent-cyan-500" />
             Usar API-SSL (puerto 8729)
           </label>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Modelo</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Modelo</label>
               <input data-testid="router-model-input" value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="CCR2004 / RB4011 / hEX" className={input} />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Ubicación / Nodo</label>
+              <label className="router-form-label block text-slate-300 font-semibold mb-1">Ubicación / Nodo</label>
               <input data-testid="router-location-input" value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Nodo Central" className={input} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-slate-300 font-semibold mb-1">Latitud</label><input type="number" step="any" value={form.latitude ?? ""} onChange={(e) => set("latitude", e.target.value === "" ? "" : Number(e.target.value))} placeholder="-8.0679" className={`${input} font-mono`} /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Longitud</label><input type="number" step="any" value={form.longitude ?? ""} onChange={(e) => set("longitude", e.target.value === "" ? "" : Number(e.target.value))} placeholder="-78.9859" className={`${input} font-mono`} /></div>
+            <div><label className="router-form-label block text-slate-300 font-semibold mb-1">Latitud</label><input type="number" step="any" value={form.latitude ?? ""} onChange={(e) => set("latitude", e.target.value === "" ? "" : Number(e.target.value))} placeholder="-8.0679" className={`${input} font-mono`} /></div>
+            <div><label className="router-form-label block text-slate-300 font-semibold mb-1">Longitud</label><input type="number" step="any" value={form.longitude ?? ""} onChange={(e) => set("longitude", e.target.value === "" ? "" : Number(e.target.value))} placeholder="-78.9859" className={`${input} font-mono`} /></div>
           </div>
-          <button type="button" onClick={() => setShowPicker(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20"><MapPin className="h-4 w-4" /> Elegir coordenadas en el mapa</button>
+          <button type="button" onClick={() => setShowPicker(true)} className="router-form-map-button flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-600 bg-cyan-600 px-3 py-2 text-xs font-bold text-white hover:bg-cyan-500 shadow-sm"><MapPin className="h-4 w-4" /> Elegir coordenadas en el mapa</button>
 
-          <p className="text-[11px] text-slate-500 bg-slate-950/60 border border-slate-800 rounded-lg p-2">
+          <p className="router-form-help text-[10px] text-slate-500 bg-slate-950/60 border border-slate-800 rounded-lg p-2">
             En el MikroTik: <span className="font-mono text-slate-300">/ip service enable api</span> (o api-ssl) y un usuario con políticas <span className="font-mono text-slate-300">read, write, api</span>. Permite el acceso desde la IP de este servidor.
           </p>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl">Cancelar</button>
-            <button data-testid="router-form-submit" type="submit" disabled={saving} className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg disabled:opacity-60">
+          <div className="router-form-footer flex items-center justify-end gap-2 pt-2.5 border-t border-slate-800">
+            <button type="button" onClick={onClose} className="router-form-cancel px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg">Cancelar</button>
+            <button data-testid="router-form-submit" type="submit" disabled={saving} className="router-form-save px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg disabled:opacity-60">
               {saving ? "Conectando..." : isEdit ? "Guardar cambios" : "Guardar y probar conexión"}
             </button>
           </div>
