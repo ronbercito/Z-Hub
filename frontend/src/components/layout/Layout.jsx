@@ -119,7 +119,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
+    <div className="app-shell min-h-screen bg-slate-950 text-slate-100 flex font-sans">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -135,7 +135,7 @@ export default function Layout() {
         <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">
           {renderContent()}
         </main>
-        <footer className="px-6 pb-4 text-right text-[10px] text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
+        <footer className="panel-footer mt-auto border-t px-6 py-3 text-right text-[10px] text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
       </div>
     </div>
   );
