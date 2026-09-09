@@ -1031,3 +1031,64 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-card.netw
     width: 100% !important;
   }
 }
+
+
+/* OLT 1.1.43 — Monitor óptico ONU con contraste y estados visuales. */
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor {
+  background: linear-gradient(135deg, #145075, #0d819b) !important;
+  border-color: transparent !important;
+  box-shadow: 0 7px 17px rgba(8, 105, 139, .25) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor,
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor h3,
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor p,
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor label,
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor svg {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor > .flex:first-child > div:first-child {
+  background: rgba(255,255,255,.16) !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor select {
+  background: rgba(255,255,255,.96) !important;
+  border-color: #8ddcff !important;
+  color: #173b63 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor button:first-of-type {
+  background: linear-gradient(135deg, #11b39f, #078879) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 79, 75, .28) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor button:last-of-type {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.42) !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat {
+  border-color: transparent !important;
+  box-shadow: 0 4px 11px rgba(31, 74, 112, .14) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat--rx {
+  background: linear-gradient(135deg, #148bbd, #0b6495) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat--tx {
+  background: linear-gradient(135deg, #7355c9, #4e369f) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat--valid {
+  background: linear-gradient(135deg, #15a780, #078060) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat,
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat p {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat p:first-child {
+  font-weight: 800 !important;
+  opacity: .86 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-optical-stat p:last-child {
+  font-weight: 900 !important;
+}
