@@ -1,19 +1,26 @@
 /**
  * Archivo: frontend/src/modules/appearance/panel-theme.css
- * Función: capa visual no destructiva para el template Z-Hub Blanco. Sobrescribe solamente
- *          utilidades de color del tema oscuro cuando html[data-panel-theme="zhub-light"] está activo.
- * Ajuste 2026-09-09 / 1.1.13: se reduce nuevamente la luminancia del template claro para
- *          evitar fatiga visual. Se mantiene un estilo claro, pero sin blancos puros ni efectos intensos.
+ * Actualización: 2026-09-09 — versión 1.1.14: rediseño del template claro.
+ * Función: capa visual no destructiva para `zhub-light`, con superficies blancas,
+ *          texto sólido de alto contraste y acentos de color sin brillo ni neón.
+ * Regla: no modifica el tema oscuro ni la lógica funcional del panel.
  */
+
+/* Base: blanco limpio y contraste profesional. */
 html[data-panel-theme="zhub-light"],
 html[data-panel-theme="zhub-light"] body,
 html[data-panel-theme="zhub-light"] #root {
-  background: #d7e0e9 !important;
-  color: #0f1f35 !important;
+  background: #f7f9fc !important;
+  color: #17324d !important;
   color-scheme: light;
 }
 
-html[data-panel-theme="zhub-light"] .bg-slate-950 { background-color: #d7e0e9 !important; }
+html[data-panel-theme="zhub-light"] body {
+  background-image: none !important;
+}
+
+/* Superficies heredadas del tema oscuro → blanco sólido. */
+html[data-panel-theme="zhub-light"] .bg-slate-950,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/35,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/45,
@@ -22,47 +29,74 @@ html[data-panel-theme="zhub-light"] .bg-slate-950\/55,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/60,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/70,
 html[data-panel-theme="zhub-light"] .bg-slate-950\/80,
-html[data-panel-theme="zhub-light"] .bg-slate-950\/85 { background-color: rgba(215, 224, 233, .96) !important; }
-
+html[data-panel-theme="zhub-light"] .bg-slate-950\/85,
 html[data-panel-theme="zhub-light"] .bg-slate-900,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/40,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/45,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/60,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/70,
 html[data-panel-theme="zhub-light"] .bg-slate-900\/80,
-html[data-panel-theme="zhub-light"] .bg-slate-900\/90 { background-color: rgba(231, 237, 243, .96) !important; }
-
+html[data-panel-theme="zhub-light"] .bg-slate-900\/90,
 html[data-panel-theme="zhub-light"] .bg-slate-800,
 html[data-panel-theme="zhub-light"] .bg-slate-800\/30,
 html[data-panel-theme="zhub-light"] .bg-slate-800\/70,
-html[data-panel-theme="zhub-light"] .bg-slate-800\/80 { background-color: #dde5ed !important; }
+html[data-panel-theme="zhub-light"] .bg-slate-800\/80 {
+  background-color: #ffffff !important;
+}
+
 html[data-panel-theme="zhub-light"] .bg-slate-700,
-html[data-panel-theme="zhub-light"] .bg-slate-700\/40 { background-color: #d0dae5 !important; }
+html[data-panel-theme="zhub-light"] .bg-slate-700\/40 {
+  background-color: #f1f5f9 !important;
+}
 
-html[data-panel-theme="zhub-light"] .text-slate-100 { color: #0f1f35 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-200 { color: #22364f !important; }
+/* Tablas, filas y superficies secundarias. */
+html[data-panel-theme="zhub-light"] .bg-slate-600,
+html[data-panel-theme="zhub-light"] .bg-slate-600\/40,
+html[data-panel-theme="zhub-light"] .bg-slate-500,
+html[data-panel-theme="zhub-light"] .bg-slate-500\/30 {
+  background-color: #eaf0f6 !important;
+}
+
+/* Texto: tinta sólida, legible y sin luminosidad. */
+html[data-panel-theme="zhub-light"] .text-white,
+html[data-panel-theme="zhub-light"] .text-slate-100 { color: #17324d !important; }
+html[data-panel-theme="zhub-light"] .text-slate-200 { color: #24425f !important; }
 html[data-panel-theme="zhub-light"] .text-slate-300,
-html[data-panel-theme="zhub-light"] .text-slate-300\/90 { color: #40546d !important; }
-html[data-panel-theme="zhub-light"] .text-slate-400 { color: #586d86 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-500 { color: #6b7f96 !important; }
-html[data-panel-theme="zhub-light"] .text-slate-600 { color: #7f92a7 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-300\/90 { color: #385572 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-400 { color: #536d87 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-500 { color: #6a8299 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-600 { color: #7c91a5 !important; }
 
+/* Bordes discretos, pero visibles. */
 html[data-panel-theme="zhub-light"] .border-slate-800,
 html[data-panel-theme="zhub-light"] .border-slate-800\/50,
 html[data-panel-theme="zhub-light"] .border-slate-800\/60,
 html[data-panel-theme="zhub-light"] .border-slate-800\/70,
-html[data-panel-theme="zhub-light"] .border-slate-800\/80 { border-color: #becad7 !important; }
+html[data-panel-theme="zhub-light"] .border-slate-800\/80,
 html[data-panel-theme="zhub-light"] .border-slate-700,
 html[data-panel-theme="zhub-light"] .border-slate-700\/70,
-html[data-panel-theme="zhub-light"] .border-slate-700\/80 { border-color: #b3c0ce !important; }
+html[data-panel-theme="zhub-light"] .border-slate-700\/80 {
+  border-color: #d5e0ea !important;
+}
 html[data-panel-theme="zhub-light"] .border-slate-600,
 html[data-panel-theme="zhub-light"] .border-slate-600\/40,
-html[data-panel-theme="zhub-light"] .border-slate-600\/50 { border-color: #a8b7c6 !important; }
+html[data-panel-theme="zhub-light"] .border-slate-600\/50 {
+  border-color: #c5d3df !important;
+}
 
 html[data-panel-theme="zhub-light"] .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
 html[data-panel-theme="zhub-light"] .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
-html[data-panel-theme="zhub-light"] .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) { border-color: #becad7 !important; }
+html[data-panel-theme="zhub-light"] .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #dbe4ec !important;
+}
 
+/* Campos: blanco sólido, borde azul grisáceo y texto oscuro. */
+html[data-panel-theme="zhub-light"] input,
+html[data-panel-theme="zhub-light"] textarea,
+html[data-panel-theme="zhub-light"] select,
+html[data-panel-theme="zhub-light"] .field {
+  color: #17324d !important;
+}
 html[data-panel-theme="zhub-light"] input.bg-slate-950,
 html[data-panel-theme="zhub-light"] textarea.bg-slate-950,
 html[data-panel-theme="zhub-light"] select.bg-slate-950,
@@ -70,54 +104,128 @@ html[data-panel-theme="zhub-light"] input.bg-slate-950\/60,
 html[data-panel-theme="zhub-light"] textarea.bg-slate-950\/60,
 html[data-panel-theme="zhub-light"] select.bg-slate-950\/60,
 html[data-panel-theme="zhub-light"] .field {
-  background: #e8edf3 !important;
-  border-color: #afbdcb !important;
-  color: #0f1f35 !important;
+  background: #ffffff !important;
+  border-color: #b8c9d8 !important;
 }
 html[data-panel-theme="zhub-light"] input::placeholder,
-html[data-panel-theme="zhub-light"] textarea::placeholder { color: #7f92a7 !important; }
+html[data-panel-theme="zhub-light"] textarea::placeholder {
+  color: #7890a6 !important;
+}
 
-html[data-panel-theme="zhub-light"] .hover\:bg-slate-700:hover { background-color: #c7d2dd !important; }
+/* Header y sidebar: blanco sólido con separación limpia. */
+html[data-panel-theme="zhub-light"] aside,
+html[data-panel-theme="zhub-light"] header {
+  background-color: #ffffff !important;
+  border-color: #d5e0ea !important;
+  box-shadow: 0 1px 5px rgba(30, 64, 90, .06) !important;
+}
+
+html[data-panel-theme="zhub-light"] main {
+  background: #f7f9fc !important;
+  background-image: none !important;
+}
+
+/* Contenedores claros: tarjetas blancas y separación por borde, no por brillo. */
+html[data-panel-theme="zhub-light"] main .bg-white,
+html[data-panel-theme="zhub-light"] main .bg-slate-950,
+html[data-panel-theme="zhub-light"] main .bg-slate-900,
+html[data-panel-theme="zhub-light"] main .bg-slate-800 {
+  box-shadow: 0 2px 8px rgba(30, 64, 90, .07) !important;
+}
+
+/* Elimina gradientes decorativos del tema claro. */
+html[data-panel-theme="zhub-light"] [class*="bg-gradient"] {
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="from-"] {
+  background-image: none !important;
+}
+html[data-panel-theme="zhub-light"] [class*="to-"] {
+  background-image: none !important;
+}
+
+/* Tarjetas de resumen: color sólido, manteniendo la semántica de cada indicador. */
+html[data-panel-theme="zhub-light"] [class*="from-teal-"] { background-color: #0f9f82 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-emerald-"] { background-color: #15966f !important; }
+html[data-panel-theme="zhub-light"] [class*="from-blue-"] { background-color: #2476c9 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-cyan-"] { background-color: #1498bd !important; }
+html[data-panel-theme="zhub-light"] [class*="from-purple-"] { background-color: #7150c8 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-violet-"] { background-color: #6c4bc0 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-rose-"] { background-color: #c64c69 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-red-"] { background-color: #c94b4b !important; }
+html[data-panel-theme="zhub-light"] [class*="from-amber-"] { background-color: #c98a27 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-orange-"] { background-color: #c97828 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-slate-"] { background-color: #334155 !important; }
+html[data-panel-theme="zhub-light"] [class*="from-indigo-"] { background-color: #5362b8 !important; }
+
+/* Acciones con color sólido: sin gradiente y sin glow. */
+html[data-panel-theme="zhub-light"] [class*="bg-cyan-500"] { background-color: #1498bd !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-blue-600"] { background-color: #2476c9 !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-emerald-600"] { background-color: #15966f !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-purple-600"],
+html[data-panel-theme="zhub-light"] [class*="bg-indigo-600"] { background-color: #5f55b8 !important; }
+
+/* Hovers sólidos y sobrios. */
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-700:hover { background-color: #e5edf4 !important; }
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-800:hover,
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/40:hover,
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/50:hover,
-html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/60:hover { background-color: #d2dbe5 !important; }
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/60:hover { background-color: #edf3f8 !important; }
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/45:hover,
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/50:hover,
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/65:hover,
 html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/70:hover,
-html[data-panel-theme="zhub-light"] .hover\:bg-slate-950:hover { background-color: #dce4ec !important; }
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-950:hover { background-color: #f2f6fa !important; }
 html[data-panel-theme="zhub-light"] .hover\:text-slate-100:hover,
-html[data-panel-theme="zhub-light"] .hover\:text-slate-200:hover { color: #0f1f35 !important; }
+html[data-panel-theme="zhub-light"] .hover\:text-slate-200:hover { color: #17324d !important; }
 
-html[data-panel-theme="zhub-light"] aside,
-html[data-panel-theme="zhub-light"] header {
-  background-color: #e3e9f0 !important;
-  box-shadow: 0 4px 14px rgba(31, 80, 125, .03);
+/* Evitar glow/neón de utilidades Tailwind en el template claro. */
+html[data-panel-theme="zhub-light"] [class*="shadow-cyan-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-blue-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-teal-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-emerald-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-purple-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-indigo-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-amber-"],
+html[data-panel-theme="zhub-light"] [class*="shadow-rose-"] {
+  box-shadow: none !important;
 }
 
-html[data-panel-theme="zhub-light"] main {
-  background-color: #d7e0e9 !important;
-  background-image:
-    radial-gradient(circle at 10% 0%, rgba(37, 99, 235, .012), transparent 30%),
-    radial-gradient(circle at 100% 20%, rgba(20, 184, 166, .01), transparent 26%);
-}
-
-/* En superficies claras el texto blanco genérico pasa a azul tinta. Se conserva blanco en superficies de acción/estado. */
-html[data-panel-theme="zhub-light"] .text-white { color: #0f1f35 !important; }
+/* En superficies claras el blanco de texto pasa a tinta; en acciones de color permanece blanco. */
+html[data-panel-theme="zhub-light"] .text-white { color: #17324d !important; }
 html[data-panel-theme="zhub-light"] [class*="bg-gradient"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-gradient"][class*="text-white"],
 html[data-panel-theme="zhub-light"] [class*="bg-cyan-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-cyan-"][class*="text-white"],
 html[data-panel-theme="zhub-light"] [class*="bg-blue-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-blue-"][class*="text-white"],
 html[data-panel-theme="zhub-light"] [class*="bg-emerald-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-emerald-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-teal-"] .text-white,
 html[data-panel-theme="zhub-light"] [class*="bg-rose-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-rose-"][class*="text-white"],
 html[data-panel-theme="zhub-light"] [class*="bg-violet-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-violet-"][class*="text-white"],
 html[data-panel-theme="zhub-light"] [class*="bg-purple-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-purple-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-indigo-"] .text-white,
 html[data-panel-theme="zhub-light"] [class*="bg-amber-"] .text-white,
-html[data-panel-theme="zhub-light"] [class*="bg-amber-"][class*="text-white"] { color: #ffffff !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-red-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-slate-"] .text-white {
+  color: #ffffff !important;
+}
+
+/* Estados: colores sólidos y discretos. */
+html[data-panel-theme="zhub-light"] [class*="text-cyan-"] { color: #087fa6 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-blue-"] { color: #1d5fa8 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-emerald-"] { color: #087b5d !important; }
+html[data-panel-theme="zhub-light"] [class*="text-green-"] { color: #17734e !important; }
+html[data-panel-theme="zhub-light"] [class*="text-purple-"],
+html[data-panel-theme="zhub-light"] [class*="text-violet-"] { color: #6650a8 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-rose-"],
+html[data-panel-theme="zhub-light"] [class*="text-red-"] { color: #b33e58 !important; }
+html[data-panel-theme="zhub-light"] [class*="text-amber-"],
+html[data-panel-theme="zhub-light"] [class*="text-orange-"] { color: #9a671d !important; }
+
+/* Focus accesible sin glow intenso. */
+html[data-panel-theme="zhub-light"] input:focus,
+html[data-panel-theme="zhub-light"] textarea:focus,
+html[data-panel-theme="zhub-light"] select:focus,
+html[data-panel-theme="zhub-light"] button:focus-visible {
+  outline: 2px solid #8abbd2 !important;
+  outline-offset: 1px;
+  box-shadow: none !important;
+}
