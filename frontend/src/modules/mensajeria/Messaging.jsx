@@ -70,7 +70,7 @@ export default function Messaging() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="messaging-page space-y-6 animate-in fade-in duration-200">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
           <MessageSquare className="w-6 h-6 text-emerald-400" /> Mensajería y Avisos WhatsApp
@@ -82,7 +82,7 @@ export default function Messaging() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 4 Cols: Templates List */}
-        <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl space-y-3">
+        <div className="messaging-templates lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-800">
             Plantillas Predeterminadas
           </h3>
@@ -91,7 +91,7 @@ export default function Messaging() {
             <div
               key={tpl.id}
               onClick={() => setSelectedTemplate(tpl)}
-              className={`p-3 rounded-xl border cursor-pointer transition text-xs ${
+              className={`messaging-template p-3 rounded-xl border cursor-pointer transition text-xs ${
                 selectedTemplate?.id === tpl.id
                   ? "bg-emerald-950/40 border-emerald-500 text-emerald-200"
                   : "bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700"
@@ -107,7 +107,7 @@ export default function Messaging() {
         </div>
 
         {/* Right 8 Cols: Customizer & Send Preview */}
-        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+        <div className="messaging-composer lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Destinatario / Abonado</label>
@@ -117,7 +117,7 @@ export default function Messaging() {
                   const c = clients.find(item => item.id === e.target.value);
                   setSelectedClient(c);
                 }}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100"
+                className="messaging-field w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100"
               >
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -133,7 +133,7 @@ export default function Messaging() {
                 type="text"
                 disabled
                 value={selectedClient?.phone ? `+51 ${selectedClient.phone}` : ""}
-                className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-cyan-300 font-mono"
+                className="messaging-field w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-cyan-300 font-mono"
               />
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function Messaging() {
               rows="6"
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
-              className="w-full p-3.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
+              className="messaging-field messaging-message w-full p-3.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-emerald-500 font-sans leading-relaxed"
             ></textarea>
           </div>
 
