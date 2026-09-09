@@ -2168,3 +2168,15 @@ html[data-panel-theme="zhub-dark"] .plans-page .plan-group-title,
 html[data-panel-theme="zhub-dark"] .plans-page .plan-group p {
   color: #d7e6f6 !important;
 }
+
+
+/* Tema claro 1.2.09 — el fondo y el pie no deben heredar el oscuro. */
+html[data-panel-theme="zhub-light"] .app-shell {
+  background: #edf2f7 !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .panel-footer {
+  background: #edf2f7 !important;
+  border-color: #d7e1eb !important;
+  color: #5e7892 !important;
+}
