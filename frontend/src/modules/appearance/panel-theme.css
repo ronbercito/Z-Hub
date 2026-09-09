@@ -409,3 +409,42 @@ html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-recent-payme
   color: #244f77 !important;
   font-weight: 800 !important;
 }
+
+
+/* Navbar 1.1.31 — controles claros, tipografía azul tinta y peso reforzado. */
+html[data-panel-theme="zhub-light"] header .navbar-currency {
+  background: #f4f8fb !important;
+  border-color: #cbdbe8 !important;
+  color: #0f4f7d !important;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-weight: 800 !important;
+  letter-spacing: .01em;
+  box-shadow: none !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-currency svg {
+  color: #087fa2 !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-notifications {
+  background: #f4f8fb !important;
+  border-color: #cbdbe8 !important;
+  color: #244f77 !important;
+  box-shadow: none !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-notifications:hover {
+  background: #e8f2f9 !important;
+  color: #123e65 !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-notifications > span {
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-user {
+  border-color: #d6e1eb !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-user .text-slate-200 {
+  color: #173b63 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] header .navbar-user .text-cyan-400 {
+  color: #087c9d !important;
+  font-weight: 800 !important;
+}
