@@ -109,8 +109,9 @@ async def get_public_branding(db: AsyncSession = Depends(get_db)):
     s = await _get(db)
     data = {**DEFAULT_SETTINGS, **(s.data or {})}
     return {
-        "company_name": (data.get("company_name") or "MikroHub").strip() or "MikroHub",
+        "company_name": (data.get("company_name") or "Z-Hub").strip() or "Z-Hub",
         "logo_data": data.get("logo_data") or "",
+        "panel_theme": data.get("panel_theme") or "dark",
     }
 
 
@@ -179,11 +180,11 @@ async def test_mail_server(data: MailTestIn, db: AsyncSession = Depends(get_db))
     if sent >= int(config.get("smtp_daily_limit") or 1000):
         raise HTTPException(status_code=429, detail="Se alcanzó el límite diario de correo")
     message = EmailMessage()
-    message["Subject"] = "Prueba SMTP · MikroHub"
-    message["From"] = username or "MikroHub"
+    message["Subject"] = "Prueba SMTP · Z-Hub"
+    message["From"] = username or "Z-Hub"
     message["To"] = data.recipient.strip()
-    message.set_content("La configuración SMTP de MikroHub funciona correctamente.")
-    message.add_alternative(f"<h2>Prueba SMTP correcta</h2><p>La configuración de correo de MikroHub funciona correctamente.</p>{config.get('smtp_signature_html') or ''}", subtype="html")
+    message.set_content("La configuración SMTP de Z-Hub funciona correctamente.")
+    message.add_alternative(f"<h2>Prueba SMTP correcta</h2><p>La configuración de correo de Z-Hub funciona correctamente.</p>{config.get('smtp_signature_html') or ''}", subtype="html")
     try:
         if config.get("smtp_security") == "ssl":
             client = smtplib.SMTP_SSL(host, int(config.get("smtp_port") or 465), timeout=15)
