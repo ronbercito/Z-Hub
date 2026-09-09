@@ -1928,3 +1928,19 @@ html[data-panel-theme="zhub-light"] .navbar-version-badge {
   color: #173f68;
   box-shadow: 0 2px 6px rgba(20, 77, 116, .08);
 }
+
+
+/* Actualizaciones 1.1.69 — estado manual de comprobación claramente visible en Claro Suave. */
+html[data-panel-theme="zhub-light"] .update-check-button[aria-busy="true"] {
+  background: linear-gradient(135deg, #149fce, #0878b7) !important;
+  border-color: #0878b7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 14px rgba(8, 123, 184, .28) !important;
+}
+html[data-panel-theme="zhub-light"] .update-check-button[aria-busy="true"],
+html[data-panel-theme="zhub-light"] .update-check-button[aria-busy="true"] svg,
+html[data-panel-theme="zhub-light"] .update-check-button[aria-busy="true"] span {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  font-weight: 800 !important;
+}
