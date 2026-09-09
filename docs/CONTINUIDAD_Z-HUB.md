@@ -1790,3 +1790,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se añadió realce visual al pasar el cursor sobre un plan.
 - Alcance: únicamente interfaz; CRUD de planes, precios, perfiles PPP y sincronización MikroTik permanecen sin cambios.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.46 — Control de Abonados y Clientes adaptado al tema
+- Se añadieron clases visuales al área de filtros y a la tabla de abonados.
+- El filtro usa azul técnico; los accesos Todos, Activos y Suspendidos tienen acentos azul, verde y rojo.
+- La tabla pasa a superficie clara con cabecera azul oscuro, filas alternadas, hover azul suave y estados/deudas legibles.
+- Alcance: solo presentación; no se modifican búsquedas, filtros, datos, acciones de servicio, WhatsApp, OLT ni eliminación.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
