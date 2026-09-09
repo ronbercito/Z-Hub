@@ -19,18 +19,18 @@ exec 1>>"$LOG_FILE" 2>&1
 
 ui() { printf '%s\n' "$*" >&3; }
 spinner_start() {
-  local msg="$1" pid="$2" i=0
+  local msg="$1" pid="$2" i=0 elapsed=0
+  # No usamos \r: algunos terminales/SSH no refrescan correctamente una línea
+  # reescrita y el instalador puede parecer congelado. Dejamos un heartbeat
+  # visible cada 2 segundos mientras el proceso siga trabajando.
   while kill -0 "$pid" 2>/dev/null; do
-    case $((i % 4)) in
-      0) printf '\r  ⟳ %s   ' "$msg" >&3 ;;
-      1) printf '\r  ⟳ %s.  ' "$msg" >&3 ;;
-      2) printf '\r  ⟳ %s.. ' "$msg" >&3 ;;
-      3) printf '\r  ⟳ %s... ' "$msg" >&3 ;;
-    esac
+    if (( i % 4 == 0 )); then
+      ui "  ⟳ $msg — ${elapsed}s transcurridos"
+    fi
     i=$((i + 1))
+    elapsed=$((elapsed + 1))
     sleep 0.5
   done
-  printf '\r' >&3
 }
 run_visual() {
   local msg="$1"
@@ -76,7 +76,7 @@ fi
 ui ""
 ui "  ✓ Código Z-Hub listo"
 ui "  ⟳ Iniciando instalador principal..."
-ui "  • La instalación continúa; este indicador seguirá activo hasta que termine."
+ui "  • La instalación continúa; se mostrará actividad cada 2 segundos."
 
 # El instalador principal tiene su propia interfaz, pero lo ejecutamos en segundo
 # plano para que la terminal nunca quede visualmente muda durante su arranque.
