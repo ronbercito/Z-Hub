@@ -16,6 +16,7 @@ import {
   PieChart, Pie, Cell 
 } from "recharts";
 import { toast } from "sonner";
+import { PANEL_VERSION } from "../system-update/version";
 
 export default function Dashboard({ setActiveTab, onSelectClient }) {
   const { API, token, user } = useAuth();
@@ -75,6 +76,9 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <span className="dashboard-version-badge" title="Versión instalada del panel">
+            Versión {PANEL_VERSION}
+          </span>
           <button
             onClick={() => { setRefreshing(true); fetchDashboard(); }}
             className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
