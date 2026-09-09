@@ -2884,3 +2884,10 @@ No se modificó la lógica de comprobación, descarga, instalación, progreso, c
 
 ## Regla para futuras versiones
 Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión únicamente. El historial puede conservarse en los documentos de continuidad/commits, pero no debe acumularse dentro de `version.js`.
+
+
+### 1.1.96 — Corrección definitiva de color en métricas Router
+
+- Se eliminó la clase `bg-slate-950/60` de las cuatro métricas de clientes: el tema claro la sobrescribía a blanco.
+- Cada tarjeta queda controlada únicamente por su clase de métrica y conserva su color, texto e iconos blancos.
+- Prueba: revisión estática de ausencia de `bg-slate` en `Stat` y de los cuatro colores explícitos.
