@@ -1,6 +1,5 @@
 """
 Archivo: backend/app/models/setting.py
-Actualización: 2026-09-08 — agrega template visual persistente y conserva reglas globales de facturación.
 Función: Tabla `settings` — configuración general del ISP en una sola fila guardada como JSON.
 Trabaja con: backend/app/routers/ajustes/router.py, Ajustes > General y frontend/src/modules/appearance/.
 """
@@ -51,6 +50,8 @@ DEFAULT_SETTINGS = {
     "smtp_signature_html": "",
     "smtp_sent_date": "",
     "smtp_sent_count": 0,
+    "initial_setup_completed": False,
+    "license_key": "",
 }
 
 
