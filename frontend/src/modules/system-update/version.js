@@ -4,8 +4,8 @@
  * Función: única fuente de verdad de PANEL_VERSION y del changelog de la versión actual.
  * Nota: CHANGELOG contiene únicamente los cambios de esta versión; no acumula versiones anteriores.
  */
-export const PANEL_VERSION = "1.1.96";
+export const PANEL_VERSION = "1.1.97";
 export const CHANGELOG = [
-  { type: "Tema claro", text: "Se elimina la herencia blanca de las tarjetas de clientes del router." },
+  { type: "Routers", text: "Las tarjetas de clientes usan estilos independientes del tema global." },
   { type: "Compatibilidad", text: "No cambian datos, conteos ni geometría." },
 ];
