@@ -9,8 +9,8 @@ import { Terminal } from "lucide-react";
 
 export default function OltConsoleTab({ cmd, setCmd, loading, onRun, res }) {
   return (
-    <div>
-      <form onSubmit={onRun} className="flex gap-2 mb-3 text-xs">
+    <div className="olt-console-panel">
+      <form onSubmit={onRun} className="olt-console-form flex gap-2 mb-3 text-xs">
         <span className="p-2 text-cyan-400"><Terminal className="w-4 h-4" /></span>
         <input
           data-testid="olt-console-input"
