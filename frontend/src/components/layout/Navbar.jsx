@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/components/layout/Navbar.jsx
- * Función: Barra superior del panel con buscador/accesos rápidos y datos del usuario autenticado.
+ * Actualización: 2026-09-09 — versión 1.1.31, controles del encabezado adaptados al tema claro.\n * Función: Barra superior del panel con buscador/accesos rápidos y datos del usuario autenticado.
  * Trabaja con: components/layout/Layout.jsx, context/AuthContext.js
  */
 import React from "react";
@@ -28,14 +28,14 @@ export default function Navbar({ setActiveTab }) {
       {/* Right Controls */}
       <div className="flex items-center gap-3">
         <UpdateCenter />
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-cyan-400 font-mono font-semibold">
+        <div className="navbar-currency hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-cyan-400 font-mono font-semibold">
           <Globe className="w-3.5 h-3.5 text-cyan-400" /> Moneda: Soles (S/.)
         </div>
 
         {/* Notifications */}
         <button
           onClick={() => setActiveTab("facturacion")}
-          className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+          className="navbar-notifications relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
           title="Facturas vencidas"
         >
           <Bell className="w-4 h-4" />
@@ -45,7 +45,7 @@ export default function Navbar({ setActiveTab }) {
         </button>
 
         {/* User Role Tag */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+        <div className="navbar-user flex items-center gap-2 pl-2 border-l border-slate-800">
           <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
             {user?.name?.charAt(0) || "U"}
           </div>
