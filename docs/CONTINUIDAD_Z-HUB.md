@@ -1876,3 +1876,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Los campos, selector de apariencia y botón Guardar cambios reciben contraste, foco visible y colores coherentes con el tema.
 - Alcance: solo presentación y distribución; no se modifican datos de empresa, logo, temas, canales de cobro, reglas, notificaciones ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.56 — Ajuste de encaje de tarjetas en Ajustes
+
+- Se corrige la distribución de las tarjetas de **Ajustes → General** en pantallas amplias.
+- Las dos columnas ahora fluyen de forma compacta según la altura de cada tarjeta, evitando grandes espacios vacíos entre recuadros.
+- El botón Guardar cambios se mantiene al final, ocupando todo el ancho de la sección.
+- En pantallas menores se conserva una única columna ordenada.
+- Alcance: exclusivamente distribución visual; no se cambian campos, valores, reglas ni API.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
