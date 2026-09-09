@@ -1,12 +1,13 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.87: barra de desplazamiento visible en la ventana de actualizaciones.
+ * Actualización: 2026-09-09 — versión 1.1.88: corrección definitiva de la barra de desplazamiento en la ventana de actualizaciones.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  */
-export const PANEL_VERSION = "1.1.87";
+export const PANEL_VERSION = "1.1.88";
 export const CHANGELOG = [
-  { type: "Interfaz", text: "La ventana de Actualizaciones muestra una barra de desplazamiento vertical para recorrer changelogs largos sin reducir el zoom." },
-  { type: "Interfaz", text: "La ventana de Actualizaciones permite desplazarse verticalmente cuando el changelog es más largo que el espacio disponible en pantalla." },
+  { type: "Interfaz", text: "La ventana de Actualizaciones muestra una barra de desplazamiento vertical visible para recorrer changelogs largos sin reducir el zoom." },
+  { type: "Interfaz", text: "La barra de desplazamiento de la ventana de Actualizaciones tiene un estilo visible y usable en navegadores Chromium/Chrome y Firefox." },
+  { type: "Interfaz", text: "La ventana de Actualizaciones mantiene su tamaño máximo según la pantalla y permite recorrer todo el contenido verticalmente." },
   { type: "Interfaz", text: "El encabezado y los botones de la ventana de Actualizaciones se mantienen accesibles mientras se recorre el contenido." },
   { type: "Interfaz", text: "El menú lateral muestra una barra de desplazamiento vertical cuando sus opciones superan la altura visible de la pantalla." },
   { type: "Navegación", text: "El submenú Ajustes puede recorrerse de arriba hacia abajo sin reducir el zoom del navegador." },
