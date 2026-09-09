@@ -1,0 +1,31 @@
+/* Z-Hub 1.1.90 — colores finales para métricas de clientes en Gestión de Red. */
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples { background: linear-gradient(135deg, #1788df, #1872ca) !important; border-color: transparent !important; }
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp { background: linear-gradient(135deg, #7a4bd1, #6335bd) !important; border-color: transparent !important; }
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background: linear-gradient(135deg, #12aa9b, #0c9088) !important; border-color: transparent !important; }
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background: linear-gradient(135deg, #db9010, #c97a08) !important; border-color: transparent !important; }
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples p,
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp p,
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe p,
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos p,
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples svg,
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp svg,
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe svg,
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos svg { color: #ffffff !important; opacity: 1 !important; }
+.network-reference .network-router-summary-stats .network-stat--clientes-colas-simples p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-dhcp p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-pppoe p:first-child,
+.network-reference .network-router-summary-stats .network-stat--clientes-suspendidos p:first-child { color: rgba(255,255,255,.87) !important; font-weight: 800 !important; }
+
+/* Prioridad adicional para Claro Suave: estas reglas se cargan después de panel-theme.css. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-colas-simples { background: linear-gradient(135deg, #1788df, #1872ca) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp { background: linear-gradient(135deg, #7a4bd1, #6335bd) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background: linear-gradient(135deg, #12aa9b, #0c9088) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background: linear-gradient(135deg, #db9010, #c97a08) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-colas-simples p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-colas-simples svg,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp svg,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe svg,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos svg { color: #ffffff !important; opacity: 1 !important; }
