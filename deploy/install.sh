@@ -23,9 +23,13 @@ START_TIME="$(date +%s)"
 $SUDO touch "$LOG_FILE"
 $SUDO chmod 600 "$LOG_FILE"
 
+# Si el instalador raíz ya entregó el descriptor 3 conectado a la terminal,
+# lo conservamos. Solo lo creamos cuando deploy/install.sh se ejecuta directamente.
+if ! { true >&3; } 2>/dev/null; then
+  exec 3>&1 4>&2
+fi
 # stdout/stderr técnicos van al log. El descriptor 3 permanece conectado
 # a la terminal para la interfaz visual del instalador.
-exec 3>&1 4>&2
 exec 1>>"$LOG_FILE" 2>&1
 
 ui()      { printf '%s\n' "$*" >&3; }
