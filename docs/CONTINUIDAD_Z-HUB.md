@@ -1763,3 +1763,9 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se adaptaron búsqueda, filtros, tabla, cabecera y filas a una superficie clara con contrastes azul técnico y estados legibles.
 - El contenido sigue siendo el mismo: no se modificaron endpoints, parser, acciones de reinicio/activación/desactivación/eliminación ni consulta óptica.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.42 — Tarjeta OLT compacta y acción CLI corregida
+- Se redujo el ancho máximo de la tarjeta OLT a 380 px en escritorio (aprox. 30 % menos); en móvil se mantiene al 100 %.
+- Se corrigió el botón “Probar conexión CLI”: ahora usa fondo azul, borde claro, texto e icono blancos y realce al pasar el cursor.
+- Alcance: solo apariencia de la tarjeta OLT; no se modifican la prueba de conexión, permisos, llamadas API ni otros controles.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
