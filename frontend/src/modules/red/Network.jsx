@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Actualización: 2026-09-09 — versión 1.1.75, acciones de edición más visibles.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
+ * Actualización: 2026-09-09 — versión 1.1.79, resumen de clientes operativos por router.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
  *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
@@ -13,7 +13,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { canPermission } from "../ajustes/staff/permissions";
 import { TEST_IDS } from "../../constants/testIds";
-import { Server, Plus, Activity, RefreshCw, Zap, ShieldOff, Cpu, HardDrive, Clock, Pencil, Trash2 } from "lucide-react";
+import { Server, Plus, Activity, RefreshCw, Zap, ShieldOff, ListChecks, Users, UserX, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import RouterCard from "./components/RouterCard";
 import RouterForm from "./components/RouterForm";
@@ -37,6 +37,7 @@ export default function Network({ focus = "mikrotik" }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [pingResult, setPingResult] = useState(null);
+  const [clientCounts, setClientCounts] = useState(null);
   const [formRouter, setFormRouter] = useState(null); // null = cerrado, {} = nuevo, {...} = editar
   const [mapRouter, setMapRouter] = useState(null);
   const selectedModule = selected?.device_type === "olt" ? "olt" : "network";
@@ -55,6 +56,26 @@ export default function Network({ focus = "mikrotik" }) {
   }, [API, token]);
 
   useEffect(() => { fetchRouters(); }, [fetchRouters]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selected || selected.device_type !== "mikrotik") {
+      setClientCounts(null);
+      return undefined;
+    }
+
+    setClientCounts(null);
+    axios.get(`${API}/routers/${selected.id}/client-counts`, { headers })
+      .then(({ data }) => {
+        if (!cancelled) setClientCounts(data?.ok ? data.counts : null);
+      })
+      .catch(() => {
+        if (!cancelled) setClientCounts(null);
+      });
+
+    return () => { cancelled = true; };
+  }, [API, token, selected?.id, selected?.device_type]);
+
 
   const run = async (key, fn) => {
     setBusy(key);
@@ -199,10 +220,10 @@ export default function Network({ focus = "mikrotik" }) {
         <div className="network-detail bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-5" data-testid="router-detail">
           {selected.device_type === "mikrotik" && (
             <div className="network-router-summary-stats grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <Stat compact icon={Cpu} label="CPU" value={`${selected.cpu_usage_pct}%`} />
-              <Stat compact icon={HardDrive} label="Memoria" value={`${selected.memory_usage_pct}%`} />
-              <Stat compact icon={Clock} label="Uptime" value={selected.uptime || "—"} />
-              <Stat compact icon={Activity} label="Latencia" value={selected.ping_ms ? `${selected.ping_ms} ms` : "—"} />
+              <Stat compact icon={ListChecks} label="Clientes colas simples" value={clientCounts?.simple_queues ?? "—"} />
+              <Stat compact icon={Users} label="Clientes DHCP" value={clientCounts?.dhcp ?? "—"} />
+              <Stat compact icon={Users} label="Clientes PPPoE" value={clientCounts?.pppoe ?? "—"} />
+              <Stat compact icon={UserX} label="Clientes suspendidos" value={clientCounts?.suspended ?? "—"} />
             </div>
           )}
 
