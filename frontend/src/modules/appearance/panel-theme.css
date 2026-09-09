@@ -714,3 +714,43 @@ html[data-panel-theme="zhub-light"] .network-reference .network-stat p:first-chi
 html[data-panel-theme="zhub-light"] .network-reference .network-stat p:last-child {
   font-weight: 900 !important;
 }
+
+
+/* Gestión de red 1.1.36 — prioridad de tarjetas sólidas sobre la superficie compartida. */
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--cpu {
+  background: linear-gradient(135deg, #1986df, #126cc4) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--memoria {
+  background: linear-gradient(135deg, #7c54d5, #6039bc) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--uptime {
+  background: linear-gradient(135deg, #16adab, #07827f) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--latencia {
+  background: linear-gradient(135deg, #e6a12c, #c87b09) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--pppoe-activos {
+  background: linear-gradient(135deg, #16b78c, #07996f) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat.network-stat--colas {
+  background: linear-gradient(135deg, #445b78, #2d415b) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p,
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p:first-child,
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p:last-child,
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p:first-child {
+  opacity: .88;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p:last-child {
+  font-weight: 900 !important;
+}
