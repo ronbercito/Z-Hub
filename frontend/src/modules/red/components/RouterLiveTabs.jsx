@@ -110,8 +110,8 @@ export default function RouterLiveTabs({ router }) {
       {error ? (
         <div data-testid="live-tab-error" className="p-4 bg-rose-950/30 border border-rose-900/50 rounded-xl text-xs text-rose-300">{error}</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-          <table className="w-full text-left text-xs" data-testid={`table-${tab}`}>
+        <div className="max-w-full overflow-x-auto rounded-xl border border-slate-800">
+          <table className={`w-full text-left text-xs ${tab === "queues" ? "table-fixed" : ""}`} data-testid={`table-${tab}`}>
             {tab === "interfaces" && (
               <>
                 <Head cols={["Interfaz", "Tipo", "IP", "RX (bajada)", "TX (subida)", "MAC", "Estado"]} />
@@ -174,12 +174,12 @@ export default function RouterLiveTabs({ router }) {
                 <tbody className="divide-y divide-slate-800/60 text-slate-300">
                   {rows.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-800/40">
-                      <td className="py-2 px-3 font-mono font-bold text-slate-100">{r.name}</td>
-                      <td className="py-2 px-3 font-mono text-cyan-300">{r.target}</td>
-                      <td className="py-2 px-3 font-mono">{r.max_limit}</td>
-                      <td className="py-2 px-3 font-mono text-emerald-300">{r.rate_up_mbps} / {r.rate_down_mbps} Mbps</td>
-                      <td className="py-2 px-3 text-slate-400 truncate max-w-[220px]">{r.comment}</td>
-                      <td className="py-2 px-3"><Badge ok={!r.disabled} yes="ACTIVA" no="DESHABILITADA" /></td>
+                      <td className="py-2 px-3 w-[16%] font-mono font-bold text-slate-100 truncate" title={r.name}>{r.name}</td>
+                      <td className="py-2 px-3 w-[30%] font-mono text-cyan-300 truncate" title={r.target}>{r.target}</td>
+                      <td className="py-2 px-3 w-[15%] font-mono truncate" title={r.max_limit}>{r.max_limit}</td>
+                      <td className="py-2 px-3 w-[16%] font-mono text-emerald-300 truncate">{r.rate_up_mbps} / {r.rate_down_mbps} Mbps</td>
+                      <td className="py-2 px-3 w-[15%] text-slate-400 truncate" title={r.comment}>{r.comment || "—"}</td>
+                      <td className="py-2 px-3 w-[8%]"><Badge ok={!r.disabled} yes="ACTIVA" no="DESHABILITADA" /></td>
                     </tr>
                   ))}
                 </tbody>
