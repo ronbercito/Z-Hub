@@ -13,7 +13,7 @@ IMPORTANTE:
   o entrega de la funcionalidad.
 -->
 
-# MikroHub — Bitácora maestra de continuidad
+# Z-Hub (MikroHub internamente) — Bitácora maestra de continuidad
 
 ## 0. Regla principal para futuras sesiones
 
@@ -68,14 +68,15 @@ Cada vez que se **agregue, modifique o corrija** algo en MikroHub:
 
 - Repositorio: `ronbercito/mirkohub`
 - Rama de publicación: `main`
-- Nombre del sistema: **MikroHub**
+- Nombre público del sistema desde 1.1.10: **Z-Hub**
+- Nombre/rutas técnicas heredadas: **MikroHub** (se conservan por compatibilidad)
 - Tipo: panel de operaciones para ISP.
 - Frontend: React.
 - Backend: FastAPI/Python.
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.1.9**, correspondiente a la configuración de facturación individual por cliente y sus reglas de vencimiento/corte/mensajería.
+- Versión funcional actual: **1.1.10**, correspondiente a la identidad visible Z-Hub y al selector de templates Oscuro clásico / Z-Hub Blanco, manteniendo intacta la lógica 1.1.9 de facturación individual.
 
 ---
 
@@ -375,7 +376,7 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 Versión funcional en esta entrega:
 
 ```text
-PANEL_VERSION = 1.1.9
+PANEL_VERSION = 1.1.10
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -1060,3 +1061,109 @@ La validación real de build, navegador, servidor y transporte externo permanece
 ### Estado de cierre
 
 **1.1.9 queda documentada en la bitácora maestra y en su continuidad complementaria. Pendiente únicamente la validación real de build/servidor/navegador y pruebas de transporte externo antes de considerarla completamente validada.**
+
+---
+
+## 21. Registro de continuidad — 2026-09-08 — Panel 1.1.10
+
+**Tipo:** Identidad / UX / templates visuales / compatibilidad / seguridad de despliegue.
+
+### Objetivo
+Cambiar la identidad visible del producto de MikroHub a **Z-Hub** y añadir un template claro inspirado en la propuesta visual aprobada, conservando el template oscuro actual y evitando cambios funcionales en Clientes, Facturación, MikroTik, OLT, permisos o rutas internas.
+
+### Decisión de compatibilidad
+El cambio de marca es **visible**, no una migración destructiva de nombres internos.
+
+Se conserva deliberadamente:
+- repositorio `ronbercito/mirkohub`;
+- ruta de despliegue `/var/www/mikrohub`;
+- claves locales heredadas `fibraz_*`;
+- nombres técnicos/integraciones que usen MikroHub internamente.
+
+El campo `company_name` sigue siendo configurable. Si el ISP ya tiene un nombre guardado (por ejemplo FIBRA Z), **no se sobrescribe**. Z-Hub funciona como identidad/fallback del producto.
+
+### Backup obligatorio creado
+- Backup: `backup-pre-zhub-theme-1.1.10`
+- Base: `9c269d9d39add24e860ba9c2ed7e8e9ffa21274b` — Panel 1.1.9.
+- Desarrollo/validación: `update-zhub-theme-1.1.10`
+
+### Templates disponibles
+1. `dark` — **Oscuro clásico**.
+2. `zhub-light` — **Z-Hub Blanco**, con blanco/azul claro y acentos azul, cian y turquesa.
+
+Selector:
+`Ajustes → General → Apariencia del panel`
+
+Persistencia:
+`panel_theme` dentro del JSON existente de `settings`; no requiere migración SQL.
+
+### Arquitectura del tema
+```text
+Ajustes > General
+  ↓
+panel_theme
+  ↓
+/api/settings
+  ↓
+settings.data JSON
+  ↓
+Layout / Login
+  ↓
+applyPanelTheme()
+  ↓
+html[data-panel-theme="dark|zhub-light"]
+  ↓
+panel-theme.css
+```
+
+### Archivos nuevos
+- `frontend/src/modules/appearance/panelThemes.js`
+- `frontend/src/modules/appearance/PanelThemeSelector.jsx`
+- `frontend/src/modules/appearance/panel-theme.css`
+- `frontend/public/zhub-logo.svg`
+
+### Archivos modificados
+- `frontend/src/modules/ajustes/Settings.jsx`
+- `frontend/src/components/layout/Layout.jsx`
+- `frontend/src/components/layout/Sidebar.jsx`
+- `frontend/src/modules/auth/Login.jsx`
+- `frontend/src/App.js`
+- `frontend/src/modules/system-update/UpdateCenter.jsx`
+- `frontend/src/modules/system-update/version.js`
+- `backend/app/models/setting.py`
+- `backend/app/routers/ajustes/router.py`
+- `docs/CONTINUIDAD_MIKROHUB.md`
+
+### Base de datos y API
+No se crea tabla ni columna SQL. Se añade la clave JSON `panel_theme = dark | zhub-light`.
+
+`GET /api/settings/public` puede devolver:
+- `company_name`
+- `logo_data`
+- `panel_theme`
+
+No se modificaron rutas existentes de Clientes, Facturación, MikroTik, OLT, permisos ni autenticación.
+
+### Pruebas realizadas
+- [x] rama backup creada antes de publicar;
+- [x] rama aislada de desarrollo creada;
+- [x] `Settings.jsx`, `Layout.jsx` y `Login.jsx` restaurados desde el `main` vigente y cambios reaplicados mínimamente;
+- [x] comparación contra `main` revisada;
+- [x] instalación de dependencias frontend en GitHub Actions;
+- [x] `yarn build` de producción correcto en GitHub Actions;
+- [x] `python -m py_compile backend/app/models/setting.py backend/app/routers/ajustes/router.py` correcto;
+- [x] versión y CHANGELOG en 1.1.10;
+- [x] continuidad canónica actualizada;
+- [ ] instalación real desde el Actualizador del servidor;
+- [ ] validación visual real de ambos templates después del despliegue;
+- [ ] prueba de cambiar tema, cerrar sesión y volver a ingresar.
+
+### Rollback
+1. rollback automático del actualizador ante fallo;
+2. rama `backup-pre-zhub-theme-1.1.10` para volver al estado exacto 1.1.9.
+
+### Regla de continuidad
+Cada cambio posterior debe actualizar `docs/CONTINUIDAD_MIKROHUB.md` antes de comunicarse como terminado.
+
+### Estado
+**Código validado por build y documentación actualizada. Preparado para publicación como 1.1.10; instalación real en servidor pendiente de ejecutar desde el Actualizador.**
