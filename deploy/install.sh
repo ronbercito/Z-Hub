@@ -28,13 +28,16 @@ $SUDO chmod 600 "$LOG_FILE"
 if ! { true >&3; } 2>/dev/null; then
   exec 3>&1 4>&2
 fi
-# stdout/stderr técnicos van al log. El descriptor 3 permanece conectado
-# a la terminal para la interfaz visual del instalador.
 exec 1>>"$LOG_FILE" 2>&1
 
 # Colores ANSI solo para la interfaz visual de la terminal.
 # El log técnico permanece sin códigos de color.
 COLOR_TITLE='\033[1;36m'
+COLOR_OK='\033[1;32m'
+COLOR_WORK='\033[1;33m'
+COLOR_ERROR='\033[1;31m'
+COLOR_INFO='\033[0;37m'
+COLOR_IMPORTANT='\033[1;35m'
 COLOR_RESET='\033[0m'
 
 ui()      { printf '%s\n' "$*" >&3; }
@@ -44,24 +47,24 @@ section() {
   printf '%b%s%b\n' "$COLOR_TITLE" "$1" "$COLOR_RESET" >&3
   line
 }
-ok()      { ui "  ✓ $1"; }
-info()    { ui "  • $1"; }
-warn()    { ui "  ⚠ $1"; }
+title()   { printf '%b%s%b\n' "$COLOR_TITLE" "$1" "$COLOR_RESET" >&3; }
+ok()      { printf '%b  ✓ %s%b\n' "$COLOR_OK" "$1" "$COLOR_RESET" >&3; }
+info()    { printf '%b  • %s%b\n' "$COLOR_INFO" "$1" "$COLOR_RESET" >&3; }
+important(){ printf '%b  %s%b\n' "$COLOR_IMPORTANT" "$1" "$COLOR_RESET" >&3; }
+warn()    { printf '%b  ⚠ %s%b\n' "$COLOR_WORK" "$1" "$COLOR_RESET" >&3; }
 
-# Ejecuta una tarea larga sin ocultar visualmente que sigue trabajando.
-# La salida completa continúa guardándose en el log técnico.
 run_visual() {
   local label="$1"; shift
   local pid rc i=0
-  ui "  ⟳ $label"
+  printf '%b  ⟳ %s%b\n' "$COLOR_WORK" "$label" "$COLOR_RESET" >&3
   "$@" >>"$LOG_FILE" 2>&1 &
   pid=$!
   while kill -0 "$pid" 2>/dev/null; do
     case $((i % 4)) in
-      0) printf '\r      ⠋ Trabajando... ' >&3 ;;
-      1) printf '\r      ⠙ Trabajando... ' >&3 ;;
-      2) printf '\r      ⠹ Trabajando... ' >&3 ;;
-      3) printf '\r      ⠸ Trabajando... ' >&3 ;;
+      0) printf '\r%b      ⠋ Trabajando... %b' "$COLOR_WORK" "$COLOR_RESET" >&3 ;;
+      1) printf '\r%b      ⠙ Trabajando... %b' "$COLOR_WORK" "$COLOR_RESET" >&3 ;;
+      2) printf '\r%b      ⠹ Trabajando... %b' "$COLOR_WORK" "$COLOR_RESET" >&3 ;;
+      3) printf '\r%b      ⠸ Trabajando... %b' "$COLOR_WORK" "$COLOR_RESET" >&3 ;;
     esac
     i=$((i + 1))
     sleep 1
@@ -70,23 +73,23 @@ run_visual() {
   rc=${rc:-0}
   printf '\r' >&3
   if [ "$rc" -eq 0 ]; then
-    ui "      ✓ $label completado"
+    ok "$label completado"
   else
-    ui "      ✗ $label falló (código $rc)"
-    ui "      Revisa: $LOG_FILE"
+    printf '%b      ✗ %s falló (código %s)%b\n' "$COLOR_ERROR" "$label" "$rc" "$COLOR_RESET" >&3
+    printf '%b      Revisa: %s%b\n' "$COLOR_ERROR" "$LOG_FILE" "$COLOR_RESET" >&3
     return "$rc"
   fi
 }
 
-trap 'rc=$?; ui ""; ui "╔════════════════════════════════════════════════════════════╗"; ui "║                 ❌ INSTALACIÓN DETENIDA                   ║"; ui "╚════════════════════════════════════════════════════════════╝"; ui "  Paso: $STEP"; ui "  Línea: $LINENO"; ui "  Código: $rc"; ui "  Log técnico: $LOG_FILE"; ui "  Últimas líneas del log:"; tail -n 18 "$LOG_FILE" >&3 2>&3 || true; exit $rc' ERR
+trap 'rc=$?; ui ""; printf "%b╔════════════════════════════════════════════════════════════╗%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b║                 ❌ INSTALACIÓN DETENIDA                   ║%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; printf "%b╚════════════════════════════════════════════════════════════╝%b\n" "$COLOR_ERROR" "$COLOR_RESET" >&3; ui "  Paso: $STEP"; ui "  Línea: $LINENO"; ui "  Código: $rc"; ui "  Log técnico: $LOG_FILE"; ui "  Últimas líneas del log:"; tail -n 18 "$LOG_FILE" >&3 2>&3 || true; exit $rc' ERR
 
 ui ""
-ui "╔════════════════════════════════════════════════════════════╗"
+printf '%b%s%b\n' "$COLOR_TITLE" "╔════════════════════════════════════════════════════════════╗" "$COLOR_RESET" >&3
 printf '%b%s%b\n' "$COLOR_TITLE" "║                    Z-HUB ISP INSTALLER                    ║" "$COLOR_RESET" >&3
-ui "║              Instalación y configuración automática       ║"
-ui "╚════════════════════════════════════════════════════════════╝"
+printf '%b%s%b\n' "$COLOR_TITLE" "║              Instalación y configuración automática       ║" "$COLOR_RESET" >&3
+printf '%b%s%b\n' "$COLOR_TITLE" "╚════════════════════════════════════════════════════════════╝" "$COLOR_RESET" >&3
 ui ""
-printf '%b%s%b\n' "$COLOR_TITLE" "Sistema detectado" "$COLOR_RESET" >&3
+title "Sistema detectado"
 if [ -r /etc/os-release ]; then
   . /etc/os-release
   ok "${PRETTY_NAME:-Sistema Linux}"
@@ -130,7 +133,7 @@ import secrets
 print(secrets.token_urlsafe(18)[:24])
 PY
 )"
-  info "Se generó una contraseña segura para MariaDB"
+  important "Se generó una contraseña segura para MariaDB"
 fi
 
 export DB_NAME DB_USER DB_PASS
@@ -191,13 +194,13 @@ ok "Supervisor configurado"
 info "Esperando respuesta del backend..."
 BACKEND_OK=0
 for i in $(seq 1 20); do
-  printf '\r  ⟳ Healthcheck backend: intento %02d/20 ... ' "$i" >&3
+  printf '\r%b  ⟳ Healthcheck backend: intento %02d/20 ... %b' "$COLOR_WORK" "$i" "$COLOR_RESET" >&3
   if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then BACKEND_OK=1; break; fi
   sleep 2
 done
 printf '\r' >&3
 if [ "$BACKEND_OK" -ne 1 ]; then
-  echo "Backend no responde" >&2
+  printf '%b✗ Backend no responde%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
   exit 1
 fi
 ok "Backend Z-Hub respondiendo en 127.0.0.1:8001"
@@ -214,12 +217,12 @@ section "[7/7] Verificación final"
 if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then
   ok "Backend: OK"
 else
-  echo "Healthcheck final del backend falló" >&2
+  printf '%b✗ Healthcheck final del backend falló%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3
   exit 1
 fi
-if systemctl is-active --quiet mariadb; then ok "MariaDB: OK"; else echo "MariaDB inactivo" >&2; exit 1; fi
-if supervisorctl status zhub_backend 2>/dev/null | grep -q RUNNING; then ok "Supervisor: OK"; else echo "Supervisor no está RUNNING" >&2; exit 1; fi
-if systemctl is-active --quiet nginx; then ok "Nginx: OK"; else echo "Nginx inactivo" >&2; exit 1; fi
+if systemctl is-active --quiet mariadb; then ok "MariaDB: OK"; else printf '%b✗ MariaDB inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+if supervisorctl status zhub_backend 2>/dev/null | grep -q RUNNING; then ok "Supervisor: OK"; else printf '%b✗ Supervisor no está RUNNING%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+if systemctl is-active --quiet nginx; then ok "Nginx: OK"; else printf '%b✗ Nginx inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
 ok "Git Update: OK"
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
@@ -227,9 +230,9 @@ END_TIME="$(date +%s)"
 ELAPSED=$((END_TIME - START_TIME))
 
 ui ""
-ui "╔════════════════════════════════════════════════════════════╗"
-printf '%b%s%b\n' "$COLOR_TITLE" "║                  ✓ Z-HUB INSTALADO                        ║" "$COLOR_RESET" >&3
-ui "╚════════════════════════════════════════════════════════════╝"
+printf '%b%s%b\n' "$COLOR_OK" "╔════════════════════════════════════════════════════════════╗" "$COLOR_RESET" >&3
+printf '%b%s%b\n' "$COLOR_OK" "║                  ✓ Z-HUB INSTALADO                        ║" "$COLOR_RESET" >&3
+printf '%b%s%b\n' "$COLOR_OK" "╚════════════════════════════════════════════════════════════╝" "$COLOR_RESET" >&3
 ui ""
 ok "Backend:     OK"
 ok "MariaDB:     OK"
@@ -238,17 +241,17 @@ ok "Nginx:       OK"
 ok "Git Update:  OK"
 ok "Duración:    ${ELAPSED}s"
 ui ""
-ui "  🌐 Panel:          http://${IP:-IP_DEL_SERVIDOR}/"
-ui "  📂 Z-Hub:          $APP_DIR"
-ui "  🗄️  Base:           $DB_NAME"
-ui "  👤 Usuario BD:      $DB_USER"
-ui "  📜 Log técnico:     $LOG_FILE"
-ui "  📜 Log backend:     /var/log/zhub_backend.err.log"
+important "🌐 Panel:          http://${IP:-IP_DEL_SERVIDOR}/"
+info "📂 Z-Hub:          $APP_DIR"
+info "🗄️  Base:           $DB_NAME"
+info "👤 Usuario BD:      $DB_USER"
+info "📜 Log técnico:     $LOG_FILE"
+info "📜 Log backend:     /var/log/zhub_backend.err.log"
 ui ""
-ui "  Credenciales iniciales:"
-ui "  🔑 Email:           $(grep '^ADMIN_EMAIL=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
-ui "  🔑 Password:        $(grep '^ADMIN_PASSWORD=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
+important "Credenciales iniciales:"
+important "🔑 Email:           $(grep '^ADMIN_EMAIL=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
+important "🔑 Password:        $(grep '^ADMIN_PASSWORD=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
 ui ""
-ui "============================================================"
-ui "  ✓ Z-HUB ESTÁ LISTO PARA USAR"
-ui "============================================================"
+printf '%b%s%b\n' "$COLOR_OK" "============================================================" "$COLOR_RESET" >&3
+printf '%b  ✓ Z-HUB ESTÁ LISTO PARA USAR%b\n' "$COLOR_OK" "$COLOR_RESET" >&3
+printf '%b%s%b\n' "$COLOR_OK" "============================================================" "$COLOR_RESET" >&3
