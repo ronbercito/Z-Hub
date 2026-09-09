@@ -2,11 +2,11 @@
 
 ## Versión actual
 
-**PANEL_VERSION: 1.1.83**
+**PANEL_VERSION: 1.1.84**
 
 Fuente de verdad de versión: `frontend/src/modules/system-update/version.js`.
 
-## Actualización registrada — 2026-09-09
+## Actualizaciones registradas — 2026-09-09
 
 ### Corrección de actualización — `zhub_backend` spawn error
 
@@ -21,31 +21,44 @@ Se corrigió `deploy/supervisor/zhub_backend.conf.template` para ejecutar Uvicor
 
 Esto evita depender de la resolución directa del ejecutable `venv/bin/uvicorn` y mantiene el mismo backend, puerto, host y número de workers.
 
-### Alcance
+### Recuperación de Google Maps en Ajustes
 
-- No se modificó la funcionalidad del Login.
-- No se modificó la autenticación JWT.
-- No se modificó la base de datos.
-- No se modificó el frontend ni su proceso de compilación.
-- El cambio afecta únicamente al comando de arranque del backend bajo Supervisor.
+La configuración de Google Maps ya existía en `Settings.jsx`, incluyendo `google_maps_api_key`, pero el acceso debía quedar disponible de forma explícita dentro del submenú Ajustes.
 
-### Archivo actualizado
+Se mantiene la sección:
 
+`Google Maps y APIs`
+
+Al seleccionarla, Z-Hub abre la configuración de **Google Maps** para introducir y guardar la clave de **Maps JavaScript API**. El acceso usa el mismo módulo de permisos de Ajustes y el icono del submenú identifica visualmente Google Maps.
+
+No se modificó la lógica de carga de mapas ni la estructura de la clave existente.
+
+### Archivos relacionados
+
+- `frontend/src/modules/ajustes/navigation/settingsSections.js`
+- `frontend/src/modules/ajustes/staff/permissions.js`
+- `frontend/src/components/layout/Sidebar.jsx`
+- `frontend/src/modules/ajustes/Settings.jsx` (configuración Google Maps existente, sin cambios funcionales)
+- `frontend/src/modules/system-update/version.js`
 - `deploy/supervisor/zhub_backend.conf.template`
 
-### Commit
+### Commits de esta continuidad
 
 - `bdb526c8adb8711188cee720a4a46322751017b9` — `fix: prevent supervisor backend spawn error`
+- `ef4bd0b17cd3cae384a7f3ade1722649cd0a3262` — `fix: allow Google Maps settings submenu`
+- `9d880e128509227c7564d648b630be2d6ab3f4c4` — `ui: show Google Maps icon in settings submenu`
+- `ccc7b9a0c30d8d68a2f9f3590633f82bc61801dc` — `chore: bump panel version to 1.1.84`
 
 ### Validación recomendada en el servidor
 
 Después de actualizar:
 
 1. Recargar la configuración de Supervisor.
-2. Reiniciar `zhub_backend`.
-3. Confirmar que el estado sea `RUNNING`.
-4. Revisar `/var/log/zhub_backend.err.log` si vuelve a fallar.
-5. Confirmar que el panel pueda comunicarse nuevamente con el backend.
+2. Confirmar que `zhub_backend` quede en `RUNNING`.
+3. Abrir **Ajustes → Google Maps y APIs**.
+4. Introducir la clave de Maps JavaScript API y guardar.
+5. Confirmar que el mapa de clientes y el selector de coordenadas continúen cargando correctamente.
+6. Revisar `/var/log/zhub_backend.err.log` si vuelve a aparecer un error de backend.
 
 ## Regla para la siguiente continuidad
 
