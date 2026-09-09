@@ -1886,3 +1886,23 @@ html[data-panel-theme="zhub-light"] .update-install-button {
   box-shadow: 0 5px 12px rgba(9, 127, 183, .22) !important;
 }
 html[data-panel-theme="zhub-light"] .update-install-button:disabled { background: #b9d9e9 !important; color: #5e8299 !important; }
+
+
+/* Actualizaciones 1.1.67 — sondeo de instalación sin borrar el control y contraste reforzado. */
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-500,
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-cyan-200 {
+  color: #39719a !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog .bg-slate-950\/70 {
+  background: #f3f8fc !important;
+  border-color: #9fd5ec !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog .text-slate-200 {
+  color: #264f75 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .update-center-dialog .bg-slate-700 {
+  background: #d9e6ef !important;
+}
