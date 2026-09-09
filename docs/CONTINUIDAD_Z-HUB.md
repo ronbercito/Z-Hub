@@ -1977,3 +1977,12 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - En escritorio el grupo queda alineado a la derecha; en pantallas pequeñas se mantiene unido y alineado sin trasladar la versión al inicio del contenido.
 - La versión continúa obteniéndose de `PANEL_VERSION`; no se modifica la actualización del Dashboard ni datos operativos.
 - Prueba realizada: revisión estática del orden versión → botón, anclaje de escritorio, alineamiento móvil y fuente de versión.
+
+
+### 1.1.67 — Instalación silenciosa y progreso legible en actualizaciones
+
+- Durante una instalación, el panel conserva el sondeo de estado cada 3 segundos para actualizar el progreso, pero lo realiza sin cambiar el botón «Comprobar» a estado de búsqueda.
+- El mensaje «Buscando actualización…» solo aparece cuando el operador presiona manualmente «Comprobar».
+- Se reforzó en Claro Suave el contraste de textos, contenedor y barra del progreso para evitar controles o letras blancas poco visibles.
+- Prueba realizada: revisión estática del sondeo silencioso, activación manual, colores de progreso y rutas de estado/instalación.
+- Alcance: no se alteran la frecuencia de sondeo durante instalación, descarga, instalación, sesión ni API.
