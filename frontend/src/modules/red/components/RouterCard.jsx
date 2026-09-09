@@ -35,7 +35,15 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className={`p-2 rounded-lg ${tone.icon}`}>
-            <Icon className="network-router-device-glyph w-5 h-5" />
+            {isOlt ? <Icon className="network-router-device-glyph w-5 h-5" /> : (
+              <svg className="w-6 h-6" viewBox="0 0 32 32" fill="none" aria-hidden="true" stroke="#0878aa" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="5" y="5" width="16" height="7" rx="2" />
+                <rect x="5" y="14" width="16" height="7" rx="2" />
+                <circle cx="9" cy="8.5" r="0.7" fill="#0878aa" stroke="none" />
+                <circle cx="9" cy="17.5" r="0.7" fill="#0878aa" stroke="none" />
+                <path d="M24 18v-3m0 3 3-2m-3 2-3-2m0 6a4 4 0 1 0 6 0 4 4 0 0 0-6 0Zm3 0v3m-2-1.5h4" />
+              </svg>
+            )}
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-slate-100 truncate">{router.name}</h3>
