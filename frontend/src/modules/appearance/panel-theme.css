@@ -1979,3 +1979,19 @@ html[data-panel-theme="zhub-light"] .login-demo-button:hover { background: #e3f4
 html[data-panel-theme="zhub-light"] .login-demo-button--admin { color: #087fb8 !important; }
 html[data-panel-theme="zhub-light"] .login-demo-button--tech { color: #078363 !important; }
 html[data-panel-theme="zhub-light"] .login-demo-button--billing { color: #6845b3 !important; }
+
+
+/* Perfil lateral 1.1.71 — avatar de cuenta activo con identidad visual amable. */
+.sidebar-account-avatar {
+  color: #ffffff;
+  border: 1px solid rgba(103, 232, 249, .46);
+  background: linear-gradient(135deg, #0ea5c9, #2563c7 58%, #7145c7);
+  box-shadow: 0 5px 13px rgba(28, 112, 198, .24);
+}
+html[data-panel-theme="zhub-light"] .sidebar-account-avatar {
+  border-color: #a7d8ed;
+  background: linear-gradient(135deg, #1fa8cf, #2d78c9 58%, #7652c8);
+  box-shadow: 0 4px 11px rgba(31, 112, 179, .22);
+}
+html[data-panel-theme="zhub-light"] .sidebar-account-info h4 { color: #163f68 !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .sidebar-account-info p { color: #087fab !important; font-weight: 800 !important; }
