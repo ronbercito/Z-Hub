@@ -56,7 +56,7 @@ export default function OnuListView({ onus = [], onAction, routerId }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="onu-list-view space-y-3">
       <p className="text-[10px] text-slate-400">RX bajo demanda: selecciona Consultar / seguir. Una ONU, cada 30 s tras la lectura; pausa al ocultar la página.</p>
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
         <div className="relative w-full xl:max-w-xl">
