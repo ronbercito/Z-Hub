@@ -1,10 +1,10 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.35: métricas de Gestión de red con color sólido.
+ * Actualización: 2026-09-09 — versión 1.1.36: prioridad corregida para las métricas sólidas de Gestión de red.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  * Regla: Z-Hub es el repositorio principal desde 1.1.12; MikroHub queda como respaldo legado.
  */
-export const PANEL_VERSION = "1.1.35";
+export const PANEL_VERSION = "1.1.36";
 export const CHANGELOG = [
   { type: "Gestión de red", text: "Las métricas CPU, memoria, uptime, latencia, PPPoE y colas ahora son tarjetas de color sólido." },
   { type: "Interfaz", text: "Cada tarjeta conserva texto e icono blanco, grueso y legible; la tabla permanece clara para operación." },
