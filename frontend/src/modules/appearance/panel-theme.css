@@ -260,3 +260,55 @@ html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi but
   border-color: rgba(255, 255, 255, .25) !important;
   font-weight: 700 !important;
 }
+
+
+/* Dashboard 1.1.26 — jerarquía tipográfica del Resumen del sistema. */
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary > h3 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.01em !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .space-y-3 {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-slate-950\/50 {
+  min-height: 36px;
+  padding: 7px 10px !important;
+  background: #f5f8fb !important;
+  border-color: #d8e2eb !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-slate-950\/50 > span:first-child {
+  color: #173b63 !important;
+  font-weight: 700 !important;
+  letter-spacing: -.005em !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-slate-950\/50 > span:last-child {
+  min-width: 27px;
+  padding: 3px 8px !important;
+  text-align: center;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  color: #123551 !important;
+  border-color: currentColor !important;
+  box-shadow: none !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-emerald-500\/20 > span:last-child,
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-teal-500\/20 > span:last-child {
+  color: #075c50 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-rose-500\/20 > span:last-child {
+  color: #8e2138 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-cyan-500\/20 > span:last-child {
+  color: #075d7b !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-purple-500\/20 > span:last-child {
+  color: #44228d !important;
+}
