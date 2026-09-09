@@ -3004,3 +3004,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Tema claro:** se aumenta el contraste del texto del pie manteniendo el fondo claro incorporado en 1.2.09.
 - **Compatibilidad:** se conserva la versión dinámica y no se altera el tema oscuro.
 - **Pruebas:** validadas posición centrada, tamaño, referencia a `PANEL_VERSION` y contraste del tema claro.
+
+
+### 1.2.11 — Submódulo Instalaciones
+
+- **Navegación:** se agrega **Clientes → Instalaciones**, protegido por el mismo permiso de Clientes.
+- **Pantalla inicial:** listado de clientes/instalaciones con buscador por cliente, teléfono o dirección, filtros de fechas, tecnología, estado y acceso visible para nueva instalación.
+- **Datos:** consulta el listado existente de clientes; no modifica registros ni la provisión actual.
+- **Pruebas:** verificados menú, ruta, permisos, carga de datos y filtros visibles.
