@@ -2957,3 +2957,10 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Filtra por usuario, perfil, IP remota o comentario e indica coincidencias.
 - No agrega consultas ni altera secretos, estados ni acciones del MikroTik.
 - Prueba: revisión estática de estado, criterios de filtro, input y listado filtrado.
+
+
+### 1.2.05 — Reubicación de Zonas en navegación
+
+- **Cambio:** se mueve el submenú **Zonas** desde **Clientes** hacia **Gestión de Red**.
+- **Compatibilidad:** se conserva el identificador `client_zones`, sus permisos existentes y la misma pantalla de gestión; solo cambia su ubicación visual en el menú.
+- **Verificación:** comprobada presencia única dentro de Gestión de Red, ausencia en Clientes y continuidad de la ruta hacia `Zones`.
