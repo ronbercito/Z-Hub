@@ -754,3 +754,43 @@ html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid >
 html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > .network-stat p:last-child {
   font-weight: 900 !important;
 }
+
+
+/* OLT 1.1.37 — indicadores operativos con color sólido y alto contraste. */
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(1) {
+  background: linear-gradient(135deg, #12ae85, #078568) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px rgba(6, 132, 104, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(2) {
+  background: linear-gradient(135deg, #149bc0, #087396) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px rgba(8, 115, 150, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(3) {
+  background: linear-gradient(135deg, #7451d4, #5335af) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px rgba(83, 53, 175, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(4) {
+  background: linear-gradient(135deg, #e68b28, #bf5e09) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 14px rgba(191, 94, 9, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4),
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) * {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) .text-emerald-300,
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) .text-amber-300,
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) .text-rose-300,
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) .text-violet-400 {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) p:first-child {
+  opacity: .86;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) p:not(:first-child) {
+  font-weight: 900 !important;
+}
