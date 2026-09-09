@@ -17,7 +17,7 @@ DB_NAME="zhub"
 DB_USER="zhub"
 LOG_FILE="/var/log/zhub_install.log"
 LICENSE_DIR="/etc/zhub/licencia"
-LICENSE_FILE="$LICENSE_DIR/licenses.json"
+LICENSE_FILE="$LICENSE_DIR/licencias.txt"
 STEP="inicio"
 START_TIME="$(date +%s)"
 
@@ -88,9 +88,9 @@ STEP="Preparando el entorno"
 section "[1/7] Preparando el entorno"
 run_visual "Actualizando componentes" apt-get update
 run_visual "Preparando recursos necesarios" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
-run_visual "Preparando registro interno" bash -c 'mkdir -p "$1"; if [ ! -f "$2" ] && [ -f "$3" ]; then cp "$3" "$2"; fi; test -f "$2"; chown root:www-data "$2"; chmod 640 "$2"' _ "$LICENSE_DIR" "$LICENSE_FILE" "$APP_DIR/licencia/licenses.json"
+run_visual "Preparando registro interno" bash -c 'mkdir -p "$1"; if [ ! -f "$2" ] && [ -f "$3" ]; then cp "$3" "$2"; fi; test -f "$2"; chown root:www-data "$2"; chmod 640 "$2"' _ "$LICENSE_DIR" "$LICENSE_FILE" "$APP_DIR/licencia/licencias.txt"
 # El registro queda fuera del checkout publicado y fuera del webroot. El backend
-# utiliza /etc/zhub/licencia/licenses.json como fuente privada de validación.
+# utiliza /etc/zhub/licencia/licencias.txt como fuente privada de validación.
 rm -rf "$APP_DIR/licencia"
 ok "Entorno preparado"
 
