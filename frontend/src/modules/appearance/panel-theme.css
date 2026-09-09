@@ -2014,3 +2014,9 @@ html[data-panel-theme="zhub-light"] .router-form-cancel { background: #edf4f9 !i
 html[data-panel-theme="zhub-light"] .router-form-save { background: #147fc1 !important; color: #ffffff !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-edit-button { background: #ffffff !important; border-color: #bce0f4 !important; color: #12659a !important; box-shadow: 0 3px 8px rgba(7,81,132,.16) !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-edit-button:hover { background: #e7f5fc !important; color: #075982 !important; }
+
+
+/* Router 1.1.76 — identidad y estado destacados sin cambiar la geometría. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-device-icon { background: #ffffff !important; border-color: #c4e5f6 !important; color: #0878aa !important; box-shadow: 0 3px 8px rgba(10,114,163,.18) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-status--online { background: #099876 !important; border-color: #62cfb8 !important; color: #ffffff !important; box-shadow: 0 3px 8px rgba(5,123,94,.20) !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-status--online span { background: #ffffff !important; }
