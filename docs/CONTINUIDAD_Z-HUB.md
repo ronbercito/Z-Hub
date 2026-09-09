@@ -1756,3 +1756,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El hover mantiene un azul más luminoso, borde claro y sombra de realce.
 - Alcance: solo presentación; no se modifican datos, estado, botones, selecciones ni monitoreo.
 - Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
+
+### 1.1.41 — Pestaña ONUs OLT adaptada al tema
+- Se añadieron clases visuales al workspace y a la lista de ONUs para aplicar estilos de forma segura.
+- Las métricas superiores son ahora sólidas: total azul, en línea verde, fuera de línea rojo y sin estado ámbar.
+- Se adaptaron búsqueda, filtros, tabla, cabecera y filas a una superficie clara con contrastes azul técnico y estados legibles.
+- El contenido sigue siendo el mismo: no se modificaron endpoints, parser, acciones de reinicio/activación/desactivación/eliminación ni consulta óptica.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
