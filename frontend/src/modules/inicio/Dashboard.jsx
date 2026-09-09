@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/inicio/Dashboard.jsx
- * Actualización: 2026-09-09 — versión 1.1.24, tarjetas KPI ajustadas a la referencia aprobada.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
+ * Actualización: 2026-09-09 — versión 1.1.66, versión alineada junto a Actualizar.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
  * Trabaja con: backend/app/routers/inicio/router.py (/api/dashboard/summary), components/layout/Layout.jsx
  */
 import React, { useState, useEffect } from "react";
@@ -76,7 +76,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
             Estado de red en tiempo real, facturación en Soles (S/.) y control de abonados
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="dashboard-update-actions flex items-center gap-2 self-end sm:self-auto sm:ml-auto">
           <span className="dashboard-version-badge" title="Versión instalada del panel">
             Versión {PANEL_VERSION}
           </span>
