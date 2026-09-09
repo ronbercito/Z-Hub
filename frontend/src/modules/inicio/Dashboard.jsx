@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/inicio/Dashboard.jsx
- * Actualización: 2026-09-09 — versión 1.1.66, versión alineada junto a Actualizar.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
+ * Actualización: 2026-09-09 — versión 1.1.68, versión trasladada a la barra superior.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
  * Trabaja con: backend/app/routers/inicio/router.py (/api/dashboard/summary), components/layout/Layout.jsx
  */
 import React, { useState, useEffect } from "react";
@@ -16,7 +16,6 @@ import {
   PieChart, Pie, Cell 
 } from "recharts";
 import { toast } from "sonner";
-import { PANEL_VERSION } from "../system-update/version";
 
 export default function Dashboard({ setActiveTab, onSelectClient }) {
   const { API, token, user } = useAuth();
@@ -77,9 +76,6 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
           </p>
         </div>
         <div className="dashboard-update-actions flex items-center gap-2 self-end sm:self-auto sm:ml-auto">
-          <span className="dashboard-version-badge" title="Versión instalada del panel">
-            Versión {PANEL_VERSION}
-          </span>
           <button
             onClick={() => { setRefreshing(true); fetchDashboard(false); }}
             disabled={refreshing}
