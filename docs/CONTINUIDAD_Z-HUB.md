@@ -1629,3 +1629,12 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: los valores se siguen obteniendo de /api/dashboard/summary; no se cambian API, datos, navegación, permisos, facturación, autenticación ni el tema oscuro.
 - Pruebas: revisión estática de las cuatro clases KPI, selectores de tema y PANEL_VERSION 1.1.24. Build y validación visual en el servidor siguen pendientes.
 - Resultado esperado: las tarjetas llenan completamente su recuadro, con verde, azul, violeta y azul oscuro; texto e iconos blancos legibles, títulos con peso alto y sin superficies blancas dentro de la franja KPI.
+
+
+### 1.1.25 — 2026-09-09 — Área útil del panel ampliada
+- Objetivo y causa: la referencia usa todo el espacio posterior al menú lateral. Layout.jsx limitaba el contenido global a max-w-7xl (1280 px), por lo que aparecían franjas vacías y el Dashboard quedaba más estrecho que el modelo.
+- Archivos modificados: frontend/src/components/layout/Layout.jsx (se reemplaza el límite max-w-7xl por ancho completo con padding adaptable), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: Dashboard y el resto de módulos conservan sus datos y acciones; solo reciben mayor área de presentación. No cambia API, permisos, autenticación, navegación ni tema oscuro.
+- Backup: rama backup-pre-layout-ampliado-1.1.25 creada antes de modificar el layout compartido.
+- Pruebas: revisión estática de la clase de Layout, PANEL_VERSION y continuidad. Build y revisión visual real en servidor pendientes.
+- Resultado esperado: tras el menú lateral, las tarjetas KPI, gráfico, resumen y tablas se extienden hasta el borde útil del contenido, con márgenes laterales compactos equivalentes a la segunda referencia.
