@@ -195,7 +195,7 @@ export default function RouterLiveTabs({ router }) {
               <>
                 <Head cols={["Usuario", "Perfil", "IP remota", "Comentario", "Estado", ""]} />
                 <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                  {rows.map((r) => (
+                  {visiblePppoeSecrets.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-800/40">
                       <td className="py-2 px-3 font-mono font-bold text-slate-100">{r.name}</td>
                       <td className="py-2 px-3 font-mono text-emerald-300">{r.profile}</td>
