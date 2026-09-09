@@ -794,3 +794,36 @@ html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > 
 html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard > .grid:first-child > div:nth-child(-n+4) p:not(:first-child) {
   font-weight: 900 !important;
 }
+
+
+/* Gestión de red 1.1.38 — tarjetas MikroTik con identidad azul y hover destacado. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card {
+  background: linear-gradient(135deg, #197fca, #0d5f9e) !important;
+  border-color: #0a72ba !important;
+  box-shadow: 0 6px 15px rgba(12, 94, 158, .23) !important;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, border-color .18s ease !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-100,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-400,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-500,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-300,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card p,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .border-slate-800 {
+  border-color: rgba(255,255,255,.32) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card:hover {
+  background: linear-gradient(135deg, #29a5ec, #1076c3) !important;
+  border-color: #62c5ff !important;
+  box-shadow: 0 12px 26px rgba(11, 105, 181, .38), 0 0 0 3px rgba(67, 177, 240, .16) !important;
+  filter: saturate(1.16) brightness(1.06);
+  transform: translateY(-3px);
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card button.bg-slate-800,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .bg-slate-800 {
+  background: rgba(255,255,255,.16) !important;
+  border-color: rgba(255,255,255,.38) !important;
+  color: #ffffff !important;
+}
