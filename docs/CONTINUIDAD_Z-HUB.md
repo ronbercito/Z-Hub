@@ -1583,3 +1583,31 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - La bitácora única pasa de CONTINUIDAD_MIKROHUB.md a CONTINUIDAD_Z-HUB.md para reflejar el repositorio y nombre público vigentes.
 - Todo el contenido consolidado se conserva en este mismo archivo; el archivo anterior se elimina.
 - Desde ahora toda referencia, actualización y documentación futura debe usar exclusivamente docs/CONTINUIDAD_Z-HUB.md.
+
+
+---
+
+## 27. Integración de registros históricos restantes
+
+### Política obligatoria ante fallos de actualización
+- No repetir una actualización a ciegas después de un error, rollback o build fallido.
+- Primero identificar versión, archivos y commits involucrados; revisar el código modificado y seguir la cadena completa React → API → backend → modelo/integración → respuesta → interfaz.
+- Comparar toda llamada nueva con flujos funcionales equivalentes del repositorio.
+- Corregir la causa real, ejecutar build y pruebas relevantes, y solo entonces reintentar el despliegue.
+- Nunca borrar base de datos ni ocultar el error para forzar una actualización.
+
+### Historial integrado de clientes, facturación y eliminación
+- 1.0.68: al editar/eliminar/anular facturas pendientes se recalcula saldo y contador desde facturas reales; las facturas pagadas o con pagos quedan protegidas.
+- 1.0.69: potencia óptica de fibra se normaliza a dBm negativo y usa rangos visuales por calidad.
+- 1.0.72–1.0.85: la eliminación definitiva de cliente evolucionó de confirmación nativa a modal propio, con datos reales de cliente/servicios/facturas, saldo pendiente, advertencia prioritaria y confirmación SI. La versión estable mantiene la carga de datos en Clients.jsx y solo la presentación en el módulo visual; no usar interceptores globales.
+- 1.0.91: Facturación de cliente se aisló con wrapper y ErrorBoundary para que un error de ejecución no deje en blanco las demás pestañas. Un error de compilación sigue requiriendo build antes de publicar.
+- 1.1.3: eliminar servicio adicional registra auditoría detallada: servicio, plan, conexión, tecnología, equipo, IP, facturas pendientes eliminadas, saldo y cuenta/rol ejecutor. Facturas pagadas o parcialmente pagadas permanecen protegidas.
+- 1.1.4: eliminar servicio adicional exige confirmación previa y una segunda confirmación si existen facturas pendientes; cancelar no envía DELETE y el servicio principal no se elimina desde ese botón.
+
+### Backups documentales retirados
+- Las notas de backup de Log y de transición 1.0.100 → 1.1.0 se consolidan aquí como referencias históricas. Los respaldos reales deben manejarse mediante ramas backup-* o la carpeta técnica backups/, no mediante archivos de continuidad separados.
+
+### Limpieza final de documentos — 2026-09-09
+- Se eliminaron los archivos restantes de continuidad, políticas y notas documentales de backup de docs/.
+- El único documento maestro, changelog y regla de continuidad es docs/CONTINUIDAD_Z-HUB.md.
+- Esta entrada no incrementa PANEL_VERSION.
