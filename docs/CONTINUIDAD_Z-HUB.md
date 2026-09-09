@@ -1824,3 +1824,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El estado PAGADO ahora resalta en verde sólido con texto e icono blancos; Pendiente y Vencido también reciben colores sólidos.
 - Alcance: solo presentación; no se modifican facturas, pagos, montos, acciones, reglas ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.51 — Pestaña Servicio del cliente adaptada al tema
+
+- Se adapta la pestaña **Servicio** de la ficha del cliente al tema claro Z-Hub.
+- La cabecera de “Servicios de Internet” ahora tiene un degradado azul sólido, título más grueso y botón “Nuevo servicio” turquesa visible.
+- La tabla cambia a cabecera azul oscuro, filas claras alternadas y datos con tipografía más gruesa para una lectura rápida.
+- El estado **Activo** resalta con verde sólido, texto blanco y sombra; los estados no activos quedan en rojo sólido.
+- Alcance: únicamente presentación; no se modifican servicios, planes, IP, Router, tecnología, señal ONU, acciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
