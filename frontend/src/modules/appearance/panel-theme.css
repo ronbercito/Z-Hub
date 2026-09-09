@@ -1001,10 +1001,7 @@ html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-
 }
 
 
-/* Gestión de red 1.1.42 — tarjeta OLT compacta y acción CLI visible. */
-html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--olt {
-  width: min(100%, 380px) !important;
-}
+/* Gestión de red 1.1.64 — acción CLI visible; la geometría OLT vive en RouterCard.jsx. */
 html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--olt button[data-testid="btn-test-connection"] {
   background: linear-gradient(135deg, #18a4da, #0a72b8) !important;
   border-color: #64c9ef !important;
@@ -1019,12 +1016,6 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-card.netw
   background: linear-gradient(135deg, #2cb8ed, #0c82cc) !important;
   filter: brightness(1.06);
 }
-@media (max-width: 767px) {
-  html[data-panel-theme="zhub-light"] .network-reference .network-router-card.network-router-card--olt {
-    width: 100% !important;
-  }
-}
-
 
 /* OLT 1.1.43 — Monitor óptico ONU con contraste y estados visuales. */
 html[data-panel-theme="zhub-light"] .network-reference .onu-optical-monitor {
