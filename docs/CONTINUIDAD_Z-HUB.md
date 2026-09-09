@@ -1855,3 +1855,14 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El operador responsable queda destacado con una etiqueta azul clara de alto contraste; la fecha conserva buena legibilidad.
 - Alcance: solo presentación; no se modifican acciones, detalle, operador, fecha, registros históricos ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.54 — Mensajería adaptada al tema
+
+- Se adapta el módulo **Mensajería y Avisos WhatsApp** al tema claro Z-Hub.
+- Plantillas y editor pasan a tarjetas claras con bordes azules, mejor contraste y tipografía más gruesa.
+- La plantilla seleccionada se resalta en verde claro; las demás conservan un fondo operativo suave con efecto al pasar el cursor.
+- Los campos de destinatario, teléfono y mensaje son claros, legibles y con foco visible.
+- Los botones Copiar y Enviar por WhatsApp quedan reforzados con color y contraste.
+- Alcance: solo presentación; no se modifican plantillas, clientes, teléfonos, contenido de mensajes, copiado ni envío por WhatsApp.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
