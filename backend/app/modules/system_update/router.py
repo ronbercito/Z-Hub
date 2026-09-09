@@ -171,7 +171,7 @@ async def update_status(response: Response):
     progress, phase = _progress_from_log(log, state)
     error_message = _extract_error_message(error_log) if state in {"rolled_back", "rollback_failed"} else ""
     return {
-        "available": current_commit != selected["commit"],
+        "available": _version_key(str(selected["version"])) > _version_key(current_version),
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
         "remote": {
             "version": selected["version"],
@@ -193,12 +193,12 @@ async def install_update():
     if not UPDATE_SCRIPT.is_file():
         raise HTTPException(status_code=500, detail="No se encontró el script de actualización")
     try:
-        current_commit = _git("rev-parse", "HEAD")
+        current_version, _ = _version_and_changelog(_source_for("HEAD"))
         candidates, _ = _available_sources()
         selected = _select_candidate(candidates)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=f"No se pudo consultar GitHub: {exc}") from exc
-    if current_commit == selected["commit"]:
+    if _version_key(str(selected["version"])) <= _version_key(current_version):
         raise HTTPException(status_code=409, detail="El panel ya está en la versión más reciente")
 
     LOG_FILE.write_text("")
