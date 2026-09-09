@@ -448,3 +448,100 @@ html[data-panel-theme="zhub-light"] header .navbar-user .text-cyan-400 {
   color: #087c9d !important;
   font-weight: 800 !important;
 }
+
+
+/* Gestión de red 1.1.32 — capa clara limitada a la vista operativa de routers y OLT. */
+html[data-panel-theme="zhub-light"] .network-reference {
+  color: #173b63;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+html[data-panel-theme="zhub-light"] .network-reference > div:first-child h2 {
+  color: #173b63 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference > div:first-child > div:first-child > p {
+  color: #52718d !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card {
+  background: #ffffff !important;
+  border-color: #d4e0ea !important;
+  color: #173b63 !important;
+  box-shadow: 0 3px 12px rgba(31, 74, 112, .08) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.border-cyan-500,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card:hover {
+  border-color: #1296c2 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-100 {
+  color: #173b63 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-400,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .text-slate-500 {
+  color: #52718d !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .border-slate-800 {
+  border-color: #dbe5ee !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card .bg-slate-800,
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card button.bg-slate-800 {
+  background: #f4f8fb !important;
+  border-color: #cbdbe8 !important;
+  color: #244f77 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail {
+  background: #ffffff !important;
+  border-color: #d4e0ea !important;
+  box-shadow: 0 3px 12px rgba(31, 74, 112, .08) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid > div {
+  background: #f5f8fb !important;
+  border-color: #d7e2eb !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid p:first-child {
+  color: #52718d !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-detail > .grid p:last-child {
+  color: #173b63 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs > div:first-child {
+  border-color: #d7e2eb !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs button {
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs button.text-slate-400 {
+  color: #52718d !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs .overflow-x-auto {
+  border-color: #d4e0ea !important;
+  background: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs thead {
+  background: #f4f8fb !important;
+  color: #244f77 !important;
+  border-color: #d4e0ea !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs th {
+  color: #244f77 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs tbody {
+  color: #315b82 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td {
+  border-color: #dbe5ee !important;
+  color: #315b82 !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.text-slate-100 {
+  color: #173b63 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs tr:hover {
+  background: #edf6fc !important;
+}
