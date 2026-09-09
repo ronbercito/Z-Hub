@@ -2044,3 +2044,13 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
 - Prueba realizada: revisión estática de las cuatro métricas, exclusión de PPPoE/colas, edición con permiso, tamaño de tarjeta y cuadrícula.
 - Alcance: no se modifican lecturas RouterOS, API, datos del router, pestañas, OLT, acciones existentes ni permisos de backend.
+
+
+### 1.1.74 — Memoria visible en tarjeta MikroTik
+
+- La fila inferior de la tarjeta MikroTik ahora muestra **CPU, Memoria y Ping**.
+- En MikroTik se distribuye en tres columnas compactas; en OLT se conserva la distribución anterior de dos columnas.
+- Se mantiene el ancho de tarjeta de 290 px y no se modifican el botón Editar ni las métricas resumidas inferiores.
+- Archivo funcional: `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de icono, dato de memoria, columnas por tipo de equipo y ancho compacto.
+- Alcance: no se modifican lecturas RouterOS, API, permisos, OLT, acciones ni pestañas.
