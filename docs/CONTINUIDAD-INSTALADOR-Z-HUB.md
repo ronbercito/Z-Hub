@@ -28,6 +28,8 @@ El panel presenta el asistente de primera configuración mientras `initial_setup
 2. **Administrador** — crea la cuenta admin real con nombre, correo y contraseña elegidos por el operador.
 3. **Finalizar** — muestra licencia activada, administrador configurado y la versión actual; `FINALIZADO` marca el proceso como terminado y vuelve al panel/login.
 
+Cuando la licencia es válida, el asistente también muestra el **nombre y correo del titular registrado** para identificar a quién pertenece la licencia. El administrador del panel sigue pudiendo elegir sus propios datos de acceso.
+
 El archivo `install.sh` no se elimina. El asistente se desactiva mediante estado persistente.
 
 ## Registro interno de licencias
@@ -35,40 +37,39 @@ El archivo `install.sh` no se elimina. El asistente se desactiva mediante estado
 El archivo fuente para preparar nuevas instalaciones está en:
 
 ```text
-licencia/licenses.json
+licencia/licencias.txt
 ```
 
-Su formato es deliberadamente sencillo: una lista de objetos. Para agregar otra licencia basta con añadir otro bloque:
+El formato es deliberadamente sencillo y editable como texto normal. Cada licencia utiliza un bloque:
 
-```json
-{
-  "licenses": [
-    {
-      "key": "ZHUB-2026-DEMO-001",
-      "name": "Licencia de demostración",
-      "active": true
-    },
-    {
-      "key": "ZHUB-2026-CLIENTE-001",
-      "name": "Cliente ejemplo",
-      "active": true
-    }
-  ]
-}
+```text
+# LICENCIAS Z-HUB
+
+LICENCIA: ZHUB-2026-001
+NOMBRE: Empresa Demo SAC
+CORREO: admin@empresademo.com
+ESTADO: ACTIVA
+
+LICENCIA: ZHUB-2026-002
+NOMBRE: Juan Pérez
+CORREO: juan@ejemplo.com
+ESTADO: ACTIVA
 ```
 
-Para desactivar una licencia sin borrarla:
+Para agregar otra licencia, basta con copiar un bloque y cambiar sus datos. Para desactivarla sin borrarla, cambia:
 
-```json
-"active": false
+```text
+ESTADO: INACTIVA
 ```
+
+Las licencias inactivas no pueden validarse en el asistente.
 
 ### Ubicación privada en el servidor
 
 Durante la instalación, el registro se copia a:
 
 ```text
-/etc/zhub/licencia/licenses.json
+/etc/zhub/licencia/licencias.txt
 ```
 
 El backend prioriza esta copia privada mediante `ZHUB_LICENSE_FILE`. Si ya existe, el instalador no la reemplaza, permitiendo que el administrador del servidor mantenga sus licencias locales.
@@ -81,7 +82,7 @@ Después de copiarla, el instalador elimina la carpeta `licencia` del checkout `
 - no queda expuesta por Nginx;
 - queda como información interna del servidor/contenedor y del administrador.
 
-La carpeta `licencia` del repositorio funciona solamente como **registro fuente temporal para preparar instalaciones nuevas**. El mecanismo definitivo de licenciamiento se implementará posteriormente sin depender de un archivo JSON distribuido públicamente.
+La carpeta `licencia` del repositorio funciona solamente como **plantilla temporal para preparar instalaciones nuevas**. El mecanismo definitivo de licenciamiento seguirá siendo responsabilidad del backend y no depende de exponer este archivo al navegador.
 
 ## Compatibilidad con instalaciones anteriores
 
