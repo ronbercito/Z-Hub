@@ -172,3 +172,35 @@ html[data-panel-theme="zhub-light"] aside nav div.border-l button.bg-cyan-500\/1
   border-color: rgba(24, 119, 190, 0.42) !important;
   box-shadow: none !important;
 }
+
+
+/* Dashboard claro de referencia 1.1.23: esta capa solo aplica al template Z-Hub Claro. */
+html[data-panel-theme="zhub-light"] .dashboard-reference { color: #173b63; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 {
+  background: #ffffff !important;
+  border-color: #d7e1eb !important;
+  box-shadow: 0 3px 12px rgba(31, 74, 112, .08) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .text-slate-100 { color: #173b63 !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .text-slate-200 { color: #315777 !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .text-slate-300 { color: #476b88 !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .text-slate-400 { color: #6f879d !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .border-slate-800,
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .border-slate-800\/60 { border-color: #dbe5ee !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .bg-slate-950,
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .bg-slate-950\/50 {
+  background: #f7fafc !important;
+  color: #315777 !important;
+  border-color: #dfe8f0 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .hover\:bg-slate-800\/40:hover,
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-900\/90 .hover\:bg-slate-800\/50:hover { background: #edf6fc !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference table thead { background: #f4f8fb !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference table tbody { color: #315777 !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .md\:border-l { border-color: #dbe5ee !important; }
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-800\/80 {
+  background: #ffffff !important;
+  color: #234e73 !important;
+  border-color: #cfdeeb !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-800\/80:hover { background: #edf6fc !important; }
