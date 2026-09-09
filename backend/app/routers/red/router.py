@@ -7,7 +7,7 @@ Trabaja con: backend/app/models/client.py, invoice.py, setting.py e integracione
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -184,6 +184,33 @@ async def queues(router_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/{router_id}/dhcp-leases")
 async def dhcp_leases(router_id: str, db: AsyncSession = Depends(get_db)):
     return await _live(db, router_id, lambda c: c.dhcp_leases())
+
+
+@router.get("/{router_id}/client-counts")
+async def client_counts(router_id: str, db: AsyncSession = Depends(get_db)):
+    """Cuenta clientes por fuente operativa con una sola conexión al MikroTik."""
+    async def read_counts(client):
+        queues = await client.simple_queues()
+        leases = await client.dhcp_leases()
+        pppoe = await client.ppp_active()
+        return {
+            "simple_queues": sum(1 for row in queues if not row.get("disabled")),
+            "dhcp": sum(1 for row in leases if str(row.get("status", "")).lower() == "bound"),
+            "pppoe": len(pppoe),
+        }
+
+    try:
+        live_counts = await _read(db, router_id, read_counts)
+    except MikroTikError as e:
+        return {"ok": False, "error": str(e), "counts": None}
+
+    suspended = (await db.execute(
+        select(func.count(Client.id)).where(
+            Client.router_id == router_id,
+            Client.status == "suspended",
+        )
+    )).scalar_one()
+    return {"ok": True, "counts": {**live_counts, "suspended": suspended}}
 
 
 @router.post("/{router_id}/dhcp-leases/{lease_id}/make-static")
