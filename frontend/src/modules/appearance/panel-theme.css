@@ -2020,3 +2020,8 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-edit-butt
 html[data-panel-theme="zhub-light"] .network-reference .network-router-device-icon { background: #ffffff !important; border-color: #c4e5f6 !important; color: #0878aa !important; box-shadow: 0 3px 8px rgba(10,114,163,.18) !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-status--online { background: #099876 !important; border-color: #62cfb8 !important; color: #ffffff !important; box-shadow: 0 3px 8px rgba(5,123,94,.20) !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-status--online span { background: #ffffff !important; }
+
+
+/* Corrección 1.1.77: el trazo SVG no debe heredar el blanco del contenedor. */
+.network-router-device-icon .network-router-device-glyph { color: #0878aa !important; stroke: currentColor !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-router-device-icon .network-router-device-glyph { color: #0878aa !important; stroke: currentColor !important; }
