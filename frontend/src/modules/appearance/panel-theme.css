@@ -1771,3 +1771,71 @@ html[data-panel-theme="zhub-light"] .settings-general-form > .flex.justify-end b
 @media (max-width: 1279px) {
   html[data-panel-theme="zhub-light"] .settings-general-form > * { margin: 0 !important; }
 }
+
+
+/* Red IPv4 y Cajas NAP 1.1.59 — capa completa para el tema claro Z-Hub. */
+html[data-panel-theme="zhub-light"] .ipv4-networks-page h2,
+html[data-panel-theme="zhub-light"] .nap-boxes-page h2 {
+  color: #143f69 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-networks-page > div:first-child p,
+html[data-panel-theme="zhub-light"] .nap-boxes-page > div:first-child p {
+  color: #4a7292 !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-summary > div {
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 13px rgba(25, 72, 109, .17) !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-summary > div:nth-child(1) { background: linear-gradient(135deg, #217fbd, #15578e) !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-summary > div:nth-child(2) { background: linear-gradient(135deg, #16ad84, #078063) !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-summary > div:nth-child(3) { background: linear-gradient(135deg, #7150cf, #5030a3) !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-summary p { color: #ffffff !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table,
+html[data-panel-theme="zhub-light"] .nap-boxes-panel {
+  background: #ffffff !important;
+  border-color: #bad7e9 !important;
+  box-shadow: 0 8px 21px rgba(25, 74, 112, .15) !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-table > div:first-child,
+html[data-panel-theme="zhub-light"] .nap-boxes-panel > div:first-child {
+  background: linear-gradient(135deg, #e8f6fc, #f7fbfe) !important;
+  border-color: #c8ddea !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-table input,
+html[data-panel-theme="zhub-light"] .nap-boxes-panel input,
+html[data-panel-theme="zhub-light"] .nap-boxes-panel select {
+  background: #ffffff !important;
+  border-color: #bcd8e9 !important;
+  color: #173f68 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-table thead {
+  background: #294f75 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .ipv4-network-table th { color: #ffffff !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table tbody { background: #ffffff !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table tbody tr:nth-child(even) { background: #f2f8fc !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table tbody tr:hover { background: #e3f4fc !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table td,
+html[data-panel-theme="zhub-light"] .ipv4-network-table td p,
+html[data-panel-theme="zhub-light"] .ipv4-network-table td span { color: #183f68 !important; font-weight: 700 !important; }
+html[data-panel-theme="zhub-light"] .ipv4-network-table .bg-slate-800 { background: #dcebf4 !important; }
+html[data-panel-theme="zhub-light"] .nap-boxes-grid { background: #edf6fb !important; }
+html[data-panel-theme="zhub-light"] .nap-box-card {
+  background: #ffffff !important;
+  border-color: #bfd9e9 !important;
+  box-shadow: 0 4px 11px rgba(25, 74, 110, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .nap-box-card:hover {
+  border-color: #3aaed3 !important;
+  box-shadow: 0 7px 16px rgba(19, 136, 182, .16) !important;
+}
+html[data-panel-theme="zhub-light"] .nap-box-card h3 { color: #153f69 !important; font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .nap-box-card p,
+html[data-panel-theme="zhub-light"] .nap-box-card > div:last-child { color: #537593 !important; font-weight: 700 !important; }
+html[data-panel-theme="zhub-light"] .nap-box-card .bg-slate-800 { background: #e6f0f6 !important; color: #18517c !important; }
