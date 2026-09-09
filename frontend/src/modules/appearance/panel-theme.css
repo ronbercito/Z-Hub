@@ -204,3 +204,59 @@ html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-800\/80 {
   border-color: #cfdeeb !important;
 }
 html[data-panel-theme="zhub-light"] .dashboard-reference .bg-slate-800\/80:hover { background: #edf6fc !important; }
+
+
+/* Dashboard 1.1.24 — tarjetas KPI aisladas para respetar exactamente la referencia clara. */
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi {
+  width: 100%;
+  max-width: none;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi > .grid:first-of-type {
+  width: 100%;
+  align-items: stretch;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi {
+  min-height: 116px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  box-shadow: 0 3px 10px rgba(19, 59, 95, .12) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi--clients {
+  background: linear-gradient(135deg, #16b895, #12a782) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi--transactions {
+  background: linear-gradient(135deg, #197de0, #116dce) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi--invoices {
+  background: linear-gradient(135deg, #7048ca, #6238bd) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi--tickets {
+  background: linear-gradient(135deg, #3a4d66, #2d3d52) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi,
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi * {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi p {
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi p:first-child {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .015em !important;
+  color: rgba(255, 255, 255, .91) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi h3 {
+  font-size: 27px !important;
+  line-height: 1.05 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.025em !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi svg {
+  color: rgba(255, 255, 255, .56) !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference--kpi .dashboard-kpi button {
+  border-color: rgba(255, 255, 255, .25) !important;
+  font-weight: 700 !important;
+}
