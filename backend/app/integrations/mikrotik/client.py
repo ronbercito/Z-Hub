@@ -228,7 +228,7 @@ class MikroTikClient:
             rate = str(r.get("rate", "0/0")).split("/")
             out.append({
                 "id": r.get(".id"), "name": r.get("name"), "target": r.get("target", ""),
-                "max_limit": r.get("max-limit", ""), "burst_limit": r.get("burst-limit", ""),
+                "max_limit": r.get("max-limit", ""), "queue_type": r.get("queue", ""), "burst_limit": r.get("burst-limit", ""),
                 "disabled": bool(r.get("disabled", False)), "comment": r.get("comment", ""),
                 "rate_up_mbps": round(int(rate[0] or 0) / 1_000_000, 2) if rate[0].isdigit() else 0,
                 "rate_down_mbps": round(int(rate[1] or 0) / 1_000_000, 2) if len(rate) > 1 and rate[1].isdigit() else 0,
