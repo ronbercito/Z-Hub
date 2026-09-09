@@ -1444,3 +1444,52 @@ html[data-panel-theme="zhub-light"] .billing-page .billing-table-card .invoice-s
   border-color: transparent !important;
   font-weight: 900 !important;
 }
+
+
+/* Servicio de cliente 1.1.51 — tarjeta, tabla y estado con alto contraste. */
+html[data-panel-theme="zhub-light"] .client-services-card {
+  background: #ffffff !important;
+  border-color: #bfd8ea !important;
+  box-shadow: 0 8px 22px rgba(25, 77, 116, .14) !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-heading {
+  background: linear-gradient(135deg, #21699f, #174f7d) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-heading h3,
+html[data-panel-theme="zhub-light"] .client-services-heading p { color: #ffffff !important; }
+html[data-panel-theme="zhub-light"] .client-services-heading h3 { font-weight: 900 !important; }
+html[data-panel-theme="zhub-light"] .client-services-heading p { font-weight: 600 !important; opacity: .87; }
+html[data-panel-theme="zhub-light"] .client-services-heading button {
+  background: linear-gradient(135deg, #13bcae, #078b9e) !important;
+  box-shadow: 0 4px 10px rgba(0, 88, 115, .32) !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-table thead {
+  background: #284b6e !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-table th {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-table tbody { background: #ffffff !important; }
+html[data-panel-theme="zhub-light"] .client-services-table tbody tr:nth-child(even) { background: #f1f7fb !important; }
+html[data-panel-theme="zhub-light"] .client-services-table tbody tr:hover { background: #e0f2fb !important; }
+html[data-panel-theme="zhub-light"] .client-services-table td,
+html[data-panel-theme="zhub-light"] .client-services-table td div {
+  color: #173e67 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-table td .text-xs { color: #35709a !important; }
+html[data-panel-theme="zhub-light"] .client-services-table .client-service-status--active {
+  background: linear-gradient(135deg, #19bd88, #078265) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 8px rgba(6, 125, 95, .27) !important;
+}
+html[data-panel-theme="zhub-light"] .client-services-table .client-service-status--inactive {
+  background: linear-gradient(135deg, #e66075, #bd314b) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
