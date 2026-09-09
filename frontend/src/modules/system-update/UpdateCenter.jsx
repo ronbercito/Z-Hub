@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-09 — versión 1.1.65, modal Claro Suave con contraste y tipografía legible.
+ * Actualización: 2026-09-09 — versión 1.1.67, consulta silenciosa durante instalación y contraste claro.
  * Función: consulta, presenta e inicia actualizaciones del panel, mostrando claramente cuando la comprobación está en curso.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito.
@@ -26,9 +26,9 @@ export default function UpdateCenter() {
   const startedHere = useRef(false), logoutQueued = useRef(false);
   const headers = token ? { Authorization: "Bearer " + token } : {};
 
-  const check = useCallback(async () => {
+  const check = useCallback(async (showFeedback = false) => {
     const startedAt = Date.now();
-    setChecking(true);
+    if (showFeedback) setChecking(true);
     try {
       const response = await axios.get(API + "/system-update/status", {
         headers: { ...headers, "Cache-Control": "no-cache" },
@@ -51,14 +51,14 @@ export default function UpdateCenter() {
       const remaining = Math.max(0, 850 - elapsed);
       window.setTimeout(() => {
         setLoading(false);
-        setChecking(false);
+        if (showFeedback) setChecking(false);
       }, remaining);
     }
   }, [API, token, logout]);
 
   useEffect(() => {
     check();
-    const timer = window.setInterval(check, installing ? 3500 : 60000);
+    const timer = window.setInterval(() => check(), installing ? 3500 : 60000);
     return () => window.clearInterval(timer);
   }, [check, installing]);
 
@@ -106,7 +106,7 @@ export default function UpdateCenter() {
         </>}
         <div className="mt-5 flex gap-3">
           <button
-            onClick={check}
+            onClick={() => check(true)}
             disabled={loading || installing || checking}
             aria-busy={checking}
             className={"update-check-button " + (checking ? "relative overflow-hidden border-cyan-300/80 bg-cyan-500/20 text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.38)] -translate-y-0.5 animate-pulse " : "border-slate-600 bg-slate-900 text-slate-200 hover:border-cyan-400/60 hover:bg-slate-800 ") + "min-w-[150px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-wait disabled:opacity-80"}
