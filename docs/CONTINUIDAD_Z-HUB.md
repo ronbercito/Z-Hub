@@ -1960,3 +1960,12 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - En escritorio las OLT usan 380 px y en móvil ocupan el ancho disponible; el tema oscuro ya no expande estas tarjetas por la cuadrícula.
 - Los colores, bordes, estados y acción «Probar conexión CLI» propios de cada tema permanecen sin cambios.
 - Prueba realizada: comprobación estática de las clases compartidas OLT/MikroTik y ausencia de reglas de ancho OLT exclusivas del tema claro.
+
+
+### 1.1.65 — Ventana de actualizaciones adaptada a Claro Suave
+
+- Se añadieron identificadores estructurales al modal de actualizaciones, confirmación, avisos, changelog y botones para que el tema claro pueda darles una presentación propia.
+- En Claro Suave el modal ahora usa superficie blanca, borde azul, tipografía azul oscura más gruesa, avisos celeste/verde legibles y botones con contraste visible.
+- El tema oscuro conserva sus fondos y colores actuales; no se cambió la geometría ni la lógica de ninguno de los temas.
+- Prueba realizada: revisión estática de selectores, avisos, botones y rutas `/system-update/status` y `/system-update/install`.
+- Alcance: no se modifican la descarga, comprobación, instalación, sesión, API ni actualización real del panel.
