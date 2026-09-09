@@ -1734,3 +1734,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Los paneles técnicos, lecturas, pestañas y acciones del módulo se conservan sin cambios funcionales.
 - Alcance: apariencia exclusiva del tema `zhub-light`; no modifica consultas, comandos ni datos de la OLT.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.38 — Tarjeta MikroTik con color y realce al pasar el cursor
+- La tarjeta de cada router MikroTik usa ahora un degradado azul sólido con alto contraste.
+- Al pasar el cursor se vuelve más brillante, se eleva ligeramente y muestra una sombra azul de realce.
+- Se ajustó texto, iconos, separadores y botones internos para mantener legibilidad sobre el nuevo fondo.
+- Alcance: solo apariencia del tema `zhub-light`; sin cambios en monitoreo, estados ni acciones del router.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
