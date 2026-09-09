@@ -2891,3 +2891,10 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Se eliminó la clase `bg-slate-950/60` de las cuatro métricas de clientes: el tema claro la sobrescribía a blanco.
 - Cada tarjeta queda controlada únicamente por su clase de métrica y conserva su color, texto e iconos blancos.
 - Prueba: revisión estática de ausencia de `bg-slate` en `Stat` y de los cuatro colores explícitos.
+
+
+### 1.1.97 — Tarjetas de clientes independientes del CSS global
+
+- Las cuatro tarjetas del resumen Router ahora usan atributos y estilos inyectados desde `Network.jsx`, cargados junto al componente.
+- Sus colores ya no dependen de la cascada de `panel-theme.css`; azul, violeta, turquesa y ámbar se aplican con prioridad propia.
+- Prueba: revisión estática de los cuatro atributos, los estilos locales y las cuatro tarjetas.
