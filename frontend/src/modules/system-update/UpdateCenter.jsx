@@ -95,7 +95,7 @@ export default function UpdateCenter() {
 
   const dialog = open ? createPortal(
     <div onMouseDown={() => !installing && setOpen(false)} className="update-center-overlay fixed inset-0 z-[9999] flex min-h-screen w-screen items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-      <section onMouseDown={event => event.stopPropagation()} className="update-center-dialog max-w-lg w-full rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+      <section onMouseDown={event => event.stopPropagation()} className="update-center-dialog max-h-[calc(100vh-2rem)] max-w-lg w-full overflow-y-auto overscroll-contain rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
         <div className="flex justify-between gap-4"><div><b className="flex items-center gap-2 text-cyan-300"><Sparkles className="w-4 h-4" />Actualizaciones</b><p className="mt-1 text-xs text-slate-400">Panel Z-Hub · versión {status?.current?.version || "…"}</p></div>{!installing && <button onClick={() => setOpen(false)} className="text-slate-400"><X /></button>}</div>
         {loading && <p className="mt-5 text-sm text-slate-300">Comprobando actualizaciones…</p>}
         {error && <p className="mt-5 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">{error}</p>}
