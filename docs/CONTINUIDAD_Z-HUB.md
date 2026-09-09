@@ -1797,3 +1797,9 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - La tabla pasa a superficie clara con cabecera azul oscuro, filas alternadas, hover azul suave y estados/deudas legibles.
 - Alcance: solo presentación; no se modifican búsquedas, filtros, datos, acciones de servicio, WhatsApp, OLT ni eliminación.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.47 — Tarjetas de plan compactas y precio destacado
+- Las tarjetas de Planes y Servicios tienen ahora un ancho máximo de 290 px en escritorio, con ancho completo en móvil.
+- Se añadió una clase específica al precio mensual y se resaltó en amarillo cálido de alto contraste para una lectura comercial inmediata.
+- Alcance: solo presentación; no se modifican precios guardados, planes, perfiles PPP ni sincronización MikroTik.
+- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
