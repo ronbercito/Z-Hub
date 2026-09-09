@@ -76,18 +76,9 @@ fi
 ui ""
 ui "  ✓ Código Z-Hub listo"
 ui "  ⟳ Iniciando instalador principal..."
-ui "  • La instalación continúa; tiempo de espera 5-7min."
+ui "  • La instalación continúa; el progreso se mostrará por etapas."
 
-# El instalador principal tiene su propia interfaz, pero lo ejecutamos en segundo
-# plano para que la terminal nunca quede visualmente muda durante su arranque.
-bash "$ROOT_DIR/deploy/install.sh" "$@" &
-MAIN_PID=$!
-spinner_start "Instalador principal en ejecución" "$MAIN_PID"
-if wait "$MAIN_PID"; then
-  ui "  ✓ Instalador principal finalizado"
-else
-  rc=$?
-  ui "  ✗ El instalador principal terminó con código $rc"
-  ui "  • Revise: $LOG_FILE"
-  exit "$rc"
-fi
+# Ejecutar el instalador principal en primer plano es intencional: deploy/install.sh
+# mantiene el descriptor 3 conectado a la terminal y muestra su propia interfaz
+# visual. Así no se pierde ninguna etapa ni el resumen final de instalación.
+bash "$ROOT_DIR/deploy/install.sh" "$@"
