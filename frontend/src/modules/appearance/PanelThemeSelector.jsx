@@ -34,7 +34,7 @@ function ThemePreview({ themeId }) {
 export default function PanelThemeSelector({ value, onChange }) {
   const selected = normalizePanelTheme(value);
   return (
-    <section className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+    <section className="settings-theme-selector bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
       <div className="flex items-start gap-3 border-b border-slate-800 pb-3">
         <div className="rounded-xl bg-cyan-500/10 p-2 text-cyan-400"><Palette className="h-5 w-5" /></div>
         <div>
