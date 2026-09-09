@@ -1952,3 +1952,11 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - En escritorio conserva 290 px y en móvil ocupa el ancho disponible, tanto en claro como en oscuro.
 - El tema claro conserva su gradiente azul y el oscuro conserva su paleta oscura/cian; el cambio solo unifica medidas y no altera datos, acciones ni navegación.
 - Prueba realizada: comprobación estática de la clase compartida y ausencia de reglas de ancho específicas del tema claro.
+
+
+### 1.1.64 — Tarjetas OLT con geometría compartida entre temas
+
+- El ancho de las tarjetas OLT se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, compartido por ambos temas.
+- En escritorio las OLT usan 380 px y en móvil ocupan el ancho disponible; el tema oscuro ya no expande estas tarjetas por la cuadrícula.
+- Los colores, bordes, estados y acción «Probar conexión CLI» propios de cada tema permanecen sin cambios.
+- Prueba realizada: comprobación estática de las clases compartidas OLT/MikroTik y ausencia de reglas de ancho OLT exclusivas del tema claro.
