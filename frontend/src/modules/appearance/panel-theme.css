@@ -1272,3 +1272,30 @@ html[data-panel-theme="zhub-light"] .plans-page .plan-card .plan-price {
     width: 100% !important;
   }
 }
+
+
+/* Clientes 1.1.48 — estado y datos principales más notorios. */
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(1),
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(2),
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(3),
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(1) *,
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(2) *,
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(3) * {
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(4) > div:first-child > span.bg-emerald-500\/20 {
+  background: linear-gradient(135deg, #18b886, #078364) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 9px rgba(4, 129, 98, .27) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(4) > div:first-child > span.bg-emerald-500\/20 svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:nth-child(4) > div:first-child > span.bg-rose-500\/20 {
+  background: linear-gradient(135deg, #de5d72, #b62d49) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
