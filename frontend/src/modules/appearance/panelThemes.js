@@ -16,8 +16,8 @@ export const PANEL_THEMES = [
   },
   {
     id: PANEL_THEME_ZHUB_LIGHT,
-    name: "Z-Hub Blanco",
-    description: "Template claro con blanco, azul, cian y detalles turquesa inspirado en la nueva identidad Z-Hub.",
+    name: "Z-Hub Claro Suave",
+    description: "Template claro de baja luminancia: gris azulado suave, superficies claras sin blanco puro y acentos azul, cian y turquesa.",
   },
 ];
 
