@@ -1,7 +1,5 @@
 """
 Punto de entrada FastAPI de Z-Hub. Monta rutas bajo /api y aplica permisos por módulo.
-Las rutas OLT específicas se registran antes del router genérico de red.
-Actualización: 2026-09-09 — identidad del servicio/API alineada con Z-Hub.
 """
 from app.core.config import CORS_ORIGINS
 import logging
@@ -47,6 +45,7 @@ from app.routers.tareas.router import router as tareas_router
 from app.routers.tickets.router import router as tickets_router
 from app.modules.system_update.router import router as system_update_router
 from app.modules.client_workspace.router import router as client_workspace_router
+from app.routers.setup.router import router as setup_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fibraz.server")
@@ -63,7 +62,6 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials
 
 @app.middleware("http")
 async def sync_summary_identity(request, call_next):
-    """Después de guardar Resumen, actualiza comentarios MikroTik sobre los mismos recursos."""
     match = re.fullmatch(r"/api/clients/([^/]+)/summary", request.url.path) if request.method == "PATCH" else None
     previous = None
     if match:
@@ -84,7 +82,7 @@ async def sync_summary_identity(request, call_next):
 api = APIRouter(prefix="/api")
 for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
-for router in (ajustes_public_router, auth_router, system_update_router):
+for router in (ajustes_public_router, auth_router, system_update_router, setup_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
