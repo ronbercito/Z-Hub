@@ -7,9 +7,9 @@ import { Home, Server, Zap, Users, Wifi, Calendar, DollarSign, Package, Headphon
 
 /**
  * Archivo: frontend/src/components/layout/Sidebar.jsx
- * Actualización: 2026-09-09 — versión 1.1.71: avatar de cuenta activo con color amable.
+ * Actualización: 2026-09-09 — Google Maps queda visible como acceso del submenú Ajustes.
  * Función: navegación lateral principal y submenús del panel.
- * Regla: solo se modifica la presentación tipográfica; rutas, permisos y lógica de navegación permanecen intactos.
+ * Regla: solo se modifica la presentación del acceso Google; rutas, permisos y lógica de navegación permanecen intactos.
  */
 
 const menuItems = [
@@ -23,7 +23,7 @@ const menuItems = [
   { id:"almacen",label:"Almacén",icon:Package,testId:TEST_IDS.NAV_ALMACEN },
   { id:"tickets",label:"Tickets",icon:Headphones,testId:TEST_IDS.NAV_TICKETS },
   { id:"mensajeria",label:"Mensajería",icon:MessageSquare,testId:TEST_IDS.NAV_MENSAJERIA },
-  { id:"ajustes",label:"Ajustes",icon:Settings,testId:TEST_IDS.NAV_AJUSTES,children:SETTINGS_SECTIONS.map((section) => ({ id:`settings_${section.id}`, label:section.label, icon:Settings })) },
+  { id:"ajustes",label:"Ajustes",icon:Settings,testId:TEST_IDS.NAV_AJUSTES,children:SETTINGS_SECTIONS.map((section) => ({ id:`settings_${section.id}`, label:section.label, icon:section.id === "google" ? MapPin : Settings })) },
 ];
 
 export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, companyName="Z-Hub", logoData="" }) {
