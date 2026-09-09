@@ -2187,3 +2187,30 @@ html[data-panel-theme="zhub-light"] .panel-footer {
   color: #28577f !important;
   font-weight: 800 !important;
 }
+
+
+/* Instalaciones 1.2.12 — adaptación completa al tema claro. */
+html[data-panel-theme="zhub-light"] .installations-page > section {
+  background: #ffffff !important;
+  border-color: #cfdde8 !important;
+  box-shadow: 0 6px 16px rgba(37, 83, 121, .12) !important;
+}
+html[data-panel-theme="zhub-light"] .installations-page table,
+html[data-panel-theme="zhub-light"] .installations-page tbody,
+html[data-panel-theme="zhub-light"] .installations-page tbody tr {
+  background: #ffffff !important;
+  color: #294b70 !important;
+}
+html[data-panel-theme="zhub-light"] .installations-page thead {
+  background: #edf4f9 !important;
+  color: #315d82 !important;
+}
+html[data-panel-theme="zhub-light"] .installations-page [class*="bg-slate-950"],
+html[data-panel-theme="zhub-light"] .installations-page [class*="bg-slate-900"] {
+  background: #ffffff !important;
+  color: #294b70 !important;
+}
+html[data-panel-theme="zhub-light"] .installations-page td,
+html[data-panel-theme="zhub-light"] .installations-page th {
+  border-color: #d8e4ed !important;
+}
