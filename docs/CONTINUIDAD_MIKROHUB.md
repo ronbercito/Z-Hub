@@ -1368,9 +1368,17 @@ Antes de modificar el actualizador se creó:
 
 Esta rama conserva exactamente el estado 1.1.11 previo a la transición.
 
-### Migración de archivos a Z-Hub
+### Migración de archivos a Z-Hub — COMPLETADA
 
-Después de validar y publicar 1.1.12 en el repositorio legado, el `main` completo debe copiarse a `ronbercito/Z-Hub` conservando el árbol de archivos actualizado. Desde ese momento, todo cambio nuevo se realizará primero en **Z-Hub**.
+La migración fue completada el 2026-09-09. El `main` validado de 1.1.12 fue promovido íntegramente a `ronbercito/Z-Hub`, conservando el mismo commit de origen durante la copia inicial (`177e29184ce138469ef0d9d4eb6d5328acf5e409`).
+
+Desde este punto:
+
+- `ronbercito/Z-Hub` es el repositorio principal y autoritativo;
+- todo desarrollo nuevo se realiza en Z-Hub;
+- `ronbercito/mirkohub` queda congelado como fuente legado/fallback de transición;
+- el panel 1.1.12 consulta ambos repositorios y solo ofrece actualización cuando existe una `PANEL_VERSION` superior;
+- cambios exclusivamente documentales con la misma versión no provocan una actualización del panel.
 
 ### Pruebas de la entrega
 
@@ -1393,3 +1401,8 @@ Después de validar y publicar 1.1.12 en el repositorio legado, el `main` comple
 **Todo desarrollo nuevo debe realizarse en `ronbercito/Z-Hub`.**
 
 `ronbercito/mirkohub` queda como compatibilidad/fallback y no debe volver a ser el repositorio principal salvo rollback o emergencia expresamente documentada.
+
+
+### Cierre de migración de repositorio
+
+**Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.

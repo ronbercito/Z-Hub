@@ -21,3 +21,9 @@ No se modifican base de datos, clientes, facturación, red, OLT, autenticación,
 
 ## Validación
 La entrega valida sintaxis Python, sintaxis Bash y build React antes de promocionarse a `main`.
+
+
+## Estado de migración
+Migración del árbol de archivos a `ronbercito/Z-Hub`: **COMPLETADA**.
+Commit inicial promovido: `177e29184ce138469ef0d9d4eb6d5328acf5e409`.
+El repositorio Z-Hub queda como fuente principal de todo trabajo futuro.
