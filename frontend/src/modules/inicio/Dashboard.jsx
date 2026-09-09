@@ -24,12 +24,13 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (silent = true) => {
     try {
       const res = await axios.get(`${API}/dashboard/summary`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(res.data);
+      if (!silent) toast.success("Dashboard actualizado");
     } catch (e) {
       console.error(e);
       toast.error("Error al cargar datos del dashboard");
@@ -80,11 +81,12 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
             Versión {PANEL_VERSION}
           </span>
           <button
-            onClick={() => { setRefreshing(true); fetchDashboard(); }}
-            className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+            onClick={() => { setRefreshing(true); fetchDashboard(false); }}
+            disabled={refreshing}
+            className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 disabled:opacity-70 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-cyan-400" : ""}`} />
-            Actualizar
+            {refreshing ? "Actualizando..." : "Actualizar"}
           </button>
         </div>
       </div>
