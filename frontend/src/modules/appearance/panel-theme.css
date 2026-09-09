@@ -1,0 +1,114 @@
+/**
+ * Archivo: frontend/src/modules/appearance/panel-theme.css
+ * Función: capa visual no destructiva para el template Z-Hub Blanco. Sobrescribe solamente
+ *          utilidades de color del tema oscuro cuando html[data-panel-theme="zhub-light"] está activo.
+ */
+html[data-panel-theme="zhub-light"],
+html[data-panel-theme="zhub-light"] body,
+html[data-panel-theme="zhub-light"] #root {
+  background: #f7fbff !important;
+  color: #10213a !important;
+  color-scheme: light;
+}
+
+html[data-panel-theme="zhub-light"] .bg-slate-950 { background-color: #f7fbff !important; }
+html[data-panel-theme="zhub-light"] .bg-slate-950\/35,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/40,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/45,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/50,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/55,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/60,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/70,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/80,
+html[data-panel-theme="zhub-light"] .bg-slate-950\/85 { background-color: rgba(247, 251, 255, .94) !important; }
+
+html[data-panel-theme="zhub-light"] .bg-slate-900,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/40,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/45,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/60,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/70,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/80,
+html[data-panel-theme="zhub-light"] .bg-slate-900\/90 { background-color: rgba(255, 255, 255, .96) !important; }
+
+html[data-panel-theme="zhub-light"] .bg-slate-800,
+html[data-panel-theme="zhub-light"] .bg-slate-800\/30,
+html[data-panel-theme="zhub-light"] .bg-slate-800\/70,
+html[data-panel-theme="zhub-light"] .bg-slate-800\/80 { background-color: #edf5fd !important; }
+html[data-panel-theme="zhub-light"] .bg-slate-700,
+html[data-panel-theme="zhub-light"] .bg-slate-700\/40 { background-color: #dce9f6 !important; }
+
+html[data-panel-theme="zhub-light"] .text-slate-100 { color: #10213a !important; }
+html[data-panel-theme="zhub-light"] .text-slate-200 { color: #1e334f !important; }
+html[data-panel-theme="zhub-light"] .text-slate-300,
+html[data-panel-theme="zhub-light"] .text-slate-300\/90 { color: #334d6b !important; }
+html[data-panel-theme="zhub-light"] .text-slate-400 { color: #5f7896 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-500 { color: #7289a3 !important; }
+html[data-panel-theme="zhub-light"] .text-slate-600 { color: #8aa0b8 !important; }
+
+html[data-panel-theme="zhub-light"] .border-slate-800,
+html[data-panel-theme="zhub-light"] .border-slate-800\/50,
+html[data-panel-theme="zhub-light"] .border-slate-800\/60,
+html[data-panel-theme="zhub-light"] .border-slate-800\/70,
+html[data-panel-theme="zhub-light"] .border-slate-800\/80 { border-color: #dce8f4 !important; }
+html[data-panel-theme="zhub-light"] .border-slate-700,
+html[data-panel-theme="zhub-light"] .border-slate-700\/70,
+html[data-panel-theme="zhub-light"] .border-slate-700\/80 { border-color: #cbdbea !important; }
+html[data-panel-theme="zhub-light"] .border-slate-600,
+html[data-panel-theme="zhub-light"] .border-slate-600\/40,
+html[data-panel-theme="zhub-light"] .border-slate-600\/50 { border-color: #b9cde0 !important; }
+
+html[data-panel-theme="zhub-light"] .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+html[data-panel-theme="zhub-light"] .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
+html[data-panel-theme="zhub-light"] .divide-slate-800\/70 > :not([hidden]) ~ :not([hidden]) { border-color: #dce8f4 !important; }
+
+html[data-panel-theme="zhub-light"] input.bg-slate-950,
+html[data-panel-theme="zhub-light"] textarea.bg-slate-950,
+html[data-panel-theme="zhub-light"] select.bg-slate-950,
+html[data-panel-theme="zhub-light"] input.bg-slate-950\/60,
+html[data-panel-theme="zhub-light"] textarea.bg-slate-950\/60,
+html[data-panel-theme="zhub-light"] select.bg-slate-950\/60,
+html[data-panel-theme="zhub-light"] .field {
+  background: #ffffff !important;
+  border-color: #c8d9e9 !important;
+  color: #10213a !important;
+}
+html[data-panel-theme="zhub-light"] input::placeholder,
+html[data-panel-theme="zhub-light"] textarea::placeholder { color: #8aa0b8 !important; }
+
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-700:hover { background-color: #deebf8 !important; }
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-800:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/40:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/50:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-800\/60:hover { background-color: #e5f1fb !important; }
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/45:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/50:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/65:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-900\/70:hover,
+html[data-panel-theme="zhub-light"] .hover\:bg-slate-950:hover { background-color: #edf6ff !important; }
+html[data-panel-theme="zhub-light"] .hover\:text-slate-100:hover,
+html[data-panel-theme="zhub-light"] .hover\:text-slate-200:hover { color: #10213a !important; }
+
+html[data-panel-theme="zhub-light"] aside,
+html[data-panel-theme="zhub-light"] header { box-shadow: 0 8px 30px rgba(31, 80, 125, .05); }
+html[data-panel-theme="zhub-light"] main {
+  background-image: radial-gradient(circle at 10% 0%, rgba(14,165,233,.06), transparent 28%), radial-gradient(circle at 100% 20%, rgba(20,184,166,.05), transparent 24%);
+}
+
+/* En superficies claras el texto blanco genérico pasa a azul tinta. Se conserva blanco en superficies de acción/estado. */
+html[data-panel-theme="zhub-light"] .text-white { color: #10213a !important; }
+html[data-panel-theme="zhub-light"] [class*="bg-gradient"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-gradient"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-cyan-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-cyan-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-blue-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-blue-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-emerald-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-emerald-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-rose-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-rose-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-violet-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-violet-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-purple-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-purple-"][class*="text-white"],
+html[data-panel-theme="zhub-light"] [class*="bg-amber-"] .text-white,
+html[data-panel-theme="zhub-light"] [class*="bg-amber-"][class*="text-white"] { color: #ffffff !important; }
