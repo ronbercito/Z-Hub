@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/auth/Login.jsx
- * Función: Pantalla de inicio de sesión (correo + contraseña). Llama a login() del AuthContext y muestra errores del backend.
+ * Actualización: 2026-09-09 — versión 1.1.70, acceso adaptado al tema seleccionado.\n * Función: Pantalla de inicio de sesión (correo + contraseña). Llama a login() del AuthContext y muestra errores del backend.
  * Trabaja con: context/AuthContext.js, backend/app/routers/auth/router.py, constants/testIds.js
  */
 import React, { useEffect, useState } from "react";
@@ -50,21 +50,21 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="login-shell min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Background glow effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="login-glow login-glow--primary absolute top-0 left-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="login-glow login-glow--secondary absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
+      <div className="login-card w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center overflow-hidden shadow-lg shadow-cyan-500/30">{branding.logo_data ? <img src={branding.logo_data} alt="Logo de empresa" className="h-full w-full object-contain" /> : <img src="/zhub-logo.svg" alt="Z-Hub" className="h-full w-full object-contain bg-white" />}</div>
             <div className="text-left">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-100">{branding.company_name}</h1>
+              <h1 className="login-title text-2xl font-bold tracking-tight text-slate-100">{branding.company_name}</h1>
               <p className="text-xs text-cyan-400/80 font-medium tracking-wide uppercase">Panel ISP</p>
             </div>
           </div>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="login-subtitle text-sm text-slate-400 mt-2">
             Panel de Facturación, Control de Clientes y Gestión · Z-Hub
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+            <label className="login-label block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
               Correo Electrónico
             </label>
             <div className="relative">
@@ -89,7 +89,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@fibraz.pe"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                className="login-input w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -130,27 +130,27 @@ export default function Login() {
         </form>
 
         {/* Demo Quick Access */}
-        <div className="mt-8 pt-6 border-t border-slate-800">
-          <p className="text-xs text-slate-400 text-center mb-3 font-medium">Accesos Rápidos Demo:</p>
+        <div className="login-demo mt-8 pt-6 border-t border-slate-800">
+          <p className="login-demo-label text-xs text-slate-400 text-center mb-3 font-medium">Accesos Rápidos Demo:</p>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setDemoCredentials("admin@fibraz.pe", "admin123")}
               type="button"
-              className="px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-cyan-300 font-medium text-center transition"
+              className="login-demo-button login-demo-button--admin px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-cyan-300 font-medium text-center transition"
             >
               Admin
             </button>
             <button
               onClick={() => setDemoCredentials("tecnico@fibraz.pe", "tec123")}
               type="button"
-              className="px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-emerald-300 font-medium text-center transition"
+              className="login-demo-button login-demo-button--tech px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-emerald-300 font-medium text-center transition"
             >
               Técnico
             </button>
             <button
               onClick={() => setDemoCredentials("cobrador@fibraz.pe", "cob123")}
               type="button"
-              className="px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-purple-300 font-medium text-center transition"
+              className="login-demo-button login-demo-button--billing px-2 py-2 bg-slate-800/70 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-purple-300 font-medium text-center transition"
             >
               Cobrador
             </button>
