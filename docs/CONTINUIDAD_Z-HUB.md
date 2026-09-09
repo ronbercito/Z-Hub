@@ -1720,3 +1720,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: CPU, memoria, uptime, latencia, PPPoE y colas conservan los mismos valores y su fuente RouterOS. No cambia API, OLT, datos, permisos, autenticación ni tema oscuro.
 - Pruebas: revisión estática de selectores y PANEL_VERSION 1.1.35. Build y validación visual real pendientes.
 - Resultado esperado: métricas azul, violeta, turquesa, ámbar, verde y azul profundo; texto/iconos blancos y gruesos. Tabla operativa permanece clara.
+
+### 1.1.36 — Corrección de prioridad visual en Gestión de Red
+- Se corrigió la prioridad de CSS de las métricas CPU, Memoria, Uptime, Latencia, PPPoE activos y Colas.
+- Los seis recuadros ahora fuerzan fondos sólidos diferenciados (azul, violeta, turquesa, ámbar, verde y azul pizarra), evitando que la superficie clara compartida los sobrescriba.
+- Texto e iconos pasan a blanco y se mantiene una jerarquía tipográfica fuerte para conservar legibilidad.
+- Alcance: solo apariencia del tema `zhub-light`; sin cambios en las lecturas ni en la API de MikroTik.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
