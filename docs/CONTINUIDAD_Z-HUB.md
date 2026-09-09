@@ -1834,3 +1834,14 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - El estado **Activo** resalta con verde sólido, texto blanco y sombra; los estados no activos quedan en rojo sólido.
 - Alcance: únicamente presentación; no se modifican servicios, planes, IP, Router, tecnología, señal ONU, acciones ni API.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+
+### 1.1.52 — Configuración de Facturación adaptada al tema
+
+- Se adapta la pestaña **Configuración** de Facturación al tema claro Z-Hub.
+- Las secciones “Fechas y corte” y “Avisos y recordatorios” ahora son tarjetas blancas con borde superior azul y verde, respectivamente.
+- Los títulos, etiquetas y controles tienen mayor contraste y grosor para facilitar la lectura.
+- Las entradas y listas usan fondo claro, borde azul y foco visible; la generación automática utiliza el color verde del tema.
+- El botón Guardar cambios se refuerza con degradado turquesa/azul.
+- Alcance: solo presentación; no se modifican fechas de pago, reglas de corte, recordatorios, generación automática, facturas ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
