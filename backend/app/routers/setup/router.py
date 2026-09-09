@@ -1,8 +1,9 @@
 """Asistente de configuración inicial de Z-Hub: licencia y administrador."""
 import json
+import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,13 +14,36 @@ from app.models.user import User
 from .schemas import AdminSetupRequest, LicenseRequest, SetupCompleteRequest
 
 router = APIRouter(prefix="/setup", tags=["Configuración inicial"])
-LICENSE_FILE = Path(__file__).resolve().parents[4] / "licencia" / "licenses.json"
+# El registro de licencias es exclusivamente backend. En producción se prioriza
+# la copia privada del servidor/contenedor; el archivo del repositorio queda como
+# plantilla temporal para preparar una instalación nueva.
+REPO_LICENSE_FILE = Path(__file__).resolve().parents[4] / "licencia" / "licenses.json"
+PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licenses.json"))
+
+
+def _license_file() -> Path:
+    if PRIVATE_LICENSE_FILE.is_file():
+        return PRIVATE_LICENSE_FILE
+    return REPO_LICENSE_FILE
 
 
 def _licenses() -> set[str]:
     try:
-        data = json.loads(LICENSE_FILE.read_text(encoding="utf-8"))
-        return {str(value).strip().upper() for value in data.get("licenses", []) if str(value).strip()}
+        data = json.loads(_license_file().read_text(encoding="utf-8"))
+        values = data.get("licenses", [])
+        keys = set()
+        for item in values:
+            if isinstance(item, str):
+                key = item.strip().upper()
+            elif isinstance(item, dict):
+                if not item.get("active", True):
+                    continue
+                key = str(item.get("key", "")).strip().upper()
+            else:
+                continue
+            if key:
+                keys.add(key)
+        return keys
     except (OSError, ValueError, TypeError):
         return set()
 
