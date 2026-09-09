@@ -2,8 +2,6 @@
 
 ## Comando oficial de instalación limpia
 
-Este es el comando que se utiliza actualmente para instalar Z-Hub desde cero:
-
 ```bash
 apt-get update && apt-get install -y git && mkdir -p /var/www && rm -rf /var/www/z-hub && git clone https://github.com/ronbercito/Z-Hub.git /var/www/z-hub && cd /var/www/z-hub && chmod +x install.sh deploy/install.sh && ./install.sh
 ```
@@ -17,52 +15,89 @@ apt-get update && apt-get install -y git && mkdir -p /var/www && rm -rf /var/www
 5. Clona `ronbercito/Z-Hub` desde `main`.
 6. Da permisos de ejecución a `install.sh` y `deploy/install.sh`.
 7. Ejecuta `./install.sh`.
-8. El instalador raíz lanza `deploy/install.sh` en primer plano para conservar la interfaz visual de terminal.
-9. Al finalizar la instalación técnica, muestra la URL del panel e intenta abrirla automáticamente mediante `xdg-open` cuando el servidor dispone de entorno gráfico.
+8. El instalador raíz lanza `deploy/install.sh` en primer plano.
+9. Al terminar intenta abrir el panel mediante `xdg-open` cuando existe entorno gráfico.
 
 ## Configuración inicial web
 
-Una instalación nueva **no crea ni muestra credenciales administrativas automáticas**. El backend tampoco siembra un usuario admin desde `.env`.
+Una instalación nueva no crea ni muestra credenciales administrativas automáticas.
 
-El panel detecta el estado `initial_setup_completed` y, mientras sea falso, presenta el asistente web de primera configuración:
+El panel presenta el asistente de primera configuración mientras `initial_setup_completed` sea falso:
 
-1. **Licencia** — se introduce una serie y el backend la compara temporalmente contra `licencia/licenses.json` del checkout.
-2. **Administrador** — se crea la cuenta admin real con nombre, correo y contraseña elegidos por el operador. La contraseña debe tener al menos 10 caracteres y se almacena mediante el mecanismo de hash existente.
-3. **Finalizar** — muestra licencia activada, administrador configurado y la versión actual `PANEL_VERSION`; el botón `FINALIZADO` marca la configuración como completada y vuelve al panel.
+1. **Licencia** — introduce una serie y el backend la valida contra el registro privado.
+2. **Administrador** — crea la cuenta admin real con nombre, correo y contraseña elegidos por el operador.
+3. **Finalizar** — muestra licencia activada, administrador configurado y la versión actual; `FINALIZADO` marca el proceso como terminado y vuelve al panel/login.
 
-Una vez completada la configuración, el asistente queda bloqueado por estado persistente y la aplicación vuelve al login/panel normal. El archivo `install.sh` **no se elimina**: se conserva para mantenimiento y futuras actualizaciones. Lo que se inutiliza es el asistente de primera configuración, no el instalador técnico.
+El archivo `install.sh` no se elimina. El asistente se desactiva mediante estado persistente.
 
-## Licencia temporal
+## Registro interno de licencias
 
-Archivo actual:
+El archivo fuente para preparar nuevas instalaciones está en:
 
 ```text
 licencia/licenses.json
 ```
 
-Actualmente contiene una serie de demostración para pruebas del flujo:
+Su formato es deliberadamente sencillo: una lista de objetos. Para agregar otra licencia basta con añadir otro bloque:
 
-```text
-ZHUB-2026-DEMO-001
+```json
+{
+  "licenses": [
+    {
+      "key": "ZHUB-2026-DEMO-001",
+      "name": "Licencia de demostración",
+      "active": true
+    },
+    {
+      "key": "ZHUB-2026-CLIENTE-001",
+      "name": "Cliente ejemplo",
+      "active": true
+    }
+  ]
+}
 ```
 
-Este registro es **temporal** y está pensado para sustituirse posteriormente por un mecanismo de licenciamiento real. La validación se realiza en backend, nunca confiando solamente en el frontend.
+Para desactivar una licencia sin borrarla:
+
+```json
+"active": false
+```
+
+### Ubicación privada en el servidor
+
+Durante la instalación, el registro se copia a:
+
+```text
+/etc/zhub/licencia/licenses.json
+```
+
+El backend prioriza esta copia privada mediante `ZHUB_LICENSE_FILE`. Si ya existe, el instalador no la reemplaza, permitiendo que el administrador del servidor mantenga sus licencias locales.
+
+Después de copiarla, el instalador elimina la carpeta `licencia` del checkout `/var/www/z-hub`. Por tanto:
+
+- no forma parte del frontend;
+- no se copia al `webroot`;
+- no es descargable desde el panel;
+- no queda expuesta por Nginx;
+- queda como información interna del servidor/contenedor y del administrador.
+
+La carpeta `licencia` del repositorio funciona solamente como **registro fuente temporal para preparar instalaciones nuevas**. El mecanismo definitivo de licenciamiento se implementará posteriormente sin depender de un archivo JSON distribuido públicamente.
 
 ## Compatibilidad con instalaciones anteriores
 
-Al arrancar, si ya existe un usuario con rol `admin` y la configuración todavía no tiene `initial_setup_completed`, el seed marca la instalación como completada para no bloquear instalaciones existentes ni reemplazar su administrador actual.
+Si ya existe un usuario con rol `admin`, el seed marca la instalación como completada para no bloquear instalaciones existentes ni reemplazar su administrador actual.
 
 ## Seguridad y salida de terminal
 
-- No se muestran contraseñas administrativas en la terminal.
-- No existen valores `admin@fibraz.pe / admin123` como credenciales de acceso automático.
-- La URL final usa OSC 8 cuando la terminal lo soporta.
+- No se muestran contraseñas administrativas.
+- No existen credenciales `admin@fibraz.pe / admin123` automáticas.
 - La salida técnica continúa en `/var/log/zhub_install.log` con permisos restringidos.
+- El registro privado de licencias queda con permisos `root:www-data` y modo `640`.
 - La interfaz de terminal mantiene las 7 etapas neutrales y su esquema de colores.
 
 ## Advertencia de instalación limpia
 
-Es una **instalación limpia del checkout**: `rm -rf /var/www/z-hub` reemplaza los archivos del checkout local antes de clonar nuevamente. No ejecutar sobre una instalación existente sin confirmar que se desea reemplazar ese checkout y que los datos necesarios están conservados/respaldados.
+`rm -rf /var/www/z-hub` reemplaza los archivos del checkout local antes de clonar nuevamente. No ejecutar sobre una instalación existente sin confirmar que se desea reemplazar ese checkout y que los datos necesarios están conservados/respaldados.
 
 La contraseña de base de datos no se documenta aquí ni en ningún documento de continuidad. En instalaciones nuevas se genera aleatoriamente; si existe una configuración válida, se conserva.
 
