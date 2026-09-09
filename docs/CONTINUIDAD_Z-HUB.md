@@ -2926,3 +2926,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - La primera columna de Colas simples es Comentario; continúan Nombre, Target, Max-limit, Tráfico actual y Estado.
 - Se redistribuyeron los anchos fijos sin afectar el ajuste de la tabla a pantalla.
 - Prueba: revisión estática del orden de cabeceras y celdas.
+
+
+### 1.1.102 — Queue type visible en Colas simples
+
+- Se añade la columna Queue type junto a Max-limit, con el valor real del campo `queue` de RouterOS.
+- Las colas PCQ se identifican por su tipo configurado; si no existe valor, se muestra default.
+- Archivos: cliente MikroTik y tabla de pestañas vivas.
+- Prueba: revisión estática de lectura de `queue`, respuesta API y columna UI.
