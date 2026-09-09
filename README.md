@@ -14,7 +14,7 @@ Panel de gestión para operación ISP: clientes, red, routers/OLT, IPv4, factura
 
 ### 🔴 Lectura obligatoria para retomar el proyecto
 
-Antes de realizar cualquier modificación en MikroHub, una nueva sesión de ChatGPT/Copilot o cualquier colaborador debe revisar estos dos documentos:
+Antes de realizar cualquier modificación en Z-Hub, una nueva sesión de ChatGPT/Copilot o cualquier colaborador debe revisar el README y la única bitácora de continuidad:
 
 1. **[README.md](README.md)** — Entrada general del proyecto, reglas de publicación y documentación principal.
 2. **[Bitácora maestra de continuidad](docs/CONTINUIDAD_MIKROHUB.md)** — **Único archivo de continuidad del repositorio.** Historial interno, versiones, decisiones, pruebas y pendientes. Cada actualización debe agregarse allí; no se deben crear documentos complementarios de continuidad.
@@ -49,7 +49,7 @@ Todo cambio funcional debe:
 
 1. Modificar el módulo/archivo responsable del comportamiento.
 2. Incluir comentarios de actualización en los archivos modificados.
-3. Registrar el cambio en `docs/CONTINUIDAD_MIKROHUB.md` o, cuando el detalle requiera un registro fechado, en `docs/CONTINUIDAD_MIKROHUB_YYYY-MM-DD.md` y mantenerlo enlazado desde este README.
+3. Registrar el cambio únicamente en `docs/CONTINUIDAD_MIKROHUB.md`; no crear archivos complementarios, fechados ni por versión.
 4. Indicar en la bitácora la versión del panel afectada.
 5. Actualizar `frontend/src/modules/system-update/version.js` y su `CHANGELOG` cuando el cambio sea funcional para el panel.
 6. Registrar archivos modificados, origen/destino de los datos, pruebas realizadas y pendientes.
