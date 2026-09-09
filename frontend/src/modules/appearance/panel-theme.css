@@ -2073,3 +2073,34 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-s
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-dhcp { background-color:#7045c8 !important; background-image:none !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-pppoe { background-color:#129d8c !important; background-image:none !important; }
 html[data-panel-theme="zhub-light"] .network-reference .network-router-summary-stats .network-stat--clientes-suspendidos { background-color:#d8890b !important; background-image:none !important; }
+
+
+/* Planes 1.2.06 — color semántico y cuadrícula uniforme por tecnología. */
+.plans-page .plans-grid {
+  align-items: stretch;
+}
+.plans-page .plan-card {
+  display: flex;
+  min-height: 292px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.plans-page .plan-card--fiber {
+  background: linear-gradient(145deg, #127cc2, #075b98) !important;
+  border-color: #33b8ef !important;
+  box-shadow: 0 9px 20px rgba(4, 109, 182, .27) !important;
+}
+.plans-page .plan-card--radio {
+  background: linear-gradient(145deg, #7042ca, #43278f) !important;
+  border-color: #ad8cff !important;
+  box-shadow: 0 9px 20px rgba(88, 47, 177, .27) !important;
+}
+.plans-page .plan-card--hotspot {
+  background: linear-gradient(145deg, #dd9407, #a95a05) !important;
+  border-color: #ffc34f !important;
+  box-shadow: 0 9px 20px rgba(190, 112, 0, .27) !important;
+}
+html[data-panel-theme="zhub-light"] .plans-page .plan-card {
+  width: 100% !important;
+  max-width: none !important;
+}
