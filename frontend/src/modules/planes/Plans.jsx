@@ -150,7 +150,7 @@ export default function Plans() {
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
               <div>
                 <span className="text-xs text-slate-400 font-medium">Precio mensual:</span>
-                <div className="text-xl font-black text-slate-100">
+                <div className="plan-price text-xl font-black text-slate-100">
                   S/. {Number(p.price).toFixed(2)}
                 </div>
               </div>
