@@ -1,15 +1,15 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.1.21: menú claro con texto negro/negrita y hover reforzado.
+ * Actualización: 2026-09-09 — versión 1.1.22: hover transparente con marco azul para menú claro.
  * Función: única fuente de verdad de PANEL_VERSION y CHANGELOG.
  * Regla: Z-Hub es el repositorio principal desde 1.1.12; MikroHub queda como respaldo legado.
  */
-export const PANEL_VERSION = "1.1.21";
+export const PANEL_VERSION = "1.1.22";
 export const CHANGELOG = [
-  { type: "Apariencia", text: "El menú lateral del template Z-Hub Claro usa texto oscuro y negrita para mejorar la lectura." },
-  { type: "Navegación", text: "Las opciones normales del menú usan peso 700 y las opciones activas usan peso 900." },
-  { type: "Interacción", text: "Al pasar el mouse por una opción del menú, la tipografía aumenta a peso 900 para resaltar claramente la opción bajo el cursor." },
-  { type: "Submenús", text: "Los submenús mantienen texto oscuro y se vuelven más gruesos al estar activos o recibir hover." },
-  { type: "Compatibilidad", text: "El ajuste visual se aplica al template zhub-light sin modificar rutas, permisos ni lógica de navegación." },
-  { type: "Validación", text: "Pendiente ejecutar build y comprobar visualmente menú, submenús y hover en el panel desplegado." },
+  { type: "Apariencia", text: "El hover del menú lateral claro deja de usar una barra gris oscura que dificulta la lectura." },
+  { type: "Navegación", text: "Al pasar el mouse, cada opción conserva fondo transparente con una carga azul translúcida y marco azul sutil." },
+  { type: "Tipografía", text: "La opción bajo el cursor mantiene texto azul oscuro y peso 900 para distinguirse claramente." },
+  { type: "Submenús", text: "El mismo tratamiento de hover se aplica a los submenús del template zhub-light." },
+  { type: "Compatibilidad", text: "El ajuste se limita al template zhub-light y no modifica rutas, permisos ni lógica de navegación." },
+  { type: "Validación", text: "Pendiente ejecutar build y comprobar visualmente hover de menú y submenús en el panel desplegado." },
 ];
