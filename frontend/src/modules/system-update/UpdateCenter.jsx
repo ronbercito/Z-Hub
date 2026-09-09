@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/system-update/UpdateCenter.jsx
- * Actualización: 2026-09-09 — versión 1.1.67, consulta silenciosa durante instalación y contraste claro.
+ * Actualización: 2026-09-09 — versión 1.1.68, versión visible junto al botón global de actualizaciones.
  * Función: consulta, presenta e inicia actualizaciones del panel, mostrando claramente cuando la comprobación está en curso.
  * Recibe: API, token y logout desde AuthContext; estado desde /api/system-update.
  * Entrega: ventana de actualización al Layout y cierre de sesión tras éxito.
@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import axios from "axios";
 import { Download, X, Sparkles, RefreshCw, AlertTriangle, CheckCircle2, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { PANEL_VERSION } from "./version";
 
 const Changelog = ({ items = [] }) => items.map((item, index) => (
   <div key={index} className="update-changelog rounded-lg bg-slate-950/70 p-3 text-xs">
@@ -122,5 +123,5 @@ export default function UpdateCenter() {
     </div>, document.body
   ) : null;
   const newer = status?.available;
-  return <>{dialog}{confirmation}<button onClick={() => setOpen(true)} title={newer ? "Nueva actualización disponible" : "Actualizaciones"} className={newer ? "flex items-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-3 py-2 text-xs font-bold text-white shadow-lg animate-pulse" : "p-2 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300"}><Download className="w-4 h-4" />{newer && <span>Nueva actualización</span>}</button></>;
+  return <>{dialog}{confirmation}<div className="navbar-update-control flex items-center gap-2"><span className="navbar-version-badge" title="Versión instalada del panel">Versión {PANEL_VERSION}</span><button onClick={() => setOpen(true)} title={newer ? "Nueva actualización disponible" : "Actualizaciones"} className={newer ? "flex items-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-3 py-2 text-xs font-bold text-white shadow-lg animate-pulse" : "p-2 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300"}><Download className="w-4 h-4" />{newer && <span>Nueva actualización</span>}</button></div></>;
 }
