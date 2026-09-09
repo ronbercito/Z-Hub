@@ -17,12 +17,68 @@ const technologyTone = (type = "") => {
   return "fiber";
 };
 
+const PLAN_GROUPS = [
+  { tone: "fiber", title: "Fibra Óptica", description: "Planes GPON" },
+  { tone: "radio", title: "Radioenlace", description: "Ubiquiti / Mimosa" },
+  { tone: "hotspot", title: "Hotspot", description: "WiFi prepago" },
+];
+
+function PlanCard({ plan, onEdit, onDelete }) {
+  return (
+    <article className={`plan-card plan-card--${technologyTone(plan.type)} w-full min-w-0 rounded-xl border p-3.5 shadow-xl transition`}>
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-bold border border-cyan-500/20">
+            {plan.type}
+          </span>
+          <span className="shrink-0 text-[10px] text-slate-500 font-mono">Prioridad {plan.priority}</span>
+        </div>
+        <h3 className="text-base font-bold text-slate-100">{plan.name}</h3>
+        <p className="text-[11px] text-slate-400 mt-0.5 min-h-[28px]">{plan.description}</p>
+
+        <div className="plan-speed my-3 p-2.5 bg-slate-950 rounded-xl border border-slate-800/80 grid grid-cols-2 gap-2 text-center">
+          <div>
+            <span className="plan-speed-label text-[10px] uppercase font-bold block">Bajada</span>
+            <span className="plan-speed-value plan-speed-value--download text-sm font-black flex items-center justify-center gap-1">
+              <ArrowDown className="w-3.5 h-3.5" /> {plan.download_speed_mbps} M
+            </span>
+          </div>
+          <div className="border-l border-slate-800">
+            <span className="plan-speed-label text-[10px] uppercase font-bold block">Subida</span>
+            <span className="plan-speed-value plan-speed-value--upload text-sm font-black flex items-center justify-center gap-1">
+              <ArrowUp className="w-3.5 h-3.5" /> {plan.upload_speed_mbps} M
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+        <div>
+          <span className="text-xs text-slate-400 font-medium">Precio mensual:</span>
+          <div className="plan-price text-lg font-black text-slate-100">S/. {Number(plan.price).toFixed(2)}</div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => onEdit(plan)} className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" aria-label={`Editar ${plan.name}`}>
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button onClick={() => onDelete(plan.id, plan.name)} className="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 border border-slate-700" aria-label={`Eliminar ${plan.name}`}>
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function Plans() {
   const { API, token } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const groupedPlans = PLAN_GROUPS
+    .map((group) => ({ ...group, plans: plans.filter((plan) => technologyTone(plan.type) === group.tone) }))
+    .filter((group) => group.plans.length > 0);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -124,64 +180,31 @@ export default function Plans() {
         </button>
       </div>
 
-      <div className="plans-grid grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {plans.map((p) => (
-          <div key={p.id} className={`plan-card plan-card--${technologyTone(p.type)} w-full min-w-0 rounded-xl border p-3.5 shadow-xl transition`}>
-            <div>
-              <div className="flex justify-between items-start mb-2">
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[11px] font-bold border border-cyan-500/20">
-                  {p.type}
-                </span>
-                <span className="text-xs text-slate-500 font-mono">Prioridad {p.priority}</span>
-              </div>
-
-              <h3 className="text-base font-bold text-slate-100">{p.name}</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5 min-h-[28px]">{p.description}</p>
-
-              <div className="my-3 p-2.5 bg-slate-950 rounded-xl border border-slate-800/80 grid grid-cols-2 gap-2 text-center">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Bajada</span>
-                  <span className="text-sm font-black text-cyan-400 flex items-center justify-center gap-1">
-                    <ArrowDown className="w-3.5 h-3.5" /> {p.download_speed_mbps} M
-                  </span>
-                </div>
-                <div className="border-l border-slate-800">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Subida</span>
-                  <span className="text-sm font-black text-emerald-400 flex items-center justify-center gap-1">
-                    <ArrowUp className="w-3.5 h-3.5" /> {p.upload_speed_mbps} M
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+      <div className="space-y-6">
+        {groupedPlans.map((group) => (
+          <section key={group.tone} className={`plan-group plan-group--${group.tone}`}>
+            <header className="mb-3 flex items-center gap-2">
+              <div className={`plan-group-marker plan-group-marker--${group.tone}`} />
               <div>
-                <span className="text-xs text-slate-400 font-medium">Precio mensual:</span>
-                <div className="plan-price text-lg font-black text-slate-100">
-                  S/. {Number(p.price).toFixed(2)}
-                </div>
+                <h3 className="plan-group-title text-sm font-black">{group.title}</h3>
+                <p className="text-[10px] text-slate-500">{group.description} · {group.plans.length} plan(es)</p>
               </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    setSelectedPlan(p);
-                    setFormData(p);
+            </header>
+            <div className="plans-grid grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {group.plans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  plan={plan}
+                  onEdit={(selected) => {
+                    setSelectedPlan(selected);
+                    setFormData(selected);
                     setShowModal(true);
                   }}
-                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(p.id, p.name)}
-                  className="p-2 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 border border-slate-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
-          </div>
+          </section>
         ))}
       </div>
 
