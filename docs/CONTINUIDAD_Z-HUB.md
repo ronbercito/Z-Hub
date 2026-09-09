@@ -2020,3 +2020,15 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - En Claro Suave también se reforzaron el nombre y rol de la cuenta para mantener buena lectura.
 - El avatar continúa mostrando la inicial, el nombre y el rol reales de la sesión; no se modifican permisos, navegación ni cierre de sesión.
 - Prueba realizada: revisión estática de estructura del perfil lateral, lectura de usuario/rol y estilos de oscuro/Claro Suave.
+
+
+
+### 1.1.72 — Métricas integradas y edición en Routers MikroTik
+
+- En **Gestión de Red → Routers MikroTik**, los seis indicadores operativos (CPU, memoria, uptime, latencia, PPPoE activos y colas) se integran dentro de la tarjeta del router seleccionado.
+- La tarjeta seleccionada usa el ancho completo del módulo para organizar los indicadores sin comprimirlos; las tarjetas no seleccionadas conservan su formato compacto.
+- Se añadió el botón **Editar router** dentro de la misma tarjeta. Abre el formulario existente y solo se muestra cuando la cuenta tiene el permiso `network → edit`.
+- Las pestañas de lectura en vivo permanecen debajo de la tarjeta y ya no repiten los indicadores.
+- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de integración de métricas, ausencia de duplicado en el detalle, apertura del formulario, permiso de edición y conservación del ancho OLT.
+- Alcance: no se modifican API, credenciales, lecturas RouterOS, pestañas, eliminación, permisos de backend ni el comportamiento de OLT.
