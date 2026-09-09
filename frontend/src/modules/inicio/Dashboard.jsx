@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/inicio/Dashboard.jsx
- * Actualización: 2026-09-09 — versión 1.1.23, Dashboard claro alineado con la referencia aprobada.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
+ * Actualización: 2026-09-09 — versión 1.1.24, tarjetas KPI ajustadas a la referencia aprobada.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
  * Trabaja con: backend/app/routers/inicio/router.py (/api/dashboard/summary), components/layout/Layout.jsx
  */
 import React, { useState, useEffect } from "react";
@@ -63,7 +63,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
   ];
 
   return (
-    <div className="dashboard-reference space-y-6 animate-in fade-in duration-300">
+    <div className="dashboard-reference dashboard-reference--kpi space-y-6 animate-in fade-in duration-300">
       {/* Header Welcome Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
@@ -88,7 +88,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
       {/* 4 Colored KPI Cards matching Screenshot */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Clientes Online (Teal / Cyan) */}
-        <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg shadow-teal-500/10 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-600 dashboard-kpi dashboard-kpi--clients rounded-xl p-4 text-white shadow-lg shadow-teal-500/10 relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-teal-100">Clientes Online</p>
@@ -107,7 +107,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
         </div>
 
         {/* Card 2: Transacciones Hoy (Sky / Blue) */}
-        <div className="bg-gradient-to-r from-sky-500 to-blue-600 rounded-xl p-4 text-white shadow-lg shadow-sky-500/10 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-r from-sky-500 to-blue-600 dashboard-kpi dashboard-kpi--transactions rounded-xl p-4 text-white shadow-lg shadow-sky-500/10 relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-sky-100">Transacciones Hoy</p>
@@ -126,7 +126,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
         </div>
 
         {/* Card 3: Facturas No Pagadas (Purple / Indigo) */}
-        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg shadow-purple-500/10 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 dashboard-kpi dashboard-kpi--invoices rounded-xl p-4 text-white shadow-lg shadow-purple-500/10 relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-purple-100">Facturas No Pagadas</p>
@@ -147,7 +147,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
         </div>
 
         {/* Card 4: Ticket Soporte (Dark Slate / Charcoal) */}
-        <div className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-4 text-white shadow-lg shadow-slate-900/20 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-gradient-to-r from-slate-700 to-slate-800 dashboard-kpi dashboard-kpi--tickets rounded-xl p-4 text-white shadow-lg shadow-slate-900/20 relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Ticket Soporte</p>
