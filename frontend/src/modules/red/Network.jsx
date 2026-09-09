@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Actualización: 2026-09-09 — versión 1.1.32, presentación clara de Gestión de red.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
+ * Actualización: 2026-09-09 — versión 1.1.33, acentos de color funcionales para Gestión de red.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
  *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
@@ -227,7 +227,7 @@ export default function Network({ focus = "mikrotik" }) {
 }
 
 const Stat = ({ icon: Icon, label, value, valueClass = "text-slate-100" }) => (
-  <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 min-w-0">
+  <div className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} p-3 rounded-xl bg-slate-950/60 border border-slate-800 min-w-0`}>
     <p className="text-[10px] uppercase tracking-wider text-slate-500 flex items-center gap-1"><Icon className="w-3 h-3" /> {label}</p>
     <p className={`text-sm font-bold mt-1 font-mono truncate ${valueClass}`} title={String(value ?? "")}>{value}</p>
   </div>
