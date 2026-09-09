@@ -2980,3 +2980,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Color por tecnología:** Fibra Óptica GPON queda azul, Radioenlace violeta y Hotspot ámbar. Las reglas ahora tienen prioridad suficiente para verse también en el tema claro.
 - **Compatibilidad:** el color sigue siendo automático según la tecnología elegida al crear o editar; no cambia ningún dato ni acción de los planes.
 - **Pruebas:** validados el tamaño compacto, cuadrícula adaptable, clases de tecnología y las tres reglas de color.
+
+
+### 1.2.08 — Planes agrupados y velocidades visibles
+
+- **Organización:** los planes se muestran en secciones independientes, cada una con su propia fila: Fibra Óptica, Radioenlace y Hotspot. Un plan se ubica automáticamente según la tecnología seleccionada.
+- **Legibilidad:** el cuadro blanco de velocidades tiene ahora clases propias y colores de alto contraste para Bajada y Subida; ya no hereda texto blanco de la tarjeta.
+- **Compatibilidad:** editar y eliminar se preservan para todos los planes; no cambia la información almacenada ni la tecnología seleccionada.
+- **Pruebas:** validados el filtrado por tipo, las tres secciones, contraste de velocidades y acciones CRUD.
