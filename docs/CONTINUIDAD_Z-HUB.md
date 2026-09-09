@@ -1727,3 +1727,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Texto e iconos pasan a blanco y se mantiene una jerarquía tipográfica fuerte para conservar legibilidad.
 - Alcance: solo apariencia del tema `zhub-light`; sin cambios en las lecturas ni en la API de MikroTik.
 - Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.37 — Indicadores sólidos en el resumen OLT
+- Se transformaron las cuatro tarjetas principales del resumen OLT en indicadores de color sólido: OLTs en línea (verde), ONUs en línea (turquesa), ONUs autorizadas (violeta) y alertas activas (ámbar).
+- Se aplicó texto e iconos blancos con mayor peso visual para mantener legibilidad sobre cada fondo.
+- Los paneles técnicos, lecturas, pestañas y acciones del módulo se conservan sin cambios funcionales.
+- Alcance: apariencia exclusiva del tema `zhub-light`; no modifica consultas, comandos ni datos de la OLT.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
