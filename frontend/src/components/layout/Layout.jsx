@@ -77,35 +77,64 @@ export default function Layout() {
   const renderContent = () => {
     if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
     switch (activeTab) {
-      case "inicio": return <Dashboard setActiveTab={setActiveTab} />;
+      case "inicio":
+        return <Dashboard setActiveTab={setActiveTab} />;
       case "red":
-      case "routers": return <Network focus="mikrotik" />;
-      case "olts": return <Network focus="olt" />;
-      case "red_ipv4": return <IPv4Networks />;
-      case "nap_boxes": return <NapBoxes />;
-      case "monitoring": return <Monitoring />;
-      case "servicios": return <Plans />;
+      case "routers":
+        return <Network focus="mikrotik" />;
+      case "olts":
+        return <Network focus="olt" />;
+      case "red_ipv4":
+        return <IPv4Networks />;
+      case "nap_boxes":
+        return <NapBoxes />;
+      case "monitoring":
+        return <Monitoring />;
+      case "servicios":
+        return <Plans />;
       case "clientes":
-      case "client_users": return <Users />;
-      case "client_zones": return <Zones />;
-      case "client_map": return <ClientMap />;
-      case "facturacion": return <Billing />;
-      case "hotspot": return <Hotspot />;
-      case "tareas": return <Tasks />;
-      case "almacen": return <Inventory />;
-      case "tickets": return <Tickets />;
-      case "mensajeria": return <Messaging />;
-      case "ajustes": return <Settings />;
-      default: return <Dashboard setActiveTab={setActiveTab} />;
+      case "client_users":
+        return <Users />;
+      case "client_zones":
+        return <Zones />;
+      case "client_map":
+        return <ClientMap />;
+      case "facturacion":
+        return <Billing />;
+      case "hotspot":
+        return <Hotspot />;
+      case "tareas":
+        return <Tasks />;
+      case "almacen":
+        return <Inventory />;
+      case "tickets":
+        return <Tickets />;
+      case "mensajeria":
+        return <Messaging />;
+      case "ajustes":
+        return <Settings />;
+      default:
+        return <Dashboard setActiveTab={setActiveTab} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        companyName={companyName}
+        logoData={logoData}
+      />
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarOpen ? "ml-64" : "ml-20"
+      }`}>
         <Navbar setActiveTab={setActiveTab} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{renderContent()}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          {renderContent()}
+        </main>
         <footer className="px-6 pb-4 text-right text-[10px] text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
       </div>
     </div>

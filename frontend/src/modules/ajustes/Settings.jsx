@@ -183,41 +183,129 @@ export default function Settings({ section = "general" }) {
       </div>
 
       {activeSection === "staff" ? <StaffManagement /> : activeSection === "general" ? <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+        {/* Company Info Box */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-cyan-400" /> Datos de la Empresa (Impresión en Recibos)
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div><label className="block text-slate-300 font-semibold mb-1">Razón Social / Nombre Comercial *</label><input type="text" required value={settings.company_name} onChange={(e) => setSettings({ ...settings, company_name: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">RUC (Perú) *</label><input type="text" required value={settings.ruc} onChange={(e) => setSettings({ ...settings, ruc: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Teléfono Central de Soporte</label><input type="text" value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Correo de Contacto</label><input type="email" value={settings.email} onChange={(e) => setSettings({ ...settings, email: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
-            <div className="md:col-span-2"><label className="block text-slate-300 font-semibold mb-1">Dirección Fiscal / Oficina</label><input type="text" value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Razón Social / Nombre Comercial *</label>
+              <input
+                type="text"
+                required
+                value={settings.company_name}
+                onChange={(e) => setSettings({ ...settings, company_name: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">RUC (Perú) *</label>
+              <input
+                type="text"
+                required
+                value={settings.ruc}
+                onChange={(e) => setSettings({ ...settings, ruc: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Teléfono Central de Soporte</label>
+              <input
+                type="text"
+                value={settings.phone}
+                onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Correo de Contacto</label>
+              <input
+                type="email"
+                value={settings.email}
+                onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-slate-300 font-semibold mb-1">Dirección Fiscal / Oficina</label>
+              <input
+                type="text"
+                value={settings.address}
+                onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
           </div>
           <div className="mt-4 border-t border-slate-800 pt-4">
             <label className="block text-xs font-semibold text-slate-300 mb-2">Logo del panel y pantalla de inicio</label>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="h-14 w-14 rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center overflow-hidden">{settings.logo_data ? <img src={settings.logo_data} alt="Vista previa del logo" className="h-full w-full object-contain" /> : <Building2 className="w-6 h-6 text-slate-500" />}</div>
-              <div><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoChange} className="block text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-500 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-cyan-400" /><p className="mt-1 text-[11px] text-slate-500">PNG, JPG, WEBP o SVG. Máximo 700 KB.</p></div>
+              <div className="h-14 w-14 rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center overflow-hidden">
+                {settings.logo_data ? <img src={settings.logo_data} alt="Vista previa del logo" className="h-full w-full object-contain" /> : <Building2 className="w-6 h-6 text-slate-500" />}
+              </div>
+              <div>
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoChange} className="block text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-500 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-cyan-400" />
+                <p className="mt-1 text-[11px] text-slate-500">PNG, JPG, WEBP o SVG. Máximo 700 KB.</p>
+              </div>
               {settings.logo_data && <button type="button" onClick={() => setSettings({ ...settings, logo_data: "" })} className="text-xs font-semibold text-rose-300 hover:text-rose-200">Quitar logo</button>}
             </div>
           </div>
         </div>
 
-        <PanelThemeSelector value={settings.panel_theme} onChange={(panel_theme) => setSettings({ ...settings, panel_theme })} />
+        <PanelThemeSelector
+          value={settings.panel_theme}
+          onChange={(panel_theme) => setSettings({ ...settings, panel_theme })}
+        />
 
+        {/* Payment & Collection Details */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-emerald-400" /> Canales de Cobro para Abonados</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-emerald-400" /> Canales de Cobro para Abonados
+          </h3>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div><label className="block text-slate-300 font-semibold mb-1">Número de Yape</label><input type="text" value={settings.yape_number} onChange={(e) => setSettings({ ...settings, yape_number: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 font-bold" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Número de Plin</label><input type="text" value={settings.plin_number} onChange={(e) => setSettings({ ...settings, plin_number: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-cyan-400 font-bold" /></div>
-            <div className="md:col-span-2"><label className="block text-slate-300 font-semibold mb-1">Cuenta Corriente BCP / CCI</label><input type="text" value={settings.bcp_account} onChange={(e) => setSettings({ ...settings, bcp_account: e.target.value })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono" /></div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Número de Yape</label>
+              <input
+                type="text"
+                value={settings.yape_number}
+                onChange={(e) => setSettings({ ...settings, yape_number: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Número de Plin</label>
+              <input
+                type="text"
+                value={settings.plin_number}
+                onChange={(e) => setSettings({ ...settings, plin_number: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-cyan-400 font-bold"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-slate-300 font-semibold mb-1">Cuenta Corriente BCP / CCI</label>
+              <input
+                type="text"
+                value={settings.bcp_account}
+                onChange={(e) => setSettings({ ...settings, bcp_account: e.target.value })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono"
+              />
+            </div>
           </div>
         </div>
 
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="flex items-start gap-3 border-b border-slate-800 pb-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300"><Bell className="h-4 w-4" /></span><div><h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">Notificaciones del sistema</h3><p className="mt-1 text-[11px] text-slate-500">Destinatarios para alertas operativas y reportes. Pulsa Enter o coma para agregar varios.</p></div></div>
+          <div className="flex items-start gap-3 border-b border-slate-800 pb-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300"><Bell className="h-4 w-4" /></span>
+            <div><h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">Notificaciones del sistema</h3><p className="mt-1 text-[11px] text-slate-500">Destinatarios para alertas operativas y reportes. Pulsa Enter o coma para agregar varios.</p></div>
+          </div>
           <div className="grid grid-cols-1 gap-4 text-xs">
             <RecipientField label="Correos para alerta de router o equipo caído" type="email" values={settings.system_alert_emails} placeholder="soporte@empresa.com" onChange={(values) => setSettings({ ...settings, system_alert_emails: values })} />
             <RecipientField label="Números móviles para alerta de router o equipo caído" type="tel" values={settings.system_alert_phones} placeholder="941932971" onChange={(values) => setSettings({ ...settings, system_alert_phones: values })} />
@@ -226,21 +314,82 @@ export default function Settings({ section = "general" }) {
           <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-[11px] text-slate-500">Los procesos de monitoreo y facturación pueden leer estos destinos mediante la API de notificaciones del sistema. La entrega por correo requiere configurar SMTP en “Servidor de correo”; la entrega por SMS requiere un proveedor SMS configurado.</div>
         </div>
 
+        {/* Billing & Auto-cut configuration */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-rose-400" /> Reglas de Facturación y Corte Automático</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-rose-400" /> Reglas de Facturación y Corte Automático
+          </h3>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div><label className="block text-slate-300 font-semibold mb-1">Moneda del Sistema</label><input type="text" disabled value="Soles Peruanos (S/.)" className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 font-bold" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Día de Emisión de Facturas</label><input type="number" min="1" max="28" value={settings.billing_day} onChange={(e) => setSettings({ ...settings, billing_day: parseInt(e.target.value) })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Días de Gracia antes del Corte</label><input type="number" min="0" max="15" value={settings.grace_days} onChange={(e) => setSettings({ ...settings, grace_days: parseInt(e.target.value) })} className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100" /></div>
-            <div><label className="block text-slate-300 font-semibold mb-1">Address-list de corte en MikroTik</label><input type="text" data-testid="settings-cut-list" value={settings.mikrotik_cut_list || ""} onChange={(e) => setSettings({ ...settings, mikrotik_cut_list: e.target.value })} placeholder="morosos" className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono" /><p className="text-[10px] text-slate-500 mt-1">Crea en el MikroTik una regla de firewall que bloquee/redirija <span className="font-mono">src-address-list</span> con este nombre.</p></div>
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Moneda del Sistema</label>
+              <input
+                type="text"
+                disabled
+                value="Soles Peruanos (S/.)"
+                className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Día de Emisión de Facturas</label>
+              <input
+                type="number"
+                min="1"
+                max="28"
+                value={settings.billing_day}
+                onChange={(e) => setSettings({ ...settings, billing_day: parseInt(e.target.value) })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Días de Gracia antes del Corte</label>
+              <input
+                type="number"
+                min="0"
+                max="15"
+                value={settings.grace_days}
+                onChange={(e) => setSettings({ ...settings, grace_days: parseInt(e.target.value) })}
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Address-list de corte en MikroTik</label>
+              <input
+                type="text"
+                data-testid="settings-cut-list"
+                value={settings.mikrotik_cut_list || ""}
+                onChange={(e) => setSettings({ ...settings, mikrotik_cut_list: e.target.value })}
+                placeholder="morosos"
+                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-mono"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">Crea en el MikroTik una regla de firewall que bloquee/redirija <span className="font-mono">src-address-list</span> con este nombre.</p>
+            </div>
           </div>
         </div>
 
-        <TechnicianClientVisibility minutes={settings.technician_client_visibility_minutes} onChange={(minutes) => setSettings({ ...settings, technician_client_visibility_minutes: minutes })} />
+        <TechnicianClientVisibility
+          minutes={settings.technician_client_visibility_minutes}
+          onChange={(minutes) => setSettings({ ...settings, technician_client_visibility_minutes: minutes })}
+        />
 
-        <div className="flex justify-end"><button type="submit" disabled={saving} className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-600/20"><Save className="w-4 h-4" />{saving ? "Guardando..." : "Guardar Cambios"}</button></div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-cyan-600/20"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Guardando..." : "Guardar Cambios"}
+          </button>
+        </div>
       </form> : activeSection === "mail" ? <form onSubmit={handleMailSubmit} className="max-w-5xl space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-        <div className="flex items-center gap-3 border-b border-slate-800 pb-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><Mail className="h-5 w-5" /></span><div><h3 className="font-bold text-slate-100">Servidor de correo</h3><p className="text-xs text-slate-500">Configuración SMTP para alertas y reportes del sistema.</p></div></div>
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><Mail className="h-5 w-5" /></span>
+          <div><h3 className="font-bold text-slate-100">Servidor de correo</h3><p className="text-xs text-slate-500">Configuración SMTP para alertas y reportes del sistema.</p></div>
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 text-xs">
           <Field label="Host / servidor SMTP"><input required value={mailConfig.host} onChange={(e) => setMailConfig({ ...mailConfig, host: e.target.value })} placeholder="smtp.gmail.com" className="field" /></Field>
           <Field label="Puerto"><input required type="number" min="1" max="65535" value={mailConfig.port} onChange={(e) => setMailConfig({ ...mailConfig, port: Number(e.target.value) })} className="field" /></Field>
@@ -253,21 +402,40 @@ export default function Settings({ section = "general" }) {
           <div className="md:col-span-2"><label className="mb-1 block font-semibold text-slate-300">Firma HTML del correo</label><textarea rows="6" value={mailConfig.signature_html} onChange={(e) => setMailConfig({ ...mailConfig, signature_html: e.target.value })} placeholder="Atentamente,<br><b>Mi Empresa</b>" className="field resize-y font-mono" /><p className="mt-1 text-[10px] text-slate-500">La firma se añadirá debajo de los correos enviados por Z-Hub.</p></div>
         </div>
         <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-[11px] text-slate-400">Para Gmail usa una contraseña de aplicación. La contraseña SMTP queda cifrada en el servidor y nunca vuelve al navegador.</div>
-        <div className="flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-end sm:justify-between"><div className="w-full sm:max-w-sm"><label className="mb-1 block text-xs font-semibold text-slate-300">Correo para la prueba</label><input type="email" value={testRecipient} onChange={(e) => setTestRecipient(e.target.value)} placeholder="administracion@empresa.com" className="field" /></div><div className="flex gap-2"><button type="button" disabled={mailTesting || mailSaving} onClick={testMail} className="flex items-center gap-2 rounded-xl border border-cyan-500 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"><Send className="h-4 w-4" />{mailTesting ? "Probando…" : "Probar configuración"}</button><button type="submit" disabled={mailSaving || mailTesting} className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400 disabled:opacity-50"><Save className="h-4 w-4" />{mailSaving ? "Guardando…" : "Guardar cambios"}</button></div></div>
+        <div className="flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="w-full sm:max-w-sm"><label className="mb-1 block text-xs font-semibold text-slate-300">Correo para la prueba</label><input type="email" value={testRecipient} onChange={(e) => setTestRecipient(e.target.value)} placeholder="administracion@empresa.com" className="field" /></div>
+          <div className="flex gap-2"><button type="button" disabled={mailTesting || mailSaving} onClick={testMail} className="flex items-center gap-2 rounded-xl border border-cyan-500 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50"><Send className="h-4 w-4" />{mailTesting ? "Probando…" : "Probar configuración"}</button><button type="submit" disabled={mailSaving || mailTesting} className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400 disabled:opacity-50"><Save className="h-4 w-4" />{mailSaving ? "Guardando…" : "Guardar cambios"}</button></div>
+        </div>
       </form> : activeSection === "google" ? <form onSubmit={handleSubmit} className="max-w-4xl space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-        <div className="flex items-center gap-3 border-b border-slate-800 pb-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><MapPin className="h-5 w-5" /></span><div><h3 className="font-bold text-slate-100">Google Maps</h3><p className="text-xs text-slate-500">Conecta el mapa de clientes a Google Maps Platform.</p></div></div>
-        <div><label className="mb-1 block text-xs font-semibold text-slate-300">Clave de Maps JavaScript API</label><input type="password" autoComplete="off" value={settings.google_maps_api_key || ""} onChange={(e) => setSettings({ ...settings, google_maps_api_key: e.target.value.trim() })} placeholder="AIza..." className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 font-mono text-sm text-slate-100" /><p className="mt-2 text-[11px] leading-relaxed text-slate-500">Activa “Maps JavaScript API” en Google Cloud y restringe la clave al dominio de este panel. Esta clave se usa únicamente para cargar el mapa desde la sesión autenticada.</p></div>
-        <div className="flex justify-end gap-2 border-t border-slate-800 pt-4"><button type="button" onClick={() => setActiveSection("general")} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button><button type="submit" disabled={saving} className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400 disabled:opacity-50"><Save className="h-4 w-4" />{saving ? "Guardando…" : "Guardar clave"}</button></div>
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><MapPin className="h-5 w-5" /></span>
+          <div><h3 className="font-bold text-slate-100">Google Maps</h3><p className="text-xs text-slate-500">Conecta el mapa de clientes a Google Maps Platform.</p></div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-300">Clave de Maps JavaScript API</label>
+          <input type="password" autoComplete="off" value={settings.google_maps_api_key || ""} onChange={(e) => setSettings({ ...settings, google_maps_api_key: e.target.value.trim() })} placeholder="AIza..." className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 font-mono text-sm text-slate-100" />
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">Activa “Maps JavaScript API” en Google Cloud y restringe la clave al dominio de este panel. Esta clave se usa únicamente para cargar el mapa desde la sesión autenticada.</p>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+          <button type="button" onClick={() => setActiveSection("general")} className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Cancelar</button>
+          <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-400 disabled:opacity-50"><Save className="h-4 w-4" />{saving ? "Guardando…" : "Guardar clave"}</button>
+        </div>
       </form> : <section className="max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
         {(() => {
           const section = SECTIONS.find((item) => item.id === activeSection);
           const Icon = section?.icon || SettingsIcon;
-          return <div className="text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300"><Icon className="h-7 w-7" /></div><h3 className="mt-4 text-lg font-bold text-slate-100">{section?.label}</h3><p className="mx-auto mt-2 max-w-md text-sm text-slate-400">Este acceso ya está organizado en Ajustes. Su configuración se habilitará en una próxima mejora, sin modificar la información actual del sistema.</p><button type="button" onClick={() => setActiveSection("general")} className="mt-5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Volver a General</button></div>;
+          return <div className="text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300"><Icon className="h-7 w-7" /></div>
+            <h3 className="mt-4 text-lg font-bold text-slate-100">{section?.label}</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">Este acceso ya está organizado en Ajustes. Su configuración se habilitará en una próxima mejora, sin modificar la información actual del sistema.</p>
+            <button type="button" onClick={() => setActiveSection("general")} className="mt-5 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700">Volver a General</button>
+          </div>;
         })()}
       </section>}
     </div>
   );
 }
+
 
 function RecipientField({ label, values, onChange, placeholder, type }) {
   const [draft, setDraft] = useState("");
@@ -277,7 +445,13 @@ function RecipientField({ label, values, onChange, placeholder, type }) {
     if (next && !recipients.includes(next)) onChange([...recipients, next]);
     setDraft("");
   };
-  return <label className="block text-slate-300 font-semibold"><span className="mb-1 block">{label}</span><div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 p-2 focus-within:border-cyan-500">{recipients.map((recipient) => <span key={recipient} className="inline-flex items-center gap-1 rounded-lg bg-cyan-500/15 px-2 py-1 font-normal text-cyan-200">{recipient}<button type="button" onClick={() => onChange(recipients.filter((item) => item !== recipient))} className="ml-1 text-cyan-400 hover:text-white" aria-label={`Quitar ${recipient}`}>×</button></span>)}<input type={type} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={add} onKeyDown={(event) => { if (event.key === "Enter" || event.key === ",") { event.preventDefault(); add(); } }} placeholder={recipients.length ? "Agregar otro…" : placeholder} className="min-w-40 flex-1 bg-transparent px-1 py-1 text-slate-100 outline-none placeholder:text-slate-600" /></div></label>;
+  return <label className="block text-slate-300 font-semibold">
+    <span className="mb-1 block">{label}</span>
+    <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 p-2 focus-within:border-cyan-500">
+      {recipients.map((recipient) => <span key={recipient} className="inline-flex items-center gap-1 rounded-lg bg-cyan-500/15 px-2 py-1 font-normal text-cyan-200">{recipient}<button type="button" onClick={() => onChange(recipients.filter((item) => item !== recipient))} className="ml-1 text-cyan-400 hover:text-white" aria-label={`Quitar ${recipient}`}>×</button></span>)}
+      <input type={type} value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={add} onKeyDown={(event) => { if (event.key === "Enter" || event.key === ",") { event.preventDefault(); add(); } }} placeholder={recipients.length ? "Agregar otro…" : placeholder} className="min-w-40 flex-1 bg-transparent px-1 py-1 text-slate-100 outline-none placeholder:text-slate-600" />
+    </div>
+  </label>;
 }
 
 function Field({ label, children }) {
