@@ -327,7 +327,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
       {/* Bottom Section: 2 Tables (Últimos pagos registrados & Últimos conectados) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Table 1: Últimos pagos registrados (7 cols) */}
-        <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
+        <div className="dashboard-recent-payments lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-400" /> Últimos pagos registrados
@@ -384,7 +384,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
         </div>
 
         {/* Table 2: Últimos conectados (5 cols) */}
-        <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
+        <div className="dashboard-recent-connected lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <Wifi className="w-4 h-4 text-cyan-400" /> Últimos conectados
