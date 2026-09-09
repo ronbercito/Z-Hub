@@ -24,6 +24,8 @@ import EquipmentMapModal from "./components/EquipmentMapModal";
 
 const errMsg = (e, fallback) => e?.response?.data?.detail || fallback;
 
+const CLIENT_METRIC_COLORS = { queues: "#197ed4", dhcp: "#7045c8", pppoe: "#129d8c", suspended: "#d8890b" };
+
 const CLIENT_METRIC_STYLES = `
   [data-router-client-metric="queues"] { background: #197ed4 !important; border-color: #197ed4 !important; }
   [data-router-client-metric="dhcp"] { background: #7045c8 !important; border-color: #7045c8 !important; }
@@ -280,7 +282,7 @@ export default function Network({ focus = "mikrotik" }) {
 }
 
 const Stat = ({ icon: Icon, label, value, valueClass = "text-slate-100", compact = false, tone }) => (
-  <div data-router-client-metric={tone} className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} border border-slate-800 min-w-0`}>
+  <div ref={(node) => { const color = CLIENT_METRIC_COLORS[tone]; if (node && color) { node.style.setProperty("background", color, "important"); node.style.setProperty("border-color", color, "important"); node.querySelectorAll("p, svg").forEach((child) => child.style.setProperty("color", "#ffffff", "important")); } }} data-router-client-metric={tone} className={`network-stat network-stat--${label.toLowerCase().replace(/[^a-záéíóúñ]+/g, "-").replace(/^-|-$/g, "")} ${compact ? "p-2.5 rounded-lg" : "p-3 rounded-xl"} border border-slate-800 min-w-0`}>
     <p className={`${compact ? "text-[9px]" : "text-[10px]"} uppercase tracking-wider text-slate-500 flex items-center gap-1`}><Icon className="w-3 h-3" /> {label}</p>
     <p className={`${compact ? "text-xs" : "text-sm"} font-bold mt-1 font-mono truncate ${valueClass}`} title={String(value ?? "")}>{value}</p>
   </div>
