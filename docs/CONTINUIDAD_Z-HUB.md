@@ -2919,3 +2919,10 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - La columna Max-limit convierte los valores técnicos de RouterOS a Mbps o Gbps, en el orden Subida / Bajada.
 - Los valores `0/0` se muestran como Sin límite y el valor completo se mantiene en el título al pasar el cursor.
 - Prueba: revisión estática de conversión bps/K/M/G, orden de dos direcciones y caso sin límite.
+
+
+### 1.1.101 — Comentario primero en Colas simples
+
+- La primera columna de Colas simples es Comentario; continúan Nombre, Target, Max-limit, Tráfico actual y Estado.
+- Se redistribuyeron los anchos fijos sin afectar el ajuste de la tabla a pantalla.
+- Prueba: revisión estática del orden de cabeceras y celdas.
