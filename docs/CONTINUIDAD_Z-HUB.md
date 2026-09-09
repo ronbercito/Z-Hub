@@ -1934,3 +1934,13 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Este archivo es **interno de continuidad** para las conversaciones de trabajo.
 - Su actualización no forma parte de una actualización funcional o visual del panel y, por sí sola, **no debe aumentar** `PANEL_VERSION`, activar el botón Actualizar ni comunicarse como versión nueva del sistema.
 - Cuando exista un cambio real en el panel, la bitácora se registra durante el proceso de trabajo, pero la versión y la publicación corresponden únicamente a los archivos funcionales del panel.
+
+
+### 1.1.62 — Geometría única para menú y submenús
+
+- El menú lateral y sus submenús ahora usan clases estructurales compartidas en `Sidebar.jsx`: contenedor, menú principal, grupo de submenú y submenú.
+- Se fijan alturas comunes: menú principal de 40 px y submenús de 36 px, junto con el mismo ancho, sangría y espaciado para ambos temas.
+- El tema oscuro y `zhub-light` solo pueden cambiar colores, bordes, texto y estados visuales; no la distribución del menú.
+- Como resultado, una futura modificación de orden, tamaño, iconos o posiciones realizada en `Sidebar.jsx` se verá de forma idéntica en los dos temas.
+- Prueba realizada: revisión estática de clases comunes y confirmación de que el componente no contiene selectores de tema.
+- Alcance: no se modifican rutas, permisos, opciones de menú, navegación ni datos.
