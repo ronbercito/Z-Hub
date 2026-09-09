@@ -917,3 +917,92 @@ html[data-panel-theme="zhub-light"] .network-reference .network-router-card.netw
     width: 100% !important;
   }
 }
+
+
+/* OLT 1.1.41 — workspace ONUs claro, coloreado y operativo. */
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace > div:first-child {
+  background: #ffffff !important;
+  border-color: #d5e2ed !important;
+  box-shadow: 0 4px 13px rgba(28, 74, 111, .09) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat {
+  border-color: transparent !important;
+  box-shadow: 0 5px 12px rgba(31, 74, 112, .14) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat--total {
+  background: linear-gradient(135deg, #2378c4, #135a9a) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat--online {
+  background: linear-gradient(135deg, #12ae85, #078568) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat--offline {
+  background: linear-gradient(135deg, #d9536b, #ae2944) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat--unknown {
+  background: linear-gradient(135deg, #e39b27, #bd6908) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat,
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat p {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat p:first-child {
+  font-weight: 800 !important;
+  opacity: .86 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-stat p:last-child {
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view input {
+  background: #f7fbff !important;
+  border-color: #b9d3e7 !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view > .flex button {
+  background: #eef5fb !important;
+  border-color: #c3d8e9 !important;
+  color: #28527b !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view > .flex button[class*="bg-cyan-950"] {
+  background: linear-gradient(135deg, #147fc5, #0b619e) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view > .overflow-x-auto {
+  border-color: #cbddea !important;
+  box-shadow: 0 2px 8px rgba(31, 74, 112, .07) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view thead {
+  background: linear-gradient(135deg, #294d73, #1d3856) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view thead th {
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,.22) !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view tbody tr {
+  background: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view tbody tr:nth-child(even) {
+  background: #f3f8fc !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view tbody tr:hover {
+  background: #e1f3ff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view td {
+  color: #173b63 !important;
+  border-color: #d5e2ed !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view td .text-emerald-300 {
+  color: #078568 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view td .text-rose-300 {
+  color: #c3324d !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .onu-workspace .onu-list-view td button {
+  background: #ffffff !important;
+  border-color: #bdd5e8 !important;
+}
