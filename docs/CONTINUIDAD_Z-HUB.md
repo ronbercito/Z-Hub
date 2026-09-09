@@ -1776,3 +1776,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - RX usa azul, TX violeta y ONUs con lectura válida verde, todos con texto blanco de alto contraste.
 - Alcance: solo presentación; no cambian el escaneo secuencial, las lecturas ópticas, temporizadores, API ni la tabla de resultados.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.44 — Consola OLT adaptada al tema
+- Se añadieron contenedores visuales específicos para la consola CLI.
+- El área de comando ahora usa azul técnico, entrada blanca legible y botón Ejecutar turquesa de alto contraste.
+- La respuesta CLI se muestra en un panel de terminal oscuro y legible cuando exista salida.
+- Alcance: solo presentación; no se modifican los comandos enviados, validaciones, permisos ni API de la OLT.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
