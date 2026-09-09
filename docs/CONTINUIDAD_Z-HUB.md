@@ -1670,3 +1670,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Flujo y compatibilidad: conserva los mismos registros, importes, API /api/dashboard/summary, navegación, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
 - Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.29. Build y validación visual real pendientes.
 - Resultado esperado: toda la información de ambas tablas se lee con mayor presencia y S/. cobrado resalta en verde vivo sin alterar el valor.
+
+
+### 1.1.30 — 2026-09-09 — Confirmación del botón Actualizar
+- Objetivo y causa: el botón de actualización del Dashboard ejecutaba la consulta, pero no ofrecía confirmación visible; si los valores no cambiaban, parecía no realizar ninguna acción.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (estado “Actualizando…”, bloqueo temporal y toast de éxito), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: el clic manual llama a /api/dashboard/summary como antes y confirma al terminar. El refresco automático de 15 segundos permanece silencioso. No cambia API, datos, rutas, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática del flujo silent/manual, estado refreshing, texto del botón y PANEL_VERSION 1.1.30. Build y validación visual real pendientes.
+- Resultado esperado: al pulsar el botón se ve “Actualizando…” con icono girando y después el aviso “Dashboard actualizado”; si falla, se conserva el aviso de error existente.
