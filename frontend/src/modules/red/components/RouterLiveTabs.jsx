@@ -56,8 +56,12 @@ export default function RouterLiveTabs({ router }) {
   const [listName, setListName] = useState("morosos");
   const [newIp, setNewIp] = useState("");
   const [queueSearch, setQueueSearch] = useState("");
+  const [pppoeSecretSearch, setPppoeSecretSearch] = useState("");
   const visibleRows = tab === "queues" && queueSearch.trim()
     ? rows.filter((row) => [row.name, row.target, row.comment].some((value) => String(value || "").toLowerCase().includes(queueSearch.trim().toLowerCase())))
+    : rows;
+  const visiblePppoeSecrets = tab === "pppoe_secrets" && pppoeSecretSearch.trim()
+    ? rows.filter((row) => [row.name, row.profile, row.remote_address, row.comment].some((value) => String(value || "").toLowerCase().includes(pppoeSecretSearch.trim().toLowerCase())))
     : rows;
 
   const load = useCallback(async () => {
@@ -116,6 +120,16 @@ export default function RouterLiveTabs({ router }) {
           </button>
         </div>
       </div>
+
+      {tab === "pppoe_secrets" && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input value={pppoeSecretSearch} onChange={(e) => setPppoeSecretSearch(e.target.value)} placeholder="Buscar usuario, perfil, IP o comentario..." className="w-full py-2 pl-8 pr-3 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-100 font-mono" data-testid="pppoe-secret-search" />
+          </div>
+          <span className="text-[11px] text-slate-400 whitespace-nowrap">{visiblePppoeSecrets.length} secret(s)</span>
+        </div>
+      )}
 
       {tab === "queues" && (
         <div className="flex items-center gap-2 mb-3">
