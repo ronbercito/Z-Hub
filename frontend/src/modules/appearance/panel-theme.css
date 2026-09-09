@@ -312,3 +312,43 @@ html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summa
 html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-system-summary .bg-purple-500\/20 > span:last-child {
   color: #44228d !important;
 }
+
+
+/* Dashboard 1.1.27 — lectura reforzada de Recaudación Diaria. */
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue h3 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.01em !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue h3 + p {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #476b88 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue > div:first-child > div:last-child,
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .recharts-legend-wrapper {
+  font-weight: 800 !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .recharts-cartesian-axis-tick-value {
+  fill: #426584 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .recharts-cartesian-axis-line {
+  stroke: #8ea6bd !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .text-xl {
+  font-weight: 900 !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .text-\[10px\],
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .text-xs {
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .dashboard-reference .dashboard-revenue .text-\[11px\] {
+  font-weight: 800 !important;
+}
