@@ -10,6 +10,13 @@ import { TEST_IDS } from "../../constants/testIds";
 import { Zap, Plus, Edit3, Trash2, CheckCircle2, ArrowDown, ArrowUp, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
+const technologyTone = (type = "") => {
+  const technology = String(type).toLowerCase();
+  if (technology.includes("hotspot")) return "hotspot";
+  if (technology.includes("radio") || technology.includes("ubiquiti") || technology.includes("mimosa")) return "radio";
+  return "fiber";
+};
+
 export default function Plans() {
   const { API, token } = useAuth();
   const [plans, setPlans] = useState([]);
@@ -117,9 +124,9 @@ export default function Plans() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="plans-grid grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {plans.map((p) => (
-          <div key={p.id} className="plan-card bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
+          <div key={p.id} className={`plan-card plan-card--${technologyTone(p.type)} w-full min-w-0 rounded-2xl border p-5 shadow-xl transition`}>
             <div>
               <div className="flex justify-between items-start mb-3">
                 <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[11px] font-bold border border-cyan-500/20">
