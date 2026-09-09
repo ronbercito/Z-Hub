@@ -545,3 +545,58 @@ html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.tex
 html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs tr:hover {
   background: #edf6fc !important;
 }
+
+
+/* Gestión de red 1.1.33 — color funcional en métricas, tráfico y equipo seleccionado. */
+html[data-panel-theme="zhub-light"] .network-reference .network-router-card.border-cyan-500 {
+  background: linear-gradient(135deg, #f7fcff, #e9f6fd) !important;
+  border-color: #0498ca !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--cpu {
+  background: #eef6ff !important;
+  border-color: #bcdaf5 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--memoria {
+  background: #f5f0ff !important;
+  border-color: #d7c7f6 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--uptime {
+  background: #edfafa !important;
+  border-color: #b9e9e3 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--latencia {
+  background: #fff8e8 !important;
+  border-color: #f2d9a0 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--pppoe-activos {
+  background: #ecfbf5 !important;
+  border-color: #b7ead5 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--colas {
+  background: #f1f3ff !important;
+  border-color: #cbd3f5 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--cpu p:last-child { color: #1473bd !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--memoria p:last-child { color: #6842b6 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--uptime p:last-child { color: #087f7b !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--latencia p:last-child { color: #a46309 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--pppoe-activos p:last-child { color: #048660 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--colas p:last-child { color: #4055b2 !important; }
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.text-cyan-300,
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.text-cyan-400 {
+  color: #087fae !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.text-emerald-300,
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs td.text-emerald-400 {
+  color: #009b6e !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs .bg-emerald-500\/10 {
+  background: #c9f3e4 !important;
+  color: #007a59 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-live-tabs .bg-rose-500\/10 {
+  background: #ffe1e7 !important;
+  color: #bf2c49 !important;
+}
