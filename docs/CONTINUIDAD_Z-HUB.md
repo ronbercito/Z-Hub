@@ -2003,3 +2003,12 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Durante una comprobación manual, el botón ahora muestra fondo azul sólido, texto e ícono blancos y el mensaje «Buscando actualización…» con contraste.
 - Al terminar vuelve a su apariencia clara normal; no se cambia el sondeo silencioso durante instalación.
 - Prueba realizada: revisión estática de estilos normal/ocupado, selector `aria-busy`, color de fondo y texto del ícono.
+
+
+### 1.1.70 — Inicio de sesión adaptado al tema seleccionado
+
+- La pantalla de inicio de sesión ahora respeta el tema guardado que obtiene desde `/settings/public` antes de autenticar.
+- En Claro Suave usa fondo luminoso, tarjeta blanca, títulos y campos de alto contraste, además de accesos rápidos claros con colores funcionales.
+- En Oscuro se conserva la presentación actual; la geometría de la pantalla se mantiene compartida.
+- Prueba realizada: revisión estática de aplicación del tema guardado, estructura de Login, estilos claros y llamada de autenticación sin cambios.
+- Alcance: no se modifican credenciales, roles, API, sesión, redirecciones ni acceso.
