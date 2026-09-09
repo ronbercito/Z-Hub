@@ -2012,3 +2012,11 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - En Oscuro se conserva la presentación actual; la geometría de la pantalla se mantiene compartida.
 - Prueba realizada: revisión estática de aplicación del tema guardado, estructura de Login, estilos claros y llamada de autenticación sin cambios.
 - Alcance: no se modifican credenciales, roles, API, sesión, redirecciones ni acceso.
+
+
+### 1.1.71 — Avatar de cuenta activa con color amigable
+
+- El identificador circular de la cuenta activa en el menú lateral ahora usa degradado azul/turquesa/violeta, borde suave y sombra ligera.
+- En Claro Suave también se reforzaron el nombre y rol de la cuenta para mantener buena lectura.
+- El avatar continúa mostrando la inicial, el nombre y el rol reales de la sesión; no se modifican permisos, navegación ni cierre de sesión.
+- Prueba realizada: revisión estática de estructura del perfil lateral, lectura de usuario/rol y estilos de oscuro/Claro Suave.
