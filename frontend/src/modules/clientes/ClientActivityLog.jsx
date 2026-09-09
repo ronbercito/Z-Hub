@@ -27,24 +27,24 @@ export default function ClientActivityLog({ activities = [] }) {
   }
 
   return (
-    <section className="rounded-2xl border border-cyan-500/20 bg-slate-950/45 p-4 sm:p-5">
-      <div className="mb-5 flex items-center justify-between gap-3">
+    <section className="client-activity-log rounded-2xl border border-cyan-500/20 bg-slate-950/45 p-4 sm:p-5">
+      <div className="client-activity-log-header mb-5 flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-cyan-300"><Activity className="h-5 w-5" /><h3 className="text-base font-bold text-white">Historial de actividad</h3></div>
           <p className="mt-1 text-xs text-slate-500">Registro de las acciones realizadas en la ficha de este cliente.</p>
         </div>
-        <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold text-cyan-300">{activities.length} eventos</span>
+        <span className="client-activity-log-count rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold text-cyan-300">{activities.length} eventos</span>
       </div>
       <div className="space-y-3">
         {activities.map((item) => (
-          <article key={item.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-cyan-500/30">
+          <article key={item.id} className="client-activity-log-event rounded-xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-cyan-500/30">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <h4 className="font-semibold text-slate-100">{item.action || "Actividad"}</h4>
                 <p className="mt-1 break-words text-sm leading-6 text-slate-400">{item.detail || "Sin detalle adicional."}</p>
               </div>
               <div className="shrink-0 space-y-1 text-left sm:text-right">
-                <div className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/10 px-2.5 py-1.5 text-xs font-bold text-cyan-300"><UserRound className="h-3.5 w-3.5" />{item.operator_name || "Sistema"}</div>
+                <div className="client-activity-log-operator inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/10 px-2.5 py-1.5 text-xs font-bold text-cyan-300"><UserRound className="h-3.5 w-3.5" />{item.operator_name || "Sistema"}</div>
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500 sm:justify-end"><Clock3 className="h-3.5 w-3.5" />{formatDate(item.created_at)}</div>
               </div>
             </div>
