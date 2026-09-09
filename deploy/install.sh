@@ -89,6 +89,11 @@ $SUDO rm -rf "$WEB_ROOT"/*
 $SUDO cp -r build/. "$WEB_ROOT"/
 $SUDO chown -R www-data:www-data "/var/www/z-hub"
 $SUDO chmod -R 755 "/var/www/z-hub"
+# El despliegue deja el árbol bajo www-data, mientras el backend de Supervisor
+# ejecuta como root. Git 2.35+ bloquea repositorios cuyo propietario difiere del
+# usuario que ejecuta git; declarar explícitamente este checkout como confiable
+# evita que el centro de actualización falle con "dubious ownership".
+$SUDO git config --system --add safe.directory "$APP_DIR"
 
 STEP="Supervisor y Nginx"
 echo "⚙️ 6/6 Supervisor y Nginx..."
