@@ -24,6 +24,23 @@ const TABS = [
   { id: "hotspot", label: "Hotspot", path: "hotspot/active" },
 ];
 
+const formatSpeed = (value) => {
+  const raw = String(value ?? "0").trim().toLowerCase();
+  if (!raw || raw === "0") return "Sin límite";
+  const unit = raw.match(/^([\d.]+)\s*([kmg])?$/);
+  if (!unit) return String(value);
+  const multiplier = { k: 1_000, m: 1_000_000, g: 1_000_000_000 };
+  const bps = Number(unit[1]) * (multiplier[unit[2]] || 1);
+  if (!Number.isFinite(bps) || bps <= 0) return "Sin límite";
+  if (bps >= 1_000_000_000) return `${(bps / 1_000_000_000).toLocaleString("es-PE", { maximumFractionDigits: 2 })} Gbps`;
+  return `${(bps / 1_000_000).toLocaleString("es-PE", { maximumFractionDigits: 1 })} Mbps`;
+};
+
+const formatQueueLimit = (limit) => {
+  const [upload = "0", download = "0"] = String(limit || "0/0").split("/");
+  return `${formatSpeed(upload)} / ${formatSpeed(download)}`;
+};
+
 const Badge = ({ ok, yes = "UP", no = "DOWN" }) => (
   <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${ok ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>{ok ? yes : no}</span>
 );
@@ -176,7 +193,7 @@ export default function RouterLiveTabs({ router }) {
                     <tr key={r.id} className="hover:bg-slate-800/40">
                       <td className="py-2 px-3 w-[16%] font-mono font-bold text-slate-100 truncate" title={r.name}>{r.name}</td>
                       <td className="py-2 px-3 w-[30%] font-mono text-cyan-300 truncate" title={r.target}>{r.target}</td>
-                      <td className="py-2 px-3 w-[15%] font-mono truncate" title={r.max_limit}>{r.max_limit}</td>
+                      <td className="py-2 px-3 w-[15%] font-mono truncate" title={formatQueueLimit(r.max_limit)}>{formatQueueLimit(r.max_limit)}</td>
                       <td className="py-2 px-3 w-[16%] font-mono text-emerald-300 truncate">{r.rate_up_mbps} / {r.rate_down_mbps} Mbps</td>
                       <td className="py-2 px-3 w-[15%] text-slate-400 truncate" title={r.comment}>{r.comment || "—"}</td>
                       <td className="py-2 px-3 w-[8%]"><Badge ok={!r.disabled} yes="ACTIVA" no="DESHABILITADA" /></td>
