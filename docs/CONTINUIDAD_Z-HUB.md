@@ -1712,3 +1712,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Backup: rama backup-pre-olt-clara-1.1.34 creada antes del ajuste.
 - Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.34. Build, revisión visual y validación de lecturas reales pendientes.
 - Resultado esperado: Resumen OLT, salud, disponibilidad, estado y actividad usan blanco, bordes azul-gris y colores funcionales: verde/turquesa para línea, índigo para autorización, ámbar para alerta y rojo para fuera de línea.
+
+
+### 1.1.35 — 2026-09-09 — Métricas sólidas en Gestión de red
+- Objetivo y causa: se solicitó más vida visual porque las métricas de Gestión de red aún se percibían demasiado blancas.
+- Archivos modificados: frontend/src/modules/appearance/panel-theme.css (tarjetas de métricas sólidas), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: CPU, memoria, uptime, latencia, PPPoE y colas conservan los mismos valores y su fuente RouterOS. No cambia API, OLT, datos, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática de selectores y PANEL_VERSION 1.1.35. Build y validación visual real pendientes.
+- Resultado esperado: métricas azul, violeta, turquesa, ámbar, verde y azul profundo; texto/iconos blancos y gruesos. Tabla operativa permanece clara.
