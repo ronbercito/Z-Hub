@@ -1,0 +1,60 @@
+name: Close migration continuity 1.1.12
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  close-docs:
+    if: github.event.head_commit.message == 'Continuidad: registrar migración completada a Z-Hub'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mark migration as completed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/CONTINUIDAD_MIKROHUB.md')
+          s = p.read_text(encoding='utf-8')
+          old = '''### Migración de archivos a Z-Hub
+
+Después de validar y publicar 1.1.12 en el repositorio legado, el `main` completo debe copiarse a `ronbercito/Z-Hub` conservando el árbol de archivos actualizado. Desde ese momento, todo cambio nuevo se realizará primero en **Z-Hub**.'''
+          new = '''### Migración de archivos a Z-Hub — COMPLETADA
+
+La migración fue completada el 2026-09-09. El `main` validado de 1.1.12 fue promovido íntegramente a `ronbercito/Z-Hub`, conservando el mismo commit de origen durante la copia inicial (`177e29184ce138469ef0d9d4eb6d5328acf5e409`).
+
+Desde este punto:
+
+- `ronbercito/Z-Hub` es el repositorio principal y autoritativo;
+- todo desarrollo nuevo se realiza en Z-Hub;
+- `ronbercito/mirkohub` queda congelado como fuente legado/fallback de transición;
+- el panel 1.1.12 consulta ambos repositorios y solo ofrece actualización cuando existe una `PANEL_VERSION` superior;
+- cambios exclusivamente documentales con la misma versión no provocan una actualización del panel.'''
+          if old not in s:
+              raise SystemExit('No se encontró el bloque de migración pendiente')
+          s = s.replace(old, new, 1)
+          s = s.replace('- [ ] instalación real 1.1.12 desde un servidor que aún tenga `origin` en MikroHub;', '- [ ] instalación real 1.1.12 desde un servidor que aún tenga `origin` en MikroHub;', 1)
+          s += '''\n\n### Cierre de migración de repositorio\n\n**Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.\n'''
+          p.write_text(s, encoding='utf-8')
+
+          d = Path('docs/CONTINUIDAD_MIKROHUB_1.1.12_REPOSITORIOS.md')
+          ds = d.read_text(encoding='utf-8')
+          ds += '''\n## Estado de migración\nMigración del árbol de archivos a `ronbercito/Z-Hub`: **COMPLETADA**.\nCommit inicial promovido: `177e29184ce138469ef0d9d4eb6d5328acf5e409`.\nEl repositorio Z-Hub queda como fuente principal de todo trabajo futuro.\n'''
+          d.write_text(ds, encoding='utf-8')
+          PY
+
+      - name: Commit closure and remove temporary workflow
+        run: |
+          rm -f .github/workflows/close-migration-docs-1.1.12.yml
+          git config user.name "ronbercito"
+          git config user.email "rj.ston1985@gmail.com"
+          git add -A
+          git commit -m "Continuidad: migración a Z-Hub completada"
+          git push origin main
