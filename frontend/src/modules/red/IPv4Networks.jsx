@@ -83,7 +83,7 @@ export default function IPv4Networks() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200" data-testid="ipv4-networks-page">
+    <div className="ipv4-networks-page space-y-6 animate-in fade-in duration-200" data-testid="ipv4-networks-page">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
@@ -98,13 +98,13 @@ export default function IPv4Networks() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="ipv4-network-summary grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Summary icon={Network} label="Redes registradas" value={networks.length} />
         <Summary icon={Users} label="IPs asignadas" value={networks.reduce((sum, item) => sum + item.used_ips, 0)} />
         <Summary icon={Router} label="MikroTiks vinculados" value={new Set(networks.map((item) => item.router_id)).size} />
       </div>
 
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="ipv4-network-table bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-3">
           <div className="relative w-full max-w-md">
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
