@@ -12,8 +12,6 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="/var/log/zhub_install.log"
 
-# Mantener la terminal limpia, pero mostrar actividad durante las operaciones
-# que pueden tardar (especialmente fetch/reset después del git clone).
 touch "$LOG_FILE" 2>/dev/null || true
 chmod 600 "$LOG_FILE" 2>/dev/null || true
 exec 3>&1 4>&2
@@ -77,7 +75,19 @@ fi
 
 ui ""
 ui "  ✓ Código Z-Hub listo"
-ui "  • Iniciando instalador principal..."
-ui ""
+ui "  ⟳ Iniciando instalador principal..."
+ui "  • La instalación continúa; este indicador seguirá activo hasta que termine."
 
-exec bash "$ROOT_DIR/deploy/install.sh" "$@"
+# El instalador principal tiene su propia interfaz, pero lo ejecutamos en segundo
+# plano para que la terminal nunca quede visualmente muda durante su arranque.
+bash "$ROOT_DIR/deploy/install.sh" "$@" &
+MAIN_PID=$!
+spinner_start "Instalador principal en ejecución" "$MAIN_PID"
+if wait "$MAIN_PID"; then
+  ui "  ✓ Instalador principal finalizado"
+else
+  rc=$?
+  ui "  ✗ El instalador principal terminó con código $rc"
+  ui "  • Revise: $LOG_FILE"
+  exit "$rc"
+fi
