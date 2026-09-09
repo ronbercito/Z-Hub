@@ -1596,3 +1596,69 @@ html[data-panel-theme="zhub-light"] .client-activity-log-event .text-\[11px\] {
   color: #52799a !important;
   font-weight: 700 !important;
 }
+
+
+/* Mensajería 1.1.54 — plantillas y editor vivos para el tema Z-Hub. */
+html[data-panel-theme="zhub-light"] .messaging-page h2 {
+  color: #133f6a !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-page > div > p {
+  color: #487493 !important;
+  font-weight: 600 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-templates,
+html[data-panel-theme="zhub-light"] .messaging-composer {
+  background: #ffffff !important;
+  border-color: #bdd8ea !important;
+  box-shadow: 0 8px 21px rgba(24, 74, 111, .15) !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-templates > h3 {
+  color: #174a76 !important;
+  border-color: #c7ddea !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-template {
+  background: #f5f9fc !important;
+  border-color: #c6dce9 !important;
+  color: #174a76 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-template p { color: #527696 !important; font-weight: 600 !important; }
+html[data-panel-theme="zhub-light"] .messaging-template:hover {
+  background: #e4f5fc !important;
+  border-color: #37add3 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-template.bg-emerald-950\/40 {
+  background: linear-gradient(135deg, #d7f8ee, #c8f2e6) !important;
+  border-color: #13a87d !important;
+  color: #096a5d !important;
+  box-shadow: 0 3px 8px rgba(8, 136, 100, .18) !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-composer label {
+  color: #164a77 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-field {
+  background: #f7fbfd !important;
+  border-color: #bcd7e8 !important;
+  color: #163f69 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-field:focus {
+  border-color: #16a4c9 !important;
+  box-shadow: 0 0 0 3px rgba(22, 164, 201, .15) !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-composer > div:last-child {
+  border-color: #c6dce9 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-composer button:first-child {
+  background: #e7f1f7 !important;
+  color: #194e79 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .messaging-composer button:last-child {
+  background: linear-gradient(135deg, #17b987, #078f7a) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 5px 12px rgba(7, 128, 107, .27) !important;
+}
