@@ -32,9 +32,18 @@ fi
 # a la terminal para la interfaz visual del instalador.
 exec 1>>"$LOG_FILE" 2>&1
 
+# Colores ANSI solo para la interfaz visual de la terminal.
+# El log técnico permanece sin códigos de color.
+COLOR_TITLE='\033[1;36m'
+COLOR_RESET='\033[0m'
+
 ui()      { printf '%s\n' "$*" >&3; }
 line()    { ui "────────────────────────────────────────────────────────────"; }
-section() { line; ui "$1"; line; }
+section() {
+  line
+  printf '%b%s%b\n' "$COLOR_TITLE" "$1" "$COLOR_RESET" >&3
+  line
+}
 ok()      { ui "  ✓ $1"; }
 info()    { ui "  • $1"; }
 warn()    { ui "  ⚠ $1"; }
@@ -73,11 +82,11 @@ trap 'rc=$?; ui ""; ui "╔═════════════════�
 
 ui ""
 ui "╔════════════════════════════════════════════════════════════╗"
-ui "║                    Z-HUB ISP INSTALLER                    ║"
+printf '%b%s%b\n' "$COLOR_TITLE" "║                    Z-HUB ISP INSTALLER                    ║" "$COLOR_RESET" >&3
 ui "║              Instalación y configuración automática       ║"
 ui "╚════════════════════════════════════════════════════════════╝"
 ui ""
-ui "Sistema detectado"
+printf '%b%s%b\n' "$COLOR_TITLE" "Sistema detectado" "$COLOR_RESET" >&3
 if [ -r /etc/os-release ]; then
   . /etc/os-release
   ok "${PRETTY_NAME:-Sistema Linux}"
@@ -219,7 +228,7 @@ ELAPSED=$((END_TIME - START_TIME))
 
 ui ""
 ui "╔════════════════════════════════════════════════════════════╗"
-ui "║                  ✓ Z-HUB INSTALADO                        ║"
+printf '%b%s%b\n' "$COLOR_TITLE" "║                  ✓ Z-HUB INSTALADO                        ║" "$COLOR_RESET" >&3
 ui "╚════════════════════════════════════════════════════════════╝"
 ui ""
 ok "Backend:     OK"
