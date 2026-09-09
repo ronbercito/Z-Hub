@@ -2075,3 +2075,9 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - Archivos funcionales: `frontend/src/modules/red/components/RouterCard.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
 - Prueba realizada: revisión estática de icono, estado y estilos de Claro Suave.
 - Alcance: no se modifican tamaño de tarjeta, datos, RouterOS, acciones, permisos, OLT ni API.
+
+
+### 1.1.77 — Corrección del trazo del icono MikroTik
+
+- Se fuerza el color y trazo del SVG del servidor dentro de la tarjeta MikroTik para que no herede blanco del contenedor.
+- No se modifican tamaño, permisos ni otras acciones.
