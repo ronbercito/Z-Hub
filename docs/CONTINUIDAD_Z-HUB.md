@@ -2912,3 +2912,10 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Targets, límites y comentarios extensos se truncan con el valor completo disponible al pasar el cursor.
 - Se evita el desplazamiento horizontal de toda la pantalla; el contenedor conserva scroll local si fuera necesario.
 - Prueba: revisión estática de `table-fixed`, anchos de columnas, `truncate` y títulos.
+
+
+### 1.1.100 — Límites de velocidad legibles en Colas simples
+
+- La columna Max-limit convierte los valores técnicos de RouterOS a Mbps o Gbps, en el orden Subida / Bajada.
+- Los valores `0/0` se muestran como Sin límite y el valor completo se mantiene en el título al pasar el cursor.
+- Prueba: revisión estática de conversión bps/K/M/G, orden de dos direcciones y caso sin límite.
