@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/inicio/Dashboard.jsx
- * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
+ * Actualización: 2026-09-09 — versión 1.1.23, Dashboard claro alineado con la referencia aprobada.\n * Función: Página de inicio: KPIs (clientes online, cobros del día/mes, facturas impagas, tickets), gráfico de recaudación de 7 días, medidor de tráfico leído de los MikroTik, resumen del sistema, últimos pagos y abonados conectados.
  * Trabaja con: backend/app/routers/inicio/router.py (/api/dashboard/summary), components/layout/Layout.jsx
  */
 import React, { useState, useEffect } from "react";
@@ -63,7 +63,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="dashboard-reference space-y-6 animate-in fade-in duration-300">
       {/* Header Welcome Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
@@ -200,10 +200,10 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
+                  <XAxis dataKey="date" stroke="#7a91a9" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px", fontSize: "12px" }}
+                    contentStyle={{ backgroundColor: "#ffffff", borderColor: "#d7e1eb", borderRadius: "10px", fontSize: "12px", color: "#173b63", boxShadow: "0 4px 14px rgba(23,59,99,.12)" }}
                   />
                   <Area type="monotone" dataKey="collected_pen" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorDown)" name="Cobrado (S/.)" />
                   <Area type="monotone" dataKey="payments" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorUp)" name="N° pagos" />
@@ -234,7 +234,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-black text-white">{bandwidth_gauge.download_pct}%</span>
+                  <span className="text-xl font-black text-slate-100">{bandwidth_gauge.download_pct}%</span>
                   <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">DESCARGA</span>
                 </div>
               </div>
