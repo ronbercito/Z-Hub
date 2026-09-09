@@ -1927,3 +1927,10 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 
 - No se debe cambiar la versión ni publicar antes de registrar y verificar la bitácora.
 - Esta regla aplica incluso a cambios exclusivamente visuales o documentales.
+
+
+#### Aclaración operativa sobre la bitácora
+
+- Este archivo es **interno de continuidad** para las conversaciones de trabajo.
+- Su actualización no forma parte de una actualización funcional o visual del panel y, por sí sola, **no debe aumentar** `PANEL_VERSION`, activar el botón Actualizar ni comunicarse como versión nueva del sistema.
+- Cuando exista un cambio real en el panel, la bitácora se registra durante el proceso de trabajo, pero la versión y la publicación corresponden únicamente a los archivos funcionales del panel.
