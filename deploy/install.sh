@@ -16,6 +16,8 @@ WEB_ROOT="/var/www/z-hub/web"
 DB_NAME="zhub"
 DB_USER="zhub"
 LOG_FILE="/var/log/zhub_install.log"
+LICENSE_DIR="/etc/zhub/licencia"
+LICENSE_FILE="$LICENSE_DIR/licenses.json"
 STEP="inicio"
 START_TIME="$(date +%s)"
 
@@ -86,6 +88,10 @@ STEP="Preparando el entorno"
 section "[1/7] Preparando el entorno"
 run_visual "Actualizando componentes" apt-get update
 run_visual "Preparando recursos necesarios" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
+run_visual "Preparando registro interno" bash -c 'mkdir -p "$1"; if [ ! -f "$2" ] && [ -f "$3" ]; then cp "$3" "$2"; fi; test -f "$2"; chown root:www-data "$2"; chmod 640 "$2"' _ "$LICENSE_DIR" "$LICENSE_FILE" "$APP_DIR/licencia/licenses.json"
+# El registro queda fuera del checkout publicado y fuera del webroot. El backend
+# utiliza /etc/zhub/licencia/licenses.json como fuente privada de validación.
+rm -rf "$APP_DIR/licencia"
 ok "Entorno preparado"
 
 STEP="Configurando el sistema"
@@ -202,7 +208,6 @@ ok "Duración:           ${ELAPSED}s"
 ui ""
 printf '%b  🌐 Panel:          \033]8;;%s\a%s\033]8;;\a%b\n' "$COLOR_IMPORTANT" "$PANEL_URL" "$PANEL_URL" "$COLOR_RESET" >&3
 info "Continúe en el navegador para activar la licencia y crear la cuenta administradora."
-# En un servidor con entorno gráfico, intenta abrir el asistente localmente.
 if command -v xdg-open >/dev/null 2>&1 && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
   xdg-open "$PANEL_URL" >/dev/null 2>&1 &
 fi
