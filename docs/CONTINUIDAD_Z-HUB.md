@@ -1969,3 +1969,11 @@ Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
 - El tema oscuro conserva sus fondos y colores actuales; no se cambió la geometría ni la lógica de ninguno de los temas.
 - Prueba realizada: revisión estática de selectores, avisos, botones y rutas `/system-update/status` y `/system-update/install`.
 - Alcance: no se modifican la descarga, comprobación, instalación, sesión, API ni actualización real del panel.
+
+
+### 1.1.66 — Versión anclada junto a Actualizar en el Dashboard
+
+- El indicador de versión del panel se agrupa de forma explícita con el botón «Actualizar» en el encabezado del Dashboard.
+- En escritorio el grupo queda alineado a la derecha; en pantallas pequeñas se mantiene unido y alineado sin trasladar la versión al inicio del contenido.
+- La versión continúa obteniéndose de `PANEL_VERSION`; no se modifica la actualización del Dashboard ni datos operativos.
+- Prueba realizada: revisión estática del orden versión → botón, anclaje de escritorio, alineamiento móvil y fuente de versión.
