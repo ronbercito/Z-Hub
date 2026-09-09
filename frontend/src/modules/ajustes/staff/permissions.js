@@ -8,7 +8,7 @@ export const permissionsByTab = {
   nap_boxes:"network", monitoring:"monitoring", servicios:"plans", clientes:"clients",
   client_users:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing",
   hotspot:"hotspot", tareas:"tasks", almacen:"inventory", tickets:"tickets",
-  mensajeria:"messaging", ajustes:"settings",
+  mensajeria:"messaging", ajustes:"settings", settings_google:"settings",
 };
 export function permissionsFor(user) {
   return Object.keys(user?.permissions || {}).length ? user.permissions : (roleDefaults[user?.role] || {});
