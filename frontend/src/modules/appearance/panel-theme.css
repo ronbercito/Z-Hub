@@ -1299,3 +1299,75 @@ html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td:n
   color: #ffffff !important;
   font-weight: 900 !important;
 }
+
+
+/* Clientes 1.1.49 — ficha de cliente con jerarquía y cuenta destacada. */
+html[data-panel-theme="zhub-light"] .client-detail-modal {
+  background: #f5f9fc !important;
+  border-color: #a9cce2 !important;
+  box-shadow: 0 20px 45px rgba(10, 53, 87, .32) !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-modal > header {
+  background: linear-gradient(135deg, #1d5d8d, #123e67) !important;
+  border-color: transparent !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-modal > header h2,
+html[data-panel-theme="zhub-light"] .client-detail-modal > header p,
+html[data-panel-theme="zhub-light"] .client-detail-modal > header button,
+html[data-panel-theme="zhub-light"] .client-detail-modal > header button svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-modal > nav {
+  background: #ffffff !important;
+  border-color: #cbddea !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-modal > nav button {
+  color: #315878 !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-modal > nav button[class*="bg-cyan-500"] {
+  background: linear-gradient(135deg, #1c9cd3, #0c72ad) !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-summary h3 {
+  color: #123d67 !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em;
+}
+html[data-panel-theme="zhub-light"] .client-detail-summary label {
+  color: #436987 !important;
+  font-weight: 700 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-summary input,
+html[data-panel-theme="zhub-light"] .client-detail-summary select {
+  background: #ffffff !important;
+  color: #173b63 !important;
+  border-color: #bfd7e8 !important;
+  font-weight: 650 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account {
+  background: linear-gradient(160deg, #254f77, #173654) !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 18px rgba(19, 60, 96, .23) !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account > h3 {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account .rounded-xl {
+  background: rgba(255,255,255,.97) !important;
+  border-color: rgba(255,255,255,.40) !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account .rounded-xl p:first-child {
+  color: #52718d !important;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account .rounded-xl p:last-child {
+  color: #173b63 !important;
+  font-weight: 900 !important;
+}
+html[data-panel-theme="zhub-light"] .client-detail-account .bg-emerald-500\/15 {
+  background: linear-gradient(135deg, #18b886, #078364) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(4, 129, 98, .28) !important;
+}
