@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Actualización: 2026-09-09 — versión 1.1.73, resumen compacto de indicadores y edición de routers.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
+ * Actualización: 2026-09-09 — versión 1.1.75, acciones de edición más visibles.\n * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
  *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
@@ -154,7 +154,7 @@ export default function Network({ focus = "mikrotik" }) {
               {r.device_type === "mikrotik" && selected?.id === r.id && canSelected("edit") && (
                 <div className="flex justify-end">
                   <button data-testid="btn-edit-router" onClick={() => setFormRouter(r)}
-                    className="px-2.5 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-700/50 text-[11px] font-semibold rounded-lg flex items-center gap-1.5 transition">
+                    className="network-router-edit-button px-2.5 py-1.5 bg-white hover:bg-cyan-50 text-blue-700 border border-cyan-100 text-[11px] font-bold rounded-lg flex items-center gap-1.5 shadow-sm transition">
                     <Pencil className="w-3.5 h-3.5" /> Editar router
                   </button>
                 </div>
