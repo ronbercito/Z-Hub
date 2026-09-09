@@ -28,7 +28,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
     <div
       data-testid={`router-card-${router.id}`}
       onClick={onSelect}
-      className={`network-router-card p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
+      className={`network-router-card ${isOlt ? "network-router-card--olt" : "network-router-card--mikrotik"} p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
         selected ? `bg-slate-900 ${tone.selected} shadow-xl` : `bg-slate-900/60 border-slate-800 ${isOlt ? "hover:border-violet-500/60" : "hover:border-cyan-500/60"}`
       }`}
     >
