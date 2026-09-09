@@ -18,6 +18,7 @@ import NapBoxes from "../../modules/red/nap_boxes/NapBoxes";
 import Monitoring from "../../modules/red/monitoring/Monitoring";
 import Plans from "../../modules/planes/Plans";
 import Users from "../../modules/clientes/usuarios/Users";
+import Installations from "../../modules/clientes/instalaciones/Installations";
 import Zones from "../../modules/clientes/zonas/Zones";
 import ClientMap from "../../modules/clientes/mapa/ClientMap";
 import Billing from "../../modules/facturacion/Billing";
@@ -97,6 +98,8 @@ export default function Layout() {
         return <Users />;
       case "client_zones":
         return <Zones />;
+      case "client_installations":
+        return <Installations />;
       case "client_map":
         return <ClientMap />;
       case "facturacion":
