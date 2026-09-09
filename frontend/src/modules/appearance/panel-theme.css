@@ -676,3 +676,41 @@ html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard .t
 html[data-panel-theme="zhub-light"] .network-reference .olt-summary-dashboard .text-violet-400 {
   color: #6943bd !important;
 }
+
+
+/* Gestión de red 1.1.35 — métricas con tarjetas de color sólido. */
+html[data-panel-theme="zhub-light"] .network-reference .network-stat {
+  border-color: transparent !important;
+  box-shadow: 0 4px 10px rgba(31, 74, 112, .13) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--cpu {
+  background: linear-gradient(135deg, #1986df, #126cc4) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--memoria {
+  background: linear-gradient(135deg, #7c54d5, #6039bc) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--uptime {
+  background: linear-gradient(135deg, #16adab, #07827f) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--latencia {
+  background: linear-gradient(135deg, #e6a12c, #c87b09) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--pppoe-activos {
+  background: linear-gradient(135deg, #16b78c, #07996f) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat--colas {
+  background: linear-gradient(135deg, #445b78, #2d415b) !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat p,
+html[data-panel-theme="zhub-light"] .network-reference .network-stat p:first-child,
+html[data-panel-theme="zhub-light"] .network-reference .network-stat p:last-child,
+html[data-panel-theme="zhub-light"] .network-reference .network-stat svg {
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat p:first-child {
+  opacity: .88;
+  font-weight: 800 !important;
+}
+html[data-panel-theme="zhub-light"] .network-reference .network-stat p:last-child {
+  font-weight: 900 !important;
+}
