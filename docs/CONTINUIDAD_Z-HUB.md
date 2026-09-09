@@ -1695,3 +1695,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Backup: rama backup-pre-red-clara-1.1.32 creada antes de modificar la vista operativa.
 - Pruebas: revisión estática de clases, selectores y versión 1.1.32. Build y validación visual/lecturas reales pendientes.
 - Resultado esperado: Gestión de red presenta equipos, métricas, pestañas e interfaces con fondos blancos, cabeceras gris-azul, textos azul tinta, bordes discretos y estados de color legibles, coherentes con Dashboard.
+
+
+### 1.1.33 — 2026-09-09 — Color funcional en Gestión de red
+- Objetivo y causa: tras llevar la vista a claro, métricas y tablas quedaron demasiado neutras. Se pidió recuperar vida visual manteniendo sobriedad operativa.
+- Archivos modificados: frontend/src/modules/red/Network.jsx (identificadores por métrica), frontend/src/modules/appearance/panel-theme.css (tonos suaves por KPI, tarjeta seleccionada, tráfico y estados), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: no cambia la lectura de RouterOS/OLT, métricas, estados, API, datos, permisos ni tema oscuro. Solo se presenta color bajo zhub-light.
+- Pruebas: revisión estática de identificadores, selectores y PANEL_VERSION 1.1.33. Build y validación visual real pendientes.
+- Resultado esperado: CPU azul, memoria violeta, uptime turquesa, latencia ámbar, PPPoE verde y colas índigo; tráfico y estados resaltan claramente sin volver a fondos oscuros.
