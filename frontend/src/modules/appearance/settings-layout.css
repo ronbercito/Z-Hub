@@ -1,0 +1,41 @@
+/**
+ * Archivo: frontend/src/modules/appearance/settings-layout.css
+ * Actualización: 2026-09-09 — unificación del layout de Ajustes entre temas.
+ * Función: reutiliza en Oscuro la misma geometría compacta que ya se validó en Claro Suave.
+ * Regla: solo controla distribución/espaciado del formulario; no cambia lógica ni paleta del tema.
+ */
+
+/*
+ * Ajustes → General: una sola geometría para ambos temas.
+ * El contenido/DOM es el mismo; aquí se fija únicamente cómo se distribuyen
+ * las tarjetas para que el cambio de tema no cambie su orden visual.
+ */
+@media (min-width: 1280px) {
+  .settings-general-form {
+    display: block !important;
+    column-count: 2;
+    column-gap: 24px;
+    max-width: 1240px !important;
+  }
+
+  .settings-general-form > * {
+    display: inline-block;
+    width: 100%;
+    break-inside: avoid;
+    margin: 0 0 24px !important;
+    vertical-align: top;
+  }
+
+  .settings-general-form > .flex.justify-end {
+    display: flex !important;
+    column-span: all;
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 1279px) {
+  .settings-general-form > * {
+    margin: 0 !important;
+  }
+}
