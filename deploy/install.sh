@@ -47,7 +47,13 @@ if [ -f "$APP_DIR/backend/.env" ] && grep -q "^DATABASE_URL=" "$APP_DIR/backend/
   DB_PASS="$(grep '^DATABASE_URL=' "$APP_DIR/backend/.env" | sed -E 's#.*://[^:]+:([^@]+)@.*#\1#')"
   echo "   .env existente: se conserva la contraseña de la base de datos."
 else
-  DB_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"
+  # No usar `head` en una sustitución bajo pipefail: head puede cerrar el pipe
+  # antes de que tr termine y provocar código 141 (SIGPIPE).
+  DB_PASS="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(18)[:24])
+PY
+)"
 fi
 
 export DB_NAME DB_USER DB_PASS
@@ -58,7 +64,12 @@ STEP="backend FastAPI"
 echo "🐍 4/6 Backend FastAPI..."
 cd "$APP_DIR/backend"
 if [ ! -f ".env" ]; then
-  export JWT_SECRET="$(tr -dc 'a-f0-9' </dev/urandom | head -c 64)"
+  JWT_SECRET="$(python3 - <<'PY'
+import secrets
+print(secrets.token_hex(32))
+PY
+)"
+  export JWT_SECRET
   envsubst < "$DEPLOY_DIR/env/backend.env.example" > .env
   echo "   backend/.env generado."
 fi
