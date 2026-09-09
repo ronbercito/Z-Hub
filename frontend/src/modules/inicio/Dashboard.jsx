@@ -253,7 +253,7 @@ export default function Dashboard({ setActiveTab, onSelectClient }) {
         </div>
 
         {/* Right 4 Cols: Resumen del Sistema (Matching Screenshot item list with badges) */}
-        <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col justify-between">
+        <div className="dashboard-system-summary lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col justify-between">
           <h3 className="text-base font-bold text-slate-100 mb-4 pb-2 border-b border-slate-800">
             Resumen del sistema
           </h3>
