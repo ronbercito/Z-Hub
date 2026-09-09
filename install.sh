@@ -76,7 +76,7 @@ fi
 ui ""
 ui "  ✓ Código Z-Hub listo"
 ui "  ⟳ Iniciando instalador principal..."
-ui "  • La instalación continúa; se mostrará actividad cada 2 segundos."
+ui "  • La instalación continúa; tiempo de espera 5-7min."
 
 # El instalador principal tiene su propia interfaz, pero lo ejecutamos en segundo
 # plano para que la terminal nunca quede visualmente muda durante su arranque.
