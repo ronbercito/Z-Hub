@@ -170,7 +170,7 @@ export default function Settings({ section = "general" }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="settings-page space-y-6 animate-in fade-in duration-200">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
           <SettingsIcon className="w-6 h-6 text-cyan-400" /> Ajustes · {settings.company_name || "Z-Hub"}
@@ -182,7 +182,7 @@ export default function Settings({ section = "general" }) {
         Configurando: <span className="font-bold text-cyan-300">{SECTIONS.find((item) => item.id === activeSection)?.label || "General"}</span>
       </div>
 
-      {activeSection === "staff" ? <StaffManagement /> : activeSection === "general" ? <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+      {activeSection === "staff" ? <StaffManagement /> : activeSection === "general" ? <form onSubmit={handleSubmit} className="settings-general-form grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-start">
         {/* Company Info Box */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 pb-2 border-b border-slate-800 flex items-center gap-2">
