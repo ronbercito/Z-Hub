@@ -1521,3 +1521,62 @@ La rama `update-soft-light-1.1.13` quedó idéntica a `main` después de la publ
 ### Versionado
 
 Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no debe generar una actualización funcional del panel.
+
+
+---
+
+## 26. Changelog único de continuidad — 1.1.14 a 1.1.22
+
+**Política definitiva:** desde esta consolidación solo existe un archivo de continuidad: docs/CONTINUIDAD_MIKROHUB.md. No se crearán archivos por versión, fecha, módulo, prueba o corrección. Cada actualización se agregará al final de este apartado, en orden cronológico, con versión, objetivo, archivos, pruebas, resultado y pendientes.
+
+### Formato obligatorio de cada entrada futura
+
+### [Versión] — [Fecha] — [Tipo]
+- Objetivo y causa.
+- Archivos modificados.
+- Flujo y compatibilidad.
+- Pruebas realizadas y pendientes.
+- Resultado, riesgos y commits.
+
+### 1.1.14 — 2026-09-09 — Tema claro blanco sólido
+- Se rediseñó exclusivamente zhub-light con superficies blancas, azul tinta, bordes discretos y sin glow, neón ni gradientes.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Se conserva el identificador zhub-light y el tema oscuro; sin cambios de API, base de datos ni lógica.
+- Pendiente validación real de build y navegador. Commits: 8933f963, 79b39d12.
+
+### 1.1.15 — 2026-09-09 — Tema claro sin brillo
+- Se reforzó la apariencia plana y profesional: sin filtros, gradientes, sombras coloreadas ni glow.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Sin cambios en Clientes, Facturación, red, autenticación ni tema oscuro.
+- Pendiente build y validación visual. Commits: 32c6f68e, 10b60734.
+
+### 1.1.16–1.1.17 — 2026-09-09 — Ajuste contra referencia visual
+- Se afinó zhub-light con fondo claro neutro, superficies blancas, texto azul tinta, KPI sólidos moderados, líneas sobrias y sombras mínimas.
+- Se preservó texto blanco dentro de indicadores de color y se evitó modificar el tema oscuro. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
+- Pendiente build y revisión visual de Dashboard, Clientes, Facturación, Red, formularios, tablas y modales. Commits: d8a925e7, 6323aa5c.
+
+### 1.1.18 — 2026-09-09 — Panel derecho del Dashboard
+- Se limitó el cambio visual al Resumen del sistema: tarjeta clara, filas gris claro, texto azul tinta y badges sobrios.
+- Se mantuvo deliberadamente el gráfico izquierdo sin convertirlo a tarjeta clara. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
+- Pendiente build y validación visual antes de extender el ajuste.
+
+### 1.1.19 — 2026-09-09 — Menú activo en negrita
+- Sidebar resalta menú y submenú activos con font-bold sin cambiar rutas, permisos ni expansión.
+- Archivo funcional: frontend/src/components/layout/Sidebar.jsx. Pendiente build y validación visual.
+
+### 1.1.20 — 2026-09-09 — Tipografía del menú
+- En zhub-light, navegación normal usa peso 600; activa y submenú activo usan peso 800 y azul tinta.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual.
+
+### 1.1.21 — 2026-09-09 — Tipografía y hover del menú
+- Menú claro: normal peso 700; activo y hover peso 900. Estructura, rutas y permisos quedan sin cambios.
+- Archivos funcionales: frontend/src/components/layout/Sidebar.jsx y frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual real.
+
+### 1.1.22 — 2026-09-09 — Hover transparente azul del menú claro
+- Se elimina la barra gris oscura que dificultaba leer al pasar el mouse.
+- Menús y submenús de zhub-light usan fondo transparente con carga azul translúcida, marco azul sutil, texto azul oscuro y peso 900 en hover.
+- No modifica rutas, permisos ni lógica de navegación. Archivo funcional: frontend/src/modules/appearance/panel-theme.css; versión/changelog: frontend/src/modules/system-update/version.js.
+- Pendiente ejecutar build y validar hover en el panel desplegado. Commits: e13af07f, 10b9276f.
+
+### Consolidación documental — 2026-09-09
+- Se eliminaron los archivos de continuidad complementarios e históricos para conservar una sola fuente de verdad.
+- El único archivo permitido para continuidad futura es este: docs/CONTINUIDAD_MIKROHUB.md.
+- Esta consolidación es documental: no incrementa PANEL_VERSION ni cambia funcionalidad del panel.
