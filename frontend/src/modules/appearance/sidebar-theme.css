@@ -1,0 +1,55 @@
+/**
+ * Archivo: frontend/src/modules/appearance/sidebar-theme.css
+ * Actualización: 2026-09-09 — versión 1.1.58: corrección visual de submenús en Claro Suave.
+ * Función: asegura que los submenús del lateral mantengan la superficie clara del tema.
+ * Regla: solo cambia presentación; no modifica rutas, permisos, navegación ni lógica funcional.
+ */
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: #d1dde8 !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #173b63 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button span,
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button svg {
+  color: #315b82 !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button:hover {
+  background: #edf6fc !important;
+  background-color: #edf6fc !important;
+  background-image: none !important;
+  color: #102f50 !important;
+  border-color: #b9d3e7 !important;
+  box-shadow: none !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button:hover span,
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button:hover svg {
+  color: #102f50 !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button.bg-cyan-500\/15 {
+  background: #e4f2fb !important;
+  background-color: #e4f2fb !important;
+  background-image: none !important;
+  color: #102f50 !important;
+  border-color: #9fc5df !important;
+  box-shadow: none !important;
+}
+
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button.bg-cyan-500\/15 span,
+html[data-panel-theme="zhub-light"] aside nav div.border-l > button.bg-cyan-500\/15 svg {
+  color: #102f50 !important;
+}
