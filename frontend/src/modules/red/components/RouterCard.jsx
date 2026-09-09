@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-09 — versión 1.1.32, tarjeta compatible con la presentación clara.\n * Área: Gestión de Red > tarjetas de equipos.
+ * Actualización: 2026-09-09 — versión 1.1.63, geometría compartida entre temas.\n * Área: Gestión de Red > tarjetas de equipos.
  * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline
  *          real, IP, modelo y latencia. En MikroTik muestra CPU; en OLT muestra puertos PON.
  * Alcance: Diferencia visualmente MikroTik (cyan) y OLT VSOL (violeta).
@@ -28,7 +28,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
     <div
       data-testid={`router-card-${router.id}`}
       onClick={onSelect}
-      className={`network-router-card ${isOlt ? "network-router-card--olt" : "network-router-card--mikrotik"} p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
+      className={`network-router-card ${isOlt ? "network-router-card--olt" : "network-router-card--mikrotik w-full md:w-[290px]"} p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
         selected ? `bg-slate-900 ${tone.selected} shadow-xl` : `bg-slate-900/60 border-slate-800 ${isOlt ? "hover:border-violet-500/60" : "hover:border-cyan-500/60"}`
       }`}
     >
