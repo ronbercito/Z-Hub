@@ -2,7 +2,7 @@
 ARCHIVO INTERNO DE CONTINUIDAD — NO ES PARTE DEL PANEL
 Archivo: docs/CONTINUIDAD_Z-HUB.md
 Propósito: conservar el contexto técnico, decisiones, ubicaciones, versiones y
-historial de cambios de MikroHub para retomar el proyecto en futuras sesiones.
+historial de cambios de Z-Hub para retomar el proyecto en futuras sesiones.
 
 IMPORTANTE:
 - Esta carpeta docs/ es documentación del repositorio; no es frontend/src/ ni
@@ -77,7 +77,7 @@ Cada vez que se **agregue, modifique o corrija** algo en Z-Hub:
 - Persistencia: SQLAlchemy/base de datos configurada por el proyecto.
 - Integraciones principales: MikroTik, OLT y Google Maps, según módulo.
 - Fuente de versión visible: `frontend/src/modules/system-update/version.js`.
-- Versión funcional actual: **1.1.22**, correspondiente al hover transparente azul del menú lateral y submenús del template Z-Hub Claro. El repositorio principal y autoritativo es `ronbercito/Z-Hub`.
+- Versión funcional actual: **1.1.79**, correspondiente al resumen de clientes operativos por router. El repositorio principal y autoritativo es `ronbercito/Z-Hub`.
 
 ---
 
@@ -374,10 +374,10 @@ La actualización del resumen del cliente sincroniza nombre/DNI con recursos Mik
 
 `frontend/src/modules/system-update/version.js`
 
-Versión funcional en esta entrega:
+Versión funcional actual:
 
 ```text
-PANEL_VERSION = 1.1.22
+PANEL_VERSION = 1.1.79
 ```
 
 Este archivo es parte del panel y debe cambiarse cuando haya una nueva funcionalidad/corrección funcional.
@@ -462,77 +462,592 @@ ls -la /var/www/mikrosmart_web
 
 ## 9. Historial de versiones y cambios importantes
 
-> Este historial es resumido. La bitácora debe seguir agregando entradas, no reemplazar las anteriores.
+> Este historial está ordenado de **más reciente a más antiguo**. La bitácora debe seguir agregando entradas, manteniendo este orden descendente. No se eliminan versiones ni se sustituye el contenido histórico.
 
-### 1.0.23
-- Selector de IP de servicio.
-- Puertos libres de NAP.
-- Potencia óptica en dBm.
+### 1.1.79 — 2026-09-09 — Resumen de clientes operativos por router
+- En **Gestión de Red → Routers MikroTik**, los cuatro recuadros de resumen reemplazan CPU, memoria, uptime y latencia por: **Clientes colas simples**, **Clientes DHCP**, **Clientes PPPoE** y **Clientes suspendidos**.
+- Colas simples, DHCP y PPPoE se consultan directamente al MikroTik al seleccionar el router, en una única conexión API; las colas deshabilitadas no se cuentan, DHCP solo considera concesiones enlazadas y PPPoE cuenta sesiones activas.
+- Clientes suspendidos se cuenta desde los abonados asignados a ese router en el panel, para reflejar el estado administrativo real.
+- Las cuatro tarjetas conservan la geometría compartida y reciben colores distinguibles en ambos temas.
+- Archivos funcionales: `backend/app/routers/red/router.py`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: verificación estática de endpoint, una sola conexión MikroTik, criterios de conteo, consulta al seleccionar y estilos de los cuatro recuadros.
+- Alcance: no se modifican clientes, servicios, cortes, credenciales, sesiones, pestañas ni aprovisionamiento.
 
-### 1.0.25
-- Criterios de disponibilidad IPv4.
-- Exclusión de red/gateway/broadcast.
-- Conteos consistentes.
+### 1.1.78 — 2026-09-09 — Icono explícito de servidor MikroTik
+- Se reemplazó el icono dependiente de estilos por un SVG de servidor/engranaje con trazo azul explícito.
+- No se modifican tamaño, datos, permisos ni acciones.
 
-### 1.0.26–1.0.27
-- Reescritura de ClientDetail y schemas.
-- Corrección de sintaxis Python inválida en schemas que impedía arranque/login del backend.
+### 1.1.77 — 2026-09-09 — Corrección del trazo del icono MikroTik
+- Se fuerza el color y trazo del SVG del servidor dentro de la tarjeta MikroTik para que no herede blanco del contenedor.
+- No se modifican tamaño, permisos ni otras acciones.
 
-### 1.0.28
-- Selector de coordenadas con Google Maps.
-- Integración en ClientDetail.
+### 1.1.76 — 2026-09-09 — Icono y estado ONLINE más notorios
+- El icono principal de MikroTik usa fondo blanco, borde celeste y sombra para destacar sobre la tarjeta azul.
+- El estado **ONLINE** ahora usa verde sólido, texto blanco, punto blanco y borde visible.
+- En Claro Suave se añadieron selectores específicos para preservar el contraste de ambos elementos.
+- Archivos funcionales: `frontend/src/modules/red/components/RouterCard.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: revisión estática de icono, estado y estilos de Claro Suave.
+- Alcance: no se modifican tamaño de tarjeta, datos, RouterOS, acciones, permisos, OLT ni API.
 
-### 1.0.29
-- Centro de actualización detecta cualquier diferencia `HEAD != origin/main`, no solo cambios de `version.js`.
+### 1.1.75 — 2026-09-09 — Edición de router compacta y con mayor contraste
+- Se compactó el modal **Editar equipo**: menor ancho, relleno y separación entre controles, conservando todos los campos.
+- En Claro Suave se reforzaron título, etiquetas, inputs, ayuda y pie del formulario para una lectura consistente.
+- El botón **Elegir coordenadas en el mapa** ahora usa azul sólido, texto e icono blancos y borde visible.
+- El botón **Editar router** de la tarjeta usa superficie blanca, texto azul más oscuro, borde y sombra para destacar sobre la tarjeta azul.
+- Archivos funcionales: `frontend/src/modules/red/components/RouterForm.jsx`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
+- Prueba realizada: revisión estática de clases del modal, botón de mapa, botón de edición y selectores Claro Suave.
+- Alcance: no se modifican coordenadas, mapa, API, datos, permisos, RouterOS, OLT ni acciones de guardado.
 
-### 1.0.30
-- Guardado de servicio cierra correctamente el editor.
-- `ClientServiceEditor` acepta `onSave`/`onSaveSuccess`.
+### 1.1.74 — 2026-09-09 — Memoria visible en tarjeta MikroTik
+- La fila inferior de la tarjeta MikroTik ahora muestra **CPU, Memoria y Ping**.
+- En MikroTik se distribuye en tres columnas compactas; en OLT se conserva la distribución anterior de dos columnas.
+- Se mantiene el ancho de tarjeta de 290 px y no se modifican el botón Editar ni las métricas resumidas inferiores.
+- Archivo funcional: `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de icono, dato de memoria, columnas por tipo de equipo y ancho compacto.
+- Alcance: no se modifican lecturas RouterOS, API, permisos, OLT, acciones ni pestañas.
 
-### 1.0.36–1.0.37
-- Servicios adicionales provisionan/actualizan MikroTik.
-- Manejo independiente de ONU/potencia.
-- Limpieza de recursos MikroTik al eliminar cliente.
-- Nombres de colas basados en DNI.
+### 1.1.73 — 2026-09-09 — Resumen compacto de métricas en Routers MikroTik
+- Se revierte el ancho expandido: la tarjeta MikroTik seleccionada vuelve a **290 px** en escritorio, igual que las demás tarjetas.
+- Se retiraron los indicadores **PPPoE activos** y **Colas** marcados como no requeridos.
+- CPU, memoria, uptime y latencia se muestran debajo de las tarjetas, en cuatro recuadros compactos.
+- El botón **Editar router** permanece dentro de la tarjeta y conserva su permiso `network → edit`.
+- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de las cuatro métricas, exclusión de PPPoE/colas, edición con permiso, tamaño de tarjeta y cuadrícula.
+- Alcance: no se modifican lecturas RouterOS, API, datos del router, pestañas, OLT, acciones existentes ni permisos de backend.
 
-### 1.0.38–1.0.43
-- Comentarios de recursos diferenciados por servicio.
-- Sincronización de nombre/DNI con recursos MikroTik existentes.
+### 1.1.72 — 2026-09-09 — Métricas integradas y edición en Routers MikroTik
+- En **Gestión de Red → Routers MikroTik**, los seis indicadores operativos (CPU, memoria, uptime, latencia, PPPoE activos y colas) se integran dentro de la tarjeta del router seleccionado.
+- La tarjeta seleccionada usa el ancho completo del módulo para organizar los indicadores sin comprimirlos; las tarjetas no seleccionadas conservan su formato compacto.
+- Se añadió el botón **Editar router** dentro de la misma tarjeta. Abre el formulario existente y solo se muestra cuando la cuenta tiene el permiso `network → edit`.
+- Las pestañas de lectura en vivo permanecen debajo de la tarjeta y ya no repiten los indicadores.
+- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
+- Prueba realizada: revisión estática de integración de métricas, ausencia de duplicado en el detalle, apertura del formulario, permiso de edición y conservación del ancho OLT.
+- Alcance: no se modifican API, credenciales, lecturas RouterOS, pestañas, eliminación, permisos de backend ni el comportamiento de OLT.
 
-### 1.0.52
-- Facturación global con Facturas/Configuración.
-- Factura manual.
-- Pagos.
-- Configuración de facturación.
+### 1.1.71 — 2026-09-09 — Avatar de cuenta activa con color amigable
+- El identificador circular de la cuenta activa en el menú lateral ahora usa degradado azul/turquesa/violeta, borde suave y sombra ligera.
+- En Claro Suave también se reforzaron el nombre y rol de la cuenta para mantener buena lectura.
+- El avatar continúa mostrando la inicial, el nombre y el rol reales de la sesión; no se modifican permisos, navegación ni cierre de sesión.
+- Prueba realizada: revisión estática de estructura del perfil lateral, lectura de usuario/rol y estilos de oscuro/Claro Suave.
 
-### 1.0.58
-- ClientBilling reestructurado con Facturas/Transacciones/Saldos/Configuración.
-- Facturas relacionadas con `service_id`.
-- Corrección posterior de JSX.
+### 1.1.70 — 2026-09-09 — Inicio de sesión adaptado al tema seleccionado
+- La pantalla de inicio de sesión ahora respeta el tema guardado que obtiene desde `/settings/public` antes de autenticar.
+- En Claro Suave usa fondo luminoso, tarjeta blanca, títulos y campos de alto contraste, además de accesos rápidos claros con colores funcionales.
+- En Oscuro se conserva la presentación actual; la geometría de la pantalla se mantiene compartida.
+- Prueba realizada: revisión estática de aplicación del tema guardado, estructura de Login, estilos claros y llamada de autenticación sin cambios.
+- Alcance: no se modifican credenciales, roles, API, sesión, redirecciones ni acceso.
 
-### 1.0.61
-- Eliminación de servicio adicional con protección de facturas pendientes.
-- Confirmación explícita antes de borrar servicio + facturas pendientes.
-- Facturas pagadas protegidas.
+### 1.1.69 — 2026-09-09 — Mensaje «Buscando actualización» visible en Claro Suave
+- Se corrigió el estado visual del botón «Comprobar»: la regla clara normal anulaba sus colores cuando `aria-busy="true"`.
+- Durante una comprobación manual, el botón ahora muestra fondo azul sólido, texto e ícono blancos y el mensaje «Buscando actualización…» con contraste.
+- Al terminar vuelve a su apariencia clara normal; no se cambia el sondeo silencioso durante instalación.
+- Prueba realizada: revisión estática de estilos normal/ocupado, selector `aria-busy`, color de fondo y texto del ícono.
 
-### 1.0.62
-- Eliminación completa del cliente limpia facturas, servicios, tickets, tareas, comunicaciones, documentos e historial asociado.
-- Facturas conservan identificación del servicio mediante `service_label`/`service_type`.
-- Migración conservadora de columnas sin borrar base de datos existente.
+### 1.1.68 — 2026-09-09 — Versión movida al control global de actualizaciones
+- Se corrigió la ubicación: la versión deja de mostrarse en el encabezado del Dashboard.
+- Ahora se muestra en la barra superior, inmediatamente antes del botón global de actualizaciones con ícono de descarga, tal como corresponde al control marcado.
+- El indicador lee `PANEL_VERSION` y tiene estilo propio para oscuro y Claro Suave.
+- Prueba realizada: revisión estática del grupo superior, orden versión → botón, eliminación del duplicado en Dashboard y estilos de ambos temas.
+- Alcance: no se modifican las métricas del Dashboard, descarga, instalación, sesión ni API.
 
-### 1.0.63
-- Acciones por factura: editar, ver documento, eliminar, anular y enviar.
+### 1.1.67 — 2026-09-09 — Instalación silenciosa y progreso legible en actualizaciones
+- Durante una instalación, el panel conserva el sondeo de estado cada 3 segundos para actualizar el progreso, pero lo realiza sin cambiar el botón «Comprobar» a estado de búsqueda.
+- El mensaje «Buscando actualización…» solo aparece cuando el operador presiona manualmente «Comprobar».
+- Se reforzó en Claro Suave el contraste de textos, contenedor y barra del progreso para evitar controles o letras blancas poco visibles.
+- Prueba realizada: revisión estática del sondeo silencioso, activación manual, colores de progreso y rutas de estado/instalación.
+- Alcance: no se alteran la frecuencia de sondeo durante instalación, descarga, instalación, sesión ni API.
+
+### 1.1.66 — 2026-09-09 — Versión anclada junto a Actualizar en el Dashboard
+- El indicador de versión del panel se agrupa de forma explícita con el botón «Actualizar» en el encabezado del Dashboard.
+- En escritorio el grupo queda alineado a la derecha; en pantallas pequeñas se mantiene unido y alineado sin trasladar la versión al inicio del contenido.
+- La versión continúa obteniéndose de `PANEL_VERSION`; no se modifica la actualización del Dashboard ni datos operativos.
+- Prueba realizada: revisión estática del orden versión → botón, anclaje de escritorio, alineamiento móvil y fuente de versión.
+
+### 1.1.65 — 2026-09-09 — Ventana de actualizaciones adaptada a Claro Suave
+- Se añadieron identificadores estructurales al modal de actualizaciones, confirmación, avisos, changelog y botones para que el tema claro pueda darles una presentación propia.
+- En Claro Suave el modal ahora usa superficie blanca, borde azul, tipografía azul oscura más gruesa, avisos celeste/verde legibles y botones con contraste visible.
+- El tema oscuro conserva sus fondos y colores actuales; no se cambió la geometría ni la lógica de ninguno de los temas.
+- Prueba realizada: revisión estática de selectores, avisos, botones y rutas `/system-update/status` y `/system-update/install`.
+- Alcance: no se modifican la descarga, comprobación, instalación, sesión, API ni actualización real del panel.
+
+### 1.1.64 — 2026-09-09 — Tarjetas OLT con geometría compartida entre temas
+- El ancho de las tarjetas OLT se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, compartido por ambos temas.
+- En escritorio las OLT usan 380 px y en móvil ocupan el ancho disponible; el tema oscuro ya no expande estas tarjetas por la cuadrícula.
+- Los colores, bordes, estados y acción «Probar conexión CLI» propios de cada tema permanecen sin cambios.
+- Prueba realizada: comprobación estática de las clases compartidas OLT/MikroTik y ausencia de reglas de ancho OLT exclusivas del tema claro.
+
+### 1.1.63 — 2026-09-09 — Tarjeta MikroTik con geometría compartida entre temas
+- El ancho de la tarjeta MikroTik se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, que usan los dos temas.
+- En escritorio conserva 290 px y en móvil ocupa el ancho disponible, tanto en claro como en oscuro.
+- El tema claro conserva su gradiente azul y el oscuro conserva su paleta oscura/cian; el cambio solo unifica medidas y no altera datos, acciones ni navegación.
+- Prueba realizada: comprobación estática de la clase compartida y ausencia de reglas de ancho específicas del tema claro.
+
+### 1.1.62 — 2026-09-09 — Geometría única para menú y submenús
+- El menú lateral y sus submenús ahora usan clases estructurales compartidas en `Sidebar.jsx`: contenedor, menú principal, grupo de submenú y submenú.
+- Se fijan alturas comunes: menú principal de 40 px y submenús de 36 px, junto con el mismo ancho, sangría y espaciado para ambos temas.
+- El tema oscuro y `zhub-light` solo pueden cambiar colores, bordes, texto y estados visuales; no la distribución del menú.
+- Como resultado, una futura modificación de orden, tamaño, iconos o posiciones realizada en `Sidebar.jsx` se verá de forma idéntica en los dos temas.
+- Prueba realizada: revisión estática de clases comunes y confirmación de que el componente no contiene selectores de tema.
+- Alcance: no se modifican rutas, permisos, opciones de menú, navegación ni datos.
+
+### 1.1.61 — 2026-09-09 — Protocolo obligatorio de trabajo y publicación
+Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
+1. **Cambio:** implementar únicamente lo solicitado.
+2. **Pruebas:** comprobar de forma segura el cambio realizado.
+3. **Bitácora:** actualizar este único archivo maestro con el detalle del cambio, alcance, archivos, pruebas y exclusiones.
+4. **Verificación:** confirmar que código, bitácora y resultado esperado están presentes.
+5. **Cambio de versión:** actualizar `PANEL_VERSION` y su descripción.
+6. **Actualización:** publicar los archivos al repositorio para que el panel pueda actualizarse.
+- No se debe cambiar la versión ni publicar antes de registrar y verificar la bitácora.
+- Esta regla aplica incluso a cambios exclusivamente visuales o documentales.
+#### Aclaración operativa sobre la bitácora
+- Este archivo es **interno de continuidad** para las conversaciones de trabajo.
+- Su actualización no forma parte de una actualización funcional o visual del panel y, por sí sola, **no debe aumentar** `PANEL_VERSION`, activar el botón Actualizar ni comunicarse como versión nueva del sistema.
+- Cuando exista un cambio real en el panel, la bitácora se registra durante el proceso de trabajo, pero la versión y la publicación corresponden únicamente a los archivos funcionales del panel.
+
+### 1.1.60 — 2026-09-09 — Bitácora maestra actualizada y cierre de la etapa visual
+- Se leyó y revisó el archivo maestro `docs/CONTINUIDAD_Z-HUB.md`.
+- Se registró el trabajo realizado desde la versión 1.1.32 hasta la 1.1.59: Dashboard, Gestión de Red, OLT, ONUs, consola, planes, clientes, ficha del abonado, facturación, mensajería, ajustes, Redes IPv4 y Cajas NAP.
+- Se confirma el patrón aplicado: tema `zhub-light` con superficies claras, tarjetas de color sólido cuando corresponde, tipografía de mayor peso, estados con contraste y tablas operativas legibles.
+- Se documenta también el ajuste de distribución de Ajustes: columnas compactas en pantallas amplias y una columna en pantallas menores.
+- Regla obligatoria vigente: **cada cambio futuro debe actualizar la versión del panel y este único documento maestro de continuidad**, detallando archivos, alcance, validación y lo que no fue modificado.
+- Validación realizada: se comprobó el historial de versiones y se completaron las entradas que faltaban de la etapa 1.1.57–1.1.58.
+
+### 1.1.59 — 2026-09-09 — Redes IPv4 y Cajas NAP adaptadas completamente
+- Se adapta de forma completa la presentación de **Redes IPv4** y **Cajas NAP** al tema claro Z-Hub.
+- Redes IPv4: indicadores sólidos azul, verde y violeta; buscador claro, tabla blanca con cabecera azul oscuro, filas alternadas y texto operativo grueso.
+- Cajas NAP: filtros claros, panel de fondo suave y tarjetas NAP blancas con borde azul, sombra y realce al pasar el cursor.
+- Se conservan colores de puertos libres/ocupados y las acciones de editar/eliminar con buena visibilidad.
+- Alcance: solo presentación; no se modifican redes, IPs, MikroTik, zonas, NAPs, puertos, asignaciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.58 — 2026-09-09 — Reconciliación de continuidad: submenús de Red
+- Se incorpora el registro que faltaba para la revisión visual de los submenús **Redes IPv4** y **Cajas NAP** en el modo Claro Suave.
+- Se verificó el estado del lateral y de las rutas de ambos submódulos; la corrección preparó la base de estilo clara para que no heredaran superficies oscuras del tema anterior.
+- Esta intervención fue visual: no alteró navegación, permisos, datos, API, MikroTik, zonas, cajas ni asignaciones.
+
+### 1.1.57 — 2026-09-09 — Reconciliación de continuidad: submenús de Red
+- Se incorpora el registro correspondiente a la etapa de revisión de los submenús **Redes IPv4** y **Cajas NAP** en el modo Claro Suave.
+- Se verificó el estado del lateral y de las rutas de ambos submódulos; la corrección preparó la base de estilo clara para que no heredaran superficies oscuras del tema anterior.
+- Esta intervención fue visual: no alteró navegación, permisos, datos, API, MikroTik, zonas, cajas ni asignaciones.
+
+### 1.1.56 — 2026-09-09 — Ajuste de encaje de tarjetas en Ajustes
+- Se corrige la distribución de las tarjetas de **Ajustes → General** en pantallas amplias.
+- Las dos columnas ahora fluyen de forma compacta según la altura de cada tarjeta, evitando grandes espacios vacíos entre recuadros.
+- El botón Guardar cambios se mantiene al final, ocupando todo el ancho de la sección.
+- En pantallas menores se conserva una única columna ordenada.
+- Alcance: exclusivamente distribución visual; no se cambian campos, valores, reglas ni API.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.55 — 2026-09-09 — Ajustes adaptados y distribuidos en dos columnas
+- Se adapta la sección **Ajustes → General** al tema claro Z-Hub.
+- Las tarjetas de configuración cambian a superficie blanca, bordes coloridos y textos más gruesos.
+- En pantallas amplias, las tarjetas se distribuyen en **dos columnas** para aprovechar el espacio y reducir el ancho de cada recuadro; en pantallas menores vuelven a una columna.
+- Los campos, selector de apariencia y botón Guardar cambios reciben contraste, foco visible y colores coherentes con el tema.
+- Alcance: solo presentación y distribución; no se modifican datos de empresa, logo, temas, canales de cobro, reglas, notificaciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.54 — 2026-09-09 — Mensajería adaptada al tema
+- Se adapta el módulo **Mensajería y Avisos WhatsApp** al tema claro Z-Hub.
+- Plantillas y editor pasan a tarjetas claras con bordes azules, mejor contraste y tipografía más gruesa.
+- La plantilla seleccionada se resalta en verde claro; las demás conservan un fondo operativo suave con efecto al pasar el cursor.
+- Los campos de destinatario, teléfono y mensaje son claros, legibles y con foco visible.
+- Los botones Copiar y Enviar por WhatsApp quedan reforzados con color y contraste.
+- Alcance: solo presentación; no se modifican plantillas, clientes, teléfonos, contenido de mensajes, copiado ni envío por WhatsApp.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.53 — 2026-09-09 — Log del cliente adaptado al tema
+- Se adapta la pestaña **Log** de la ficha del cliente al tema claro Z-Hub.
+- El historial usa fondo claro y el contador de eventos se muestra en azul sólido con texto blanco.
+- Cada evento ahora es una tarjeta blanca con borde azul suave, título y detalle más gruesos, además de efecto visual al pasar el cursor.
+- El operador responsable queda destacado con una etiqueta azul clara de alto contraste; la fecha conserva buena legibilidad.
+- Alcance: solo presentación; no se modifican acciones, detalle, operador, fecha, registros históricos ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.52 — 2026-09-09 — Configuración de Facturación adaptada al tema
+- Se adapta la pestaña **Configuración** de Facturación al tema claro Z-Hub.
+- Las secciones “Fechas y corte” y “Avisos y recordatorios” ahora son tarjetas blancas con borde superior azul y verde, respectivamente.
+- Los títulos, etiquetas y controles tienen mayor contraste y grosor para facilitar la lectura.
+- Las entradas y listas usan fondo claro, borde azul y foco visible; la generación automática utiliza el color verde del tema.
+- El botón Guardar cambios se refuerza con degradado turquesa/azul.
+- Alcance: solo presentación; no se modifican fechas de pago, reglas de corte, recordatorios, generación automática, facturas ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.51 — 2026-09-09 — Pestaña Servicio del cliente adaptada al tema
+- Se adapta la pestaña **Servicio** de la ficha del cliente al tema claro Z-Hub.
+- La cabecera de “Servicios de Internet” ahora tiene un degradado azul sólido, título más grueso y botón “Nuevo servicio” turquesa visible.
+- La tabla cambia a cabecera azul oscuro, filas claras alternadas y datos con tipografía más gruesa para una lectura rápida.
+- El estado **Activo** resalta con verde sólido, texto blanco y sombra; los estados no activos quedan en rojo sólido.
+- Alcance: únicamente presentación; no se modifican servicios, planes, IP, Router, tecnología, señal ONU, acciones ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.50 — 2026-09-09 — Facturación adaptada al tema
+- Se añadieron clases específicas para indicadores, tabla y estados de facturas.
+- Total facturado, cobrado y por cobrar usan tarjetas sólidas azul, verde y rojo.
+- La tabla tiene superficie clara, cabecera azul oscuro, filas alternadas y tipografía operativa más gruesa.
+- El estado PAGADO ahora resalta en verde sólido con texto e icono blancos; Pendiente y Vencido también reciben colores sólidos.
+- Alcance: solo presentación; no se modifican facturas, pagos, montos, acciones, reglas ni API.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.49 — 2026-09-09 — Ficha de cliente adaptada al tema
+- Se añadieron clases específicas al modal, formulario de resumen y panel de estado de cuenta.
+- Cabecera y pestañas ahora presentan azul técnico; los títulos, etiquetas e inputs ganan contraste y peso tipográfico.
+- El estado de cuenta usa un panel azul profundo, tarjetas blancas legibles y estado de servicio activo en verde sólido.
+- Alcance: solo presentación; no se modifican guardado, pestañas, datos, facturación, servicios, comunicaciones ni ubicación.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.48 — 2026-09-09 — Estados y datos principales de abonados reforzados
+- La información principal de Abonado/Contacto, Plan/Tarifa e IP/Conexión se muestra con mayor peso tipográfico.
+- El estado ACTIVO usa fondo verde sólido, texto e icono blancos y sombra de realce; el estado CORTADO recibe el mismo tratamiento en rojo.
+- Alcance: solo presentación; no se modifican estados reales, deuda, datos ni acciones del abonado.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.47 — 2026-09-09 — Tarjetas de plan compactas y precio destacado
+- Las tarjetas de Planes y Servicios tienen ahora un ancho máximo de 290 px en escritorio, con ancho completo en móvil.
+- Se añadió una clase específica al precio mensual y se resaltó en amarillo cálido de alto contraste para una lectura comercial inmediata.
+- Alcance: solo presentación; no se modifican precios guardados, planes, perfiles PPP ni sincronización MikroTik.
+- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
+
+### 1.1.46 — 2026-09-09 — Control de Abonados y Clientes adaptado al tema
+- Se añadieron clases visuales al área de filtros y a la tabla de abonados.
+- El filtro usa azul técnico; los accesos Todos, Activos y Suspendidos tienen acentos azul, verde y rojo.
+- La tabla pasa a superficie clara con cabecera azul oscuro, filas alternadas, hover azul suave y estados/deudas legibles.
+- Alcance: solo presentación; no se modifican búsquedas, filtros, datos, acciones de servicio, WhatsApp, OLT ni eliminación.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.45 — 2026-09-09 — Planes y Servicios adaptados al tema
+- Se añadieron clases de presentación al módulo y a cada tarjeta de plan.
+- Las tarjetas usan azul profundo, etiqueta de tecnología visible, bloque de velocidades blanco con valores azul/verde y acciones con alto contraste.
+- Se añadió realce visual al pasar el cursor sobre un plan.
+- Alcance: únicamente interfaz; CRUD de planes, precios, perfiles PPP y sincronización MikroTik permanecen sin cambios.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.44 — 2026-09-09 — Consola OLT adaptada al tema
+- Se añadieron contenedores visuales específicos para la consola CLI.
+- El área de comando ahora usa azul técnico, entrada blanca legible y botón Ejecutar turquesa de alto contraste.
+- La respuesta CLI se muestra en un panel de terminal oscuro y legible cuando exista salida.
+- Alcance: solo presentación; no se modifican los comandos enviados, validaciones, permisos ni API de la OLT.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.43 — 2026-09-09 — Monitor óptico de ONUs adaptado al tema
+- Se añadieron clases visuales al panel de Potencia Óptica ONU y a sus tres métricas.
+- El bloque “Monitor óptico” ahora tiene fondo azul técnico, selector claramente visible, botón de consulta turquesa y botón Detener con contraste.
+- RX usa azul, TX violeta y ONUs con lectura válida verde, todos con texto blanco de alto contraste.
+- Alcance: solo presentación; no cambian el escaneo secuencial, las lecturas ópticas, temporizadores, API ni la tabla de resultados.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.42 — 2026-09-09 — Tarjeta OLT compacta y acción CLI corregida
+- Se redujo el ancho máximo de la tarjeta OLT a 380 px en escritorio (aprox. 30 % menos); en móvil se mantiene al 100 %.
+- Se corrigió el botón “Probar conexión CLI”: ahora usa fondo azul, borde claro, texto e icono blancos y realce al pasar el cursor.
+- Alcance: solo apariencia de la tarjeta OLT; no se modifican la prueba de conexión, permisos, llamadas API ni otros controles.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.41 — 2026-09-09 — Pestaña ONUs OLT adaptada al tema
+- Se añadieron clases visuales al workspace y a la lista de ONUs para aplicar estilos de forma segura.
+- Las métricas superiores son ahora sólidas: total azul, en línea verde, fuera de línea rojo y sin estado ámbar.
+- Se adaptaron búsqueda, filtros, tabla, cabecera y filas a una superficie clara con contrastes azul técnico y estados legibles.
+- El contenido sigue siendo el mismo: no se modificaron endpoints, parser, acciones de reinicio/activación/desactivación/eliminación ni consulta óptica.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.40 — 2026-09-09 — Corrección de contraste y tamaño de tarjeta MikroTik
+- Se añadió una clase específica para distinguir visualmente las tarjetas MikroTik de las OLT.
+- Se corrigió la prioridad CSS de la tarjeta seleccionada para que conserve el fondo azul sólido y el texto blanco plenamente visible.
+- La tarjeta MikroTik queda compacta, con un ancho máximo de 290 px en escritorio y ancho completo en móvil.
+- El hover mantiene un azul más luminoso, borde claro y sombra de realce.
+- Alcance: solo presentación; no se modifican datos, estado, botones, selecciones ni monitoreo.
+- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
+
+### 1.1.39 — 2026-09-09 — Puertos PON OLT adaptados al tema de color
+- Se añadieron clases visuales propias al encabezado y a las métricas de Puertos PON.
+- El encabezado del diagnóstico óptico utiliza azul técnico; las métricas se diferencian por tipo: temperatura naranja, voltaje violeta, corriente láser azul y potencia óptica verde.
+- Texto, iconos, barras y etiqueta de lectura se ajustaron a alto contraste; las tarjetas resaltan suavemente al pasar el cursor.
+- Alcance: únicamente presentación; no se modificó el parser de métricas, las consultas OLT ni la selección de PON.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.38 — 2026-09-09 — Tarjeta MikroTik con color y realce al pasar el cursor
+- La tarjeta de cada router MikroTik usa ahora un degradado azul sólido con alto contraste.
+- Al pasar el cursor se vuelve más brillante, se eleva ligeramente y muestra una sombra azul de realce.
+- Se ajustó texto, iconos, separadores y botones internos para mantener legibilidad sobre el nuevo fondo.
+- Alcance: solo apariencia del tema `zhub-light`; sin cambios en monitoreo, estados ni acciones del router.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.37 — 2026-09-09 — Indicadores sólidos en el resumen OLT
+- Se transformaron las cuatro tarjetas principales del resumen OLT en indicadores de color sólido: OLTs en línea (verde), ONUs en línea (turquesa), ONUs autorizadas (violeta) y alertas activas (ámbar).
+- Se aplicó texto e iconos blancos con mayor peso visual para mantener legibilidad sobre cada fondo.
+- Los paneles técnicos, lecturas, pestañas y acciones del módulo se conservan sin cambios funcionales.
+- Alcance: apariencia exclusiva del tema `zhub-light`; no modifica consultas, comandos ni datos de la OLT.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.36 — 2026-09-09 — Corrección de prioridad visual en Gestión de Red
+- Se corrigió la prioridad de CSS de las métricas CPU, Memoria, Uptime, Latencia, PPPoE activos y Colas.
+- Los seis recuadros ahora fuerzan fondos sólidos diferenciados (azul, violeta, turquesa, ámbar, verde y azul pizarra), evitando que la superficie clara compartida los sobrescriba.
+- Texto e iconos pasan a blanco y se mantiene una jerarquía tipográfica fuerte para conservar legibilidad.
+- Alcance: solo apariencia del tema `zhub-light`; sin cambios en las lecturas ni en la API de MikroTik.
+- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
+
+### 1.1.35 — 2026-09-09 — Métricas sólidas en Gestión de red
+- Objetivo y causa: se solicitó más vida visual porque las métricas de Gestión de red aún se percibían demasiado blancas.
+- Archivos modificados: frontend/src/modules/appearance/panel-theme.css (tarjetas de métricas sólidas), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: CPU, memoria, uptime, latencia, PPPoE y colas conservan los mismos valores y su fuente RouterOS. No cambia API, OLT, datos, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática de selectores y PANEL_VERSION 1.1.35. Build y validación visual real pendientes.
+- Resultado esperado: métricas azul, violeta, turquesa, ámbar, verde y azul profundo; texto/iconos blancos y gruesos. Tabla operativa permanece clara.
+
+### 1.1.34 — 2026-09-09 — Tablero OLT claro con color operativo
+- Objetivo y causa: el resumen de OLT conservaba módulos completos en oscuro pese a que la vista general de Gestión de red ya se adaptó al tema claro.
+- Archivos modificados: frontend/src/modules/red/components/OltLiveTabs.jsx (contenedor visual OLT), frontend/src/modules/red/components/olt-tabs/OltSummaryTab.jsx (clase propia del tablero), frontend/src/modules/appearance/panel-theme.css (superficies claras y acentos de estado), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: no se modifica ningún endpoint /api/routers/{id}/olt/*, comando CLI, consulta de PON, ONU, conteo ni acción de la OLT. No cambia permisos, autenticación, datos ni tema oscuro.
+- Backup: rama backup-pre-olt-clara-1.1.34 creada antes del ajuste.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.34. Build, revisión visual y validación de lecturas reales pendientes.
+- Resultado esperado: Resumen OLT, salud, disponibilidad, estado y actividad usan blanco, bordes azul-gris y colores funcionales: verde/turquesa para línea, índigo para autorización, ámbar para alerta y rojo para fuera de línea.
+
+### 1.1.33 — 2026-09-09 — Color funcional en Gestión de red
+- Objetivo y causa: tras llevar la vista a claro, métricas y tablas quedaron demasiado neutras. Se pidió recuperar vida visual manteniendo sobriedad operativa.
+- Archivos modificados: frontend/src/modules/red/Network.jsx (identificadores por métrica), frontend/src/modules/appearance/panel-theme.css (tonos suaves por KPI, tarjeta seleccionada, tráfico y estados), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: no cambia la lectura de RouterOS/OLT, métricas, estados, API, datos, permisos ni tema oscuro. Solo se presenta color bajo zhub-light.
+- Pruebas: revisión estática de identificadores, selectores y PANEL_VERSION 1.1.33. Build y validación visual real pendientes.
+- Resultado esperado: CPU azul, memoria violeta, uptime turquesa, latencia ámbar, PPPoE verde y colas índigo; tráfico y estados resaltan claramente sin volver a fondos oscuros.
+
+### 1.1.32 — 2026-09-09 — Gestión de red adaptada al tema claro
+- Objetivo y causa: al ingresar a Gestión de red, tarjetas de equipos, métricas y tabla de interfaces conservaban grandes superficies oscuras que no seguían el estilo ya aplicado al Dashboard.
+- Archivos modificados: frontend/src/modules/red/Network.jsx (contenedores visuales), frontend/src/modules/red/components/RouterCard.jsx (clase de tarjeta), frontend/src/modules/red/components/RouterLiveTabs.jsx (clase de tabla viva), frontend/src/modules/appearance/panel-theme.css (capa clara aislada), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se preservan las llamadas a /api/routers, acciones de prueba, ping, cortes, configuración, RouterOS y OLT. No cambian datos, rutas, permisos, autenticación ni tema oscuro.
+- Backup: rama backup-pre-red-clara-1.1.32 creada antes de modificar la vista operativa.
+- Pruebas: revisión estática de clases, selectores y versión 1.1.32. Build y validación visual/lecturas reales pendientes.
+- Resultado esperado: Gestión de red presenta equipos, métricas, pestañas e interfaces con fondos blancos, cabeceras gris-azul, textos azul tinta, bordes discretos y estados de color legibles, coherentes con Dashboard.
+
+### 1.1.31 — 2026-09-09 — Navbar clara y tipografía reforzada
+- Objetivo y causa: adaptar Moneda, notificaciones y perfil de la barra superior al tema claro; anteriormente conservaban fondos oscuros y un peso visual inconsistente con el resto del Dashboard.
+- Archivos modificados: frontend/src/components/layout/Navbar.jsx (clases propias navbar-currency, navbar-notifications y navbar-user), frontend/src/modules/appearance/panel-theme.css (fondos claros, texto azul tinta y peso alto), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: búsqueda, enlace a facturación de notificaciones, centro de actualizaciones y datos del usuario se conservan sin cambios. No afecta API, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.31. Build y validación visual real pendientes.
+- Resultado esperado: la barra superior clara muestra moneda, alerta y usuario con superficies claras, bordes discretos y texto más grueso como el resto del panel.
+
+### 1.1.30 — 2026-09-09 — Confirmación del botón Actualizar
+- Objetivo y causa: el botón de actualización del Dashboard ejecutaba la consulta, pero no ofrecía confirmación visible; si los valores no cambiaban, parecía no realizar ninguna acción.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (estado “Actualizando…”, bloqueo temporal y toast de éxito), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: el clic manual llama a /api/dashboard/summary como antes y confirma al terminar. El refresco automático de 15 segundos permanece silencioso. No cambia API, datos, rutas, permisos, autenticación ni tema oscuro.
+- Pruebas: revisión estática del flujo silent/manual, estado refreshing, texto del botón y PANEL_VERSION 1.1.30. Build y validación visual real pendientes.
+- Resultado esperado: al pulsar el botón se ve “Actualizando…” con icono girando y después el aviso “Dashboard actualizado”; si falla, se conserva el aviso de error existente.
+
+### 1.1.29 — 2026-09-09 — Tablas recientes con lectura reforzada
+- Objetivo y causa: mejorar el peso de letra en Últimos pagos registrados y Últimos conectados, y resaltar los importes cobrados con un verde más vivo.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases propias de ambas tablas), frontend/src/modules/appearance/panel-theme.css (títulos, encabezados, filas e importes), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: conserva los mismos registros, importes, API /api/dashboard/summary, navegación, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
+- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.29. Build y validación visual real pendientes.
+- Resultado esperado: toda la información de ambas tablas se lee con mayor presencia y S/. cobrado resalta en verde vivo sin alterar el valor.
+
+### 1.1.28 — 2026-09-09 — Versión visible en Dashboard
+- Objetivo y causa: mostrar la versión instalada junto al botón Actualizar para facilitar la comprobación visual del panel sin buscar el pie de página.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (importa y presenta PANEL_VERSION), frontend/src/modules/appearance/panel-theme.css (etiqueta dashboard-version-badge), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: la etiqueta usa la fuente única PANEL_VERSION, por lo que cambia automáticamente en cada publicación. No modifica el mecanismo de actualización, API, datos, permisos, autenticación ni el tema oscuro.
+- Pruebas: revisión estática de importación, presentación de PANEL_VERSION, selector y versión 1.1.28. Build y validación visual real pendientes.
+- Resultado esperado: el Dashboard muestra “Versión 1.1.28” inmediatamente a la izquierda de “Actualizar”.
+
+### 1.1.27 — 2026-09-09 — Tipografía de Recaudación Diaria reforzada
+- Objetivo y causa: aumentar el peso visual de las letras de Recaudación Diaria para que sea consistente con el Resumen del sistema y la referencia aprobada.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-revenue), frontend/src/modules/appearance/panel-theme.css (título, subtítulo, leyenda, escalas y medidor), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se conservan datos, series, porcentajes, API /api/dashboard/summary, rutas, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
+- Pruebas: revisión estática de clase, selectores y PANEL_VERSION 1.1.27. Build y validación visual real pendientes.
+- Resultado esperado: textos, escalas y métricas del gráfico se ven más gruesos, oscuros y notorios sin alterar la gráfica ni sus datos.
+
+### 1.1.26 — 2026-09-09 — Legibilidad del Resumen del sistema
+- Objetivo y causa: ajustar la tipografía del Resumen del sistema para que tenga la misma lectura azul tinta, más nítida y con peso alto de la referencia. Los números de los indicadores circulares requerían mayor contraste respecto de su color de fondo.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-system-summary), frontend/src/modules/appearance/panel-theme.css (tipografía, filas y contadores), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: se preservan /api/dashboard/summary, todos los valores, navegación, permisos, autenticación y tema oscuro; el cambio solo actúa en zhub-light.
+- Pruebas: revisión estática de selectores, clase del panel y PANEL_VERSION 1.1.26. Build y validación visual real pendientes.
+- Resultado esperado: etiquetas y título en azul tinta con peso consistente; cada contador redondo conserva su color pero muestra un número oscuro, grueso y visible.
+
+### 1.1.25 — 2026-09-09 — Área útil del panel ampliada
+- Objetivo y causa: la referencia usa todo el espacio posterior al menú lateral. Layout.jsx limitaba el contenido global a max-w-7xl (1280 px), por lo que aparecían franjas vacías y el Dashboard quedaba más estrecho que el modelo.
+- Archivos modificados: frontend/src/components/layout/Layout.jsx (se reemplaza el límite max-w-7xl por ancho completo con padding adaptable), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: Dashboard y el resto de módulos conservan sus datos y acciones; solo reciben mayor área de presentación. No cambia API, permisos, autenticación, navegación ni tema oscuro.
+- Backup: rama backup-pre-layout-ampliado-1.1.25 creada antes de modificar el layout compartido.
+- Pruebas: revisión estática de la clase de Layout, PANEL_VERSION y continuidad. Build y revisión visual real en servidor pendientes.
+- Resultado esperado: tras el menú lateral, las tarjetas KPI, gráfico, resumen y tablas se extienden hasta el borde útil del contenido, con márgenes laterales compactos equivalentes a la segunda referencia.
+
+### 1.1.24 — 2026-09-09 — Tarjetas KPI del Dashboard según referencia
+- Objetivo y causa: corregir la franja superior del Dashboard claro. La regla global de tema no reconocía el color sky y además reemplazaba los textos blancos de las tarjetas por tonos oscuros, por eso la tarjeta de transacciones aparecía blanca y con bajo contraste.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases visuales propias de cada KPI), frontend/src/modules/appearance/panel-theme.css (colores, tipografía, contraste, altura y ancho de las cuatro tarjetas), frontend/src/modules/system-update/version.js.
+- Flujo y compatibilidad: los valores se siguen obteniendo de /api/dashboard/summary; no se cambian API, datos, navegación, permisos, facturación, autenticación ni el tema oscuro.
+- Pruebas: revisión estática de las cuatro clases KPI, selectores de tema y PANEL_VERSION 1.1.24. Build y validación visual en el servidor siguen pendientes.
+- Resultado esperado: las tarjetas llenan completamente su recuadro, con verde, azul, violeta y azul oscuro; texto e iconos blancos legibles, títulos con peso alto y sin superficies blancas dentro de la franja KPI.
+
+### 1.1.23 — 2026-09-09 — Dashboard claro según referencia
+- Objetivo: alinear el Dashboard del tema zhub-light con la segunda referencia proporcionada: fondos blancos, bordes azul-gris discretos, texto azul tinta, tablas claras y gráficos legibles.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (contenedor visual y tooltip claro), frontend/src/modules/appearance/panel-theme.css (capa visual acotada a .dashboard-reference), frontend/src/modules/system-update/version.js.
+- Flujo/compatibilidad: no cambia API, datos, rutas, permisos ni el tema oscuro. Dashboard mantiene /api/dashboard/summary y solo se modifica su presentación bajo html[data-panel-theme="zhub-light"].
+- Backup: rama backup-pre-dashboard-claro-1.1.23 creada antes del cambio.
+- Pruebas: revisión estática de JSX, selectores y versión; build y validación visual real en servidor pendientes.
+- Resultado esperado: tarjetas KPI coloreadas, recaudación, resumen, últimas tablas y tooltip se presentan en claro como la referencia, eliminando las grandes superficies oscuras del Dashboard.
+
+### 1.1.22 — 2026-09-09 — Hover transparente azul del menú claro
+- Se elimina la barra gris oscura que dificultaba leer al pasar el mouse.
+- Menús y submenús de zhub-light usan fondo transparente con carga azul translúcida, marco azul sutil, texto azul oscuro y peso 900 en hover.
+- No modifica rutas, permisos ni lógica de navegación. Archivo funcional: frontend/src/modules/appearance/panel-theme.css; versión/changelog: frontend/src/modules/system-update/version.js.
+- Pendiente ejecutar build y validar hover en el panel desplegado. Commits: e13af07f, 10b9276f.
+
+### 1.1.21 — 2026-09-09 — Tipografía y hover del menú
+- Menú claro: normal peso 700; activo y hover peso 900. Estructura, rutas y permisos quedan sin cambios.
+- Archivos funcionales: frontend/src/components/layout/Sidebar.jsx y frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual real.
+
+### 1.1.20 — 2026-09-09 — Tipografía del menú
+- En zhub-light, navegación normal usa peso 600; activa y submenú activo usan peso 800 y azul tinta.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual.
+
+### 1.1.19 — 2026-09-09 — Menú activo en negrita
+- Sidebar resalta menú y submenú activos con font-bold sin cambiar rutas, permisos ni expansión.
+- Archivo funcional: frontend/src/components/layout/Sidebar.jsx. Pendiente build y validación visual.
+
+### 1.1.18 — 2026-09-09 — Panel derecho del Dashboard
+- Se limitó el cambio visual al Resumen del sistema: tarjeta clara, filas gris claro, texto azul tinta y badges sobrios.
+- Se mantuvo deliberadamente el gráfico izquierdo sin convertirlo a tarjeta clara. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
+- Pendiente build y validación visual antes de extender el ajuste.
+
+### 1.1.17–1.1.16 — 2026-09-09 — Ajuste contra referencia visual
+- Se afinó zhub-light con fondo claro neutro, superficies blancas, texto azul tinta, KPI sólidos moderados, líneas sobrias y sombras mínimas.
+- Se preservó texto blanco dentro de indicadores de color y se evitó modificar el tema oscuro. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
+- Pendiente build y revisión visual de Dashboard, Clientes, Facturación, Red, formularios, tablas y modales. Commits: d8a925e7, 6323aa5c.
+
+### 1.1.15 — 2026-09-09 — Tema claro sin brillo
+- Se reforzó la apariencia plana y profesional: sin filtros, gradientes, sombras coloreadas ni glow.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Sin cambios en Clientes, Facturación, red, autenticación ni tema oscuro.
+- Pendiente build y validación visual. Commits: 32c6f68e, 10b60734.
+
+### 1.1.14 — 2026-09-09 — Tema claro blanco sólido
+- Se rediseñó exclusivamente zhub-light con superficies blancas, azul tinta, bordes discretos y sin glow, neón ni gradientes.
+- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Se conserva el identificador zhub-light y el tema oscuro; sin cambios de API, base de datos ni lógica.
+- Pendiente validación real de build y navegador. Commits: 8933f963, 79b39d12.
+
+### 1.1.13 — 2026-09-09 — Tema claro suave
+- El tema persistido `zhub-light` se mantiene, con una base gris-azulada suave, superficies claras, menor luminancia y sin grandes superficies blancas.
+- No se modifican lógica funcional, base de datos, Clientes, Facturación, MikroTik, OLT, permisos, autenticación ni el tema oscuro clásico.
+- Backup: `backup-pre-soft-light-1.1.13`.
+- Pruebas: build React de producción ejecutado en GitHub Actions; validación visual real en servidor pendiente.
+
+### 1.1.12 — 2026-09-09 — Migración de repositorio / actualizador dual
+- El repositorio principal pasa a `ronbercito/Z-Hub` y `ronbercito/mirkohub` queda como legado/fallback.
+- El actualizador consulta ambas fuentes, compara `PANEL_VERSION` y prioriza Z-Hub en empate.
+- Se conservan por compatibilidad rutas técnicas heredadas, base de datos, clientes, facturación, routers/OLT, permisos, autenticación y templates.
+- La migración de código a Z-Hub fue completada y el desarrollo nuevo debe realizarse en Z-Hub.
+
+### 1.1.11 — 2026-09-09 — Refinamiento del template claro
+- Se redujo la sensación de brillo del template Z-Hub Blanco manteniendo el estilo claro.
+- Se redujo luminosidad de fondos, superficies, bordes, sombras y efectos sin alterar la lógica del panel.
+- Backup: `backup-pre-zhub-light-1.1.11`.
+- Build React y `py_compile` validados; validación visual real pendiente.
+
+### 1.1.10 — 2026-09-08 — Identidad Z-Hub y templates visuales
+- Se cambió la identidad visible del producto de MikroHub a **Z-Hub** y se añadió el template claro `zhub-light`, conservando el template oscuro clásico.
+- El cambio de marca es visible y no destructivo: repositorio legado, rutas técnicas, claves heredadas y nombres internos se conservan por compatibilidad.
+- `panel_theme` se persiste dentro del JSON existente de `settings`; no requiere migración SQL.
+- Build React y `py_compile` validados; instalación real en servidor pendiente.
+
+### 1.1.9 — 2026-09-08 — Facturación por cliente / vencimiento / corte / mensajería
+- La configuración de Facturación se alinea con las reglas individuales guardadas en el abonado: tipo, día de pago, anticipación, gracia, meses para corte y canales/días de mensajes.
+- Se ajustaron frontend y backend para que emisión, vencimiento, gracia y corte respeten la configuración individual.
+- La configuración queda persistida; el transporte automático externo de SMS/WhatsApp/correo sigue pendiente.
+
+### 1.0.98 — 2026-09-08 — Navegación interna de Facturación
+- Se reforzaron las pestañas Facturas, Transacciones, Saldos y Configuración del cliente.
+- Cambio exclusivamente visual/UX, sin modificaciones de base de datos ni endpoints.
+
+### 1.0.97–1.0.96 — 2026-09-08 — Saldos y aplicación automática
+- Se incorporó un libro mayor de movimientos firmados para registrar abonos positivos y deudas negativas, con aplicación automática a facturas futuras.
+- Regla: crédito positivo se aplica a la siguiente factura y el excedente queda disponible; deuda negativa se suma completa a la siguiente factura, aunque supere el monto base.
+- Corrección 1.0.97: `-100 + factura base 50 = factura final 150`.
+- Validación real de build y base de producción pendiente.
+
+### 1.0.95 — 2026-09-08 — Aislamiento de Facturación
+- Se separó Facturación en controlador, tabla, filtros, acciones, utilidades y ErrorBoundary.
+- El ordenamiento React reemplazó la manipulación DOM anterior.
+- API y base de datos sin cambios.
+
+### 1.0.94 — 2026-09-08 — Ordenamiento de Facturación
+- Se agregó ordenamiento para Recibo, Servicio, Período, Monto, Vencimiento y Estado.
+- La implementación inicial fue posteriormente consolidada en React dentro de `ClientBillingTable`.
+
+### 1.0.93 — 2026-09-08 — Corrección de build
+- Se corrigió la ruta relativa de `AuthContext` después de mover Facturación a `editor/billing/`.
+- API, base de datos y lógica de negocio sin cambios.
+
+### 1.0.91 — 2026-09-08 — Aislamiento de Facturación
+- Se creó un wrapper estable para `ClientBilling.jsx` y `ClientBillingErrorBoundary.jsx` para aislar errores de renderizado de las demás pestañas de la ficha.
+- El rollback del actualizador se utilizó cuando una primera versión presentó error de build.
+
+### 1.0.90 — 2026-09-08 — Feedback del Centro de Actualizaciones
+- Se mejoró el feedback visual persistente al comprobar actualizaciones.
+
+### 1.0.85–1.0.89 — Correcciones y mejoras de eliminación de clientes
+- Evolución del flujo de eliminación de clientes, con confirmaciones y protección de datos según las reglas establecidas.
+
+### 1.0.68 — Recalculo de facturación
+- Al editar/eliminar/anular facturas pendientes se recalcula saldo y contador desde facturas reales; las facturas pagadas o con pagos quedan protegidas.
+
+### 1.0.69 — Potencia óptica
+- La potencia óptica de fibra se normaliza a dBm negativo y usa rangos visuales por calidad.
+
+### 1.0.72–1.0.84 — Eliminación definitiva de cliente
+- La eliminación evolucionó de confirmación nativa a modal propio, con datos reales de cliente/servicios/facturas, saldo pendiente, advertencia prioritaria y confirmación SI.
+- La versión estable mantiene la carga de datos en `Clients.jsx` y solo la presentación en el módulo visual; no usar interceptores globales.
+
+### 1.0.63 — Acciones por factura
+- Acciones: editar, ver documento, eliminar, anular y enviar.
 - Protección de facturas pagadas/con pagos.
 - Ventana de envío con Correo o WhatsApp.
 - Documento actual imprimible/guardable como PDF, todavía no PDF binario real.
 - Envío actual mediante `mailto:` / `wa.me`.
 
-### 1.0.85–1.0.90
-- Correcciones y mejoras del flujo de eliminación de clientes.
-- Fuente única de versión.
-- Mejoras de feedback del Centro de Actualizaciones.
-- Fecha de instalación preseleccionada en Nuevo Abonado.
-- 1.0.90: feedback visual persistente al comprobar actualizaciones.
+### 1.0.62 — Eliminación completa del cliente
+- La eliminación completa limpia facturas, servicios, tickets, tareas, comunicaciones, documentos e historial asociado.
+- Facturas conservan identificación del servicio mediante `service_label`/`service_type`.
+- Migración conservadora de columnas sin borrar base de datos existente.
+
+### 1.0.61 — Eliminación de servicio adicional
+- Protección de facturas pendientes y confirmación explícita antes de borrar servicio + facturas pendientes.
+- Facturas pagadas protegidas.
+
+### 1.0.58 — Facturación del cliente
+- `ClientBilling` reestructurado con Facturas/Transacciones/Saldos/Configuración.
+- Facturas relacionadas con `service_id`.
+- Corrección posterior de JSX.
+
+### 1.0.52 — Facturación global
+- Facturación global con Facturas/Configuración.
+- Factura manual, pagos y configuración de facturación.
+
+### 1.0.38–1.0.43 — Sincronización de recursos MikroTik
+- Comentarios de recursos diferenciados por servicio.
+- Sincronización de nombre/DNI con recursos MikroTik existentes.
+
+### 1.0.36–1.0.37 — Servicios adicionales y MikroTik
+- Servicios adicionales provisionan/actualizan MikroTik.
+- Manejo independiente de ONU/potencia.
+- Limpieza de recursos MikroTik al eliminar cliente.
+- Nombres de colas basados en DNI.
+
+### 1.0.30 — Guardado de servicio
+- Guardado de servicio cierra correctamente el editor.
+- `ClientServiceEditor` acepta `onSave`/`onSaveSuccess`.
+
+### 1.0.29 — Centro de actualización
+- Detecta cualquier diferencia `HEAD != origin/main`, no solo cambios de `version.js`.
+
+### 1.0.28 — Coordenadas
+- Selector de coordenadas con Google Maps e integración en ClientDetail.
+
+### 1.0.26–1.0.27 — ClientDetail y schemas
+- Reescritura de ClientDetail y schemas.
+- Corrección de sintaxis Python inválida en schemas que impedía arranque/login del backend.
+
+### 1.0.25 — Disponibilidad IPv4
+- Criterios de disponibilidad IPv4.
+- Exclusión de red/gateway/broadcast.
+- Conteos consistentes.
+
+### 1.0.23 — IP, NAP y potencia óptica
+- Selector de IP de servicio.
+- Puertos libres de NAP.
+- Potencia óptica en dBm.
 
 ---
 
@@ -546,7 +1061,7 @@ La ruta `/pdf` genera HTML imprimible. Si se requiere archivo PDF real, implemen
 ### P2 — Envío automático real
 **Estado:** pendiente.
 
-Correo/WhatsApp actualmente abren los mecanismos del navegador. Para envío automático desde MikroHub habrá que definir e integrar proveedor y credenciales seguras.
+Correo/WhatsApp actualmente abren los mecanismos del navegador. Para envío automático desde Z-Hub habrá que definir e integrar proveedor y credenciales seguras.
 
 ### P3 — Email del cliente
 **Estado:** revisar.
@@ -1168,7 +1683,6 @@ Cada cambio posterior debe actualizar `docs/CONTINUIDAD_Z-HUB.md` antes de comun
 ### Estado
 **Código validado por build y documentación actualizada. Preparado para publicación como 1.1.10; instalación real en servidor pendiente de ejecutar desde el Actualizador.**
 
-
 ---
 
 ## 22. Registro de continuidad — 2026-09-09 — Panel 1.1.11
@@ -1401,11 +1915,9 @@ Desde este punto:
 
 `ronbercito/mirkohub` queda como compatibilidad/fallback y no debe volver a ser el repositorio principal salvo rollback o emergencia expresamente documentada.
 
-
 ### Cierre de migración de repositorio
 
 **Migración de código: completada.** El repositorio principal `ronbercito/Z-Hub` contiene el árbol actualizado de 1.1.12. La validación en servidor real del nuevo actualizador dual permanece pendiente hasta que el administrador instale 1.1.12 desde su panel.
-
 
 ---
 
@@ -1469,7 +1981,6 @@ No se modifican lógica funcional, base de datos, Clientes, Facturación, MikroT
 
 El template debe seguir siendo claro, pero notablemente menos brillante, con una base gris-azulada suave y sin grandes superficies blancas que fatiguen la vista.
 
-
 ---
 
 ## 25. Nota operativa — Política de ramas Git
@@ -1520,59 +2031,11 @@ La rama `update-soft-light-1.1.13` quedó idéntica a `main` después de la publ
 
 Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no debe generar una actualización funcional del panel.
 
-
 ---
 
 ## 26. Changelog único de continuidad — 1.1.14 a 1.1.22
 
 **Política definitiva:** desde esta consolidación solo existe un archivo de continuidad: docs/CONTINUIDAD_Z-HUB.md. No se crearán archivos por versión, fecha, módulo, prueba o corrección. Cada actualización se agregará al final de este apartado, en orden cronológico, con versión, objetivo, archivos, pruebas, resultado y pendientes.
-
-### Formato obligatorio de cada entrada futura
-
-### [Versión] — [Fecha] — [Tipo]
-- Objetivo y causa.
-- Archivos modificados.
-- Flujo y compatibilidad.
-- Pruebas realizadas y pendientes.
-- Resultado, riesgos y commits.
-
-### 1.1.14 — 2026-09-09 — Tema claro blanco sólido
-- Se rediseñó exclusivamente zhub-light con superficies blancas, azul tinta, bordes discretos y sin glow, neón ni gradientes.
-- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Se conserva el identificador zhub-light y el tema oscuro; sin cambios de API, base de datos ni lógica.
-- Pendiente validación real de build y navegador. Commits: 8933f963, 79b39d12.
-
-### 1.1.15 — 2026-09-09 — Tema claro sin brillo
-- Se reforzó la apariencia plana y profesional: sin filtros, gradientes, sombras coloreadas ni glow.
-- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Sin cambios en Clientes, Facturación, red, autenticación ni tema oscuro.
-- Pendiente build y validación visual. Commits: 32c6f68e, 10b60734.
-
-### 1.1.16–1.1.17 — 2026-09-09 — Ajuste contra referencia visual
-- Se afinó zhub-light con fondo claro neutro, superficies blancas, texto azul tinta, KPI sólidos moderados, líneas sobrias y sombras mínimas.
-- Se preservó texto blanco dentro de indicadores de color y se evitó modificar el tema oscuro. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
-- Pendiente build y revisión visual de Dashboard, Clientes, Facturación, Red, formularios, tablas y modales. Commits: d8a925e7, 6323aa5c.
-
-### 1.1.18 — 2026-09-09 — Panel derecho del Dashboard
-- Se limitó el cambio visual al Resumen del sistema: tarjeta clara, filas gris claro, texto azul tinta y badges sobrios.
-- Se mantuvo deliberadamente el gráfico izquierdo sin convertirlo a tarjeta clara. Archivo funcional: frontend/src/modules/appearance/panel-theme.css.
-- Pendiente build y validación visual antes de extender el ajuste.
-
-### 1.1.19 — 2026-09-09 — Menú activo en negrita
-- Sidebar resalta menú y submenú activos con font-bold sin cambiar rutas, permisos ni expansión.
-- Archivo funcional: frontend/src/components/layout/Sidebar.jsx. Pendiente build y validación visual.
-
-### 1.1.20 — 2026-09-09 — Tipografía del menú
-- En zhub-light, navegación normal usa peso 600; activa y submenú activo usan peso 800 y azul tinta.
-- Archivo funcional: frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual.
-
-### 1.1.21 — 2026-09-09 — Tipografía y hover del menú
-- Menú claro: normal peso 700; activo y hover peso 900. Estructura, rutas y permisos quedan sin cambios.
-- Archivos funcionales: frontend/src/components/layout/Sidebar.jsx y frontend/src/modules/appearance/panel-theme.css. Pendiente build y validación visual real.
-
-### 1.1.22 — 2026-09-09 — Hover transparente azul del menú claro
-- Se elimina la barra gris oscura que dificultaba leer al pasar el mouse.
-- Menús y submenús de zhub-light usan fondo transparente con carga azul translúcida, marco azul sutil, texto azul oscuro y peso 900 en hover.
-- No modifica rutas, permisos ni lógica de navegación. Archivo funcional: frontend/src/modules/appearance/panel-theme.css; versión/changelog: frontend/src/modules/system-update/version.js.
-- Pendiente ejecutar build y validar hover en el panel desplegado. Commits: e13af07f, 10b9276f.
 
 ### Consolidación documental — 2026-09-09
 - Se eliminaron los archivos de continuidad complementarios e históricos para conservar una sola fuente de verdad.
@@ -1583,7 +2046,6 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - La bitácora única pasa de CONTINUIDAD_MIKROHUB.md a CONTINUIDAD_Z-HUB.md para reflejar el repositorio y nombre público vigentes.
 - Todo el contenido consolidado se conserva en este mismo archivo; el archivo anterior se elimina.
 - Desde ahora toda referencia, actualización y documentación futura debe usar exclusivamente docs/CONTINUIDAD_Z-HUB.md.
-
 
 ---
 
@@ -1596,14 +2058,6 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Corregir la causa real, ejecutar build y pruebas relevantes, y solo entonces reintentar el despliegue.
 - Nunca borrar base de datos ni ocultar el error para forzar una actualización.
 
-### Historial integrado de clientes, facturación y eliminación
-- 1.0.68: al editar/eliminar/anular facturas pendientes se recalcula saldo y contador desde facturas reales; las facturas pagadas o con pagos quedan protegidas.
-- 1.0.69: potencia óptica de fibra se normaliza a dBm negativo y usa rangos visuales por calidad.
-- 1.0.72–1.0.85: la eliminación definitiva de cliente evolucionó de confirmación nativa a modal propio, con datos reales de cliente/servicios/facturas, saldo pendiente, advertencia prioritaria y confirmación SI. La versión estable mantiene la carga de datos en Clients.jsx y solo la presentación en el módulo visual; no usar interceptores globales.
-- 1.0.91: Facturación de cliente se aisló con wrapper y ErrorBoundary para que un error de ejecución no deje en blanco las demás pestañas. Un error de compilación sigue requiriendo build antes de publicar.
-- 1.1.3: eliminar servicio adicional registra auditoría detallada: servicio, plan, conexión, tecnología, equipo, IP, facturas pendientes eliminadas, saldo y cuenta/rol ejecutor. Facturas pagadas o parcialmente pagadas permanecen protegidas.
-- 1.1.4: eliminar servicio adicional exige confirmación previa y una segunda confirmación si existen facturas pendientes; cancelar no envía DELETE y el servicio principal no se elimina desde ese botón.
-
 ### Backups documentales retirados
 - Las notas de backup de Log y de transición 1.0.100 → 1.1.0 se consolidan aquí como referencias históricas. Los respaldos reales deben manejarse mediante ramas backup-* o la carpeta técnica backups/, no mediante archivos de continuidad separados.
 
@@ -1611,491 +2065,3 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se eliminaron los archivos restantes de continuidad, políticas y notas documentales de backup de docs/.
 - El único documento maestro, changelog y regla de continuidad es docs/CONTINUIDAD_Z-HUB.md.
 - Esta entrada no incrementa PANEL_VERSION.
-
-
-### 1.1.23 — 2026-09-09 — Dashboard claro según referencia
-
-- Objetivo: alinear el Dashboard del tema zhub-light con la segunda referencia proporcionada: fondos blancos, bordes azul-gris discretos, texto azul tinta, tablas claras y gráficos legibles.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (contenedor visual y tooltip claro), frontend/src/modules/appearance/panel-theme.css (capa visual acotada a .dashboard-reference), frontend/src/modules/system-update/version.js.
-- Flujo/compatibilidad: no cambia API, datos, rutas, permisos ni el tema oscuro. Dashboard mantiene /api/dashboard/summary y solo se modifica su presentación bajo html[data-panel-theme="zhub-light"].
-- Backup: rama backup-pre-dashboard-claro-1.1.23 creada antes del cambio.
-- Pruebas: revisión estática de JSX, selectores y versión; build y validación visual real en servidor pendientes.
-- Resultado esperado: tarjetas KPI coloreadas, recaudación, resumen, últimas tablas y tooltip se presentan en claro como la referencia, eliminando las grandes superficies oscuras del Dashboard.
-
-
-### 1.1.24 — 2026-09-09 — Tarjetas KPI del Dashboard según referencia
-- Objetivo y causa: corregir la franja superior del Dashboard claro. La regla global de tema no reconocía el color sky y además reemplazaba los textos blancos de las tarjetas por tonos oscuros, por eso la tarjeta de transacciones aparecía blanca y con bajo contraste.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases visuales propias de cada KPI), frontend/src/modules/appearance/panel-theme.css (colores, tipografía, contraste, altura y ancho de las cuatro tarjetas), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: los valores se siguen obteniendo de /api/dashboard/summary; no se cambian API, datos, navegación, permisos, facturación, autenticación ni el tema oscuro.
-- Pruebas: revisión estática de las cuatro clases KPI, selectores de tema y PANEL_VERSION 1.1.24. Build y validación visual en el servidor siguen pendientes.
-- Resultado esperado: las tarjetas llenan completamente su recuadro, con verde, azul, violeta y azul oscuro; texto e iconos blancos legibles, títulos con peso alto y sin superficies blancas dentro de la franja KPI.
-
-
-### 1.1.25 — 2026-09-09 — Área útil del panel ampliada
-- Objetivo y causa: la referencia usa todo el espacio posterior al menú lateral. Layout.jsx limitaba el contenido global a max-w-7xl (1280 px), por lo que aparecían franjas vacías y el Dashboard quedaba más estrecho que el modelo.
-- Archivos modificados: frontend/src/components/layout/Layout.jsx (se reemplaza el límite max-w-7xl por ancho completo con padding adaptable), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: Dashboard y el resto de módulos conservan sus datos y acciones; solo reciben mayor área de presentación. No cambia API, permisos, autenticación, navegación ni tema oscuro.
-- Backup: rama backup-pre-layout-ampliado-1.1.25 creada antes de modificar el layout compartido.
-- Pruebas: revisión estática de la clase de Layout, PANEL_VERSION y continuidad. Build y revisión visual real en servidor pendientes.
-- Resultado esperado: tras el menú lateral, las tarjetas KPI, gráfico, resumen y tablas se extienden hasta el borde útil del contenido, con márgenes laterales compactos equivalentes a la segunda referencia.
-
-
-### 1.1.26 — 2026-09-09 — Legibilidad del Resumen del sistema
-- Objetivo y causa: ajustar la tipografía del Resumen del sistema para que tenga la misma lectura azul tinta, más nítida y con peso alto de la referencia. Los números de los indicadores circulares requerían mayor contraste respecto de su color de fondo.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-system-summary), frontend/src/modules/appearance/panel-theme.css (tipografía, filas y contadores), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: se preservan /api/dashboard/summary, todos los valores, navegación, permisos, autenticación y tema oscuro; el cambio solo actúa en zhub-light.
-- Pruebas: revisión estática de selectores, clase del panel y PANEL_VERSION 1.1.26. Build y validación visual real pendientes.
-- Resultado esperado: etiquetas y título en azul tinta con peso consistente; cada contador redondo conserva su color pero muestra un número oscuro, grueso y visible.
-
-
-### 1.1.27 — 2026-09-09 — Tipografía de Recaudación Diaria reforzada
-- Objetivo y causa: aumentar el peso visual de las letras de Recaudación Diaria para que sea consistente con el Resumen del sistema y la referencia aprobada.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clase propia dashboard-revenue), frontend/src/modules/appearance/panel-theme.css (título, subtítulo, leyenda, escalas y medidor), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: se conservan datos, series, porcentajes, API /api/dashboard/summary, rutas, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
-- Pruebas: revisión estática de clase, selectores y PANEL_VERSION 1.1.27. Build y validación visual real pendientes.
-- Resultado esperado: textos, escalas y métricas del gráfico se ven más gruesos, oscuros y notorios sin alterar la gráfica ni sus datos.
-
-
-### 1.1.28 — 2026-09-09 — Versión visible en Dashboard
-- Objetivo y causa: mostrar la versión instalada junto al botón Actualizar para facilitar la comprobación visual del panel sin buscar el pie de página.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (importa y presenta PANEL_VERSION), frontend/src/modules/appearance/panel-theme.css (etiqueta dashboard-version-badge), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: la etiqueta usa la fuente única PANEL_VERSION, por lo que cambia automáticamente en cada publicación. No modifica el mecanismo de actualización, API, datos, permisos, autenticación ni el tema oscuro.
-- Pruebas: revisión estática de importación, presentación de PANEL_VERSION, selector y versión 1.1.28. Build y validación visual real pendientes.
-- Resultado esperado: el Dashboard muestra “Versión 1.1.28” inmediatamente a la izquierda de “Actualizar”.
-
-
-### 1.1.29 — 2026-09-09 — Tablas recientes con lectura reforzada
-- Objetivo y causa: mejorar el peso de letra en Últimos pagos registrados y Últimos conectados, y resaltar los importes cobrados con un verde más vivo.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (clases propias de ambas tablas), frontend/src/modules/appearance/panel-theme.css (títulos, encabezados, filas e importes), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: conserva los mismos registros, importes, API /api/dashboard/summary, navegación, permisos, autenticación y tema oscuro. Solo cambia la presentación zhub-light.
-- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.29. Build y validación visual real pendientes.
-- Resultado esperado: toda la información de ambas tablas se lee con mayor presencia y S/. cobrado resalta en verde vivo sin alterar el valor.
-
-
-### 1.1.30 — 2026-09-09 — Confirmación del botón Actualizar
-- Objetivo y causa: el botón de actualización del Dashboard ejecutaba la consulta, pero no ofrecía confirmación visible; si los valores no cambiaban, parecía no realizar ninguna acción.
-- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (estado “Actualizando…”, bloqueo temporal y toast de éxito), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: el clic manual llama a /api/dashboard/summary como antes y confirma al terminar. El refresco automático de 15 segundos permanece silencioso. No cambia API, datos, rutas, permisos, autenticación ni tema oscuro.
-- Pruebas: revisión estática del flujo silent/manual, estado refreshing, texto del botón y PANEL_VERSION 1.1.30. Build y validación visual real pendientes.
-- Resultado esperado: al pulsar el botón se ve “Actualizando…” con icono girando y después el aviso “Dashboard actualizado”; si falla, se conserva el aviso de error existente.
-
-
-### 1.1.31 — 2026-09-09 — Navbar clara y tipografía reforzada
-- Objetivo y causa: adaptar Moneda, notificaciones y perfil de la barra superior al tema claro; anteriormente conservaban fondos oscuros y un peso visual inconsistente con el resto del Dashboard.
-- Archivos modificados: frontend/src/components/layout/Navbar.jsx (clases propias navbar-currency, navbar-notifications y navbar-user), frontend/src/modules/appearance/panel-theme.css (fondos claros, texto azul tinta y peso alto), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: búsqueda, enlace a facturación de notificaciones, centro de actualizaciones y datos del usuario se conservan sin cambios. No afecta API, permisos, autenticación ni tema oscuro.
-- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.31. Build y validación visual real pendientes.
-- Resultado esperado: la barra superior clara muestra moneda, alerta y usuario con superficies claras, bordes discretos y texto más grueso como el resto del panel.
-
-
-### 1.1.32 — 2026-09-09 — Gestión de red adaptada al tema claro
-- Objetivo y causa: al ingresar a Gestión de red, tarjetas de equipos, métricas y tabla de interfaces conservaban grandes superficies oscuras que no seguían el estilo ya aplicado al Dashboard.
-- Archivos modificados: frontend/src/modules/red/Network.jsx (contenedores visuales), frontend/src/modules/red/components/RouterCard.jsx (clase de tarjeta), frontend/src/modules/red/components/RouterLiveTabs.jsx (clase de tabla viva), frontend/src/modules/appearance/panel-theme.css (capa clara aislada), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: se preservan las llamadas a /api/routers, acciones de prueba, ping, cortes, configuración, RouterOS y OLT. No cambian datos, rutas, permisos, autenticación ni tema oscuro.
-- Backup: rama backup-pre-red-clara-1.1.32 creada antes de modificar la vista operativa.
-- Pruebas: revisión estática de clases, selectores y versión 1.1.32. Build y validación visual/lecturas reales pendientes.
-- Resultado esperado: Gestión de red presenta equipos, métricas, pestañas e interfaces con fondos blancos, cabeceras gris-azul, textos azul tinta, bordes discretos y estados de color legibles, coherentes con Dashboard.
-
-
-### 1.1.33 — 2026-09-09 — Color funcional en Gestión de red
-- Objetivo y causa: tras llevar la vista a claro, métricas y tablas quedaron demasiado neutras. Se pidió recuperar vida visual manteniendo sobriedad operativa.
-- Archivos modificados: frontend/src/modules/red/Network.jsx (identificadores por métrica), frontend/src/modules/appearance/panel-theme.css (tonos suaves por KPI, tarjeta seleccionada, tráfico y estados), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: no cambia la lectura de RouterOS/OLT, métricas, estados, API, datos, permisos ni tema oscuro. Solo se presenta color bajo zhub-light.
-- Pruebas: revisión estática de identificadores, selectores y PANEL_VERSION 1.1.33. Build y validación visual real pendientes.
-- Resultado esperado: CPU azul, memoria violeta, uptime turquesa, latencia ámbar, PPPoE verde y colas índigo; tráfico y estados resaltan claramente sin volver a fondos oscuros.
-
-
-### 1.1.34 — 2026-09-09 — Tablero OLT claro con color operativo
-- Objetivo y causa: el resumen de OLT conservaba módulos completos en oscuro pese a que la vista general de Gestión de red ya se adaptó al tema claro.
-- Archivos modificados: frontend/src/modules/red/components/OltLiveTabs.jsx (contenedor visual OLT), frontend/src/modules/red/components/olt-tabs/OltSummaryTab.jsx (clase propia del tablero), frontend/src/modules/appearance/panel-theme.css (superficies claras y acentos de estado), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: no se modifica ningún endpoint /api/routers/{id}/olt/*, comando CLI, consulta de PON, ONU, conteo ni acción de la OLT. No cambia permisos, autenticación, datos ni tema oscuro.
-- Backup: rama backup-pre-olt-clara-1.1.34 creada antes del ajuste.
-- Pruebas: revisión estática de clases, selectores y PANEL_VERSION 1.1.34. Build, revisión visual y validación de lecturas reales pendientes.
-- Resultado esperado: Resumen OLT, salud, disponibilidad, estado y actividad usan blanco, bordes azul-gris y colores funcionales: verde/turquesa para línea, índigo para autorización, ámbar para alerta y rojo para fuera de línea.
-
-
-### 1.1.35 — 2026-09-09 — Métricas sólidas en Gestión de red
-- Objetivo y causa: se solicitó más vida visual porque las métricas de Gestión de red aún se percibían demasiado blancas.
-- Archivos modificados: frontend/src/modules/appearance/panel-theme.css (tarjetas de métricas sólidas), frontend/src/modules/system-update/version.js.
-- Flujo y compatibilidad: CPU, memoria, uptime, latencia, PPPoE y colas conservan los mismos valores y su fuente RouterOS. No cambia API, OLT, datos, permisos, autenticación ni tema oscuro.
-- Pruebas: revisión estática de selectores y PANEL_VERSION 1.1.35. Build y validación visual real pendientes.
-- Resultado esperado: métricas azul, violeta, turquesa, ámbar, verde y azul profundo; texto/iconos blancos y gruesos. Tabla operativa permanece clara.
-
-### 1.1.36 — Corrección de prioridad visual en Gestión de Red
-- Se corrigió la prioridad de CSS de las métricas CPU, Memoria, Uptime, Latencia, PPPoE activos y Colas.
-- Los seis recuadros ahora fuerzan fondos sólidos diferenciados (azul, violeta, turquesa, ámbar, verde y azul pizarra), evitando que la superficie clara compartida los sobrescriba.
-- Texto e iconos pasan a blanco y se mantiene una jerarquía tipográfica fuerte para conservar legibilidad.
-- Alcance: solo apariencia del tema `zhub-light`; sin cambios en las lecturas ni en la API de MikroTik.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-### 1.1.37 — Indicadores sólidos en el resumen OLT
-- Se transformaron las cuatro tarjetas principales del resumen OLT en indicadores de color sólido: OLTs en línea (verde), ONUs en línea (turquesa), ONUs autorizadas (violeta) y alertas activas (ámbar).
-- Se aplicó texto e iconos blancos con mayor peso visual para mantener legibilidad sobre cada fondo.
-- Los paneles técnicos, lecturas, pestañas y acciones del módulo se conservan sin cambios funcionales.
-- Alcance: apariencia exclusiva del tema `zhub-light`; no modifica consultas, comandos ni datos de la OLT.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-### 1.1.38 — Tarjeta MikroTik con color y realce al pasar el cursor
-- La tarjeta de cada router MikroTik usa ahora un degradado azul sólido con alto contraste.
-- Al pasar el cursor se vuelve más brillante, se eleva ligeramente y muestra una sombra azul de realce.
-- Se ajustó texto, iconos, separadores y botones internos para mantener legibilidad sobre el nuevo fondo.
-- Alcance: solo apariencia del tema `zhub-light`; sin cambios en monitoreo, estados ni acciones del router.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-### 1.1.39 — Puertos PON OLT adaptados al tema de color
-- Se añadieron clases visuales propias al encabezado y a las métricas de Puertos PON.
-- El encabezado del diagnóstico óptico utiliza azul técnico; las métricas se diferencian por tipo: temperatura naranja, voltaje violeta, corriente láser azul y potencia óptica verde.
-- Texto, iconos, barras y etiqueta de lectura se ajustaron a alto contraste; las tarjetas resaltan suavemente al pasar el cursor.
-- Alcance: únicamente presentación; no se modificó el parser de métricas, las consultas OLT ni la selección de PON.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.40 — Corrección de contraste y tamaño de tarjeta MikroTik
-- Se añadió una clase específica para distinguir visualmente las tarjetas MikroTik de las OLT.
-- Se corrigió la prioridad CSS de la tarjeta seleccionada para que conserve el fondo azul sólido y el texto blanco plenamente visible.
-- La tarjeta MikroTik queda compacta, con un ancho máximo de 290 px en escritorio y ancho completo en móvil.
-- El hover mantiene un azul más luminoso, borde claro y sombra de realce.
-- Alcance: solo presentación; no se modifican datos, estado, botones, selecciones ni monitoreo.
-- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
-
-### 1.1.41 — Pestaña ONUs OLT adaptada al tema
-- Se añadieron clases visuales al workspace y a la lista de ONUs para aplicar estilos de forma segura.
-- Las métricas superiores son ahora sólidas: total azul, en línea verde, fuera de línea rojo y sin estado ámbar.
-- Se adaptaron búsqueda, filtros, tabla, cabecera y filas a una superficie clara con contrastes azul técnico y estados legibles.
-- El contenido sigue siendo el mismo: no se modificaron endpoints, parser, acciones de reinicio/activación/desactivación/eliminación ni consulta óptica.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.42 — Tarjeta OLT compacta y acción CLI corregida
-- Se redujo el ancho máximo de la tarjeta OLT a 380 px en escritorio (aprox. 30 % menos); en móvil se mantiene al 100 %.
-- Se corrigió el botón “Probar conexión CLI”: ahora usa fondo azul, borde claro, texto e icono blancos y realce al pasar el cursor.
-- Alcance: solo apariencia de la tarjeta OLT; no se modifican la prueba de conexión, permisos, llamadas API ni otros controles.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-### 1.1.43 — Monitor óptico de ONUs adaptado al tema
-- Se añadieron clases visuales al panel de Potencia Óptica ONU y a sus tres métricas.
-- El bloque “Monitor óptico” ahora tiene fondo azul técnico, selector claramente visible, botón de consulta turquesa y botón Detener con contraste.
-- RX usa azul, TX violeta y ONUs con lectura válida verde, todos con texto blanco de alto contraste.
-- Alcance: solo presentación; no cambian el escaneo secuencial, las lecturas ópticas, temporizadores, API ni la tabla de resultados.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.44 — Consola OLT adaptada al tema
-- Se añadieron contenedores visuales específicos para la consola CLI.
-- El área de comando ahora usa azul técnico, entrada blanca legible y botón Ejecutar turquesa de alto contraste.
-- La respuesta CLI se muestra en un panel de terminal oscuro y legible cuando exista salida.
-- Alcance: solo presentación; no se modifican los comandos enviados, validaciones, permisos ni API de la OLT.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.45 — Planes y Servicios adaptados al tema
-- Se añadieron clases de presentación al módulo y a cada tarjeta de plan.
-- Las tarjetas usan azul profundo, etiqueta de tecnología visible, bloque de velocidades blanco con valores azul/verde y acciones con alto contraste.
-- Se añadió realce visual al pasar el cursor sobre un plan.
-- Alcance: únicamente interfaz; CRUD de planes, precios, perfiles PPP y sincronización MikroTik permanecen sin cambios.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.46 — Control de Abonados y Clientes adaptado al tema
-- Se añadieron clases visuales al área de filtros y a la tabla de abonados.
-- El filtro usa azul técnico; los accesos Todos, Activos y Suspendidos tienen acentos azul, verde y rojo.
-- La tabla pasa a superficie clara con cabecera azul oscuro, filas alternadas, hover azul suave y estados/deudas legibles.
-- Alcance: solo presentación; no se modifican búsquedas, filtros, datos, acciones de servicio, WhatsApp, OLT ni eliminación.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.47 — Tarjetas de plan compactas y precio destacado
-- Las tarjetas de Planes y Servicios tienen ahora un ancho máximo de 290 px en escritorio, con ancho completo en móvil.
-- Se añadió una clase específica al precio mensual y se resaltó en amarillo cálido de alto contraste para una lectura comercial inmediata.
-- Alcance: solo presentación; no se modifican precios guardados, planes, perfiles PPP ni sincronización MikroTik.
-- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
-
-### 1.1.48 — Estados y datos principales de abonados reforzados
-- La información principal de Abonado/Contacto, Plan/Tarifa e IP/Conexión se muestra con mayor peso tipográfico.
-- El estado ACTIVO usa fondo verde sólido, texto e icono blancos y sombra de realce; el estado CORTADO recibe el mismo tratamiento en rojo.
-- Alcance: solo presentación; no se modifican estados reales, deuda, datos ni acciones del abonado.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-### 1.1.49 — Ficha de cliente adaptada al tema
-- Se añadieron clases específicas al modal, formulario de resumen y panel de estado de cuenta.
-- Cabecera y pestañas ahora presentan azul técnico; los títulos, etiquetas e inputs ganan contraste y peso tipográfico.
-- El estado de cuenta usa un panel azul profundo, tarjetas blancas legibles y estado de servicio activo en verde sólido.
-- Alcance: solo presentación; no se modifican guardado, pestañas, datos, facturación, servicios, comunicaciones ni ubicación.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-### 1.1.50 — Facturación adaptada al tema
-- Se añadieron clases específicas para indicadores, tabla y estados de facturas.
-- Total facturado, cobrado y por cobrar usan tarjetas sólidas azul, verde y rojo.
-- La tabla tiene superficie clara, cabecera azul oscuro, filas alternadas y tipografía operativa más gruesa.
-- El estado PAGADO ahora resalta en verde sólido con texto e icono blancos; Pendiente y Vencido también reciben colores sólidos.
-- Alcance: solo presentación; no se modifican facturas, pagos, montos, acciones, reglas ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.51 — Pestaña Servicio del cliente adaptada al tema
-
-- Se adapta la pestaña **Servicio** de la ficha del cliente al tema claro Z-Hub.
-- La cabecera de “Servicios de Internet” ahora tiene un degradado azul sólido, título más grueso y botón “Nuevo servicio” turquesa visible.
-- La tabla cambia a cabecera azul oscuro, filas claras alternadas y datos con tipografía más gruesa para una lectura rápida.
-- El estado **Activo** resalta con verde sólido, texto blanco y sombra; los estados no activos quedan en rojo sólido.
-- Alcance: únicamente presentación; no se modifican servicios, planes, IP, Router, tecnología, señal ONU, acciones ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.52 — Configuración de Facturación adaptada al tema
-
-- Se adapta la pestaña **Configuración** de Facturación al tema claro Z-Hub.
-- Las secciones “Fechas y corte” y “Avisos y recordatorios” ahora son tarjetas blancas con borde superior azul y verde, respectivamente.
-- Los títulos, etiquetas y controles tienen mayor contraste y grosor para facilitar la lectura.
-- Las entradas y listas usan fondo claro, borde azul y foco visible; la generación automática utiliza el color verde del tema.
-- El botón Guardar cambios se refuerza con degradado turquesa/azul.
-- Alcance: solo presentación; no se modifican fechas de pago, reglas de corte, recordatorios, generación automática, facturas ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.53 — Log del cliente adaptado al tema
-
-- Se adapta la pestaña **Log** de la ficha del cliente al tema claro Z-Hub.
-- El historial usa fondo claro y el contador de eventos se muestra en azul sólido con texto blanco.
-- Cada evento ahora es una tarjeta blanca con borde azul suave, título y detalle más gruesos, además de efecto visual al pasar el cursor.
-- El operador responsable queda destacado con una etiqueta azul clara de alto contraste; la fecha conserva buena legibilidad.
-- Alcance: solo presentación; no se modifican acciones, detalle, operador, fecha, registros históricos ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.54 — Mensajería adaptada al tema
-
-- Se adapta el módulo **Mensajería y Avisos WhatsApp** al tema claro Z-Hub.
-- Plantillas y editor pasan a tarjetas claras con bordes azules, mejor contraste y tipografía más gruesa.
-- La plantilla seleccionada se resalta en verde claro; las demás conservan un fondo operativo suave con efecto al pasar el cursor.
-- Los campos de destinatario, teléfono y mensaje son claros, legibles y con foco visible.
-- Los botones Copiar y Enviar por WhatsApp quedan reforzados con color y contraste.
-- Alcance: solo presentación; no se modifican plantillas, clientes, teléfonos, contenido de mensajes, copiado ni envío por WhatsApp.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.55 — Ajustes adaptados y distribuidos en dos columnas
-
-- Se adapta la sección **Ajustes → General** al tema claro Z-Hub.
-- Las tarjetas de configuración cambian a superficie blanca, bordes coloridos y textos más gruesos.
-- En pantallas amplias, las tarjetas se distribuyen en **dos columnas** para aprovechar el espacio y reducir el ancho de cada recuadro; en pantallas menores vuelven a una columna.
-- Los campos, selector de apariencia y botón Guardar cambios reciben contraste, foco visible y colores coherentes con el tema.
-- Alcance: solo presentación y distribución; no se modifican datos de empresa, logo, temas, canales de cobro, reglas, notificaciones ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.56 — Ajuste de encaje de tarjetas en Ajustes
-
-- Se corrige la distribución de las tarjetas de **Ajustes → General** en pantallas amplias.
-- Las dos columnas ahora fluyen de forma compacta según la altura de cada tarjeta, evitando grandes espacios vacíos entre recuadros.
-- El botón Guardar cambios se mantiene al final, ocupando todo el ancho de la sección.
-- En pantallas menores se conserva una única columna ordenada.
-- Alcance: exclusivamente distribución visual; no se cambian campos, valores, reglas ni API.
-- Validación realizada: revisión estática de selectores, versión y registro de continuidad.
-
-
-### 1.1.59 — Redes IPv4 y Cajas NAP adaptadas completamente
-
-- Se adapta de forma completa la presentación de **Redes IPv4** y **Cajas NAP** al tema claro Z-Hub.
-- Redes IPv4: indicadores sólidos azul, verde y violeta; buscador claro, tabla blanca con cabecera azul oscuro, filas alternadas y texto operativo grueso.
-- Cajas NAP: filtros claros, panel de fondo suave y tarjetas NAP blancas con borde azul, sombra y realce al pasar el cursor.
-- Se conservan colores de puertos libres/ocupados y las acciones de editar/eliminar con buena visibilidad.
-- Alcance: solo presentación; no se modifican redes, IPs, MikroTik, zonas, NAPs, puertos, asignaciones ni API.
-- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
-
-
-### 1.1.57–1.1.58 — Reconciliación de continuidad: submenús de Red
-
-- Se incorpora el registro que faltaba para la revisión visual de los submenús **Redes IPv4** y **Cajas NAP** en el modo Claro Suave.
-- Se verificó el estado del lateral y de las rutas de ambos submódulos; la corrección preparó la base de estilo clara para que no heredaran superficies oscuras del tema anterior.
-- Esta intervención fue visual: no alteró navegación, permisos, datos, API, MikroTik, zonas, cajas ni asignaciones.
-
-### 1.1.60 — Bitácora maestra actualizada y cierre de la etapa visual
-
-- Se leyó y revisó el archivo maestro `docs/CONTINUIDAD_Z-HUB.md`.
-- Se registró el trabajo realizado desde la versión 1.1.32 hasta la 1.1.59: Dashboard, Gestión de Red, OLT, ONUs, consola, planes, clientes, ficha del abonado, facturación, mensajería, ajustes, Redes IPv4 y Cajas NAP.
-- Se confirma el patrón aplicado: tema `zhub-light` con superficies claras, tarjetas de color sólido cuando corresponde, tipografía de mayor peso, estados con contraste y tablas operativas legibles.
-- Se documenta también el ajuste de distribución de Ajustes: columnas compactas en pantallas amplias y una columna en pantallas menores.
-- Regla obligatoria vigente: **cada cambio futuro debe actualizar la versión del panel y este único documento maestro de continuidad**, detallando archivos, alcance, validación y lo que no fue modificado.
-- Validación realizada: se comprobó el historial de versiones y se completaron las entradas que faltaban de la etapa 1.1.57–1.1.58.
-
-
-### 1.1.61 — Protocolo obligatorio de trabajo y publicación
-
-Para cualquier cambio futuro en Z-Hub se debe respetar estrictamente este orden:
-
-1. **Cambio:** implementar únicamente lo solicitado.
-2. **Pruebas:** comprobar de forma segura el cambio realizado.
-3. **Bitácora:** actualizar este único archivo maestro con el detalle del cambio, alcance, archivos, pruebas y exclusiones.
-4. **Verificación:** confirmar que código, bitácora y resultado esperado están presentes.
-5. **Cambio de versión:** actualizar `PANEL_VERSION` y su descripción.
-6. **Actualización:** publicar los archivos al repositorio para que el panel pueda actualizarse.
-
-- No se debe cambiar la versión ni publicar antes de registrar y verificar la bitácora.
-- Esta regla aplica incluso a cambios exclusivamente visuales o documentales.
-
-
-#### Aclaración operativa sobre la bitácora
-
-- Este archivo es **interno de continuidad** para las conversaciones de trabajo.
-- Su actualización no forma parte de una actualización funcional o visual del panel y, por sí sola, **no debe aumentar** `PANEL_VERSION`, activar el botón Actualizar ni comunicarse como versión nueva del sistema.
-- Cuando exista un cambio real en el panel, la bitácora se registra durante el proceso de trabajo, pero la versión y la publicación corresponden únicamente a los archivos funcionales del panel.
-
-
-### 1.1.62 — Geometría única para menú y submenús
-
-- El menú lateral y sus submenús ahora usan clases estructurales compartidas en `Sidebar.jsx`: contenedor, menú principal, grupo de submenú y submenú.
-- Se fijan alturas comunes: menú principal de 40 px y submenús de 36 px, junto con el mismo ancho, sangría y espaciado para ambos temas.
-- El tema oscuro y `zhub-light` solo pueden cambiar colores, bordes, texto y estados visuales; no la distribución del menú.
-- Como resultado, una futura modificación de orden, tamaño, iconos o posiciones realizada en `Sidebar.jsx` se verá de forma idéntica en los dos temas.
-- Prueba realizada: revisión estática de clases comunes y confirmación de que el componente no contiene selectores de tema.
-- Alcance: no se modifican rutas, permisos, opciones de menú, navegación ni datos.
-
-
-### 1.1.63 — Tarjeta MikroTik con geometría compartida entre temas
-
-- El ancho de la tarjeta MikroTik se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, que usan los dos temas.
-- En escritorio conserva 290 px y en móvil ocupa el ancho disponible, tanto en claro como en oscuro.
-- El tema claro conserva su gradiente azul y el oscuro conserva su paleta oscura/cian; el cambio solo unifica medidas y no altera datos, acciones ni navegación.
-- Prueba realizada: comprobación estática de la clase compartida y ausencia de reglas de ancho específicas del tema claro.
-
-
-### 1.1.64 — Tarjetas OLT con geometría compartida entre temas
-
-- El ancho de las tarjetas OLT se trasladó desde el CSS exclusivo de `zhub-light` hacia `RouterCard.jsx`, compartido por ambos temas.
-- En escritorio las OLT usan 380 px y en móvil ocupan el ancho disponible; el tema oscuro ya no expande estas tarjetas por la cuadrícula.
-- Los colores, bordes, estados y acción «Probar conexión CLI» propios de cada tema permanecen sin cambios.
-- Prueba realizada: comprobación estática de las clases compartidas OLT/MikroTik y ausencia de reglas de ancho OLT exclusivas del tema claro.
-
-
-### 1.1.65 — Ventana de actualizaciones adaptada a Claro Suave
-
-- Se añadieron identificadores estructurales al modal de actualizaciones, confirmación, avisos, changelog y botones para que el tema claro pueda darles una presentación propia.
-- En Claro Suave el modal ahora usa superficie blanca, borde azul, tipografía azul oscura más gruesa, avisos celeste/verde legibles y botones con contraste visible.
-- El tema oscuro conserva sus fondos y colores actuales; no se cambió la geometría ni la lógica de ninguno de los temas.
-- Prueba realizada: revisión estática de selectores, avisos, botones y rutas `/system-update/status` y `/system-update/install`.
-- Alcance: no se modifican la descarga, comprobación, instalación, sesión, API ni actualización real del panel.
-
-
-### 1.1.66 — Versión anclada junto a Actualizar en el Dashboard
-
-- El indicador de versión del panel se agrupa de forma explícita con el botón «Actualizar» en el encabezado del Dashboard.
-- En escritorio el grupo queda alineado a la derecha; en pantallas pequeñas se mantiene unido y alineado sin trasladar la versión al inicio del contenido.
-- La versión continúa obteniéndose de `PANEL_VERSION`; no se modifica la actualización del Dashboard ni datos operativos.
-- Prueba realizada: revisión estática del orden versión → botón, anclaje de escritorio, alineamiento móvil y fuente de versión.
-
-
-### 1.1.67 — Instalación silenciosa y progreso legible en actualizaciones
-
-- Durante una instalación, el panel conserva el sondeo de estado cada 3 segundos para actualizar el progreso, pero lo realiza sin cambiar el botón «Comprobar» a estado de búsqueda.
-- El mensaje «Buscando actualización…» solo aparece cuando el operador presiona manualmente «Comprobar».
-- Se reforzó en Claro Suave el contraste de textos, contenedor y barra del progreso para evitar controles o letras blancas poco visibles.
-- Prueba realizada: revisión estática del sondeo silencioso, activación manual, colores de progreso y rutas de estado/instalación.
-- Alcance: no se alteran la frecuencia de sondeo durante instalación, descarga, instalación, sesión ni API.
-
-
-### 1.1.68 — Versión movida al control global de actualizaciones
-
-- Se corrigió la ubicación: la versión deja de mostrarse en el encabezado del Dashboard.
-- Ahora se muestra en la barra superior, inmediatamente antes del botón global de actualizaciones con ícono de descarga, tal como corresponde al control marcado.
-- El indicador lee `PANEL_VERSION` y tiene estilo propio para oscuro y Claro Suave.
-- Prueba realizada: revisión estática del grupo superior, orden versión → botón, eliminación del duplicado en Dashboard y estilos de ambos temas.
-- Alcance: no se modifican las métricas del Dashboard, descarga, instalación, sesión ni API.
-
-
-### 1.1.69 — Mensaje «Buscando actualización» visible en Claro Suave
-
-- Se corrigió el estado visual del botón «Comprobar»: la regla clara normal anulaba sus colores cuando `aria-busy="true"`.
-- Durante una comprobación manual, el botón ahora muestra fondo azul sólido, texto e ícono blancos y el mensaje «Buscando actualización…» con contraste.
-- Al terminar vuelve a su apariencia clara normal; no se cambia el sondeo silencioso durante instalación.
-- Prueba realizada: revisión estática de estilos normal/ocupado, selector `aria-busy`, color de fondo y texto del ícono.
-
-
-### 1.1.70 — Inicio de sesión adaptado al tema seleccionado
-
-- La pantalla de inicio de sesión ahora respeta el tema guardado que obtiene desde `/settings/public` antes de autenticar.
-- En Claro Suave usa fondo luminoso, tarjeta blanca, títulos y campos de alto contraste, además de accesos rápidos claros con colores funcionales.
-- En Oscuro se conserva la presentación actual; la geometría de la pantalla se mantiene compartida.
-- Prueba realizada: revisión estática de aplicación del tema guardado, estructura de Login, estilos claros y llamada de autenticación sin cambios.
-- Alcance: no se modifican credenciales, roles, API, sesión, redirecciones ni acceso.
-
-
-### 1.1.71 — Avatar de cuenta activa con color amigable
-
-- El identificador circular de la cuenta activa en el menú lateral ahora usa degradado azul/turquesa/violeta, borde suave y sombra ligera.
-- En Claro Suave también se reforzaron el nombre y rol de la cuenta para mantener buena lectura.
-- El avatar continúa mostrando la inicial, el nombre y el rol reales de la sesión; no se modifican permisos, navegación ni cierre de sesión.
-- Prueba realizada: revisión estática de estructura del perfil lateral, lectura de usuario/rol y estilos de oscuro/Claro Suave.
-
-
-
-### 1.1.72 — Métricas integradas y edición en Routers MikroTik
-
-- En **Gestión de Red → Routers MikroTik**, los seis indicadores operativos (CPU, memoria, uptime, latencia, PPPoE activos y colas) se integran dentro de la tarjeta del router seleccionado.
-- La tarjeta seleccionada usa el ancho completo del módulo para organizar los indicadores sin comprimirlos; las tarjetas no seleccionadas conservan su formato compacto.
-- Se añadió el botón **Editar router** dentro de la misma tarjeta. Abre el formulario existente y solo se muestra cuando la cuenta tiene el permiso `network → edit`.
-- Las pestañas de lectura en vivo permanecen debajo de la tarjeta y ya no repiten los indicadores.
-- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
-- Prueba realizada: revisión estática de integración de métricas, ausencia de duplicado en el detalle, apertura del formulario, permiso de edición y conservación del ancho OLT.
-- Alcance: no se modifican API, credenciales, lecturas RouterOS, pestañas, eliminación, permisos de backend ni el comportamiento de OLT.
-
-
-
-### 1.1.73 — Resumen compacto de métricas en Routers MikroTik
-
-- Se revierte el ancho expandido: la tarjeta MikroTik seleccionada vuelve a **290 px** en escritorio, igual que las demás tarjetas.
-- Se retiraron los indicadores **PPPoE activos** y **Colas** marcados como no requeridos.
-- CPU, memoria, uptime y latencia se muestran debajo de las tarjetas, en cuatro recuadros compactos.
-- El botón **Editar router** permanece dentro de la tarjeta y conserva su permiso `network → edit`.
-- Archivos funcionales: `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/red/components/RouterCard.jsx`.
-- Prueba realizada: revisión estática de las cuatro métricas, exclusión de PPPoE/colas, edición con permiso, tamaño de tarjeta y cuadrícula.
-- Alcance: no se modifican lecturas RouterOS, API, datos del router, pestañas, OLT, acciones existentes ni permisos de backend.
-
-
-### 1.1.74 — Memoria visible en tarjeta MikroTik
-
-- La fila inferior de la tarjeta MikroTik ahora muestra **CPU, Memoria y Ping**.
-- En MikroTik se distribuye en tres columnas compactas; en OLT se conserva la distribución anterior de dos columnas.
-- Se mantiene el ancho de tarjeta de 290 px y no se modifican el botón Editar ni las métricas resumidas inferiores.
-- Archivo funcional: `frontend/src/modules/red/components/RouterCard.jsx`.
-- Prueba realizada: revisión estática de icono, dato de memoria, columnas por tipo de equipo y ancho compacto.
-- Alcance: no se modifican lecturas RouterOS, API, permisos, OLT, acciones ni pestañas.
-
-
-### 1.1.75 — Edición de router compacta y con mayor contraste
-
-- Se compactó el modal **Editar equipo**: menor ancho, relleno y separación entre controles, conservando todos los campos.
-- En Claro Suave se reforzaron título, etiquetas, inputs, ayuda y pie del formulario para una lectura consistente.
-- El botón **Elegir coordenadas en el mapa** ahora usa azul sólido, texto e icono blancos y borde visible.
-- El botón **Editar router** de la tarjeta usa superficie blanca, texto azul más oscuro, borde y sombra para destacar sobre la tarjeta azul.
-- Archivos funcionales: `frontend/src/modules/red/components/RouterForm.jsx`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
-- Prueba realizada: revisión estática de clases del modal, botón de mapa, botón de edición y selectores Claro Suave.
-- Alcance: no se modifican coordenadas, mapa, API, datos, permisos, RouterOS, OLT ni acciones de guardado.
-
-
-### 1.1.76 — Icono y estado ONLINE más notorios
-
-- El icono principal de MikroTik usa fondo blanco, borde celeste y sombra para destacar sobre la tarjeta azul.
-- El estado **ONLINE** ahora usa verde sólido, texto blanco, punto blanco y borde visible.
-- En Claro Suave se añadieron selectores específicos para preservar el contraste de ambos elementos.
-- Archivos funcionales: `frontend/src/modules/red/components/RouterCard.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
-- Prueba realizada: revisión estática de icono, estado y estilos de Claro Suave.
-- Alcance: no se modifican tamaño de tarjeta, datos, RouterOS, acciones, permisos, OLT ni API.
-
-
-### 1.1.77 — Corrección del trazo del icono MikroTik
-
-- Se fuerza el color y trazo del SVG del servidor dentro de la tarjeta MikroTik para que no herede blanco del contenedor.
-- No se modifican tamaño, permisos ni otras acciones.
-
-
-### 1.1.78 — Icono explícito de servidor MikroTik
-
-- Se reemplazó el icono dependiente de estilos por un SVG de servidor/engranaje con trazo azul explícito.
-- No se modifican tamaño, datos, permisos ni acciones.
-
-
-
-### 1.1.79 — Resumen de clientes operativos por router
-
-- En **Gestión de Red → Routers MikroTik**, los cuatro recuadros de resumen reemplazan CPU, memoria, uptime y latencia por: **Clientes colas simples**, **Clientes DHCP**, **Clientes PPPoE** y **Clientes suspendidos**.
-- Colas simples, DHCP y PPPoE se consultan directamente al MikroTik al seleccionar el router, en una única conexión API; las colas deshabilitadas no se cuentan, DHCP solo considera concesiones enlazadas y PPPoE cuenta sesiones activas.
-- Clientes suspendidos se cuenta desde los abonados asignados a ese router en el panel, para reflejar el estado administrativo real.
-- Las cuatro tarjetas conservan la geometría compartida y reciben colores distinguibles en ambos temas.
-- Archivos funcionales: `backend/app/routers/red/router.py`, `frontend/src/modules/red/Network.jsx` y `frontend/src/modules/appearance/panel-theme.css`.
-- Prueba realizada: verificación estática de endpoint, una sola conexión MikroTik, criterios de conteo, consulta al seleccionar y estilos de los cuatro recuadros.
-- Alcance: no se modifican clientes, servicios, cortes, credenciales, sesiones, pestañas ni aprovisionamiento.
