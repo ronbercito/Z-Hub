@@ -2949,3 +2949,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Cada segmento menor llega hasta 99: después de `1.1.99` continúa `1.2.00`; después de `1.2.99`, `1.3.00`.
 - La secuencia reciente queda corregida a 1.2.00, 1.2.01, 1.2.02 y **1.2.03**.
 - El comparador del actualizador interpreta los segmentos como números, por lo que `1.2.03` se ordena correctamente.
+
+
+### 1.2.04 — Buscador de PPPoE secrets
+
+- Se añade buscador compacto en PPPoE secrets.
+- Filtra por usuario, perfil, IP remota o comentario e indica coincidencias.
+- No agrega consultas ni altera secretos, estados ni acciones del MikroTik.
+- Prueba: revisión estática de estado, criterios de filtro, input y listado filtrado.
