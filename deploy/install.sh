@@ -1,10 +1,9 @@
 #!/bin/bash
 # ============================================================================== 
-# Archivo: deploy/setup_debian.sh
-# Actualización: 2026-09-08 — corrige el diagnóstico del build y evita que ESLint heredado bloquee despliegues.
-# Función: instalación y despliegue automático de MikroHub en Debian/Ubuntu.
-# Trabaja con: deploy/mariadb/init.sql.template, deploy/supervisor/mikrosmart_backend.conf.template,
-#              deploy/nginx/mikrosmart.conf.template, deploy/env/backend.env.example,
+# Archivo: deploy/install.sh
+# Función: instalación y despliegue automático de Z-Hub en Debian/Ubuntu.
+# Trabaja con: deploy/mariadb/init.sql.template, deploy/supervisor/zhub_backend.conf.template,
+#              deploy/nginx/zhub.conf.template, deploy/env/backend.env.example,
 #              backend/requirements.txt, frontend/package.json
 # ============================================================================== 
 set -Eeuo pipefail
@@ -16,7 +15,7 @@ fi
 
 DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$DEPLOY_DIR")"
-WEB_ROOT="/var/www/mikrosmart_web"
+WEB_ROOT="/var/www/z-hub/web"
 DB_NAME="fibraz_isp_db"
 DB_USER="fibraz"
 STEP="inicio"
@@ -24,7 +23,7 @@ STEP="inicio"
 trap 'rc=$?; echo "ERROR_SETUP: paso=$STEP linea=$LINENO comando=$BASH_COMMAND codigo=$rc"; exit $rc' ERR
 
 STEP="paquetes del sistema"
-echo "🚀 Instalando MikroHub ISP"
+echo "🚀 Instalando Z-Hub ISP"
 echo "📂 Aplicación: $APP_DIR"
 echo "📦 1/6 Paquetes del sistema..."
 export DEBIAN_FRONTEND=noninteractive
@@ -73,44 +72,45 @@ cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
 rm -rf build
 yarn install --network-timeout 100000
-# React Scripts 5 puede convertir advertencias de ESLint heredadas en errores del build.
-# La validación funcional se mantiene separada del despliegue para no bloquear una actualización.
 DISABLE_ESLINT_PLUGIN=true CI= yarn build
 $SUDO mkdir -p "$WEB_ROOT"
 $SUDO rm -rf "$WEB_ROOT"/*
 $SUDO cp -r build/. "$WEB_ROOT"/
-$SUDO chown -R www-data:www-data "$WEB_ROOT"
-$SUDO chmod -R 755 "$WEB_ROOT"
+$SUDO chown -R www-data:www-data "/var/www/z-hub"
+$SUDO chmod -R 755 "/var/www/z-hub"
 
 STEP="Supervisor y Nginx"
 echo "⚙️ 6/6 Supervisor y Nginx..."
 cd "$APP_DIR"
 export APP_DIR WEB_ROOT
-envsubst < "$DEPLOY_DIR/supervisor/mikrosmart_backend.conf.template" | $SUDO tee /etc/supervisor/conf.d/mikrosmart_backend.conf >/dev/null
+envsubst < "$DEPLOY_DIR/supervisor/zhub_backend.conf.template" | $SUDO tee /etc/supervisor/conf.d/zhub_backend.conf >/dev/null
 $SUDO supervisorctl reread || true
 $SUDO supervisorctl update || true
-$SUDO supervisorctl restart mikrosmart_backend || true
+$SUDO supervisorctl restart zhub_backend || true
 
 echo "   Esperando al backend..."
 for i in $(seq 1 20); do
-  if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then echo "   ✅ Backend respondiendo"; break; fi
+  if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then echo "   ✅ Backend Z-Hub respondiendo"; break; fi
   sleep 2
   if [ "$i" -eq 20 ]; then
-    echo "   ❌ El backend no responde. Últimas líneas del log:"; $SUDO tail -n 30 /var/log/mikrosmart_backend.err.log
+    echo "   ❌ El backend no responde. Últimas líneas del log:"
+    $SUDO tail -n 30 /var/log/zhub_backend.err.log
+    exit 1
   fi
 done
 
 $SUDO rm -f /etc/nginx/sites-enabled/default
-envsubst '$WEB_ROOT' < "$DEPLOY_DIR/nginx/mikrosmart.conf.template" | $SUDO tee /etc/nginx/sites-available/mikrosmart >/dev/null
-$SUDO ln -sf /etc/nginx/sites-available/mikrosmart /etc/nginx/sites-enabled/mikrosmart
+envsubst '$WEB_ROOT' < "$DEPLOY_DIR/nginx/zhub.conf.template" | $SUDO tee /etc/nginx/sites-available/zhub >/dev/null
+$SUDO ln -sf /etc/nginx/sites-available/zhub /etc/nginx/sites-enabled/zhub
 $SUDO nginx -t
 $SUDO systemctl restart nginx
 
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo "========================================================="
-echo "🎉 DESPLIEGUE COMPLETADO"
+echo "🎉 Z-HUB — DESPLIEGUE COMPLETADO"
 echo "🌐 Panel:    http://${IP:-IP_DEL_SERVIDOR}/"
 echo "🔑 Acceso:   $(grep '^ADMIN_EMAIL=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')  /  $(grep '^ADMIN_PASSWORD=' "$APP_DIR/backend/.env" | cut -d= -f2 | tr -d '\"')"
 echo "🗄️ MariaDB: base $DB_NAME, usuario $DB_USER (clave en backend/.env)"
-echo "📜 Logs: /var/log/mikrosmart_backend.err.log"
+echo "📂 Z-Hub: $APP_DIR"
+echo "📜 Logs: /var/log/zhub_backend.err.log"
 echo "========================================================="

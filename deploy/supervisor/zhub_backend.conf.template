@@ -1,0 +1,12 @@
+# Archivo: deploy/supervisor/zhub_backend.conf.template
+# Función: Servicio Supervisor que mantiene el backend FastAPI de Z-Hub corriendo.
+[program:zhub_backend]
+directory=${APP_DIR}/backend
+command=${APP_DIR}/backend/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8001 --workers 2
+autostart=true
+autorestart=true
+startretries=5
+stderr_logfile=/var/log/zhub_backend.err.log
+stdout_logfile=/var/log/zhub_backend.out.log
+user=root
+environment=PYTHONUNBUFFERED=1

@@ -1,7 +1,7 @@
 <!--
 Archivo: README.md
-Actualización: 2026-09-08 — establece README y bitácora maestra como lectura obligatoria de continuidad.
-Función: punto de entrada del repositorio MikroHub y acceso a sus guías principales.
+Actualización: 2026-09-09 — identidad oficial del proyecto: Z-Hub.
+Función: punto de entrada del repositorio Z-Hub y acceso a sus guías principales.
 Recibe de: documentación versionada dentro del repositorio.
 Entrega a: desarrolladores, Copilot y mantenedores rutas de lectura antes de modificar el sistema.
 -->
@@ -23,10 +23,10 @@ Antes de realizar cualquier modificación en Z-Hub, una nueva sesión de ChatGPT
 
 ### Documentación técnica
 
-
 ### Instalación y despliegue
 
 - **[Guía de Instalación Debian](INSTALL_DEBIAN.md)** — Instalación y despliegue del panel.
+- **[install.sh](install.sh)** — Instalador principal del servidor.
 
 ## 🔐 Documentación interna de continuidad
 
@@ -40,8 +40,6 @@ No deben:
 - incluirse en el build frontend;
 - utilizarse como fuente de datos del panel;
 - contener contraseñas, tokens, claves privadas, `.env` ni secretos reales.
-
-La documentación existe únicamente para conservar el contexto técnico y facilitar futuras revisiones o nuevas sesiones de desarrollo.
 
 ## 📝 Regla de continuidad y publicación
 

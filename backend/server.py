@@ -1,7 +1,7 @@
 """
-Punto de entrada FastAPI. Monta rutas bajo /api y aplica permisos por módulo.
+Punto de entrada FastAPI de Z-Hub. Monta rutas bajo /api y aplica permisos por módulo.
 Las rutas OLT específicas se registran antes del router genérico de red.
-Actualización: 2026-09-08 — registra acciones de facturas, resumen seguro, API aislada de saldos y auditoría detallada de servicios.
+Actualización: 2026-09-09 — identidad del servicio/API alineada con Z-Hub.
 """
 from app.core.config import CORS_ORIGINS
 import logging
@@ -58,7 +58,7 @@ async def lifespan(_: FastAPI):
     yield
     await database.engine.dispose()
 
-app = FastAPI(title="FibraZ / MikroSmart ISP API", version="3.0.0", lifespan=lifespan)
+app = FastAPI(title="Z-Hub ISP API", version="3.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials="*" not in CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
 @app.middleware("http")
@@ -71,9 +71,7 @@ async def sync_summary_identity(request, call_next):
             client = await db.get(Client, match.group(1))
             if client:
                 previous = (client.dni_ruc or "", client.full_name or "")
-
     response = await call_next(request)
-
     if match and previous and 200 <= response.status_code < 300:
         async with database.SessionLocal() as db:
             client = await db.get(Client, match.group(1))
@@ -84,23 +82,18 @@ async def sync_summary_identity(request, call_next):
     return response
 
 api = APIRouter(prefix="/api")
-
 for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
-
 for router in (ajustes_public_router, auth_router, system_update_router):
     api.include_router(router)
-
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
-
 for router, module in (
     (inicio_router, "dashboard"), (clientes_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
-    (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"),
-    (staff_router, "staff"),
+    (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"), (staff_router, "staff"),
 ):
     api.include_router(router, dependencies=[Depends(require_permission(module))])
 

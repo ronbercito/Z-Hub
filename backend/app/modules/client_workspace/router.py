@@ -1,5 +1,5 @@
 """Archivo: backend/app/modules/client_workspace/router.py
-Actualización: 2026-09-08 — versión 1.1.5: el Log reconstruye con datos reales la creación de servicios adicionales.
+Actualización: 2026-09-09 — versión 1.1.79: almacenamiento de documentos bajo la raíz Z-Hub.
 Función: registra comunicaciones, documentos y acciones operativas del editor de cliente.
 Recibe: ClientDetail.jsx, usuario autenticado y archivos multipart.
 Entrega: datos persistentes para las pestañas Email y SMS, Documentos y Log.
@@ -21,7 +21,7 @@ from app.models.client_document import ClientDocument
 from app.models.client_service import ClientService
 
 router = APIRouter(prefix="/clients", tags=["Editor de cliente"])
-UPLOAD_ROOT = Path(os.environ.get("MIKROHUB_UPLOADS", "/var/www/mikrohub/uploads/client-documents"))
+UPLOAD_ROOT = Path(os.environ.get("ZHUB_UPLOADS", "/var/www/z-hub/uploads/client-documents"))
 MAX_SIZE = 15 * 1024 * 1024
 ALLOWED = {"application/pdf","image/jpeg","image/png","image/webp","text/plain","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
 
@@ -86,30 +86,14 @@ async def create_communication(client_id: str, data: CommunicationIn, db: AsyncS
 
 @router.post("/{client_id}/activity")
 async def create_activity(client_id: str, data: ActivityIn, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
-    """Registra una acción del editor usando la cuenta autenticada.
-
-    Las acciones de Facturación ya generan auditoría específica desde sus endpoints.
-    El antiguo callback genérico 'Facturación actualizada' se ignora para evitar
-    duplicados y para que el Log conserve únicamente eventos descriptivos.
-
-    La creación de servicios adicionales se normaliza aquí con los datos reales
-    guardados en ClientService, evitando registrar precios en cero, IDs técnicos
-    como nombres o textos ambiguos provenientes del formulario.
-    """
+    """Registra una acción del editor usando la cuenta autenticada."""
     await _client(db, client_id)
     action = data.action.strip()
     detail = data.detail.strip()
-    if action == "Facturación actualizada" and (
-        not detail or detail == "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."
-    ):
+    if action == "Facturación actualizada" and (not detail or detail == "Se realizó una acción en Facturación del cliente: factura, pago, anulación, eliminación o saldo."):
         return {"ok": True, "skipped": True, "reason": "La operación de Facturación se registra con detalle específico."}
     if action == "Servicio creado":
-        service = (await db.execute(
-            select(ClientService)
-            .where(ClientService.client_id == client_id)
-            .order_by(ClientService.created_at.desc(), ClientService.id.desc())
-            .limit(1)
-        )).scalar_one_or_none()
+        service = (await db.execute(select(ClientService).where(ClientService.client_id == client_id).order_by(ClientService.created_at.desc(), ClientService.id.desc()).limit(1))).scalar_one_or_none()
         if service:
             detail = _service_created_detail(service)
     operator = user.get("name") or user.get("email") or "Sistema"

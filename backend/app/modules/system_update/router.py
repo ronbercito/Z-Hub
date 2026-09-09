@@ -1,9 +1,8 @@
 """Archivo: backend/app/modules/system_update/router.py
-Actualización: 2026-09-09 — versión 1.1.12: consulta dos repositorios y prioriza Z-Hub.
-Función: consulta Z-Hub y MikroHub legado, compara versiones, selecciona la actualización
-         más reciente y ejecuta run_update.sh indicando el repositorio elegido.
+Actualización: 2026-09-09 — versión 1.1.79: sistema de actualización centralizado en Z-Hub.
+Función: consulta Z-Hub, compara versiones y ejecuta run_update.sh con la fuente oficial.
 Recibe: solicitudes administrativas desde UpdateCenter.jsx y datos Git locales.
-Entrega: estado, fuente seleccionada, fuentes consultadas, fase, porcentaje y detalle de fallo.
+Entrega: estado, fuente seleccionada, fase, porcentaje y detalle de fallo.
 """
 from __future__ import annotations
 
@@ -16,22 +15,15 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from app.core.security import require_role
 
 router = APIRouter(prefix="/system-update", tags=["Actualizaciones"])
-ROOT = Path(os.environ.get("MIKROHUB_ROOT", "/var/www/mikrohub"))
+ROOT = Path(os.environ.get("ZHUB_ROOT", "/var/www/z-hub"))
 UPDATE_SCRIPT = ROOT / "backend/app/modules/system_update/run_update.sh"
-LOG_FILE = Path("/tmp/mikrohub-update.log")
-ERROR_LOG_FILE = Path("/tmp/mikrohub-update-error.log")
-PID_FILE = Path("/tmp/mikrohub-update.pid")
+LOG_FILE = Path("/tmp/z-hub-update.log")
+ERROR_LOG_FILE = Path("/tmp/z-hub-update-error.log")
+PID_FILE = Path("/tmp/z-hub-update.pid")
 VERSION_FILE = "frontend/src/modules/system-update/version.js"
 
-PRIMARY_REPOSITORY = os.environ.get("ZHUB_REPOSITORY", "https://github.com/ronbercito/Z-Hub.git")
-LEGACY_REPOSITORY = os.environ.get(
-    "MIKROHUB_LEGACY_REPOSITORY",
-    os.environ.get("MIKROHUB_REPOSITORY", "https://github.com/ronbercito/mirkohub.git"),
-)
-REPOSITORIES = (
-    {"id": "zhub", "name": "Z-Hub", "url": PRIMARY_REPOSITORY, "priority": 2},
-    {"id": "mirkohub", "name": "MikroHub legado", "url": LEGACY_REPOSITORY, "priority": 1},
-)
+REPOSITORY = os.environ.get("ZHUB_REPOSITORY", "https://github.com/ronbercito/Z-Hub.git")
+REPOSITORY_INFO = {"id": "zhub", "name": "Z-Hub", "url": REPOSITORY, "priority": 1}
 
 
 def _git(*args: str) -> str:
@@ -56,17 +48,16 @@ def _version_key(version: str) -> tuple[int, ...]:
     return tuple((parts + [0, 0, 0, 0])[:4])
 
 
-def _fetch_candidate(repository: dict[str, object]) -> dict[str, object]:
-    repo_id = str(repository["id"])
-    ref = f"refs/remotes/system-update/{repo_id}/main"
-    _git("fetch", "--force", str(repository["url"]), f"+refs/heads/main:{ref}")
+def _fetch_candidate() -> dict[str, object]:
+    ref = "refs/remotes/system-update/zhub/main"
+    _git("fetch", "--force", REPOSITORY, f"+refs/heads/main:{ref}")
     commit = _git("rev-parse", ref)
     version, changelog = _version_and_changelog(_source_for(ref))
     return {
-        "id": repo_id,
-        "name": str(repository["name"]),
-        "url": str(repository["url"]),
-        "priority": int(repository["priority"]),
+        "id": "zhub",
+        "name": "Z-Hub",
+        "url": REPOSITORY,
+        "priority": 1,
         "ref": ref,
         "commit": commit,
         "version": version,
@@ -75,34 +66,13 @@ def _fetch_candidate(repository: dict[str, object]) -> dict[str, object]:
     }
 
 
-def _available_sources() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-    candidates: list[dict[str, object]] = []
-    sources: list[dict[str, object]] = []
-    for repository in REPOSITORIES:
-        try:
-            candidate = _fetch_candidate(repository)
-            candidates.append(candidate)
-            sources.append({
-                "id": candidate["id"],
-                "name": candidate["name"],
-                "ok": True,
-                "version": candidate["version"],
-                "commit": str(candidate["commit"])[:12],
-            })
-        except RuntimeError as exc:
-            sources.append({
-                "id": str(repository["id"]),
-                "name": str(repository["name"]),
-                "ok": False,
-                "error": str(exc)[-500:],
-            })
-    return candidates, sources
-
-
-def _select_candidate(candidates: list[dict[str, object]]) -> dict[str, object]:
-    if not candidates:
-        raise RuntimeError("Ninguno de los repositorios de actualización respondió correctamente")
-    return max(candidates, key=lambda item: (_version_key(str(item["version"])), int(item["priority"])))
+def _available_source() -> tuple[dict[str, object], dict[str, object]]:
+    try:
+        candidate = _fetch_candidate()
+        source = {"id": "zhub", "name": "Z-Hub", "ok": True, "version": candidate["version"], "commit": str(candidate["commit"])[:12]}
+        return candidate, source
+    except RuntimeError as exc:
+        raise RuntimeError(f"No se pudo consultar Z-Hub: {exc}") from exc
 
 
 def _log_state() -> tuple[str, str, str, bool]:
@@ -140,7 +110,6 @@ def _progress_from_log(log: str, state: str) -> tuple[int, str]:
 
 
 def _extract_error_message(error_log: str) -> str:
-    """Extrae contexto útil del fallo, incluyendo errores reales de React/Webpack."""
     if not error_log.strip():
         return "Error desconocido. Revisa los logs del servidor."
     lines = [line.strip() for line in error_log.strip().splitlines() if line.strip()]
@@ -150,8 +119,7 @@ def _extract_error_message(error_log: str) -> str:
         if any(pattern in line for pattern in patterns):
             selected.extend(lines[max(0, index - 1): min(len(lines), index + 5)])
     if selected:
-        unique = list(dict.fromkeys(selected))
-        return "\n".join(unique[-14:])[-3500:]
+        return "\n".join(list(dict.fromkeys(selected))[-14:])[-3500:]
     return "\n".join(lines[-14:])[-3500:]
 
 
@@ -162,10 +130,9 @@ async def update_status(response: Response):
     try:
         current_commit = _git("rev-parse", "HEAD")
         current_version, current_changelog = _version_and_changelog(_source_for("HEAD"))
-        candidates, sources = _available_sources()
-        selected = _select_candidate(candidates)
+        selected, source = _available_source()
     except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=f"No se pudo consultar los repositorios de actualización: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"No se pudo consultar Z-Hub: {exc}") from exc
 
     state, log, error_log, running = _log_state()
     progress, phase = _progress_from_log(log, state)
@@ -173,14 +140,8 @@ async def update_status(response: Response):
     return {
         "available": _version_key(str(selected["version"])) > _version_key(current_version),
         "current": {"version": current_version, "commit": current_commit[:12], "changelog": current_changelog},
-        "remote": {
-            "version": selected["version"],
-            "commit": str(selected["commit"])[:12],
-            "changelog": selected["changelog"],
-            "source": selected["id"],
-            "source_name": selected["name"],
-        },
-        "sources": sources,
+        "remote": {"version": selected["version"], "commit": str(selected["commit"])[:12], "changelog": selected["changelog"], "source": selected["id"], "source_name": selected["name"]},
+        "sources": [source],
         "installation": {"state": state, "running": running, "progress": progress, "phase": phase, "error": error_message},
     }
 
@@ -191,11 +152,10 @@ async def install_update():
     if running:
         raise HTTPException(status_code=409, detail="Ya hay una actualización en curso")
     if not UPDATE_SCRIPT.is_file():
-        raise HTTPException(status_code=500, detail="No se encontró el script de actualización")
+        raise HTTPException(status_code=500, detail="No se encontró el script de actualización de Z-Hub")
     try:
         current_version, _ = _version_and_changelog(_source_for("HEAD"))
-        candidates, _ = _available_sources()
-        selected = _select_candidate(candidates)
+        selected, _ = _available_source()
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=f"No se pudo consultar GitHub: {exc}") from exc
     if _version_key(str(selected["version"])) <= _version_key(current_version):
@@ -204,19 +164,8 @@ async def install_update():
     LOG_FILE.write_text("")
     ERROR_LOG_FILE.write_text("")
     env = os.environ.copy()
-    env["MIKROHUB_UPDATE_REPOSITORY"] = str(selected["url"])
-    env["MIKROHUB_UPDATE_SOURCE"] = str(selected["id"])
-    process = subprocess.Popen(
-        ["bash", str(UPDATE_SCRIPT)],
-        cwd=str(ROOT),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        env=env,
-    )
+    env["ZHUB_UPDATE_REPOSITORY"] = str(selected["url"])
+    env["ZHUB_UPDATE_SOURCE"] = str(selected["id"])
+    process = subprocess.Popen(["bash", str(UPDATE_SCRIPT)], cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True, env=env)
     PID_FILE.write_text(str(process.pid))
-    return {
-        "message": f"Actualización iniciada desde {selected['name']}",
-        "source": selected["id"],
-        "installation": {"state": "running", "pid": process.pid},
-    }
+    return {"message": f"Actualización iniciada desde {selected['name']}", "source": selected["id"], "installation": {"state": "running", "pid": process.pid}}
