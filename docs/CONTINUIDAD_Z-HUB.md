@@ -1748,3 +1748,11 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Texto, iconos, barras y etiqueta de lectura se ajustaron a alto contraste; las tarjetas resaltan suavemente al pasar el cursor.
 - Alcance: únicamente presentación; no se modificó el parser de métricas, las consultas OLT ni la selección de PON.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.40 — Corrección de contraste y tamaño de tarjeta MikroTik
+- Se añadió una clase específica para distinguir visualmente las tarjetas MikroTik de las OLT.
+- Se corrigió la prioridad CSS de la tarjeta seleccionada para que conserve el fondo azul sólido y el texto blanco plenamente visible.
+- La tarjeta MikroTik queda compacta, con un ancho máximo de 290 px en escritorio y ancho completo en móvil.
+- El hover mantiene un azul más luminoso, borde claro y sombra de realce.
+- Alcance: solo presentación; no se modifican datos, estado, botones, selecciones ni monitoreo.
+- Validación realizada: revisión estática de clase, selectores, versión y registro de continuidad.
