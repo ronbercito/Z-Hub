@@ -1611,3 +1611,13 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - Se eliminaron los archivos restantes de continuidad, políticas y notas documentales de backup de docs/.
 - El único documento maestro, changelog y regla de continuidad es docs/CONTINUIDAD_Z-HUB.md.
 - Esta entrada no incrementa PANEL_VERSION.
+
+
+### 1.1.23 — 2026-09-09 — Dashboard claro según referencia
+
+- Objetivo: alinear el Dashboard del tema zhub-light con la segunda referencia proporcionada: fondos blancos, bordes azul-gris discretos, texto azul tinta, tablas claras y gráficos legibles.
+- Archivos modificados: frontend/src/modules/inicio/Dashboard.jsx (contenedor visual y tooltip claro), frontend/src/modules/appearance/panel-theme.css (capa visual acotada a .dashboard-reference), frontend/src/modules/system-update/version.js.
+- Flujo/compatibilidad: no cambia API, datos, rutas, permisos ni el tema oscuro. Dashboard mantiene /api/dashboard/summary y solo se modifica su presentación bajo html[data-panel-theme="zhub-light"].
+- Backup: rama backup-pre-dashboard-claro-1.1.23 creada antes del cambio.
+- Pruebas: revisión estática de JSX, selectores y versión; build y validación visual real en servidor pendientes.
+- Resultado esperado: tarjetas KPI coloreadas, recaudación, resumen, últimas tablas y tooltip se presentan en claro como la referencia, eliminando las grandes superficies oscuras del Dashboard.
