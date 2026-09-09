@@ -101,14 +101,14 @@ ok "Usuario: $(id -un)"
 
 export DEBIAN_FRONTEND=noninteractive
 
-STEP="Preparando sistema"
-section "[1/7] Preparando sistema"
+STEP="Preparando el entorno"
+section "[1/7] Preparando el entorno"
 run_visual "Actualizando paquetes" apt-get update
 run_visual "Instalando dependencias del sistema" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
 ok "Paquetes del sistema listos"
 
-STEP="Node.js y Yarn"
-section "[2/7] Node.js LTS y Yarn"
+STEP="Configurando el sistema"
+section "[2/7] Configurando el sistema"
 if ! command -v node >/dev/null; then
   run_visual "Configurando repositorio Node.js 20 LTS" bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash -'
   run_visual "Instalando Node.js" apt-get install -y nodejs
@@ -119,8 +119,8 @@ fi
 ok "Node.js: $(node --version)"
 ok "Yarn: $(yarn --version)"
 
-STEP="MariaDB"
-section "[3/7] Configurando MariaDB"
+STEP="Inicializando componentes"
+section "[3/7] Inicializando componentes"
 run_visual "Activando servicio MariaDB" systemctl enable --now mariadb
 ok "Servicio MariaDB activo"
 
@@ -141,8 +141,8 @@ run_visual "Preparando base de datos y usuario MariaDB" bash -c 'envsubst < "$1/
 ok "Base de datos '$DB_NAME' preparada"
 ok "Usuario MariaDB '$DB_USER' preparado"
 
-STEP="Backend FastAPI"
-section "[4/7] Instalando backend FastAPI"
+STEP="Preparando la aplicación"
+section "[4/7] Preparando la aplicación"
 cd "$APP_DIR/backend"
 if [ ! -f ".env" ]; then
   JWT_SECRET="$(python3 - <<'PY'
@@ -163,8 +163,8 @@ run_visual "Actualizando pip" ./venv/bin/pip install --upgrade pip
 run_visual "Instalando dependencias Python del backend" ./venv/bin/pip install -r requirements.txt
 ok "Entorno virtual y dependencias del backend listos"
 
-STEP="Frontend React"
-section "[5/7] Compilando frontend React"
+STEP="Procesando la aplicación"
+section "[5/7] Procesando la aplicación"
 cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
 rm -rf build
@@ -181,8 +181,8 @@ git config --system --add safe.directory "$APP_DIR"
 ok "Archivos publicados en $WEB_ROOT"
 ok "Git safe.directory configurado para $APP_DIR"
 
-STEP="Servicios"
-section "[6/7] Activando Supervisor y Nginx"
+STEP="Activando el sistema"
+section "[6/7] Activando el sistema"
 cd "$APP_DIR"
 export APP_DIR WEB_ROOT
 envsubst < "$DEPLOY_DIR/supervisor/zhub_backend.conf.template" | tee /etc/supervisor/conf.d/zhub_backend.conf >/dev/null
@@ -212,8 +212,8 @@ run_visual "Validando configuración Nginx" nginx -t
 run_visual "Reiniciando Nginx" systemctl restart nginx
 ok "Nginx configurado y activo"
 
-STEP="Verificación final"
-section "[7/7] Verificación final"
+STEP="Finalizando instalación"
+section "[7/7] Finalizando instalación"
 if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then
   ok "Backend: OK"
 else
