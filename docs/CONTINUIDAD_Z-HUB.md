@@ -1783,3 +1783,10 @@ Esta nota es exclusivamente documental. **No incrementa `PANEL_VERSION`** y no d
 - La respuesta CLI se muestra en un panel de terminal oscuro y legible cuando exista salida.
 - Alcance: solo presentación; no se modifican los comandos enviados, validaciones, permisos ni API de la OLT.
 - Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
+
+### 1.1.45 — Planes y Servicios adaptados al tema
+- Se añadieron clases de presentación al módulo y a cada tarjeta de plan.
+- Las tarjetas usan azul profundo, etiqueta de tecnología visible, bloque de velocidades blanco con valores azul/verde y acciones con alto contraste.
+- Se añadió realce visual al pasar el cursor sobre un plan.
+- Alcance: únicamente interfaz; CRUD de planes, precios, perfiles PPP y sincronización MikroTik permanecen sin cambios.
+- Validación realizada: revisión estática de clases, selectores, versión y registro de continuidad.
