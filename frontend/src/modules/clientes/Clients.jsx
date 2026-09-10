@@ -1,19 +1,20 @@
 /**
  * Archivo: frontend/src/modules/clientes/Clients.jsx
- * Actualización: 2026-09-08 — la eliminación se valida con APIs reales y muestra una alerta roja desde su módulo; la tabla muestra deuda y meses pendientes.
- * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
+ * Actualización: 2026-09-09 — vista Clientes simplificada; el alta sigue disponible desde Instalaciones.
+ * Función: listado, gestión operativa y ficha de clientes; el alta oficial se conserva para el puente de Instalaciones.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { TEST_IDS } from "../../constants/testIds";
-import { Users, UserPlus, Search, Phone, MapPin, ShieldAlert, CheckCircle2, XCircle, MessageSquare, Edit3, Trash2, ExternalLink, Radio } from "lucide-react";
+import { Users, Search, Phone, MapPin, ShieldAlert, CheckCircle2, XCircle, MessageSquare, Trash2, ExternalLink, Radio } from "lucide-react";
 import { toast } from "sonner";
 import ClientRegistrationWizard from "./usuarios/ClientRegistrationWizard";
 import ClientDetail from "./ClientDetail";
 import CoordinatesPicker from "../red/components/CoordinatesPicker";
 import { showDeleteModal } from "../../constants/clientDeleteGuard";
+import "./clients-theme.css";
 
 const emptyForm = (planId = "", routerId = "") => ({
   full_name: "", dni_ruc: "", phone: "", email: "", address: "", reference: "",
@@ -150,7 +151,6 @@ export default function Clients({ onSelectClient }) {
   const handleDeleteClient = async (id, name) => {
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      // Estas son exactamente las rutas que ya alimentan las pestañas Servicios y Facturación.
       const [servicesRes, invoicesRes] = await Promise.all([
         axios.get(`${API}/clients/${id}/services`, { headers }),
         axios.get(`${API}/clients/${id}/invoices`, { headers }),
@@ -182,42 +182,13 @@ export default function Clients({ onSelectClient }) {
     window.open(`https://wa.me/51${cleanPhone}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const startNew = () => {
-    setSelectedClient(null);
-    setFormData(emptyForm(activePlans[0]?.id || "", mikrotikRouters[0]?.id || ""));
-    setShowAddModal(true);
-  };
-
-  const startEdit = (c) => {
-    setSelectedClient(c);
-    setFormData({
-      ...emptyForm(c.plan_id, c.router_id),
-      full_name: c.full_name, dni_ruc: c.dni_ruc, phone: c.phone, email: c.email || "",
-      address: c.address, reference: c.reference || "", latitude: c.latitude ?? "", longitude: c.longitude ?? "",
-      ip_address: c.ip_address, onu_sn: c.onu_sn || "", connection_type: c.connection_type || "PPPoE",
-      pppoe_user: c.pppoe_user || "", pppoe_password: c.pppoe_password || "", ipv4_network_id: c.ipv4_network_id || "",
-      nap_box: c.nap_box || "", nap_box_id: c.nap_box_id || "", nap_port: c.nap_port ?? "",
-      optical_power_dbm: c.optical_power_dbm ?? "", installation_date: c.installation_date || "",
-      technology: c.technology || "fiber", zone_id: c.zone_id || "", zone_name: c.zone_name || "",
-      monitoring_equipment_id: c.monitoring_equipment_id || "", monitoring_equipment_name: c.monitoring_equipment_name || "",
-      antenna_type: c.antenna_type || "", management_ip: c.management_ip || "", status: c.status,
-      billing_day: c.billing_day ?? 5, billing_type: c.billing_type || "prepaid", invoice_lead_days: c.invoice_lead_days ?? 5,
-      grace_days: c.grace_days ?? 5, cut_after_months: c.cut_after_months ?? 1,
-      invoice_notification_channel: c.invoice_notification_channel || "none", payment_reminder_channel: c.payment_reminder_channel || "none",
-      reminder_1_days: c.reminder_1_days ?? null, reminder_2_days: c.reminder_2_days ?? null,
-      reminder_3_days: c.reminder_3_days ?? null, create_first_invoice: false
-    });
-    setShowAddModal(true);
-  };
-
   return (
     <div className="clients-page space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="clients-header flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl p-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2"><Users className="w-6 h-6 text-cyan-400" /> Control de Abonados y Clientes</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Administración de contratos de fibra óptica, IP asignada, cortes y reactivaciones</p>
+          <h2 className="clients-title text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2"><Users className="w-6 h-6 text-cyan-400" /> Control de Clientes</h2>
+          <p className="clients-subtitle text-xs text-slate-400 mt-0.5">Administración de contratos de fibra óptica, IP asignada, cortes y reactivaciones</p>
         </div>
-        <button data-testid={TEST_IDS.BTN_NEW_CLIENT} onClick={startNew} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold rounded-xl shadow-lg flex items-center gap-2"><UserPlus className="w-4 h-4" /> Nuevo Abonado</button>
       </div>
 
       <div className="clients-controls bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -242,12 +213,11 @@ export default function Clients({ onSelectClient }) {
                 <td className="py-3 px-4"><button type="button" onClick={() => window.open(`http://${c.ip_address}`, "_blank")} title="Abrir MikroTik / equipo en una nueva pestaña" className="font-mono text-slate-200 hover:text-cyan-300 cursor-pointer">{c.ip_address}</button><div className="text-[11px] text-slate-400">{c.connection_type}: <span className="font-mono text-cyan-400">{c.pppoe_user || "estática"}</span></div><div className="text-[10px] text-slate-500">Router: {c.router_name}</div></td>
                 <td className="py-3 px-4"><div>{c.status === "active" ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px] border border-emerald-500/30"><CheckCircle2 className="w-3.5 h-3.5" /> ACTIVO</span> : <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 font-bold text-[11px] border border-rose-500/30"><XCircle className="w-3.5 h-3.5" /> CORTADO</span>}</div>{c.balance_due > 0 && <div className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-2"><span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold" title={`${c.unpaid_invoices_count || 0} meses pendientes`}>{c.unpaid_invoices_count || 0}</span><span>S/. {Number(c.balance_due).toFixed(2)}</span></div>}</td>
                 <td className="py-3 px-4 text-center"><div className="flex items-center justify-center gap-1.5">
-                  <button onClick={() => setDetailClientId(c.id)} title="Ver ficha del cliente" className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"><ExternalLink className="w-4 h-4" /></button>
-                  <button onClick={() => handleToggleStatus(c.id, c.full_name)} title={c.status === "active" ? "Cortar Servicio MikroTik" : "Reactivar Servicio"} className={`p-1.5 rounded-lg border ${c.status === "active" ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"}`}><ShieldAlert className="w-4 h-4" /></button>
-                  {c.onu_sn && <button onClick={() => handleOnuStatus(c)} title="Ver ONU en la OLT" className="p-1.5 rounded-lg bg-cyan-600/10 text-cyan-300 border border-cyan-600/30"><Radio className="w-4 h-4" /></button>}
-                  <button onClick={() => openWhatsAppReminder(c)} title="Enviar aviso WhatsApp" className="p-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 border border-emerald-600/30"><MessageSquare className="w-4 h-4" /></button>
-                  <button onClick={() => startEdit(c)} title="Editar Abonado" className="p-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => handleDeleteClient(c.id, c.full_name)} title="Eliminar" className="p-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => setDetailClientId(c.id)} title="Ver ficha del cliente" className="client-action-view p-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"><ExternalLink className="w-4 h-4" /></button>
+                  <button onClick={() => handleToggleStatus(c.id, c.full_name)} title={c.status === "active" ? "Cortar Servicio MikroTik" : "Reactivar Servicio"} className={`client-action-service p-1.5 rounded-lg border ${c.status === "active" ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"}`}><ShieldAlert className="w-4 h-4" /></button>
+                  {c.onu_sn && <button onClick={() => handleOnuStatus(c)} title="Ver ONU en la OLT" className="client-action-onu p-1.5 rounded-lg bg-cyan-600/10 text-cyan-300 border border-cyan-600/30"><Radio className="w-4 h-4" /></button>}
+                  <button onClick={() => openWhatsAppReminder(c)} title="Enviar aviso WhatsApp" className="client-action-whatsapp p-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 border border-emerald-600/30"><MessageSquare className="w-4 h-4" /></button>
+                  <button onClick={() => handleDeleteClient(c.id, c.full_name)} title="Eliminar" className="client-action-delete p-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700"><Trash2 className="w-4 h-4" /></button>
                 </div></td>
               </tr>
             ))}
