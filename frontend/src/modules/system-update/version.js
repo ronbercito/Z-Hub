@@ -1,10 +1,10 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.54";
+export const PANEL_VERSION = "1.2.55";
 export const CHANGELOG = [
-  { type: "Corrección", text: "Se corrige la navegación de Ajustes: el menú lateral ya no fuerza General y ahora abre realmente la portada visual de módulos." },
-  { type: "Ajustes", text: "Al seleccionar Ajustes se muestra el tablero aprobado con tarjetas, iconos, estados y animaciones hover." },
-  { type: "Menú lateral", text: "Se elimina únicamente el despliegue largo de subopciones de Ajustes; las secciones siguen accesibles desde las tarjetas del tablero." },
-  { type: "Navegación", text: "Al entrar a una tarjeta, Ajustes permanece resaltado en el menú lateral y se abre la pantalla funcional existente correspondiente." },
-  { type: "Compatibilidad", text: "No se elimina ninguna configuración ni módulo; solo cambia la forma de acceso a Ajustes y se conserva toda la lógica existente." },
-  { type: "Backup", text: "Antes de corregir se creó backup/pre-settings-home-fix-1.2.53-20260910 desde la 1.2.53 publicada." },
+  { type: "Ajustes", text: "Cada tarjeta del tablero abre ahora una ventana emergente compacta sobre la pantalla de Ajustes, sin navegar a una página completa." },
+  { type: "Interacción", text: "Hacer clic fuera de la ventana o pulsar Escape la cierra sin guardar cambios." },
+  { type: "Guardado", text: "Después de una operación de guardado confirmada por la API, la ventana se cierra automáticamente; las pruebas de utilidad como SMTP no fuerzan el cierre." },
+  { type: "Diseño", text: "La ventana limita su ancho y alto, usa scroll interno solo cuando es necesario y se adapta a tema claro, oscuro y pantallas pequeñas." },
+  { type: "Compatibilidad", text: "Se mantienen intactas las pantallas y formularios existentes de General, Configuración clientes, Gestión personal, Servidor de correo, Google y accesos en desarrollo." },
+  { type: "Backup", text: "Se creó backup/pre-settings-modal-1.2.54-20260910 apuntando al estado 1.2.54 previo a la modificación." },
 ];
