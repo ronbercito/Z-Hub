@@ -19,6 +19,32 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.37 — 2026-09-10 — Saneamiento de seguridad, integridad y calidad
+
+- **Objetivo:** corregir los hallazgos críticos y altos de la auditoría de 1.2.36 antes de continuar agregando funciones, protegiendo secretos, datos históricos y la sincronización con MikroTik.
+- **Backup integral previo:** antes de modificar se creó la rama `backup/pre-maintenance-1.2.36-20260910`, apuntando exactamente al commit `d086581b5f8e09fcb518ea702b51a2950306bcdc`. `docs/backups/1.2.36/FULL_REPOSITORY_BACKUP.md` documenta el rollback.
+- **Instalador:** se elimina el `chmod -R 755` global; `backend/.env` queda protegido con modo `600` y se aplican permisos diferenciados a directorios, código, scripts y frontend publicado.
+- **MikroTik / Clientes:** suspensión, reactivación y eliminación definitiva solo modifican/eliminan el estado local cuando RouterOS confirma la operación. Un fallo externo ya no deja un estado local falso.
+- **Pagos:** el hecho financiero se conserva aunque la reactivación automática en MikroTik falle. En ese caso el cliente permanece `suspended` y la API informa la incidencia para intervención.
+- **Retiro:** deja de borrar facturas, tickets, tareas, documentos, comunicaciones, actividades y servicios. Se conserva historial; facturas pendientes se cancelan/archivan y servicios adicionales se conservan como retirados.
+- **Comunicaciones:** Email/SMS sin proveedor real quedan como `registered` y la API responde `sent: false`; se elimina la falsa confirmación de entrega externa.
+- **Autenticación:** la sesión persistente se apoya en cookie httpOnly; el JWT deja de guardarse en `localStorage`. Un encabezado histórico `Authorization: Bearer ` vacío ya no bloquea el fallback a la cookie. `SESSION_COOKIE_SECURE` permite exigir cookie Secure al desplegar con HTTPS.
+- **Cifrado:** se agrega `APP_ENCRYPTION_KEY` independiente del `JWT_SECRET` para secretos SMTP, con compatibilidad de lectura para instalaciones antiguas.
+- **Ajustes:** `PUT /api/settings` queda limitado a claves conocidas; secretos y contadores internos quedan fuera de la actualización genérica.
+- **Zona horaria:** la operación de negocio usa `America/Lima` por defecto mediante `APP_TIMEZONE`; facturación, pausas y suspensión prolongada dejan de depender de la fecha UTC para decisiones diarias.
+- **Workers:** los workers de pausa y suspensión prolongada registran excepciones en logs en vez de silenciarlas.
+- **Recuperación:** `Recuperado` y `No recuperado` se consideran estados cerrados y no pueden reabrirse silenciosamente mediante PATCH.
+- **Permisos/UI:** los submenús `settings_*` heredan consistentemente el permiso `settings`; se normaliza branding visible/documental restante de FibraZ hacia Z-Hub donde no era una clave técnica de compatibilidad.
+- **Base de datos:** se elimina la doble ejecución accidental de `_add_missing_columns()` en el arranque MariaDB.
+- **Calidad:** se agrega `backend/tests/test_maintenance_contracts.py` y `.github/workflows/quality.yml`. Los reportes viejos se marcan como históricos y dejan de considerarse certificación de la versión actual.
+- **CI:** el primer intento del frontend falló antes del build porque el workflow intentaba cachear un `frontend/yarn.lock` que no existe. Se corrigió el workflow para instalar dependencias sin ese caché. La ejecución `34487091693`, sobre el commit `35f575d702fa64eaeb228c826938d68e84d37c7c`, terminó en `success`.
+- **Pruebas confirmadas por CI:** compilación estática Python OK, contratos de mantenimiento pytest OK y build de producción React OK.
+- **Pruebas pendientes:** actualización real del servidor, arranque contra MariaDB de producción y pruebas con MikroTik/OLT reales. No se afirma haber ejecutado esas pruebas.
+- **Compatibilidad:** no se borra ni reinicializa la base de datos; no se agregan retiros automáticos ni movimientos automáticos de inventario.
+- **Archivos principales:** `deploy/install.sh`, `deploy/env/backend.env.example`, `backend/app/core/config.py`, `backend/app/core/database.py`, `backend/app/core/security.py`, `backend/app/core/utils.py`, `backend/app/routers/auth/router.py`, `backend/app/routers/ajustes/router.py`, `backend/app/routers/clientes/router.py`, `backend/app/routers/clientes/retired.py`, `backend/app/routers/clientes/pause.py`, `backend/app/routers/clientes/suspension_alerts.py`, `backend/app/routers/clientes/equipment_recoveries.py`, `backend/app/routers/facturacion/router.py`, `frontend/src/context/AuthContext.js`, `frontend/src/modules/ajustes/staff/permissions.js`, `frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx`, documentación y CI.
+- **Resultado:** 1.2.37 queda como release de mantenimiento/saneamiento, con backup completo de 1.2.36 y controles automáticos de calidad antes de continuar nuevas funciones.
+- **Siguiente versión funcional:** `1.2.38`.
+
 ## 1.2.36 — 2026-09-10 — Módulo operativo de Recuperación de equipos
 
 - **Objetivo:** convertir `Recuperación de equipos` de un espacio preparado a un flujo operativo para controlar ONU, CPE u otros equipos que deben recuperarse de clientes suspendidos por largo tiempo o retirados.
@@ -297,6 +323,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.36**.
+- Serie cubierta: **1.2.00 → 1.2.37**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.37**, encima de 1.2.36.
+- Próxima versión funcional: **1.2.38**, encima de 1.2.37.
