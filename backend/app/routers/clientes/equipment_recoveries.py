@@ -10,16 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db, now_iso
 from app.core.security import get_current_user
 from app.models.client import Client
+from app.models.client_equipment import ClientEquipment
 from app.models.equipment_recovery import EquipmentRecovery
+from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/equipment-recoveries", tags=["Clientes / Recuperación de equipos"], dependencies=[Depends(get_current_user)])
 
 OPEN_STATUSES = {"pending", "contacted", "visit_scheduled"}
 CLOSED_STATUSES = {"recovered", "not_recovered"}
 VALID_STATUSES = OPEN_STATUSES | CLOSED_STATUSES
-
-# Los casos cerrados son históricos. Para volver a trabajar el cliente se crea un caso nuevo,
-# evitando reescribir silenciosamente el resultado de una visita anterior.
 ALLOWED_TRANSITIONS = {
     "pending": VALID_STATUSES,
     "contacted": VALID_STATUSES,
@@ -36,6 +35,17 @@ class RecoveryUpdate(BaseModel):
     notes: str = Field(default="", max_length=2000)
 
 
+async def _enabled(db: AsyncSession) -> bool:
+    setting = await db.get(Setting, "system_config")
+    data = {**DEFAULT_SETTINGS, **((setting.data if setting else {}) or {})}
+    return data.get("client_equipment_recovery_enabled", False) is True
+
+
+async def _require_enabled(db: AsyncSession) -> None:
+    if not await _enabled(db):
+        raise HTTPException(status_code=404, detail="El módulo de Recuperación de equipos está desactivado.")
+
+
 def _safe_snapshot(client: Client) -> dict:
     if client.status != "retired" or not client.retirement_technical_snapshot:
         return {}
@@ -46,23 +56,47 @@ def _safe_snapshot(client: Client) -> dict:
         return {}
 
 
-def _equipment_for(client: Client) -> dict:
+async def _assigned_items(db: AsyncSession, client: Client) -> list[dict]:
+    rows = (await db.execute(select(ClientEquipment).where(
+        ClientEquipment.client_id == client.id,
+        ClientEquipment.ownership == "company",
+        ClientEquipment.status.in_(("installed", "assigned", "recovery_pending")),
+    ).order_by(ClientEquipment.created_at))).scalars().all()
+    return [
+        {
+            "equipment_id": row.id,
+            "type": row.equipment_type or "Equipo",
+            "brand_model": row.brand_model or "",
+            "identifier": row.serial_mac or "",
+            "serial_mac": row.serial_mac or "",
+            "ownership": row.ownership,
+            "status": row.status,
+            "delivered_at": row.delivered_at or "",
+            "notes": row.notes or "",
+        }
+        for row in rows
+    ]
+
+
+async def _equipment_for(db: AsyncSession, client: Client) -> dict:
     snapshot = _safe_snapshot(client)
     technology = snapshot.get("technology") or client.technology or ""
-    equipment = []
-
-    if technology == "fiber":
-        onu_sn = snapshot.get("onu_sn") or client.onu_sn or ""
-        if onu_sn:
-            equipment.append({"type": "ONU", "identifier": onu_sn})
-    elif technology == "wireless":
-        antenna = snapshot.get("antenna_type") or client.antenna_type or ""
-        management_ip = snapshot.get("management_ip") or client.management_ip or ""
-        if antenna or management_ip:
-            equipment.append({"type": "CPE", "identifier": antenna or "CPE inalámbrico", "management_ip": management_ip})
-
-    if not equipment:
-        equipment.append({"type": "Por verificar", "identifier": "Equipo por verificar en campo"})
+    assigned = await _assigned_items(db, client)
+    if assigned:
+        equipment = assigned
+    else:
+        equipment = []
+        if technology == "fiber":
+            onu_sn = snapshot.get("onu_sn") or client.onu_sn or ""
+            if onu_sn:
+                equipment.append({"type": "ONU", "identifier": onu_sn})
+        elif technology == "wireless":
+            antenna = snapshot.get("antenna_type") or client.antenna_type or ""
+            management_ip = snapshot.get("management_ip") or client.management_ip or ""
+            if antenna or management_ip:
+                equipment.append({"type": "CPE", "identifier": antenna or "CPE inalámbrico", "management_ip": management_ip})
+        if not equipment:
+            equipment.append({"type": "Por verificar", "identifier": "Equipo por verificar en campo"})
 
     return {
         "technology": technology,
@@ -85,6 +119,7 @@ def _decorate(row: EquipmentRecovery) -> dict:
 
 @router.get("")
 async def list_recoveries(search: str = "", status: str = "all", db: AsyncSession = Depends(get_db)):
+    await _require_enabled(db)
     q = select(EquipmentRecovery)
     if status and status != "all":
         if status not in VALID_STATUSES:
@@ -106,6 +141,7 @@ async def list_recoveries(search: str = "", status: str = "all", db: AsyncSessio
 
 @router.get("/summary")
 async def recovery_summary(db: AsyncSession = Depends(get_db)):
+    await _require_enabled(db)
     rows = (await db.execute(select(EquipmentRecovery))).scalars().all()
     counts = {state: 0 for state in VALID_STATUSES}
     for row in rows:
@@ -118,6 +154,7 @@ async def recovery_summary(db: AsyncSession = Depends(get_db)):
 
 @router.post("/from-client/{client_id}")
 async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    await _require_enabled(db)
     client = await db.get(Client, client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Cliente no encontrado.")
@@ -131,7 +168,7 @@ async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db),
     if existing:
         raise HTTPException(status_code=409, detail="Este cliente ya tiene una recuperación de equipos pendiente.")
 
-    equipment = _equipment_for(client)
+    equipment = await _equipment_for(db, client)
     row = EquipmentRecovery(
         client_id=client.id,
         client_name=client.full_name or "",
@@ -145,6 +182,13 @@ async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db),
         created_by=current_user.get("name") or current_user.get("username") or "Sistema",
     )
     db.add(row)
+    for item in (equipment.get("items") or []):
+        equipment_id = item.get("equipment_id")
+        if equipment_id:
+            assigned = await db.get(ClientEquipment, equipment_id)
+            if assigned and assigned.status in {"installed", "assigned"}:
+                assigned.status = "recovery_pending"
+                assigned.updated_at = now_iso()
     await db.commit()
     await db.refresh(row)
     return {"ok": True, "message": "Cliente enviado a Recuperación de equipos.", "recovery": _decorate(row)}
@@ -152,6 +196,7 @@ async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db),
 
 @router.patch("/{recovery_id}")
 async def update_recovery(recovery_id: str, payload: RecoveryUpdate, db: AsyncSession = Depends(get_db)):
+    await _require_enabled(db)
     row = await db.get(EquipmentRecovery, recovery_id)
     if not row:
         raise HTTPException(status_code=404, detail="Caso de recuperación no encontrado.")
