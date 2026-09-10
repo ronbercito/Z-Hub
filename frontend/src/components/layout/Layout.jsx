@@ -85,7 +85,7 @@ export default function Layout() {
       case "monitoring": return <Monitoring />;
       case "servicios": return <Plans />;
       case "clientes":
-      case "client_users": return <Users />;
+      case "client_users": return <Users onOpenRecovery={() => setActiveTab("client_recovery")} />;
       case "client_zones": return <Zones />;
       case "client_installations": return <Installations onContinueToClient={() => setActiveTab("client_users")} />;
       case "client_recovery": return <EquipmentRecovery />;
