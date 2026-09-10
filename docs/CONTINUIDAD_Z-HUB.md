@@ -3028,3 +3028,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Garantía:** continúa consultando el estado mientras instala y solo recarga cuando el servidor informa éxito **y** la versión instalada coincide con la versión objetivo.
 - **Recarga:** se usa una URL con marcador de actualización para solicitar los recursos nuevos; sesión y credenciales permanecen activas.
 - **Pruebas:** validada ausencia de logout, condición de éxito, coincidencia de versión y recarga única controlada.
+
+
+### 1.2.14 — Botón de nueva instalación adaptado al tema
+
+- **Ubicación:** la acción **Nueva instalación** se traslada al lado izquierdo, debajo del título y la descripción de Instalaciones.
+- **Tema:** el botón cuenta con una clase propia: conserva degradado cian/azul en oscuro y azul sólido con texto blanco y contraste reforzado en Claro Suave.
+- **Compatibilidad:** no se modifican filtros, listado ni datos de instalaciones.
+- **Pruebas:** verificada la nueva posición y las reglas específicas para tema claro y oscuro.
