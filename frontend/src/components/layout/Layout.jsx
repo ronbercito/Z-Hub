@@ -26,6 +26,7 @@ import Inventory from "../../modules/almacen/Inventory";
 import Tickets from "../../modules/tickets/Tickets";
 import Messaging from "../../modules/mensajeria/Messaging";
 import Settings from "../../modules/ajustes/Settings";
+import SettingsHome from "../../modules/ajustes/SettingsHome";
 import ClientSettings from "../../modules/ajustes/clientes/ClientSettings";
 import { PANEL_VERSION } from "../../modules/system-update/version";
 import { applyPanelTheme } from "../../modules/appearance/panelThemes";
@@ -72,6 +73,8 @@ export default function Layout() {
 
   useEffect(() => { document.title = `${companyName} · Z-Hub`; }, [companyName]);
 
+  const openSettingsSection = (section) => setActiveTab(section === "clients" ? "settings_clients" : `settings_${section}`);
+
   const renderContent = () => {
     if (activeTab === "settings_clients") return <ClientSettings />;
     if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
@@ -96,7 +99,7 @@ export default function Layout() {
       case "almacen": return <Inventory />;
       case "tickets": return <Tickets />;
       case "mensajeria": return <Messaging />;
-      case "ajustes": return <Settings />;
+      case "ajustes": return <SettingsHome onOpen={openSettingsSection} />;
       default: return <Dashboard setActiveTab={setActiveTab} />;
     }
   };
