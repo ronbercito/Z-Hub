@@ -6,7 +6,8 @@ superaron el umbral configurable de 1 a 6 meses. No cambia ni retira servicios.
 """
 import asyncio
 import calendar
-from datetime import date, datetime, timezone
+import logging
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
@@ -15,10 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import database
 from app.core.database import get_db, now_iso
 from app.core.security import get_current_user
+from app.core.utils import business_today
 from app.models.client import Client
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/client-alerts", tags=["Clientes / Alertas"], dependencies=[Depends(get_current_user)])
+logger = logging.getLogger("zhub.suspension_alerts")
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -74,7 +77,6 @@ async def _ensure_tracking(db: AsyncSession, clients: list[Client]) -> bool:
                     client.suspended_at = now_iso()
                 changed = True
             elif last_active and last_active > suspended:
-                # Hubo una reactivación posterior a la suspensión anterior; comienza un ciclo nuevo.
                 client.suspended_at = f"{last_active.isoformat()}T00:00:00+00:00"
                 changed = True
         elif client.suspended_at:
@@ -90,7 +92,7 @@ async def prolonged_suspensions(db: AsyncSession = Depends(get_db)):
     enabled, threshold_months = await _config(db)
     clients = (await db.execute(select(Client).where(Client.status == "suspended").order_by(Client.full_name))).scalars().all()
     await _ensure_tracking(db, clients)
-    today = datetime.now(timezone.utc).date()
+    today = business_today()
     alerts = []
     for client in clients:
         started = _parse_date(client.suspended_at)
@@ -137,6 +139,5 @@ async def suspension_alert_worker():
                 clients = (await db.execute(select(Client))).scalars().all()
                 await _ensure_tracking(db, clients)
         except Exception:
-            # La alerta nunca debe tumbar el backend; se reintenta en la siguiente vuelta.
-            pass
+            logger.exception("Error en el worker de suspensión prolongada; se reintentará en una hora")
         await asyncio.sleep(3600)
