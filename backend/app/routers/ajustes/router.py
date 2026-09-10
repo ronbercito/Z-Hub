@@ -1,11 +1,11 @@
 """
 Archivo: backend/app/routers/ajustes/router.py
 Función: Configuración general del ISP (/api/settings): lectura y actualización de razón
-         social, RUC, contacto, cuentas de cobro (Yape/Plin/BCP/BBVA), días de gracia,
-         corte automático y nombre de la address-list de morosos usada en MikroTik.
+         social, RUC, contacto, cuentas de cobro, políticas operativas, correo y notificaciones.
 Trabaja con: backend/app/models/setting.py, frontend/src/modules/ajustes/Settings.jsx,
              backend/app/integrations/mikrotik/service.py (lista de corte)
 """
+import asyncio
 import base64
 import hashlib
 import smtplib
@@ -15,16 +15,27 @@ from typing import Any, Dict
 
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import APP_ENCRYPTION_KEY, JWT_SECRET
 from app.core.database import get_db
-from app.core.config import JWT_SECRET
 from app.core.security import get_current_user, require_role
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/settings", tags=["Ajustes"], dependencies=[Depends(get_current_user)])
 public_router = APIRouter(prefix="/settings", tags=["Ajustes públicos"])
+
+# La API genérica solo puede modificar claves conocidas. Los secretos/contadores internos
+# se administran en endpoints específicos y nunca mediante PUT /settings.
+PROTECTED_GENERIC_SETTINGS = {
+    "smtp_password_encrypted",
+    "smtp_sent_date",
+    "smtp_sent_count",
+    "initial_setup_completed",
+    "license_key",
+}
+EDITABLE_SETTINGS = set(DEFAULT_SETTINGS) - PROTECTED_GENERIC_SETTINGS
 
 
 class SystemNotificationsIn(BaseModel):
@@ -54,13 +65,21 @@ class MailServerIn(BaseModel):
 
 
 class MailTestIn(BaseModel):
-    recipient: str
+    recipient: EmailStr
+
+
+def _fernet_from_secret(secret: str) -> Fernet:
+    key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode("utf-8")).digest())
+    return Fernet(key)
 
 
 def _fernet() -> Fernet:
-    """Deriva una clave estable para cifrar la contraseña SMTP almacenada."""
-    key = base64.urlsafe_b64encode(hashlib.sha256(JWT_SECRET.encode("utf-8")).digest())
-    return Fernet(key)
+    """Usa una clave de cifrado independiente; conserva fallback para instalaciones antiguas."""
+    return _fernet_from_secret(APP_ENCRYPTION_KEY or JWT_SECRET)
+
+
+def _legacy_fernet() -> Fernet:
+    return _fernet_from_secret(JWT_SECRET)
 
 
 def _public_settings(data: dict) -> dict:
@@ -125,6 +144,9 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
 async def update_settings(data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     s = await _get(db)
     data.pop("id", None)
+    unknown = sorted(set(data) - EDITABLE_SETTINGS)
+    if unknown:
+        raise HTTPException(status_code=422, detail=f"Configuración no permitida: {', '.join(unknown)}")
     s.data = {**(s.data or {}), **data}
     await db.commit()
     return {"id": s.id, **_public_settings({**DEFAULT_SETTINGS, **s.data})}
@@ -160,10 +182,34 @@ def _smtp_password(data: dict) -> str:
     encrypted = data.get("smtp_password_encrypted") or ""
     if not encrypted:
         return ""
+    raw = encrypted.encode("utf-8")
     try:
-        return _fernet().decrypt(encrypted.encode("utf-8")).decode("utf-8")
-    except InvalidToken as exc:
-        raise HTTPException(status_code=500, detail="No se pudo descifrar la contraseña SMTP; revise JWT_SECRET") from exc
+        return _fernet().decrypt(raw).decode("utf-8")
+    except InvalidToken:
+        # Compatibilidad: contraseñas guardadas antes de 1.2.37 estaban cifradas con JWT_SECRET.
+        if APP_ENCRYPTION_KEY:
+            try:
+                return _legacy_fernet().decrypt(raw).decode("utf-8")
+            except InvalidToken:
+                pass
+        raise HTTPException(status_code=500, detail="No se pudo descifrar la contraseña SMTP; revise APP_ENCRYPTION_KEY/JWT_SECRET")
+
+
+def _send_smtp(config: dict, username: str, password: str, message: EmailMessage) -> None:
+    host = (config.get("smtp_host") or "").strip()
+    port = int(config.get("smtp_port") or (465 if config.get("smtp_security") == "ssl" else 587))
+    if config.get("smtp_security") == "ssl":
+        client = smtplib.SMTP_SSL(host, port, timeout=15)
+    else:
+        client = smtplib.SMTP(host, port, timeout=15)
+        client.ehlo()
+        if config.get("smtp_security") == "starttls":
+            client.starttls()
+            client.ehlo()
+    with client:
+        if config.get("smtp_authentication"):
+            client.login(username, password)
+        client.send_message(message)
 
 
 @router.post("/mail-server/test", dependencies=[Depends(require_role("admin"))])
@@ -173,38 +219,29 @@ async def test_mail_server(data: MailTestIn, db: AsyncSession = Depends(get_db))
     host, username = (config.get("smtp_host") or "").strip(), (config.get("smtp_username") or "").strip()
     if not host:
         raise HTTPException(status_code=422, detail="Primero guarde un servidor SMTP válido")
-    if config.get("smtp_authentication") and not _smtp_password(config):
+    password = _smtp_password(config)
+    if config.get("smtp_authentication") and not password:
         raise HTTPException(status_code=422, detail="Ingrese y guarde la contraseña de aplicación antes de probar")
     today = date.today().isoformat()
     sent = int(config.get("smtp_sent_count") or 0) if config.get("smtp_sent_date") == today else 0
     if sent >= int(config.get("smtp_daily_limit") or 1000):
         raise HTTPException(status_code=429, detail="Se alcanzó el límite diario de correo")
+    recipient = str(data.recipient).strip()
     message = EmailMessage()
     message["Subject"] = "Prueba SMTP · Z-Hub"
     message["From"] = username or "Z-Hub"
-    message["To"] = data.recipient.strip()
+    message["To"] = recipient
     message.set_content("La configuración SMTP de Z-Hub funciona correctamente.")
     message.add_alternative(f"<h2>Prueba SMTP correcta</h2><p>La configuración de correo de Z-Hub funciona correctamente.</p>{config.get('smtp_signature_html') or ''}", subtype="html")
     try:
-        if config.get("smtp_security") == "ssl":
-            client = smtplib.SMTP_SSL(host, int(config.get("smtp_port") or 465), timeout=15)
-        else:
-            client = smtplib.SMTP(host, int(config.get("smtp_port") or 587), timeout=15)
-            client.ehlo()
-            if config.get("smtp_security") == "starttls":
-                client.starttls()
-                client.ehlo()
-        with client:
-            if config.get("smtp_authentication"):
-                client.login(username, _smtp_password(config))
-            client.send_message(message)
+        await asyncio.to_thread(_send_smtp, config, username, password, message)
     except (OSError, smtplib.SMTPException) as exc:
         raise HTTPException(status_code=502, detail=f"No se pudo enviar la prueba SMTP: {exc}") from exc
     saved = dict(s.data or {})
     saved["smtp_sent_date"], saved["smtp_sent_count"] = today, sent + 1
     s.data = saved
     await db.commit()
-    return {"message": f"Correo de prueba enviado a {data.recipient.strip()}", "sent_today": sent + 1}
+    return {"message": f"Correo de prueba enviado a {recipient}", "sent_today": sent + 1}
 
 
 @router.get("/system-notifications")
