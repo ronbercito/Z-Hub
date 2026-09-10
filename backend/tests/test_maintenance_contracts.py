@@ -1,4 +1,4 @@
-"""Regresiones estáticas de seguridad/integridad introducidas en Z-Hub 1.2.37.
+"""Regresiones estáticas de seguridad/integridad introducidas desde Z-Hub 1.2.37.
 
 No requieren MariaDB, RouterOS ni credenciales. Complementan, no sustituyen, las pruebas
 operativas con un MikroTik/OLT de laboratorio.
@@ -16,6 +16,14 @@ def test_installer_never_chmods_entire_app_755():
     text = source("deploy/install.sh")
     assert 'chmod -R 755 "$APP_DIR"' not in text
     assert 'chmod 600 "$APP_DIR/backend/.env"' in text
+
+
+def test_installer_preserves_frontend_and_venv_executables():
+    text = source("deploy/install.sh")
+    assert '-path "$APP_DIR/frontend/node_modules"' in text
+    assert '-path "$APP_DIR/backend/venv"' in text
+    assert 'chmod 755 node_modules/.bin/*' in text
+    assert text.count('chmod 755 node_modules/.bin/*') >= 2
 
 
 def test_client_toggle_requires_mikrotik_success_before_local_status():
@@ -69,7 +77,7 @@ def test_generic_settings_are_whitelisted():
     text = source("backend/app/routers/ajustes/router.py")
     assert "EDITABLE_SETTINGS = set(DEFAULT_SETTINGS) - PROTECTED_GENERIC_SETTINGS" in text
     assert "unknown = sorted(set(data) - EDITABLE_SETTINGS)" in text
-    assert 'data.pop("license_key", None)' not in text  # protected keys are removed by the protected-key loop
+    assert 'data.pop("license_key", None)' not in text
 
 
 def test_auth_token_is_not_persisted_in_local_storage():
