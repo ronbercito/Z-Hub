@@ -115,6 +115,8 @@
     "@tootallnate/once": "2.0.1",
     "webpack-dev-server": "5.2.6",
     "resolve-url-loader": "5.0.0",
+    "memfs": "4.71.0",
+    "@jsonjoy.com/fs-snapshot": "4.71.0",
     "**/resolve-url-loader/postcss": "8.5.10",
     "**/axios/form-data": "4.0.6",
     "**/jsdom/form-data": "3.0.5",
