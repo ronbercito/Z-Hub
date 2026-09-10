@@ -106,6 +106,23 @@ Siempre:
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.24 — 2026-09-09 — Pestañas adaptadas al tema Claro Suave
+
+- **Objetivo:** corregir los colores apagados/oscuros de `Instalaciones` y `Registrados` en el template claro para que se parezcan al diseño visual aprobado.
+- **Causa:** las clases Tailwind usadas por las pestañas eran alcanzadas por reglas globales del tema claro y la pestaña inactiva terminaba con un gris oscuro que no combinaba con Z-Hub Claro Suave.
+- **Solución:** se añadieron estilos locales y específicos dentro de `Installations.jsx`, con prioridad suficiente para estas dos pestañas sin modificar la hoja global `panel-theme.css`.
+- **Pestaña activa:** degradado azul/cian, borde cian, texto e iconos blancos, badge semitransparente claro y sombra azul suave.
+- **Pestaña inactiva en tema claro:** fondo azul-gris muy claro, borde suave, texto azul oscuro, icono heredando el mismo color y badge blanco con sombra mínima.
+- **Tema oscuro:** conserva una variante oscura independiente; la corrección del tema claro no obliga a usar colores claros en oscuro.
+- **Archivos modificados:** `frontend/src/modules/clientes/instalaciones/Installations.jsx` y `frontend/src/modules/system-update/version.js`.
+- **Backend/Base de datos:** sin cambios.
+- **Flujo preservado:** pestañas, filtros, conteos, `Nueva instalación`, `Dar de alta cliente`, `/api/installations`, `/api/clients` y el asistente oficial permanecen sin cambios funcionales.
+- **Backups:** `version.js` de 1.2.23 guardado en `docs/backups/1.2.23/version.js`; el blob exacto previo de `Installations.jsx` quedó registrado en `docs/backups/1.2.23/README.md` como `4e8a55055a83185306262e06e20e41623ee97215`.
+- **Pruebas realizadas:** revisión estática de selectores, prioridad CSS local, estados activo/inactivo y preservación de handlers/render condicional.
+- **Pruebas pendientes:** build React y validación visual real después de instalar 1.2.24 en el servidor.
+- **Resultado:** corrección visual publicada en `main`; no altera datos ni lógica de negocio.
+- **Commits principales:** UI `7223c35f6f7060e1ecf743476d4960a1b1b83fef`; versión `4902f8932cbb4f969d18857806780c4f37fbdbdd`; backup versión `a41e61880420d348f8382a6c468baca0e90e8f27`; referencia de rollback `9fbfef7a46666bfd7ee2cd10d8ef2228547cd699`.
+
 ## 1.2.23 — 2026-09-09 — Pestañas Instalaciones y Registrados
 
 - **Objetivo:** separar visualmente el trabajo pendiente de instalación de los clientes cuyo alta ya terminó correctamente, siguiendo el diseño aprobado por el administrador.
@@ -283,6 +300,6 @@ Siempre:
 
 ## Estado documental
 
-- Serie cubierta: **1.2.00 → 1.2.23**.
+- Serie cubierta: **1.2.00 → 1.2.24**.
 - Orden: **descendente, versión más reciente primero**.
-- Próxima entrada: si corresponde `1.2.24`, debe insertarse **encima de 1.2.23**.
+- Próxima entrada: si corresponde `1.2.25`, debe insertarse **encima de 1.2.24**.
