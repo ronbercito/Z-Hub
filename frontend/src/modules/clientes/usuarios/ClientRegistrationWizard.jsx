@@ -3,8 +3,8 @@
  * Función: Registro guiado de clientes en tres pasos: datos personales,
  *          facturación y servicio técnico.
  * Alcance: organiza la interfaz; conserva el guardado y aprovisionamiento definidos
- *          en Clients.jsx, sin alterar la lógica de MikroTik, NAP o redes IPv4.
- * Trabaja con: ../Clients.jsx, planes, routers, redes IPv4 y cajas NAP.
+ *          en Clients.jsx, aplicando preferencias de Registro y altas a nuevos abonados.
+ * Trabaja con: ../Clients.jsx, Ajustes > Configuración clientes, planes, routers, redes IPv4 y cajas NAP.
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -30,6 +30,7 @@ export default function ClientRegistrationWizard({ selectedClient, formData, set
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [showCoordinatesPicker, setShowCoordinatesPicker] = useState(false);
+  const [registrationPolicy, setRegistrationPolicy] = useState({ installationDateRequired: true });
   const selectedTechnology = formData.technology || "fiber";
   const activePlans = plans.filter((plan) => plan.is_active && planTechnology(plan.type) === selectedTechnology);
   const mikrotiks = routers.filter((router) => router.device_type === "mikrotik");
@@ -44,6 +45,35 @@ export default function ClientRegistrationWizard({ selectedClient, formData, set
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [zones, setZones] = useState([]);
   const [equipment, setEquipment] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${api}/settings`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((response) => {
+        const policy = {
+          billingDay: Math.min(30, Math.max(1, Number(response.data.client_registration_default_billing_day || 5))),
+          technology: response.data.client_registration_default_technology === "wireless" ? "wireless" : "fiber",
+          installationDateRequired: response.data.client_registration_installation_date_required !== false,
+          createFirstInvoice: response.data.client_registration_create_first_invoice_default !== false,
+        };
+        setRegistrationPolicy(policy);
+        if (!selectedClient) {
+          setFormData((current) => {
+            const prefilledIdentity = Boolean(current.full_name || current.dni_ruc || current.address || current.phone);
+            const technology = prefilledIdentity && current.technology ? current.technology : policy.technology;
+            return {
+              ...current,
+              billing_day: policy.billingDay,
+              create_first_invoice: policy.createFirstInvoice,
+              technology,
+              plan_id: technology === current.technology ? current.plan_id : "",
+            };
+          });
+        }
+      })
+      .catch(() => {
+        setRegistrationPolicy({ installationDateRequired: true });
+      });
+  }, [api, token, selectedClient?.id, setFormData]);
 
   useEffect(() => {
     axios.all([
@@ -76,16 +106,29 @@ export default function ClientRegistrationWizard({ selectedClient, formData, set
     return () => { active = false; };
   }, [api, token, selectedClient?.id, formData.connection_type, formData.ipv4_network_id]);
 
+  const validateInstallationDate = () => {
+    if (!selectedClient && registrationPolicy.installationDateRequired && !formData.installation_date) {
+      toast.error("La fecha de instalación es obligatoria según Configuración clientes.");
+      return false;
+    }
+    return true;
+  };
+
   const next = () => {
     if (step === 1 && (!formData.full_name?.trim() || !formData.dni_ruc?.trim() || !formData.address?.trim() || !formData.phone?.trim())) {
       toast.error("Completa nombre, identificación, dirección y celular antes de continuar.");
       return;
     }
+    if (step === 1 && !validateInstallationDate()) return;
     setStep((value) => Math.min(3, value + 1));
   };
 
   const submit = (event) => {
     event.preventDefault();
+    if (!validateInstallationDate()) {
+      setStep(1);
+      return;
+    }
     if (!formData.plan_id || !formData.router_id) {
       toast.error("Selecciona el plan y el MikroTik del abonado.");
       return;
@@ -115,7 +158,7 @@ export default function ClientRegistrationWizard({ selectedClient, formData, set
       <div className="flex overflow-x-auto bg-slate-950/40"><Step number="1" label="Datos personales" subtitle="Nombre, dirección y contacto" active={step === 1} done={step > 1} onClick={() => setStep(1)} /><Step number="2" label="Facturación" subtitle="Cobro y primera factura" active={step === 2} done={step > 2} onClick={() => setStep(2)} /><Step number="3" label="Servicio" subtitle="Plan, red, NAP y MikroTik" active={step === 3} done={false} onClick={() => setStep(3)} /></div>
       <form noValidate onSubmit={submit}>
         <div className="p-6 min-h-[400px]">
-          {step === 1 && <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4"><Field label="Nombre completo / Razón social *"><input required value={formData.full_name} onChange={e=>setFormData({...formData,full_name:e.target.value})} placeholder="Ej. Carlos Pérez / Empresa SAC" /></Field><Field label="DNI / RUC *"><input required value={formData.dni_ruc} onChange={e=>setFormData({...formData,dni_ruc:e.target.value})} placeholder="DNI o RUC" /></Field><div className="md:col-span-2"><Field label="Dirección principal *"><input required value={formData.address} onChange={e=>setFormData({...formData,address:e.target.value})} placeholder="Av. / Jr. / Mz. Lt. / distrito" /></Field></div><Field label="Celular / WhatsApp *"><input required value={formData.phone} onChange={e=>setFormData({...formData,phone:e.target.value})} placeholder="987654321" /></Field><Field label="Correo electrónico"><input type="email" value={formData.email || ""} onChange={e=>setFormData({...formData,email:e.target.value})} placeholder="cliente@correo.com" /></Field><div className="md:col-span-2"><Field label="Referencia de instalación"><input value={formData.reference || ""} onChange={e=>setFormData({...formData,reference:e.target.value})} placeholder="Casa de dos pisos, portón negro..." /></Field></div><Field label="Coordenadas (latitud)"><input type="number" step="any" value={formData.latitude ?? ""} onChange={e=>setFormData({...formData,latitude:e.target.value})} placeholder="-8.0679" /></Field><Field label="Coordenadas (longitud)"><input type="number" step="any" value={formData.longitude ?? ""} onChange={e=>setFormData({...formData,longitude:e.target.value})} placeholder="-78.9859" /></Field><div className="md:col-span-2"><button type="button" onClick={() => setShowCoordinatesPicker(true)} className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20"><MapPin className="w-4 h-4" /> Elegir coordenadas en el mapa</button><p className="mt-1 text-[10px] text-slate-500">Mueve el marcador o haz clic en el punto de instalación.</p></div><div className="md:col-span-2 relative z-50 text-xs text-slate-300 font-semibold space-y-1"><span>Fecha de instalación</span><div className="flex gap-2"><input required readOnly value={formatDate(formData.installation_date)} placeholder="Selecciona una fecha" onClick={() => setDatePickerOpen(!datePickerOpen)} className="flex-1 cursor-pointer p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-normal" /><button type="button" onClick={() => setDatePickerOpen(!datePickerOpen)} className="px-3 rounded-xl bg-slate-800 border border-slate-700 text-cyan-300 hover:bg-slate-700" title="Elegir fecha"><CalendarDays className="w-4 h-4" /></button></div>{datePickerOpen && <CalendarPicker value={formData.installation_date} month={calendarMonth} onMonthChange={setCalendarMonth} onSelect={(date) => { setFormData({...formData, installation_date: date}); setDatePickerOpen(false); }} />}</div></div>}
+          {step === 1 && <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4"><Field label="Nombre completo / Razón social *"><input required value={formData.full_name} onChange={e=>setFormData({...formData,full_name:e.target.value})} placeholder="Ej. Carlos Pérez / Empresa SAC" /></Field><Field label="DNI / RUC *"><input required value={formData.dni_ruc} onChange={e=>setFormData({...formData,dni_ruc:e.target.value})} placeholder="DNI o RUC" /></Field><div className="md:col-span-2"><Field label="Dirección principal *"><input required value={formData.address} onChange={e=>setFormData({...formData,address:e.target.value})} placeholder="Av. / Jr. / Mz. Lt. / distrito" /></Field></div><Field label="Celular / WhatsApp *"><input required value={formData.phone} onChange={e=>setFormData({...formData,phone:e.target.value})} placeholder="987654321" /></Field><Field label="Correo electrónico"><input type="email" value={formData.email || ""} onChange={e=>setFormData({...formData,email:e.target.value})} placeholder="cliente@correo.com" /></Field><div className="md:col-span-2"><Field label="Referencia de instalación"><input value={formData.reference || ""} onChange={e=>setFormData({...formData,reference:e.target.value})} placeholder="Casa de dos pisos, portón negro..." /></Field></div><Field label="Coordenadas (latitud)"><input type="number" step="any" value={formData.latitude ?? ""} onChange={e=>setFormData({...formData,latitude:e.target.value})} placeholder="-8.0679" /></Field><Field label="Coordenadas (longitud)"><input type="number" step="any" value={formData.longitude ?? ""} onChange={e=>setFormData({...formData,longitude:e.target.value})} placeholder="-78.9859" /></Field><div className="md:col-span-2"><button type="button" onClick={() => setShowCoordinatesPicker(true)} className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20"><MapPin className="w-4 h-4" /> Elegir coordenadas en el mapa</button><p className="mt-1 text-[10px] text-slate-500">Mueve el marcador o haz clic en el punto de instalación.</p></div><div className="md:col-span-2 relative z-50 text-xs text-slate-300 font-semibold space-y-1"><span>Fecha de instalación{registrationPolicy.installationDateRequired ? " *" : " (opcional)"}</span><div className="flex gap-2"><input required={registrationPolicy.installationDateRequired} readOnly value={formatDate(formData.installation_date)} placeholder="Selecciona una fecha" onClick={() => setDatePickerOpen(!datePickerOpen)} className="flex-1 cursor-pointer p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 font-normal" /><button type="button" onClick={() => setDatePickerOpen(!datePickerOpen)} className="px-3 rounded-xl bg-slate-800 border border-slate-700 text-cyan-300 hover:bg-slate-700" title="Elegir fecha"><CalendarDays className="w-4 h-4" /></button>{!registrationPolicy.installationDateRequired && formData.installation_date && <button type="button" onClick={() => setFormData({...formData, installation_date: ""})} className="px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700">Sin fecha</button>}</div>{datePickerOpen && <CalendarPicker value={formData.installation_date} month={calendarMonth} onMonthChange={setCalendarMonth} onSelect={(date) => { setFormData({...formData, installation_date: date}); setDatePickerOpen(false); }} />}</div></div>}
           {step === 2 && <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-5">
             <Card title="Facturación" icon={CreditCard}>
               <Field label="Tipo de servicio"><select value={formData.billing_type || "prepaid"} onChange={e=>setFormData({...formData,billing_type:e.target.value})}><option value="prepaid">Prepago (adelantado)</option><option value="postpaid">Postpago</option></select></Field>
