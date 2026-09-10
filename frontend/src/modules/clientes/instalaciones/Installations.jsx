@@ -5,52 +5,82 @@ import NewInstallationModal from "./NewInstallationModal";
 import { useAuth } from "../../../context/AuthContext";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "zhub_pending_installations";
+const LEGACY_STORAGE_KEY = "zhub_pending_installations";
 const DRAFT_KEY = "zhub_installation_draft";
 const value = (item, key) => String(item?.[key] ?? "").toLowerCase();
 const technologyLabel = (technology) => technology === "wireless" ? "Inalámbrico" : technology === "hotspot" ? "Hotspot" : "Fibra óptica";
 
-const loadPendingInstallations = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_) {
-    return [];
-  }
-};
-
-const savePendingInstallations = (items) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-};
-
 export default function Installations({ onContinueToClient }) {
   const { API, token } = useAuth();
   const [clients, setClients] = useState([]);
-  const [pendingInstallations, setPendingInstallations] = useState(loadPendingInstallations);
+  const [pendingInstallations, setPendingInstallations] = useState([]);
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [showNewInstallation, setShowNewInstallation] = useState(false);
+  const headers = { Authorization: `Bearer ${token}` };
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [clientsResponse, installationsResponse] = await Promise.all([
+        axios.get(`${API}/clients`, { headers }),
+        axios.get(`${API}/installations`, { headers }),
+      ]);
+      setClients(Array.isArray(clientsResponse.data) ? clientsResponse.data : []);
+      setPendingInstallations(Array.isArray(installationsResponse.data) ? installationsResponse.data : []);
+    } catch (error) {
+      console.error("Z-Hub: no se pudo cargar Instalaciones", error);
+      toast.error("No se pudieron cargar las instalaciones.");
+      setClients([]);
+      setPendingInstallations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, [API, token]);
+
+  // Migra una sola vez cualquier registro temporal creado durante la transición 1.2.17.
   useEffect(() => {
-    axios.get(`${API}/clients`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data }) => setClients(Array.isArray(data) ? data : []))
-      .catch(() => setClients([]))
-      .finally(() => setLoading(false));
-  }, [API, token]);
+    if (loading) return;
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return;
+    let legacy = [];
+    try { legacy = JSON.parse(raw); } catch (_) { legacy = []; }
+    if (!Array.isArray(legacy) || !legacy.length) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return;
+    }
+    const migrate = async () => {
+      for (const item of legacy) {
+        const { id, status, created_at, ...payload } = item;
+        try { await axios.post(`${API}/installations`, payload, { headers }); }
+        catch (error) {
+          if (error.response?.status !== 409) console.error("Z-Hub: migración de instalación pendiente", error);
+        }
+      }
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      await fetchData();
+    };
+    migrate();
+  }, [loading, API, token]);
 
-  // Una solicitud deja de ser pendiente únicamente cuando el abonado ya existe realmente.
+  // La solicitud deja de ser pendiente solamente cuando ya existe un abonado con el mismo DNI/RUC.
   useEffect(() => {
     if (loading || !clients.length || !pendingInstallations.length) return;
     const registeredDocuments = new Set(clients.map((client) => String(client.dni_ruc || "").trim()).filter(Boolean));
-    const next = pendingInstallations.filter((installation) => !registeredDocuments.has(String(installation.dni_ruc || "").trim()));
-    if (next.length !== pendingInstallations.length) {
-      setPendingInstallations(next);
-      savePendingInstallations(next);
-    }
-  }, [clients, loading, pendingInstallations]);
+    const completed = pendingInstallations.filter((installation) => registeredDocuments.has(String(installation.dni_ruc || "").trim()));
+    if (!completed.length) return;
+    const closeCompleted = async () => {
+      await Promise.all(completed.map((installation) =>
+        axios.delete(`${API}/installations/${installation.id}`, { headers }).catch(() => null)
+      ));
+      setPendingInstallations((current) => current.filter((installation) => !completed.some((done) => done.id === installation.id)));
+    };
+    closeCompleted();
+  }, [clients, pendingInstallations, loading, API, token]);
 
   const pendingRows = useMemo(() => pendingInstallations.filter((installation) => {
     const date = installation.installation_date || installation.created_at?.slice(0, 10) || "";
@@ -68,22 +98,25 @@ export default function Installations({ onContinueToClient }) {
       && (!to || !date || date <= to);
   }), [clients, query, from, to]);
 
-  const registerInstallation = (draft) => {
-    const installation = {
-      ...draft,
-      id: `inst-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    };
-    const next = [installation, ...pendingInstallations];
-    setPendingInstallations(next);
-    savePendingInstallations(next);
-    setShowNewInstallation(false);
-    toast.success("Instalación registrada. Quedó pendiente de alta del cliente.");
+  const registerInstallation = async (draft) => {
+    try {
+      const payload = {
+        ...draft,
+        latitude: draft.latitude === "" ? null : Number(draft.latitude),
+        longitude: draft.longitude === "" ? null : Number(draft.longitude),
+      };
+      const response = await axios.post(`${API}/installations`, payload, { headers });
+      setPendingInstallations((current) => [response.data, ...current]);
+      setShowNewInstallation(false);
+      toast.success("Instalación registrada. Quedó pendiente de alta del cliente.");
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "No se pudo registrar la instalación.");
+    }
   };
 
   const activateClient = (installation) => {
-    const { id, status, created_at, ...draft } = installation;
+    const { id, status, created_at, created_by_user_id, ...draft } = installation;
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     onContinueToClient?.();
   };
@@ -109,7 +142,7 @@ export default function Installations({ onContinueToClient }) {
       </div>
 
       {pendingRows.length > 0 && <div className="mb-5">
-        <div className="mb-3 flex items-center justify-between"><div><h3 className="text-sm font-bold text-slate-100">Pendientes de alta</h3><p className="mt-0.5 text-[11px] text-slate-500">Solicitudes registradas que todavía no son abonados.</p></div><span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold text-amber-300">{pendingRows.length} PENDIENTE(S)</span></div>
+        <div className="mb-3 flex items-center justify-between"><div><h3 className="text-sm font-bold text-slate-100">Pendientes de alta</h3><p className="mt-0.5 text-[11px] text-slate-500">Solicitudes guardadas en Z-Hub que todavía no son abonados.</p></div><span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold text-amber-300">{pendingRows.length} PENDIENTE(S)</span></div>
         <div className="grid gap-4 xl:grid-cols-2">
           {pendingRows.map((installation) => <article key={installation.id} className="overflow-hidden rounded-2xl border border-amber-500/20 bg-slate-950/55 shadow-lg">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-4 py-3">
