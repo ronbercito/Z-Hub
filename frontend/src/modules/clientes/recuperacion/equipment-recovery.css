@@ -1,0 +1,40 @@
+.equipment-recovery-page { color: #e2e8f0; }
+.equipment-recovery-page .recovery-hero,
+.equipment-recovery-page .recovery-card,
+.equipment-recovery-page .recovery-modal { background: rgba(15,23,42,.92); border-color: #334155; }
+.equipment-recovery-page .recovery-icon { background: rgba(6,182,212,.14); color: #67e8f9; }
+.equipment-recovery-page .recovery-primary { background: #0891b2; color: white; }
+.equipment-recovery-page .recovery-primary:hover { background: #0e7490; }
+.equipment-recovery-page .recovery-secondary { border-color: #475569; color: #cbd5e1; background: rgba(15,23,42,.35); }
+.equipment-recovery-page .recovery-secondary:hover { background: rgba(51,65,85,.6); }
+.equipment-recovery-page .recovery-stat,
+.equipment-recovery-page .recovery-candidate,
+.equipment-recovery-page .recovery-note { border-color: #334155; background: rgba(2,6,23,.3); }
+.equipment-recovery-page .recovery-stat { display:flex; flex-direction:column; gap:2px; }
+.equipment-recovery-page .recovery-stat b { font-size:1.2rem; color:#67e8f9; }
+.equipment-recovery-page .recovery-stat span { font-size:.7rem; color:#94a3b8; }
+.equipment-recovery-page .recovery-input { border-color:#475569; background:#0f172a; color:#e2e8f0; }
+.equipment-recovery-page table thead { background:#0b1220; color:#94a3b8; text-transform:uppercase; }
+.equipment-recovery-page table th { padding:.8rem 1rem; }
+.equipment-recovery-page table td { padding:.8rem 1rem; border-top:1px solid rgba(51,65,85,.65); vertical-align:top; }
+.equipment-recovery-page .recovery-status { display:inline-flex; border-radius:.55rem; padding:.3rem .55rem; font-weight:800; }
+.equipment-recovery-page .recovery-status-pending { background:#fef3c7; color:#92400e; }
+.equipment-recovery-page .recovery-status-contacted { background:#dbeafe; color:#1e40af; }
+.equipment-recovery-page .recovery-status-visit_scheduled { background:#ede9fe; color:#5b21b6; }
+.equipment-recovery-page .recovery-status-recovered { background:#d1fae5; color:#065f46; }
+.equipment-recovery-page .recovery-status-not_recovered { background:#fee2e2; color:#991b1b; }
+
+html.zhub-light .equipment-recovery-page { color:#0f3d67; }
+html.zhub-light .equipment-recovery-page .recovery-hero,
+html.zhub-light .equipment-recovery-page .recovery-card,
+html.zhub-light .equipment-recovery-page .recovery-modal { background:#fff; border-color:#cbdbea; box-shadow:0 6px 18px rgba(30,64,175,.08); }
+html.zhub-light .equipment-recovery-page .recovery-icon { background:#e0f2fe; color:#0284c7; }
+html.zhub-light .equipment-recovery-page .recovery-secondary { border-color:#bfd2e5; color:#174b76; background:#f8fbfe; }
+html.zhub-light .equipment-recovery-page .recovery-stat,
+html.zhub-light .equipment-recovery-page .recovery-candidate,
+html.zhub-light .equipment-recovery-page .recovery-note { border-color:#cfdeeb; background:#f7fbfe; }
+html.zhub-light .equipment-recovery-page .recovery-stat b { color:#0284c7; }
+html.zhub-light .equipment-recovery-page .recovery-stat span { color:#58738e; }
+html.zhub-light .equipment-recovery-page .recovery-input { border-color:#bfd2e5; background:#fff; color:#123f68; }
+html.zhub-light .equipment-recovery-page table thead { background:#edf5fb; color:#315d80; }
+html.zhub-light .equipment-recovery-page table td { border-top-color:#dbe7f1; color:#234f73; }
