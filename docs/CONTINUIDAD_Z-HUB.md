@@ -3036,3 +3036,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Tema:** el botón cuenta con una clase propia: conserva degradado cian/azul en oscuro y azul sólido con texto blanco y contraste reforzado en Claro Suave.
 - **Compatibilidad:** no se modifican filtros, listado ni datos de instalaciones.
 - **Pruebas:** verificada la nueva posición y las reglas específicas para tema claro y oscuro.
+
+
+### 1.2.15 — Flujo de preinscripción desde Instalaciones
+
+- **Acción habilitada:** el botón **Nueva instalación** abre un recuadro de registro inicial.
+- **Datos:** solicita nombre, DNI/RUC, dirección, celular, correo, referencia, coordenadas, fecha y tecnología; conserva la estructura del primer paso de Nuevo abonado.
+- **Continuidad:** al aceptar no crea un registro incompleto; abre automáticamente **Clientes → Nuevo abonado** con los datos ya cargados para completar facturación, plan y aprovisionamiento.
+- **Compatibilidad:** los datos se transfieren temporalmente en la sesión del navegador y se eliminan al abrir el asistente; no altera APIs ni registros existentes.
