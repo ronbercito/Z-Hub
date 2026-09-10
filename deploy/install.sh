@@ -127,10 +127,29 @@ import secrets
 print(secrets.token_hex(32))
 PY
 )"
-  export JWT_SECRET
+  APP_ENCRYPTION_KEY="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(32))
+PY
+)"
+  export JWT_SECRET APP_ENCRYPTION_KEY
   envsubst < "$DEPLOY_DIR/env/backend.env.example" > .env
   ok "Configuración de la aplicación generada"
-else ok "Configuración de la aplicación conservada"; fi
+else
+  if ! grep -q '^APP_ENCRYPTION_KEY=' .env; then
+    APP_ENCRYPTION_KEY="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(32))
+PY
+)"
+    printf '\nAPP_ENCRYPTION_KEY="%s"\n' "$APP_ENCRYPTION_KEY" >> .env
+    ok "Clave de cifrado independiente agregada a la configuración existente"
+  fi
+  if ! grep -q '^APP_TIMEZONE=' .env; then printf 'APP_TIMEZONE="America/Lima"\n' >> .env; fi
+  if ! grep -q '^SESSION_COOKIE_SECURE=' .env; then printf 'SESSION_COOKIE_SECURE="false"\n' >> .env; fi
+  ok "Configuración de la aplicación conservada"
+fi
+chmod 600 .env
 if [ ! -d venv ]; then run_visual "Preparando entorno de ejecución" python3 -m venv venv; fi
 run_visual "Actualizando herramientas" ./venv/bin/pip install --upgrade pip
 run_visual "Preparando dependencias" ./venv/bin/pip install -r requirements.txt
@@ -140,6 +159,7 @@ STEP="Procesando la aplicación"
 section "[5/7] Procesando la aplicación"
 cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
+chmod 644 .env
 rm -rf build
 run_visual "Preparando recursos de la aplicación" yarn install --network-timeout 100000
 ok "Dependencias preparadas"
@@ -148,8 +168,17 @@ ok "Recursos de la aplicación generados correctamente"
 mkdir -p "$WEB_ROOT"
 rm -rf "$WEB_ROOT"/*
 run_visual "Publicando recursos" cp -r build/. "$WEB_ROOT"/
-run_visual "Ajustando permisos" chown -R www-data:www-data "$APP_DIR"
-run_visual "Aplicando configuración de seguridad" chmod -R 755 "$APP_DIR"
+# Permisos deliberadamente separados: directorios ejecutables/recorribles, archivos de código legibles,
+# scripts ejecutables y secretos restringidos. Nunca usar chmod -R 755 sobre todo el proyecto.
+run_visual "Ajustando propietario" chown -R root:www-data "$APP_DIR"
+run_visual "Protegiendo directorios" find "$APP_DIR" -type d -exec chmod 755 {} +
+run_visual "Protegiendo archivos" find "$APP_DIR" -type f -exec chmod 644 {} +
+run_visual "Habilitando scripts" find "$APP_DIR" -type f \( -name '*.sh' -o -path '*/venv/bin/*' \) -exec chmod 755 {} +
+chmod 600 "$APP_DIR/backend/.env"
+chown root:root "$APP_DIR/backend/.env"
+chown -R www-data:www-data "$WEB_ROOT"
+find "$WEB_ROOT" -type d -exec chmod 755 {} +
+find "$WEB_ROOT" -type f -exec chmod 644 {} +
 git config --system --add safe.directory "$APP_DIR"
 ok "Recursos publicados correctamente"
 ok "Configuración de seguridad aplicada"
