@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Users, UserPlus, PauseCircle, UserMinus, SlidersHorizontal, ShieldAlert, Save, PackageCheck, ChevronRight } from "lucide-react";
+import { Users, UserPlus, PauseCircle, UserMinus, SlidersHorizontal, ShieldAlert, Save, PackageCheck, ChevronRight, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../../context/AuthContext";
 import "./client-settings-theme.css";
@@ -10,11 +10,12 @@ export default function ClientSettings() {
   const headers = { Authorization: `Bearer ${token}` };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeGroup, setActiveGroup] = useState("suspensions");
   const [enabled, setEnabled] = useState(true);
   const [months, setMonths] = useState(3);
-  const [activeGroup, setActiveGroup] = useState("pauses");
   const [registration, setRegistration] = useState({ billingDay: 5, technology: "fiber", installationDateRequired: true, createFirstInvoice: true });
   const [pausePolicy, setPausePolicy] = useState({ maxMonths: 3, alertDays: 5, allowEarlyResume: true, allowBillingDayChange: true, whatsappEnabled: true, autoResume: true });
+  const [retirementPolicy, setRetirementPolicy] = useState({ reasonRequired: true, keepTechnicalSnapshot: true, allowReactivation: true });
 
   useEffect(() => {
     axios.get(`${API}/settings`, { headers })
@@ -36,6 +37,11 @@ export default function ClientSettings() {
           whatsappEnabled: d.client_pause_whatsapp_enabled !== false,
           autoResume: d.client_pause_auto_resume !== false,
         });
+        setRetirementPolicy({
+          reasonRequired: d.client_retirement_reason_required !== false,
+          keepTechnicalSnapshot: d.client_retirement_keep_technical_snapshot !== false,
+          allowReactivation: d.client_retirement_allow_reactivation !== false,
+        });
       })
       .catch(() => toast.error("No se pudo cargar la configuración de clientes"))
       .finally(() => setLoading(false));
@@ -43,18 +49,23 @@ export default function ClientSettings() {
 
   const save = async (payload, message) => {
     setSaving(true);
-    try { await axios.put(`${API}/settings`, payload, { headers }); toast.success(message); }
-    catch (error) { toast.error(error.response?.data?.detail || "No se pudo guardar la configuración"); }
-    finally { setSaving(false); }
+    try {
+      await axios.put(`${API}/settings`, payload, { headers });
+      toast.success(message);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "No se pudo guardar la configuración");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const saveSuspensionPolicy = () => save({ long_suspension_alert_enabled: enabled, long_suspension_alert_months: Number(months) }, "Política de suspensión prolongada guardada");
   const saveRegistrationPolicy = () => save({
     client_registration_default_billing_day: Number(registration.billingDay),
     client_registration_default_technology: registration.technology,
     client_registration_installation_date_required: registration.installationDateRequired,
     client_registration_create_first_invoice_default: registration.createFirstInvoice,
   }, "Configuración de Registro y altas guardada");
+
   const savePausePolicy = () => save({
     client_pause_max_months: Number(pausePolicy.maxMonths),
     client_pause_alert_days: Number(pausePolicy.alertDays),
@@ -64,6 +75,14 @@ export default function ClientSettings() {
     client_pause_auto_resume: pausePolicy.autoResume,
   }, "Configuración de Pausas de servicio guardada");
 
+  const saveSuspensionRetirementPolicy = () => save({
+    long_suspension_alert_enabled: enabled,
+    long_suspension_alert_months: Number(months),
+    client_retirement_reason_required: retirementPolicy.reasonRequired,
+    client_retirement_keep_technical_snapshot: retirementPolicy.keepTechnicalSnapshot,
+    client_retirement_allow_reactivation: retirementPolicy.allowReactivation,
+  }, "Configuración de Suspensiones, retiros y reactivaciones guardada");
+
   const groups = [
     { id: "registration", icon: UserPlus, title: "Registro y altas", text: "Reglas para altas, tecnología, planes y datos iniciales del abonado." },
     { id: "pauses", icon: PauseCircle, title: "Pausas de servicio", text: "Políticas de pausa temporal, reactivación y avisos previos." },
@@ -71,15 +90,63 @@ export default function ClientSettings() {
     { id: "recovery", icon: PackageCheck, title: "Recuperación de equipos", text: "Seguimiento de ONU, router, CPE u otros equipos pendientes de recuperar." },
   ];
 
-  const Toggle = ({ title, text, checked, onChange }) => <label className="client-settings-toggle flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><div><div className="text-[13px] font-bold text-slate-200">{title}</div><div className="mt-1 text-[11px] text-slate-500">{text}</div></div><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} className="h-5 w-5 accent-cyan-500" /></label>;
+  const Toggle = ({ title, text, checked, onChange }) => (
+    <label className="client-settings-toggle flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3">
+      <div><div className="text-[13px] font-bold text-slate-200">{title}</div><div className="mt-1 text-[11px] text-slate-500">{text}</div></div>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-5 w-5 accent-cyan-500" />
+    </label>
+  );
 
-  const registrationPanel = <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><UserPlus className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Registro y altas</h3><p className="mt-1 text-[11px] text-slate-400">Valores predeterminados y validaciones para nuevos abonados.</p></div></div>{loading?<div className="py-5 text-sm text-slate-500">Cargando configuración…</div>:<div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"><label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Día de facturación sugerido</span><select value={registration.billingDay} onChange={e=>setRegistration({...registration,billingDay:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{Array.from({length:30},(_,i)=>i+1).map(d=><option key={d} value={d}>Día {d}</option>)}</select></label><label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Tecnología predeterminada</span><select value={registration.technology} onChange={e=>setRegistration({...registration,technology:e.target.value})} className="w-full rounded-xl border p-2.5"><option value="fiber">Fibra óptica</option><option value="wireless">Inalámbrico</option></select></label><Toggle title="Fecha de instalación obligatoria" text="Impide finalizar el alta sin fecha." checked={registration.installationDateRequired} onChange={v=>setRegistration({...registration,installationDateRequired:v})}/><Toggle title="Primera factura activada por defecto" text="Define el estado inicial del checkbox Crear primera factura." checked={registration.createFirstInvoice} onChange={v=>setRegistration({...registration,createFirstInvoice:v})}/><div className="md:col-span-2 flex justify-end"><button disabled={saving} onClick={saveRegistrationPolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white"><Save className="mr-2 inline h-4 w-4"/>Guardar Registro y altas</button></div></div>}</section>;
+  const registrationPanel = (
+    <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl">
+      <div className="flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><UserPlus className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Registro y altas</h3><p className="mt-1 text-[11px] text-slate-400">Valores predeterminados y validaciones para nuevos abonados.</p></div></div>
+      {loading ? <div className="py-5 text-sm text-slate-500">Cargando configuración…</div> : <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Día de facturación sugerido</span><select value={registration.billingDay} onChange={(e)=>setRegistration({...registration,billingDay:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{Array.from({length:30},(_,i)=>i+1).map(d=><option key={d} value={d}>Día {d}</option>)}</select></label>
+        <label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Tecnología predeterminada</span><select value={registration.technology} onChange={(e)=>setRegistration({...registration,technology:e.target.value})} className="w-full rounded-xl border p-2.5"><option value="fiber">Fibra óptica</option><option value="wireless">Inalámbrico</option></select></label>
+        <Toggle title="Fecha de instalación obligatoria" text="Impide finalizar el alta sin fecha." checked={registration.installationDateRequired} onChange={(v)=>setRegistration({...registration,installationDateRequired:v})}/>
+        <Toggle title="Primera factura activada por defecto" text="Define el estado inicial del checkbox Crear primera factura." checked={registration.createFirstInvoice} onChange={(v)=>setRegistration({...registration,createFirstInvoice:v})}/>
+        <div className="md:col-span-2 flex justify-end"><button disabled={saving} onClick={saveRegistrationPolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50"><Save className="mr-2 inline h-4 w-4"/>Guardar Registro y altas</button></div>
+      </div>}
+    </section>
+  );
 
-  const pausesPanel = <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><PauseCircle className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Pausas de servicio</h3><p className="mt-1 text-[11px] text-slate-400">Controla duración, avisos y forma de reactivación de las pausas voluntarias.</p></div></div>{loading?<div className="py-5 text-sm text-slate-500">Cargando configuración…</div>:<div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"><label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Duración máxima permitida</span><select value={pausePolicy.maxMonths} onChange={e=>setPausePolicy({...pausePolicy,maxMonths:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{[1,2,3].map(v=><option key={v} value={v}>{v} {v===1?"mes":"meses"}</option>)}</select><p className="mt-1.5 text-[10px] text-slate-500">El operador solo podrá seleccionar hasta este límite.</p></label><label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Avisar antes de finalizar</span><select value={pausePolicy.alertDays} onChange={e=>setPausePolicy({...pausePolicy,alertDays:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{[3,5,7].map(v=><option key={v} value={v}>{v} días antes</option>)}</select><p className="mt-1.5 text-[10px] text-slate-500">Determina cuándo aparece “Pausa por finalizar”.</p></label><Toggle title="Permitir reactivación anticipada" text="Permite reactivar antes de la fecha programada." checked={pausePolicy.allowEarlyResume} onChange={v=>setPausePolicy({...pausePolicy,allowEarlyResume:v})}/><Toggle title="Permitir cambiar día de facturación" text="Muestra el selector opcional al reactivar manualmente." checked={pausePolicy.allowBillingDayChange} onChange={v=>setPausePolicy({...pausePolicy,allowBillingDayChange:v})}/><Toggle title="Botón de aviso por WhatsApp" text="Muestra Avisar WhatsApp cuando corresponda el aviso previo." checked={pausePolicy.whatsappEnabled} onChange={v=>setPausePolicy({...pausePolicy,whatsappEnabled:v})}/><Toggle title="Reactivar automáticamente al vencer" text="Si se desactiva, la pausa vencida queda pendiente hasta reactivación manual." checked={pausePolicy.autoResume} onChange={v=>setPausePolicy({...pausePolicy,autoResume:v})}/><div className="md:col-span-2 flex justify-end"><button disabled={saving} onClick={savePausePolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white"><Save className="mr-2 inline h-4 w-4"/>Guardar Pausas de servicio</button></div></div>}</section>;
+  const pausesPanel = (
+    <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl">
+      <div className="flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><PauseCircle className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Pausas de servicio</h3><p className="mt-1 text-[11px] text-slate-400">Controla duración, avisos y forma de reactivación de las pausas voluntarias.</p></div></div>
+      {loading ? <div className="py-5 text-sm text-slate-500">Cargando configuración…</div> : <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Duración máxima permitida</span><select value={pausePolicy.maxMonths} onChange={(e)=>setPausePolicy({...pausePolicy,maxMonths:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{[1,2,3].map(v=><option key={v} value={v}>{v} {v===1?"mes":"meses"}</option>)}</select></label>
+        <label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Avisar antes de finalizar</span><select value={pausePolicy.alertDays} onChange={(e)=>setPausePolicy({...pausePolicy,alertDays:Number(e.target.value)})} className="w-full rounded-xl border p-2.5">{[3,5,7].map(v=><option key={v} value={v}>{v} días antes</option>)}</select></label>
+        <Toggle title="Permitir reactivación anticipada" text="Permite reactivar antes de la fecha programada." checked={pausePolicy.allowEarlyResume} onChange={(v)=>setPausePolicy({...pausePolicy,allowEarlyResume:v})}/>
+        <Toggle title="Permitir cambiar día de facturación" text="Muestra el selector opcional al reactivar manualmente." checked={pausePolicy.allowBillingDayChange} onChange={(v)=>setPausePolicy({...pausePolicy,allowBillingDayChange:v})}/>
+        <Toggle title="Botón de aviso por WhatsApp" text="Muestra Avisar WhatsApp cuando corresponda el aviso previo." checked={pausePolicy.whatsappEnabled} onChange={(v)=>setPausePolicy({...pausePolicy,whatsappEnabled:v})}/>
+        <Toggle title="Reactivar automáticamente al vencer" text="Si se desactiva, la pausa vencida queda pendiente hasta reactivación manual." checked={pausePolicy.autoResume} onChange={(v)=>setPausePolicy({...pausePolicy,autoResume:v})}/>
+        <div className="md:col-span-2 flex justify-end"><button disabled={saving} onClick={savePausePolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50"><Save className="mr-2 inline h-4 w-4"/>Guardar Pausas de servicio</button></div>
+      </div>}
+    </section>
+  );
 
-  const suspensionPanel = <section className="client-settings-policy rounded-2xl border border-amber-500/20 bg-slate-900/90 p-4 shadow-xl"><div className="client-settings-policy-header flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-policy-icon flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300"><ShieldAlert className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Alerta por suspensión prolongada</h3><p className="mt-1 text-[11px] text-slate-400">Avisa cuando un cliente permanece suspendido demasiado tiempo.</p></div></div>{!loading&&<div className="mt-3 space-y-3"><Toggle title="Activar alerta" text="Solo genera un aviso visual; no retira al cliente." checked={enabled} onChange={setEnabled}/><div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_280px] md:items-end"><label><span className="mb-1 block text-[11px] font-semibold text-slate-300">Mostrar alerta después de</span><select value={months} disabled={!enabled} onChange={e=>setMonths(Number(e.target.value))} className="w-full rounded-xl border p-2.5">{[1,2,3,4,5,6].map(v=><option key={v} value={v}>{v} {v===1?"mes":"meses"} suspendido</option>)}</select></label><button disabled={saving} onClick={saveSuspensionPolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white"><Save className="mr-2 inline h-4 w-4"/>Guardar política</button></div></div>}</section>;
+  const suspensionPanel = (
+    <section className="client-settings-policy rounded-2xl border border-amber-500/20 bg-slate-900/90 p-4 shadow-xl">
+      <div className="client-settings-policy-header flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-policy-icon flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300"><ShieldAlert className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Suspensiones, retiros y reactivaciones</h3><p className="mt-1 text-[11px] text-slate-400">Define cuándo revisar una suspensión prolongada y cómo se controla el retiro o retorno de un cliente.</p></div></div>
+      {loading ? <div className="py-5 text-sm text-slate-500">Cargando configuración…</div> : <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Toggle title="Alerta por suspensión prolongada" text="Activa el aviso para clientes que permanecen suspendidos demasiado tiempo." checked={enabled} onChange={setEnabled}/>
+        <label className="client-settings-toggle rounded-xl border border-slate-800 bg-slate-950/45 px-3.5 py-3"><span className="mb-1 block text-[11px] font-semibold text-slate-300">Mostrar alerta después de</span><select value={months} disabled={!enabled} onChange={(e)=>setMonths(Number(e.target.value))} className="w-full rounded-xl border p-2.5 disabled:opacity-50">{[1,2,3,4,5,6].map(v=><option key={v} value={v}>{v} {v===1?"mes":"meses"} suspendido</option>)}</select><p className="mt-1.5 text-[10px] text-slate-500">Las pausas temporales no participan.</p></label>
+        <Toggle title="Motivo obligatorio al retirar" text="Si está activo, exige un motivo de al menos 10 caracteres antes de retirar al cliente." checked={retirementPolicy.reasonRequired} onChange={(v)=>setRetirementPolicy({...retirementPolicy,reasonRequired:v})}/>
+        <Toggle title="Conservar ficha técnica del retiro" text="Guarda una copia del plan, router, IP, ONU/NAP o CPE que tenía antes de liberar los recursos." checked={retirementPolicy.keepTechnicalSnapshot} onChange={(v)=>setRetirementPolicy({...retirementPolicy,keepTechnicalSnapshot:v})}/>
+        <Toggle title="Permitir reactivar clientes retirados" text="Controla si aparece y se acepta el flujo Reactivar / volver a registrar." checked={retirementPolicy.allowReactivation} onChange={(v)=>setRetirementPolicy({...retirementPolicy,allowReactivation:v})}/>
+        <div className="client-settings-note rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-3 text-[11px] leading-relaxed text-amber-200"><ArchiveRestore className="mr-1 inline h-4 w-4"/>La alerta nunca retira automáticamente al abonado. La decisión de retiro y recuperación de equipos sigue siendo manual.</div>
+        <div className="md:col-span-2 flex justify-end"><button disabled={saving} onClick={saveSuspensionRetirementPolicy} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50"><Save className="mr-2 inline h-4 w-4"/>{saving?"Guardando…":"Guardar suspensiones y retiros"}</button></div>
+      </div>}
+    </section>
+  );
 
   const recoveryPanel = <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="flex items-start gap-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><PackageCheck className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Recuperación de equipos</h3><p className="mt-1 text-[11px] text-slate-400">Área preparada para seguimiento de ONU, router y CPE pendientes de recuperar.</p></div></div></section>;
 
-  return <div className="settings-page client-settings-page space-y-4 animate-in fade-in duration-200"><div className="client-settings-heading"><h2 className="flex items-center gap-2 text-2xl font-bold text-slate-100"><Users className="h-6 w-6 text-cyan-400"/> Configuración clientes</h2><p className="mt-1 text-xs text-slate-400">Preferencias que controlan alertas y comportamiento del módulo Clientes.</p></div><section className="client-settings-shell rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="client-settings-shell-header flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><SlidersHorizontal className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Configuración del módulo Clientes</h3><p className="mt-1 text-[11px] text-slate-400">Selecciona una sección para administrar sus opciones.</p></div></div><div className="client-settings-groups mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">{groups.map(({id,icon:Icon,title,text})=>{const active=activeGroup===id;return <button key={id} type="button" onClick={()=>setActiveGroup(id)} aria-pressed={active} className={`client-settings-group client-settings-group-button rounded-xl border px-3.5 py-3 text-left transition ${active?"client-settings-group-active border-cyan-500/60 bg-cyan-500/10":"border-slate-800 bg-slate-950/45"}`}><div className="flex items-center justify-between"><div className="flex items-center gap-2 text-[13px] font-bold text-slate-200"><Icon className="h-4 w-4 text-cyan-400"/>{title}</div><ChevronRight className={`h-4 w-4 ${active?"rotate-90 text-cyan-400":"text-slate-500"}`}/></div><p className="mt-1.5 text-[11px] text-slate-500">{text}</p></button>})}</div></section>{activeGroup==="registration"?registrationPanel:activeGroup==="pauses"?pausesPanel:activeGroup==="suspensions"?suspensionPanel:recoveryPanel}</div>;
+  return (
+    <div className="settings-page client-settings-page space-y-4 animate-in fade-in duration-200">
+      <div className="client-settings-heading"><h2 className="flex items-center gap-2 text-2xl font-bold text-slate-100"><Users className="h-6 w-6 text-cyan-400"/> Configuración clientes</h2><p className="mt-1 text-xs text-slate-400">Preferencias que controlan alertas y comportamiento del módulo Clientes.</p></div>
+      <section className="client-settings-shell rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="client-settings-shell-header flex items-start gap-3 border-b border-slate-800 pb-3"><span className="client-settings-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><SlidersHorizontal className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Configuración del módulo Clientes</h3><p className="mt-1 text-[11px] text-slate-400">Selecciona una sección para administrar sus opciones.</p></div></div><div className="client-settings-groups mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">{groups.map(({id,icon:Icon,title,text})=>{const active=activeGroup===id;return <button key={id} type="button" onClick={()=>setActiveGroup(id)} aria-pressed={active} className={`client-settings-group client-settings-group-button rounded-xl border px-3.5 py-3 text-left transition ${active?"client-settings-group-active border-cyan-500/60 bg-cyan-500/10":"border-slate-800 bg-slate-950/45"}`}><div className="flex items-center justify-between"><div className="flex items-center gap-2 text-[13px] font-bold text-slate-200"><Icon className="h-4 w-4 text-cyan-400"/>{title}</div><ChevronRight className={`h-4 w-4 ${active?"rotate-90 text-cyan-400":"text-slate-500"}`}/></div><p className="mt-1.5 text-[11px] text-slate-500">{text}</p></button>})}</div></section>
+      {activeGroup==="registration"?registrationPanel:activeGroup==="pauses"?pausesPanel:activeGroup==="suspensions"?suspensionPanel:recoveryPanel}
+    </div>
+  );
 }
