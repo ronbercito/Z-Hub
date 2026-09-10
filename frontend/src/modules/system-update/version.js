@@ -1,10 +1,9 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.56";
+export const PANEL_VERSION = "1.2.57";
 export const CHANGELOG = [
-  { type: "Temas", text: "Se corrigen los colores internos de todas las ventanas emergentes de Ajustes para que tema claro y oscuro usen superficies, bordes y textos coherentes." },
-  { type: "Controles", text: "Inputs, selects, textareas, campos, tablas y placeholders dentro de los modales ahora respetan la paleta activa y muestran un foco visible uniforme." },
-  { type: "Tema claro", text: "Se eliminan fondos negros heredados de utilidades oscuras en formularios y tarjetas; se usan blancos, grises azulados y acentos Z-Hub con contraste correcto." },
-  { type: "Tema oscuro", text: "Se unifica la paleta azul noche de los modales, incluyendo superficies secundarias, bordes, scrollbar y sombras." },
-  { type: "Compatibilidad", text: "La corrección es visual y queda limitada a las ventanas de Ajustes; no cambia datos, backend ni la lógica de guardado/cierre del modal." },
-  { type: "Backup", text: "Antes del cambio se creó backup/pre-settings-modal-theme-1.2.55-20260910 desde la versión 1.2.55 publicada." },
+  { type: "Gestión personal", text: "Se corrigen los colores de los botones de permisos Ver, Crear, Editar, Eliminar, Suspender, Operar, Cobrar, Reportes y Enviar dentro de la ventana de Gestión personal." },
+  { type: "Tema claro", text: "Los permisos inactivos dejan de usar fondo oscuro: ahora muestran superficie clara, borde azul suave y texto legible; los permisos activos usan acento cyan claramente diferenciado." },
+  { type: "Tema oscuro", text: "Los permisos mantienen una paleta azul noche coherente, con mejor contraste entre estado normal, activo y hover." },
+  { type: "Compatibilidad", text: "La corrección es exclusivamente visual y no cambia roles, permisos guardados, API, backend ni lógica de autorización." },
+  { type: "Backup", text: "Se creó backup/pre-staff-theme-1.2.56-20260910 desde el estado publicado de 1.2.56 antes de aplicar la corrección." },
 ];
