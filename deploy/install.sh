@@ -161,19 +161,39 @@ cd "$APP_DIR/frontend"
 printf 'REACT_APP_BACKEND_URL=\n' > .env
 chmod 644 .env
 rm -rf build
+
+# Reparación de compatibilidad para instalaciones 1.2.37/1.2.38 que pudieron dejar
+# los binarios de node_modules sin permiso de ejecución (por ejemplo CRACO).
+# chmod sobre los enlaces de .bin sigue el destino y restaura el +x sin borrar dependencias.
+if [ -d node_modules/.bin ]; then
+  chmod 755 node_modules/.bin/* 2>/dev/null || true
+fi
+
 run_visual "Preparando recursos de la aplicación" yarn install --network-timeout 100000
 ok "Dependencias preparadas"
+
+# Yarn puede recrear enlaces durante install; aseguramos nuevamente los binarios antes del build.
+if [ -d node_modules/.bin ]; then
+  chmod 755 node_modules/.bin/* 2>/dev/null || true
+fi
 run_visual "Procesando componentes" env DISABLE_ESLINT_PLUGIN=true CI= yarn build
 ok "Recursos de la aplicación generados correctamente"
 mkdir -p "$WEB_ROOT"
 rm -rf "$WEB_ROOT"/*
 run_visual "Publicando recursos" cp -r build/. "$WEB_ROOT"/
-# Permisos deliberadamente separados: directorios ejecutables/recorribles, archivos de código legibles,
-# scripts ejecutables y secretos restringidos. Nunca usar chmod -R 755 sobre todo el proyecto.
+
+# Permisos del código versionado. Se excluyen .git, backend/venv y frontend/node_modules
+# porque contienen sus propios modos ejecutables y no deben normalizarse a 0644.
 run_visual "Ajustando propietario" chown -R root:www-data "$APP_DIR"
-run_visual "Protegiendo directorios" find "$APP_DIR" -type d -exec chmod 755 {} +
-run_visual "Protegiendo archivos" find "$APP_DIR" -type f -exec chmod 644 {} +
-run_visual "Habilitando scripts" find "$APP_DIR" -type f \( -name '*.sh' -o -path '*/venv/bin/*' \) -exec chmod 755 {} +
+run_visual "Protegiendo directorios" find "$APP_DIR" \
+  \( -path "$APP_DIR/.git" -o -path "$APP_DIR/backend/venv" -o -path "$APP_DIR/frontend/node_modules" \) -prune -o \
+  -type d -exec chmod 755 {} +
+run_visual "Protegiendo archivos" find "$APP_DIR" \
+  \( -path "$APP_DIR/.git" -o -path "$APP_DIR/backend/venv" -o -path "$APP_DIR/frontend/node_modules" \) -prune -o \
+  -type f -exec chmod 644 {} +
+run_visual "Habilitando scripts" find "$APP_DIR" \
+  \( -path "$APP_DIR/.git" -o -path "$APP_DIR/backend/venv" -o -path "$APP_DIR/frontend/node_modules" \) -prune -o \
+  -type f -name '*.sh' -exec chmod 755 {} +
 chmod 600 "$APP_DIR/backend/.env"
 chown root:root "$APP_DIR/backend/.env"
 chown -R www-data:www-data "$WEB_ROOT"
