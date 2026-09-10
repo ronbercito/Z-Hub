@@ -19,6 +19,24 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.30 — 2026-09-09 — Configuración clientes compacta y Recuperación de equipos
+
+- **Objetivo:** ordenar mejor `Ajustes → Configuración clientes`, eliminar la categoría redundante `Avisos del cliente` y corregir el contraste de esta pantalla en el tema claro.
+- **Organización:** las cuatro áreas quedan como `Registro y altas`, `Pausas de servicio`, `Suspensiones, retiros y reactivaciones` y `Recuperación de equipos`.
+- **Recuperación de equipos:** reemplaza a `Avisos del cliente` para reservar un espacio específico al seguimiento futuro de ONU, router, CPE u otros equipos pendientes de recuperar, sin duplicar las notificaciones que ya existen en Facturación del abonado.
+- **Suspensión prolongada:** la política 1–6 meses existente se conserva intacta y conceptualmente queda asociada al grupo `Suspensiones, retiros y reactivaciones`.
+- **Diseño:** se reduce altura, padding, iconos, separaciones y tipografía secundaria de las tarjetas para ocupar menos espacio, manteniendo margen para agregar opciones futuras.
+- **Tema claro:** se crea `client-settings-theme.css` con estilos locales para fondos blancos, bordes azul-gris, texto legible, iconos, selector, botón y nota informativa. No se modifica la capa global del tema.
+- **Archivos modificados:** `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Archivo nuevo:** `frontend/src/modules/ajustes/clientes/client-settings-theme.css`.
+- **Backend/Base de datos:** sin cambios.
+- **Compatibilidad:** no se modifica Facturación, MikroTik, pausas, retiros, alertas de suspensión prolongada ni datos reales de clientes.
+- **Backup:** `docs/backups/1.2.29/CLIENT_SETTINGS_LAYOUT_BACKUP.md` conserva blobs exactos de 1.2.29 y registra el CSS nuevo para rollback.
+- **Pruebas realizadas:** revisión estática de imports, clases CSS locales, selector de 1–6 meses y preservación del guardado de política existente.
+- **Pruebas pendientes:** build React y validación visual en servidor con tema oscuro y `zhub-light` después de instalar 1.2.30.
+- **Resultado esperado:** Configuración clientes ocupa menos altura y mantiene coherencia visual con el tema claro sin afectar otros módulos.
+- **Commits principales:** backup `ecec41a36907a9828bd2b6564c9d81399ca4f9ce`; UI `8325ead219f69410e583809144dd99fe14711f42`; CSS `498c5811be73f6d8066f023b29cae99370cdbfa4`; versión `2bfc94c2bd657e605730117e5db0f9a47ce381f4`.
+
 ## 1.2.29 — 2026-09-09 — Alerta por suspensión prolongada y recuperación de equipos
 
 - **Objetivo:** detectar clientes que permanecen suspendidos durante demasiado tiempo para facilitar la decisión operativa de recuperar ONU, router u otros equipos instalados.
@@ -166,6 +184,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.29**.
+- Serie cubierta: **1.2.00 → 1.2.30**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.30**, encima de 1.2.29.
+- Próxima versión funcional: **1.2.31**, encima de 1.2.30.
