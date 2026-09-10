@@ -1,6 +1,8 @@
 /**
  * Archivo: frontend/src/context/AuthContext.js
- * Función: Contexto global de autenticación: guarda el token JWT (localStorage) y el usuario actual, expone login/logout y la URL base de la API (REACT_APP_BACKEND_URL + /api) usada por todos los módulos.
+ * Función: Contexto global de autenticación. La sesión persistente se apoya en la cookie
+ *          httpOnly del backend; el JWT de compatibilidad solo vive en memoria durante
+ *          la sesión actual y ya no se guarda en localStorage.
  * Trabaja con: backend/app/routers/auth/router.py (/api/auth/login, /me, /logout), App.js, todos los modules/*
  */
 import React, { createContext, useContext, useState, useEffect } from "react";
@@ -10,12 +12,17 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("fibraz_token") || "");
+  const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
 
   const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
-  // Si el backend responde 401 (sesión inválida/expirada) se cierra la sesión automáticamente
+  // Limpieza de la clave histórica: desde 1.2.37 la sesión no depende de localStorage.
+  useEffect(() => {
+    localStorage.removeItem("fibraz_token");
+  }, []);
+
+  // Si el backend responde 401 (sesión inválida/expirada) se limpia la sesión en memoria.
   useEffect(() => {
     const id = axios.interceptors.response.use(
       (res) => res,
@@ -33,24 +40,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const savedToken = localStorage.getItem("fibraz_token");
-      if (savedToken) {
-        try {
-          const res = await axios.get(`${API}/auth/me`, {
-            headers: { Authorization: `Bearer ${savedToken}` },
-            withCredentials: true,
-          });
-          setUser(res.data.user);
-          setToken(savedToken);
-        } catch (e) {
-          localStorage.removeItem("fibraz_token");
-          setUser(false);
-          setToken("");
-        }
-      } else {
+      try {
+        const res = await axios.get(`${API}/auth/me`, { withCredentials: true });
+        setUser(res.data.user);
+      } catch (e) {
         setUser(false);
+        setToken("");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     checkAuth();
   }, [API]);
@@ -62,8 +60,9 @@ export const AuthProvider = ({ children }) => {
       { withCredentials: true }
     );
     const { token: newToken, user: userData } = res.data;
-    localStorage.setItem("fibraz_token", newToken);
-    setToken(newToken);
+    // Compatibilidad con componentes que aún construyen Authorization: Bearer <token>.
+    // El valor solo se conserva en memoria; tras recargar, la cookie httpOnly autentica la sesión.
+    setToken(newToken || "");
     setUser(userData);
     return userData;
   };
