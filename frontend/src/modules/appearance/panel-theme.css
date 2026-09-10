@@ -2214,3 +2214,21 @@ html[data-panel-theme="zhub-light"] .installations-page td,
 html[data-panel-theme="zhub-light"] .installations-page th {
   border-color: #d8e4ed !important;
 }
+
+
+/* Instalaciones 1.2.14 — acción ubicada bajo el título y contrastada por tema. */
+.installation-new-button {
+  background: linear-gradient(90deg, #06b6d4, #2563eb) !important;
+  box-shadow: 0 6px 16px rgba(8, 145, 178, .28);
+}
+.installation-new-button:hover { filter: brightness(1.06); }
+html[data-panel-theme="zhub-light"] .installation-new-button {
+  background: #2477c4 !important;
+  color: #ffffff !important;
+  border: 1px solid #1d66ab !important;
+  box-shadow: 0 3px 8px rgba(36, 119, 196, .22) !important;
+}
+html[data-panel-theme="zhub-light"] .installation-new-button:hover {
+  background: #1d66ab !important;
+  color: #ffffff !important;
+}
