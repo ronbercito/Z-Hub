@@ -19,6 +19,23 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.26 — 2026-09-09 — Planes filtrados por tecnología en el alta
+
+- **Objetivo:** evitar que durante el registro de un abonado se pueda escoger un plan que pertenezca a otra tecnología.
+- **Comportamiento:** cuando la tecnología seleccionada es `Fibra óptica`, el selector `Plan de internet` muestra únicamente planes activos clasificados como fibra; cuando se selecciona `Inalámbrico`, muestra únicamente planes activos de radio/inalámbricos.
+- **Clasificación:** se reutiliza el criterio ya usado por el módulo Planes: tipos con `radio`, `inalam/inalám`, `Ubiquiti` o `Mimosa` se consideran inalámbricos; `Hotspot` queda fuera de ambos selectores; los demás tipos corresponden a fibra.
+- **Cambio de tecnología:** al cambiar de Fibra a Inalámbrico o viceversa se limpia `plan_id`, obligando a escoger un plan válido para la nueva tecnología.
+- **Validación:** antes de guardar, el asistente verifica que el `plan_id` seleccionado exista dentro de los planes activos compatibles con la tecnología actual; si no coincide, bloquea el registro y muestra un aviso.
+- **Archivo funcional:** `frontend/src/modules/clientes/usuarios/ClientRegistrationWizard.jsx`.
+- **Versión/changelog:** `frontend/src/modules/system-update/version.js` → `1.2.26`.
+- **Backend/Base de datos:** sin cambios; no se modifican planes existentes ni su estructura.
+- **Compatibilidad:** se conservan MikroTik, PPPoE, redes IPv4, NAP, ONU, facturación, Instalaciones, reactivación y aprovisionamiento actuales.
+- **Backup:** `docs/backups/1.2.25/PLAN_TECH_FILTER_BACKUP.md`, con blobs exactos recuperables de los archivos 1.2.25 previos al cambio.
+- **Pruebas realizadas:** revisión estática del filtro por `plan.type`, cambio reactivo al modificar `formData.technology`, limpieza de `plan_id`, placeholder contextual y validación previa al submit.
+- **Pruebas pendientes:** build React y prueba visual/funcional real en el servidor después de instalar 1.2.26, comprobando al menos Fibra → solo fibra e Inalámbrico → solo radio/inalámbricos.
+- **Resultado:** código funcional y versión publicados en `main`; validación operativa real queda pendiente hasta instalar 1.2.26.
+- **Commits principales:** backup `9aa0bc6dc9ade5f5d19a347bd9e78bdf76f174e5`; asistente `0010aea308e100979fb6a364af9dc93b993ecc5c`; versión `591330496adedd9d9bab687980d30ee86f3190cb`.
+
 ## 1.2.25 — 2026-09-09 — Baja controlada y Clientes retirados
 
 - **Objetivo:** reemplazar la eliminación como procedimiento normal de salida por una baja controlada que conserve la identidad del cliente.
@@ -121,6 +138,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.25**.
+- Serie cubierta: **1.2.00 → 1.2.26**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.26**, encima de 1.2.25.
+- Próxima versión funcional: **1.2.27**, encima de 1.2.26.
