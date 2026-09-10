@@ -89,8 +89,6 @@ section "[1/7] Preparando el entorno"
 run_visual "Actualizando componentes" apt-get update
 run_visual "Preparando recursos necesarios" apt-get install -y curl wget git build-essential python3 python3-pip python3-venv python3-dev nginx supervisor gnupg lsb-release mariadb-server mariadb-client libmariadb-dev pkg-config gettext-base
 run_visual "Preparando registro interno" bash -c 'mkdir -p "$1"; if [ ! -f "$2" ] && [ -f "$3" ]; then cp "$3" "$2"; fi; test -f "$2"; chown root:www-data "$2"; chmod 640 "$2"' _ "$LICENSE_DIR" "$LICENSE_FILE" "$APP_DIR/licencia/licencias.txt"
-# El registro queda fuera del checkout publicado y fuera del webroot. El backend
-# utiliza /etc/zhub/licencia/licencias.txt como fuente privada de validación.
 rm -rf "$APP_DIR/licencia"
 ok "Entorno preparado"
 
@@ -184,7 +182,14 @@ ok "Acceso web activado"
 
 STEP="Finalizando instalación"
 section "[7/7] Finalizando instalación"
-if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then ok "Servicio principal: OK"; else printf '%b✗ Comprobación final del servicio falló%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
+FINAL_BACKEND_OK=0
+for i in $(seq 1 10); do
+  printf '\r%b  ⟳ Comprobación final: intento %02d/10 ... %b' "$COLOR_WORK" "$i" "$COLOR_RESET" >&3
+  if curl -fs http://127.0.0.1:8001/api/health >/dev/null 2>&1; then FINAL_BACKEND_OK=1; break; fi
+  sleep 2
+done
+printf '\r' >&3
+if [ "$FINAL_BACKEND_OK" -eq 1 ]; then ok "Servicio principal: OK"; else printf '%b✗ Comprobación final del servicio falló después de 10 intentos%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; supervisorctl status zhub_backend >&3 2>&3 || true; tail -n 20 /var/log/zhub_backend.err.log >&3 2>&3 || true; exit 1; fi
 if systemctl is-active --quiet mariadb; then ok "Datos: OK"; else printf '%b✗ Servicio de datos inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
 if supervisorctl status zhub_backend 2>/dev/null | grep -q RUNNING; then ok "Servicios: OK"; else printf '%b✗ Los servicios no están activos%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
 if systemctl is-active --quiet nginx; then ok "Acceso web: OK"; else printf '%b✗ Acceso web inactivo%b\n' "$COLOR_ERROR" "$COLOR_RESET" >&3; exit 1; fi
