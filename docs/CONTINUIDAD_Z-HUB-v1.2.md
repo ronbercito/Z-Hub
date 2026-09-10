@@ -19,6 +19,22 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.31 — 2026-09-09 — Tarjetas funcionales en Configuración clientes
+
+- **Objetivo:** corregir que las cuatro tarjetas superiores de `Ajustes → Configuración clientes` parecían botones pero no respondían al clic.
+- **Solución:** `Registro y altas`, `Pausas de servicio`, `Suspensiones, retiros y reactivaciones` y `Recuperación de equipos` ahora son botones reales con selección visual, flecha de estado y contenido contextual.
+- **Suspensiones:** se conserva como sección inicial y al seleccionarla muestra la política funcional de alerta por suspensión prolongada de 1 a 6 meses.
+- **Otras secciones:** Registro y altas, Pausas y Recuperación ya responden al clic y muestran su área correspondiente preparada para incorporar sus opciones sin duplicar Facturación.
+- **Tema claro:** se agregan estilos hover, activo y foco accesible locales; la tarjeta seleccionada queda resaltada sin afectar otros módulos.
+- **Archivos modificados:** `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, `frontend/src/modules/ajustes/clientes/client-settings-theme.css`, `frontend/src/modules/system-update/version.js`.
+- **Backend/Base de datos:** sin cambios.
+- **Compatibilidad:** no se modifica facturación, MikroTik, pausa temporal, suspensión prolongada, retiro ni datos reales.
+- **Backup:** `docs/backups/1.2.30/CLIENT_SETTINGS_BUTTONS_BACKUP.md` conserva blobs exactos previos de 1.2.30.
+- **Pruebas realizadas:** revisión estática de estado `activeGroup`, eventos `onClick`, `aria-pressed`, render condicional de la política y clases locales para tema claro/oscuro.
+- **Pruebas pendientes:** build React y validación visual/clic real en el servidor después de instalar 1.2.31.
+- **Resultado esperado:** las cuatro tarjetas dejan de verse desactivadas y funcionan como selector de secciones.
+- **Commits principales:** backup `ccfcf3786315115199dc53649088f88e75540503`; UI `2cf15154efbd8932b8f00a93eb19532882222375`; CSS `8efc7f8be16d38be5eefd9d6e71993fd89b126b1`; versión `56e3f5f8c7ab43549769324d535bfcba9fecee2b`.
+
 ## 1.2.30 — 2026-09-09 — Configuración clientes compacta y Recuperación de equipos
 
 - **Objetivo:** ordenar mejor `Ajustes → Configuración clientes`, eliminar la categoría redundante `Avisos del cliente` y corregir el contraste de esta pantalla en el tema claro.
@@ -184,6 +200,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.30**.
+- Serie cubierta: **1.2.00 → 1.2.31**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.31**, encima de 1.2.30.
+- Próxima versión funcional: **1.2.32**, encima de 1.2.31.
