@@ -41,6 +41,17 @@ export default function Installations({ onContinueToClient }) {
       .finally(() => setLoading(false));
   }, [API, token]);
 
+  // Una solicitud deja de ser pendiente únicamente cuando el abonado ya existe realmente.
+  useEffect(() => {
+    if (loading || !clients.length || !pendingInstallations.length) return;
+    const registeredDocuments = new Set(clients.map((client) => String(client.dni_ruc || "").trim()).filter(Boolean));
+    const next = pendingInstallations.filter((installation) => !registeredDocuments.has(String(installation.dni_ruc || "").trim()));
+    if (next.length !== pendingInstallations.length) {
+      setPendingInstallations(next);
+      savePendingInstallations(next);
+    }
+  }, [clients, loading, pendingInstallations]);
+
   const pendingRows = useMemo(() => pendingInstallations.filter((installation) => {
     const date = installation.installation_date || installation.created_at?.slice(0, 10) || "";
     const text = [value(installation, "full_name"), value(installation, "dni_ruc"), value(installation, "address"), value(installation, "phone")].join(" ");
@@ -74,11 +85,6 @@ export default function Installations({ onContinueToClient }) {
   const activateClient = (installation) => {
     const { id, status, created_at, ...draft } = installation;
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-
-    const next = pendingInstallations.filter((item) => item.id !== id);
-    setPendingInstallations(next);
-    savePendingInstallations(next);
-
     onContinueToClient?.();
   };
 
