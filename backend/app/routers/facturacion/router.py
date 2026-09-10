@@ -1,13 +1,13 @@
 """
 Archivo: backend/app/routers/facturacion/router.py
-Actualización: 2026-09-09 — la facturación mensual respeta el estado de servicio en pausa.
+Actualización: 2026-09-10 — mantiene consistencia de pagos/reactivación y usa zona horaria de negocio.
 Función: Facturación y cobros: listar/crear facturas, facturación masiva mensual, marcar vencidas y pagos,
          manteniendo cada recibo asociado al cliente y aplicando créditos/deudas del libro mayor.
 Trabaja con: invoice.py, client.py, client_service.py, client_balance.py, client_activity.py,
              backend/app/routers/facturacion/balances.py, frontend/src/modules/clientes/editor/billing/ClientBilling.jsx
 """
 import calendar
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, now_iso
 from app.core.security import get_current_user
-from app.core.utils import correlative, current_period, get_or_404
+from app.core.utils import business_now, business_today, correlative, current_period, get_or_404
 from app.integrations.mikrotik import service as mt
 from app.models.client import Client
 from app.models.client_activity import ClientActivity
@@ -105,7 +105,7 @@ async def create_invoice(data: InvoiceIn, current_user: dict = Depends(get_curre
         service = await db.get(ClientService, data.service_id)
         if not service or service.client_id != c.id:
             raise HTTPException(status_code=422, detail="El servicio seleccionado no pertenece al cliente.")
-    now = datetime.now(timezone.utc)
+    now = business_now()
     default_issue, default_due, _ = _billing_dates(c, now)
     inv = Invoice(invoice_number=data.invoice_number or correlative("REC"), client_id=c.id, service_id=service.id if service else None, client_name=c.full_name, client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone, plan_name=data.plan_name or (service.plan_name if service else c.plan_name), amount=data.amount if data.amount is not None else (service.plan_price if service else c.plan_price), month_period=data.month_period or current_period(), issue_date=data.issue_date or default_issue, due_date=data.due_date or default_due, status=data.status, notes=data.notes)
     db.add(inv)
@@ -155,6 +155,7 @@ async def register_payment(data: PaymentIn, current_user: dict = Depends(get_cur
     remaining = max(0.0, float(inv.amount or 0) - current_paid)
     if data.amount > remaining + 0.005:
         raise HTTPException(status_code=400, detail="El pago no puede superar el saldo pendiente de la factura")
+
     new_paid = round(current_paid + float(data.amount), 2)
     inv.status = "paid" if new_paid >= float(inv.amount or 0) - 0.005 else "unpaid"
     inv.paid_amount = new_paid
@@ -163,23 +164,35 @@ async def register_payment(data: PaymentIn, current_user: dict = Depends(get_cur
     inv.operation_reference = data.operation_reference or correlative("OP")
     inv.operator_name = current_user.get("name", "")
     inv.notes = data.notes or inv.notes
+
     mikrotik = None
+    reactivation_warning = ""
     c = await db.get(Client, inv.client_id)
     if c:
         remaining_invoices = await _refresh_balance(db, c)
         if not remaining_invoices and c.status == "suspended":
-            c.status, c.is_online, c.last_connection_time = "active", True, now_iso()
             s = await db.get(Setting, "system_config")
             rtr = await db.get(Router, c.router_id) if c.router_id else None
             mikrotik = await mt.restore_client(c, rtr, (s.data or {}).get("mikrotik_cut_list") or "morosos")
-        _activity(db, c.id, "Pago registrado", f"Se registró pago en {inv.invoice_number}. Monto pagado en esta operación: S/. {float(data.amount):.2f}. Método: {data.payment_method}. Referencia: {inv.operation_reference}. Pagado acumulado: S/. {new_paid:.2f} de S/. {float(inv.amount or 0):.2f}. Estado resultante: {inv.status}.", current_user)
+            if mikrotik.get("ok"):
+                c.status, c.is_online, c.last_connection_time = "active", True, now_iso()
+            else:
+                # El pago es un hecho financiero y se conserva. El cliente permanece suspendido
+                # hasta que MikroTik confirme la restauración para no mentir sobre su estado.
+                c.status, c.is_online = "suspended", False
+                reactivation_warning = f"Pago registrado, pero MikroTik no pudo reactivar el servicio: {mikrotik.get('message', 'error desconocido')}"
+        _activity(db, c.id, "Pago registrado", f"Se registró pago en {inv.invoice_number}. Monto pagado en esta operación: S/. {float(data.amount):.2f}. Método: {data.payment_method}. Referencia: {inv.operation_reference}. Pagado acumulado: S/. {new_paid:.2f} de S/. {float(inv.amount or 0):.2f}. Estado resultante: {inv.status}.{' ' + reactivation_warning if reactivation_warning else ''}", current_user)
+
     await db.commit()
-    return {"message": "Pago registrado exitosamente. Recibo emitido.", "invoice": (await _decorate_invoices(db, [inv]))[0], "mikrotik": mikrotik}
+    message = "Pago registrado exitosamente. Recibo emitido."
+    if reactivation_warning:
+        message += " El servicio continúa suspendido porque la reactivación en MikroTik no fue confirmada."
+    return {"message": message, "invoice": (await _decorate_invoices(db, [inv]))[0], "mikrotik": mikrotik, "reactivation_warning": reactivation_warning}
 
 
 @router.post("/invoices/mass-generate")
 async def mass_generate(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    now = datetime.now(timezone.utc)
+    now = business_now()
     clients = (await db.execute(select(Client).where(Client.status != "canceled"))).scalars().all()
     count = 0
     auto_paid = 0
@@ -219,7 +232,7 @@ async def mass_generate(db: AsyncSession = Depends(get_db), current_user: dict =
 @router.post("/invoices/mark-overdue")
 async def mark_overdue(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     rows = (await db.execute(select(Invoice).where(Invoice.status == "unpaid"))).scalars().all()
-    today_value = datetime.now(timezone.utc).date()
+    today_value = business_today()
     affected = 0
     grace_values = []
     for invoice in rows:
