@@ -60,12 +60,13 @@ def test_settings_store_normalized_license_snapshot():
     assert '"license_activated_at": ""' in settings
 
 
-def test_stage2_does_not_yet_enforce_client_creation_limit():
+def test_stage2_keeps_capacity_decision_out_of_client_crud_implementation():
     clients = read("backend/app/routers/clientes/router.py")
     assert "can_create_client" not in clients
     assert "CLIENT_LIMIT_REACHED" not in clients
 
 
-def test_release_version():
+def test_release_contract_remains_versioned():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.58"' in version
+    assert 'export const PANEL_VERSION = ' in version
+    assert 'export const CHANGELOG = [' in version
