@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageSquare, PackageCheck, Phone, RefreshCw, Search, UserRoundCheck, XCircle } from "lucide-react";
+import { AlertTriangle, ClipboardList, MapPin, PackageCheck, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../../context/AuthContext";
 import "./equipment-recovery.css";
@@ -12,6 +12,7 @@ const STATUS_LABELS = {
   recovered: "Recuperado",
   not_recovered: "No recuperado",
 };
+const CLOSED_STATUSES = new Set(["recovered", "not_recovered"]);
 
 const equipmentText = (row) => {
   const items = row?.equipment?.items || [];
@@ -20,7 +21,7 @@ const equipmentText = (row) => {
 
 export default function EquipmentRecovery() {
   const { API, token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const [loading, setLoading] = useState(true);
   const [recoveries, setRecoveries] = useState([]);
   const [suspended, setSuspended] = useState([]);
@@ -31,13 +32,15 @@ export default function EquipmentRecovery() {
   const [form, setForm] = useState({ status: "pending", assigned_to: "", scheduled_date: "", notes: "" });
   const [saving, setSaving] = useState(false);
 
+  const requestConfig = { headers, withCredentials: true };
+
   const load = async () => {
     setLoading(true);
     try {
       const [r, s, t] = await Promise.allSettled([
-        axios.get(`${API}/equipment-recoveries`, { headers }),
-        axios.get(`${API}/client-alerts/suspensions`, { headers }),
-        axios.get(`${API}/clients/retired/list`, { headers }),
+        axios.get(`${API}/equipment-recoveries`, requestConfig),
+        axios.get(`${API}/client-alerts/suspensions`, requestConfig),
+        axios.get(`${API}/clients/retired/list`, requestConfig),
       ]);
       if (r.status !== "fulfilled") throw r.reason;
       setRecoveries(Array.isArray(r.value.data) ? r.value.data : []);
@@ -68,7 +71,7 @@ export default function EquipmentRecovery() {
 
   const createRecovery = async (client) => {
     try {
-      const response = await axios.post(`${API}/equipment-recoveries/from-client/${client.id}`, {}, { headers });
+      const response = await axios.post(`${API}/equipment-recoveries/from-client/${client.id}`, {}, requestConfig);
       toast.success(response.data?.message || "Enviado a recuperación");
       await load();
     } catch (error) {
@@ -77,6 +80,7 @@ export default function EquipmentRecovery() {
   };
 
   const editRecovery = (row) => {
+    if (row.closed || CLOSED_STATUSES.has(row.status)) return;
     setEditing(row);
     setForm({ status: row.status || "pending", assigned_to: row.assigned_to || "", scheduled_date: row.scheduled_date || "", notes: row.notes || "" });
   };
@@ -85,7 +89,7 @@ export default function EquipmentRecovery() {
     if (form.status === "visit_scheduled" && !form.scheduled_date) return toast.error("Indica la fecha de visita.");
     setSaving(true);
     try {
-      const response = await axios.patch(`${API}/equipment-recoveries/${editing.id}`, form, { headers });
+      const response = await axios.patch(`${API}/equipment-recoveries/${editing.id}`, form, requestConfig);
       toast.success(response.data?.message || "Seguimiento actualizado");
       setEditing(null);
       await load();
@@ -127,7 +131,7 @@ export default function EquipmentRecovery() {
 
     <section className="recovery-card overflow-hidden rounded-2xl border shadow-sm">
       <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between"><div><h3 className="font-black">Seguimiento de recuperaciones</h3><p className="text-xs opacity-70">Pendiente → Contactado → Visita programada → Recuperado / No recuperado.</p></div><div className="flex flex-col gap-2 sm:flex-row"><label className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 opacity-50"/><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Buscar cliente, equipo..." className="recovery-input rounded-xl border py-2 pl-9 pr-3 text-xs"/></label><select value={status} onChange={(e)=>setStatus(e.target.value)} className="recovery-input rounded-xl border px-3 py-2 text-xs"><option value="all">Todos los estados</option>{Object.entries(STATUS_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></div></div>
-      <div className="overflow-x-auto"><table className="w-full min-w-[1050px] text-left text-xs"><thead><tr><th>Cliente</th><th>Contacto / dirección</th><th>Equipo</th><th>Origen</th><th>Estado</th><th>Responsable / visita</th><th>Acción</th></tr></thead><tbody>{loading?<tr><td colSpan="7" className="p-8 text-center">Cargando...</td></tr>:filtered.length?filtered.map((row)=><tr key={row.id}><td><b>{row.client_name}</b><div>DNI/RUC: {row.dni_ruc || "—"}</div></td><td><div><Phone className="mr-1 inline h-3 w-3"/>{row.phone || "—"}</div><div><MapPin className="mr-1 inline h-3 w-3"/>{row.address || "—"}</div></td><td><b>{equipmentText(row)}</b>{row.equipment?.nap_box&&<div>NAP: {row.equipment.nap_box}{row.equipment.nap_port?` · P${row.equipment.nap_port}`:""}</div>}</td><td>{row.source_status === "retired" ? "Retirado" : "Suspendido"}</td><td><span className={`recovery-status recovery-status-${row.status}`}>{STATUS_LABELS[row.status] || row.status}</span></td><td>{row.assigned_to || "Sin asignar"}<div>{row.scheduled_date ? `Visita: ${row.scheduled_date}` : "Sin visita"}</div></td><td><button onClick={()=>editRecovery(row)} className="recovery-secondary rounded-lg border px-3 py-2 font-bold"><ClipboardList className="mr-1 inline h-3.5 w-3.5"/> Gestionar</button></td></tr>):<tr><td colSpan="7" className="p-8 text-center opacity-60">No hay casos de recuperación con este filtro.</td></tr>}</tbody></table></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[1050px] text-left text-xs"><thead><tr><th>Cliente</th><th>Contacto / dirección</th><th>Equipo</th><th>Origen</th><th>Estado</th><th>Responsable / visita</th><th>Acción</th></tr></thead><tbody>{loading?<tr><td colSpan="7" className="p-8 text-center">Cargando...</td></tr>:filtered.length?filtered.map((row)=><tr key={row.id}><td><b>{row.client_name}</b><div>DNI/RUC: {row.dni_ruc || "—"}</div></td><td><div><Phone className="mr-1 inline h-3 w-3"/>{row.phone || "—"}</div><div><MapPin className="mr-1 inline h-3 w-3"/>{row.address || "—"}</div></td><td><b>{equipmentText(row)}</b>{row.equipment?.nap_box&&<div>NAP: {row.equipment.nap_box}{row.equipment.nap_port?` · P${row.equipment.nap_port}`:""}</div>}</td><td>{row.source_status === "retired" ? "Retirado" : "Suspendido"}</td><td><span className={`recovery-status recovery-status-${row.status}`}>{STATUS_LABELS[row.status] || row.status}</span></td><td>{row.assigned_to || "Sin asignar"}<div>{row.scheduled_date ? `Visita: ${row.scheduled_date}` : "Sin visita"}</div></td><td>{row.closed || CLOSED_STATUSES.has(row.status) ? <span className="rounded-lg border px-3 py-2 font-bold opacity-70">Cerrado</span> : <button onClick={()=>editRecovery(row)} className="recovery-secondary rounded-lg border px-3 py-2 font-bold"><ClipboardList className="mr-1 inline h-3.5 w-3.5"/> Gestionar</button>}</td></tr>):<tr><td colSpan="7" className="p-8 text-center opacity-60">No hay casos de recuperación con este filtro.</td></tr>}</tbody></table></div>
     </section>
 
     <div className="recovery-note rounded-xl border px-4 py-3 text-xs"><PackageCheck className="mr-1 inline h-4 w-4"/>Marcar un equipo como recuperado <b>no modifica automáticamente Almacén</b>. Primero se conserva el control físico del caso; la integración de inventario se hará cuando exista una asociación segura entre el equipo y un registro de stock.</div>
