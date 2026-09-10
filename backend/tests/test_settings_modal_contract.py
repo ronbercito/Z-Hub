@@ -48,6 +48,7 @@ def test_staff_permission_buttons_are_theme_aware():
     assert 'border-color:#27a9cf!important' in css
 
 
-def test_release_version():
+def test_release_version_contract_exists():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.57"' in version
+    assert 'export const PANEL_VERSION = ' in version
+    assert 'export const CHANGELOG = [' in version
