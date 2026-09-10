@@ -22,7 +22,6 @@ class InstallationIn(BaseModel):
     longitude: float | None = None
     installation_date: str = ""
     technology: str = "fiber"
-    allow_retired: bool = False
 
 @router.get("")
 async def list_installations(db: AsyncSession = Depends(get_db)):
@@ -38,12 +37,9 @@ async def create_installation(payload: InstallationIn, db: AsyncSession = Depend
     if existing:
         raise HTTPException(status_code=409, detail="Ya existe una instalación pendiente con este DNI/RUC.")
     retired = await db.scalar(select(Client).where(Client.dni_ruc == dni_ruc, Client.status == "retired"))
-    if retired and not payload.allow_retired:
-        raise HTTPException(status_code=409, detail={
-            "code": "RETIRED_CLIENT",
-            "message": "Este DNI/RUC pertenece a un cliente retirado.",
-            "client": {"id": retired.id, "full_name": retired.full_name, "dni_ruc": retired.dni_ruc, "phone": retired.phone, "address": retired.address, "retired_at": retired.retired_at, "retirement_reason": retired.retirement_reason},
-        })
+    if retired:
+        retired_date = (retired.retired_at or "")[:10] or "sin fecha"
+        raise HTTPException(status_code=409, detail=f"CLIENTE RETIRADO: {retired.full_name} ya figura en el historial (retiro {retired_date}). Motivo: {retired.retirement_reason}. Usa Clientes > Retirados > Volver a registrar.")
     installation = Installation(full_name=full_name, dni_ruc=dni_ruc, phone=phone, email=payload.email.strip(), address=address,
         reference=payload.reference.strip(), latitude=float(payload.latitude or 0), longitude=float(payload.longitude or 0),
         installation_date=payload.installation_date or "", technology=payload.technology or "fiber", status="pending",
