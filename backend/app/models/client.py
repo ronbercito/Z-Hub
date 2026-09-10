@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/client.py
-Función: Tabla `clients` — datos personales, servicio activo e historial de retiro.
+Función: Tabla `clients` — datos personales, servicio activo e historiales de retiro y pausa.
 """
 from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -47,9 +47,20 @@ class Client(Base):
     antenna_type: Mapped[str] = mapped_column(String(80), default="")
     management_ip: Mapped[str] = mapped_column(String(60), default="")
 
-    status: Mapped[str] = mapped_column(String(30), default="active")  # active | suspended | retired | pending_install
+    status: Mapped[str] = mapped_column(String(30), default="active")  # active | suspended | paused | retired | pending_install
     retired_at: Mapped[str] = mapped_column(String(40), default="", index=True)
     retirement_reason: Mapped[str] = mapped_column(String(250), default="")
+
+    pause_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    pause_started_at: Mapped[str] = mapped_column(String(40), default="", index=True)
+    pause_until: Mapped[str] = mapped_column(String(10), default="", index=True)
+    pause_months: Mapped[int] = mapped_column(Integer, default=0)
+    pause_reason: Mapped[str] = mapped_column(String(250), default="")
+    pause_saved_days: Mapped[int] = mapped_column(Integer, default=0)
+    pause_original_billing_day: Mapped[int] = mapped_column(Integer, default=0)
+    pause_resumed_at: Mapped[str] = mapped_column(String(40), default="")
+    pause_billing_day_after: Mapped[int] = mapped_column(Integer, default=0)
+
     billing_day: Mapped[int] = mapped_column(Integer, default=5)
     billing_type: Mapped[str] = mapped_column(String(20), default="prepaid")
     invoice_lead_days: Mapped[int] = mapped_column(Integer, default=5)
