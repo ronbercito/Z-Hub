@@ -51,6 +51,7 @@ class Client(Base):
     suspended_at: Mapped[str] = mapped_column(String(40), default="", index=True)
     retired_at: Mapped[str] = mapped_column(String(40), default="", index=True)
     retirement_reason: Mapped[str] = mapped_column(String(250), default="")
+    retirement_technical_snapshot: Mapped[str] = mapped_column(Text, default="")
 
     pause_active: Mapped[bool] = mapped_column(Boolean, default=False)
     pause_started_at: Mapped[str] = mapped_column(String(40), default="", index=True)
