@@ -21,7 +21,7 @@ jobs:
       - name: Install pytest for maintenance contracts
         run: python -m pip install 'pytest>=8,<9'
       - name: Maintenance and equipment regression contracts
-        run: pytest -q -c /dev/null backend/tests/test_maintenance_contracts.py backend/tests/test_equipment_stage2_contracts.py backend/tests/test_equipment_stage3_contracts.py backend/tests/test_stage4_theme_contract.py backend/tests/test_settings_home_navigation.py backend/tests/test_settings_modal_contract.py
+        run: pytest -q -c /dev/null backend/tests/test_maintenance_contracts.py backend/tests/test_equipment_stage2_contracts.py backend/tests/test_equipment_stage3_contracts.py backend/tests/test_stage4_theme_contract.py backend/tests/test_settings_home_navigation.py backend/tests/test_settings_modal_contract.py backend/tests/test_license_stage2_contract.py
 
   frontend-build:
     runs-on: ubuntu-latest
