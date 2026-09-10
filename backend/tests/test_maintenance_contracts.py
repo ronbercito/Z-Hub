@@ -100,3 +100,26 @@ def test_business_timezone_defaults_to_lima():
     assert 'APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "America/Lima")' in config
     assert "def business_now()" in utils
     assert "def business_today()" in utils
+
+
+def test_new_service_wizard_is_sequential_and_defaults_to_static_ip():
+    text = source("frontend/src/modules/clientes/editor/ClientServiceEditor.jsx")
+    assert 'connection_type: "IP Estática"' in text
+    assert 'technology: ""' in text
+    assert 'label="Router *"' in text
+    assert 'title="Selecciona la tecnología"' in text
+    assert 'title="Plan de internet"' in text
+    assert 'title="Tipo de conexión"' in text
+    assert 'disabled={!routerReady}' in text
+    assert 'disabled={!technologyReady}' in text
+    assert 'disabled={!planReady}' in text
+    assert 'disabled={saving || !canSubmit}' in text
+    assert 'planTechnology(p.type) === formData.technology' in text
+    assert 'client-service-wizard.css' in text
+
+
+def test_new_service_wizard_has_explicit_light_theme_skin():
+    css = source("frontend/src/modules/clientes/editor/client-service-wizard.css")
+    assert 'html[data-panel-theme="zhub-light"] .service-wizard-modal' in css
+    assert 'html[data-panel-theme="zhub-light"] .service-wizard-card' in css
+    assert 'html[data-panel-theme="zhub-light"] .service-wizard-input' in css
