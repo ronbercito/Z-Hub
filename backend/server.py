@@ -25,6 +25,7 @@ from app.routers.clientes.pause import router as pause_clients_router, pause_wor
 from app.routers.clientes.suspension_alerts import router as suspension_alerts_router, suspension_alert_worker
 from app.routers.clientes.registration_settings import router as client_registration_settings_router
 from app.routers.clientes.equipment_recoveries import router as equipment_recoveries_router
+from app.routers.clientes.client_equipment import router as client_equipment_router
 from app.routers.clientes.services import router as client_services_router
 from app.routers.clientes.service_delete_audit import router as client_service_delete_audit_router
 from app.routers.clientes.deletion_summary import router as client_deletion_summary_router
@@ -110,7 +111,7 @@ api.include_router(client_workspace_router, dependencies=[Depends(require_permis
 for router, module in (
     (inicio_router, "dashboard"),
     (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"),
-    (client_registration_settings_router, "clients"), (equipment_recoveries_router, "clients"), (installations_router, "clients"),
+    (client_registration_settings_router, "clients"), (equipment_recoveries_router, "clients"), (client_equipment_router, "clients"), (installations_router, "clients"),
     (client_service_delete_audit_router, "clients"), (client_services_router, "clients"),
     (client_deletion_summary_router, "clients"), (zones_router, "clients"),
     (clientes_router, "clients"),
