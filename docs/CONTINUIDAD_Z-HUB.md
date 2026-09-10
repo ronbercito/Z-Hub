@@ -3044,3 +3044,9 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Datos:** solicita nombre, DNI/RUC, dirección, celular, correo, referencia, coordenadas, fecha y tecnología; conserva la estructura del primer paso de Nuevo abonado.
 - **Continuidad:** al aceptar no crea un registro incompleto; abre automáticamente **Clientes → Nuevo abonado** con los datos ya cargados para completar facturación, plan y aprovisionamiento.
 - **Compatibilidad:** los datos se transfieren temporalmente en la sesión del navegador y se eliminan al abrir el asistente; no altera APIs ni registros existentes.
+
+
+### 1.2.16 — Ventana de instalación sin cubrir la pantalla
+
+- **Corrección visual:** se elimina la capa opaca y el desenfoque que cubrían la vista de Instalaciones al abrir Nueva instalación.
+- **Resultado:** el formulario sigue siendo una ventana emergente centrada, mientras el contenido del módulo permanece visible alrededor, tanto en tema claro como oscuro.
