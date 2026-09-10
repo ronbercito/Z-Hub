@@ -18,7 +18,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 from .config import DATABASE_URL
 
-logger = logging.getLogger("fibraz.database")
+logger = logging.getLogger("zhub.database")
 
 
 class Base(DeclarativeBase):
@@ -35,6 +35,7 @@ def new_id() -> str:
 
 
 def now_iso() -> str:
+    """Timestamp técnico en UTC. Las fechas de negocio usan app.core.utils."""
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -54,7 +55,6 @@ async def init_db():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            await conn.run_sync(_add_missing_columns)
             await conn.run_sync(_add_missing_columns)
         logger.info("Base de datos conectada: %s", DATABASE_URL.split("@")[-1])
     except Exception as e:
