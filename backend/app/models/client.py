@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/client.py
-Función: Tabla `clients` — datos personales, servicio activo e historiales de retiro y pausa.
+Función: Tabla `clients` — datos personales, servicio activo e historiales de retiro, pausa y suspensión.
 """
 from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -48,6 +48,7 @@ class Client(Base):
     management_ip: Mapped[str] = mapped_column(String(60), default="")
 
     status: Mapped[str] = mapped_column(String(30), default="active")  # active | suspended | paused | retired | pending_install
+    suspended_at: Mapped[str] = mapped_column(String(40), default="", index=True)
     retired_at: Mapped[str] = mapped_column(String(40), default="", index=True)
     retirement_reason: Mapped[str] = mapped_column(String(250), default="")
 
