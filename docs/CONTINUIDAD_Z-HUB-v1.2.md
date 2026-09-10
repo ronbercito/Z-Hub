@@ -19,6 +19,28 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.36 — 2026-09-10 — Módulo operativo de Recuperación de equipos
+
+- **Objetivo:** convertir `Recuperación de equipos` de un espacio preparado a un flujo operativo para controlar ONU, CPE u otros equipos que deben recuperarse de clientes suspendidos por largo tiempo o retirados.
+- **Nuevo submódulo:** se agrega `Clientes → Recuperación`, visible con el mismo permiso `clients`, sin crear un permiso paralelo que rompa los roles existentes.
+- **Candidatos:** la pantalla reúne clientes con suspensión prolongada según la política configurada y clientes retirados que todavía no tienen un caso abierto. El operador decide manualmente cuándo enviarlos a recuperación.
+- **Persistencia:** nueva tabla `equipment_recoveries` mediante el modelo `EquipmentRecovery`; `init_db()` la crea al arrancar sin borrar ni modificar datos existentes.
+- **Ficha del equipo:** para fibra se conserva la ONU/serial disponible; para inalámbrico se conserva CPE, antena e IP de administración cuando existan. Para retirados se reutiliza la ficha técnica histórica de 1.2.34 si fue conservada.
+- **Estados:** `Pendiente`, `Contactado`, `Visita programada`, `Recuperado` y `No recuperado`.
+- **Seguimiento:** cada caso puede guardar responsable, fecha de visita y observaciones. La visita programada exige una fecha válida.
+- **Duplicados:** un cliente no puede tener dos recuperaciones abiertas simultáneamente; puede generarse un caso nuevo después de cerrar el anterior como recuperado o no recuperado.
+- **Alerta de suspensión:** el aviso de Clientes incorpora botón `Recuperación` para abrir directamente el nuevo submódulo.
+- **API:** se agregan `GET /api/equipment-recoveries`, `GET /api/equipment-recoveries/summary`, `POST /api/equipment-recoveries/from-client/{client_id}` y `PATCH /api/equipment-recoveries/{recovery_id}` bajo permiso de Clientes.
+- **Seguridad de inventario:** marcar `Recuperado` **no aumenta ni modifica automáticamente Almacén**. Todavía no existe una relación inequívoca entre una ONU/CPE recuperada y un registro concreto de `inventory`; se evita alterar stock por aproximación.
+- **Compatibilidad:** no se modifica el estado del cliente, MikroTik, facturación, NAP/OLT, pausa, retiro ni recursos técnicos al crear o actualizar un caso de recuperación. El módulo es seguimiento físico/operativo.
+- **Archivos nuevos:** `backend/app/models/equipment_recovery.py`, `backend/app/routers/clientes/equipment_recoveries.py`, `frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx`, `frontend/src/modules/clientes/recuperacion/equipment-recovery.css`.
+- **Archivos modificados:** `backend/app/models/__init__.py`, `backend/server.py`, `frontend/src/components/layout/Sidebar.jsx`, `frontend/src/components/layout/Layout.jsx`, `frontend/src/modules/ajustes/staff/permissions.js`, `frontend/src/modules/clientes/usuarios/Users.jsx`, `frontend/src/modules/clientes/usuarios/SuspensionRecoveryAlerts.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Backup:** `docs/backups/1.2.35/EQUIPMENT_RECOVERY_BACKUP.md` registra los blobs previos y los archivos nuevos a eliminar para rollback.
+- **Pruebas realizadas:** revisión estática del modelo, creación automática de tabla, rutas, validación de estados/fecha, prevención de duplicados, lectura de ficha técnica de retirados, navegación lateral, permiso `clients`, carga tolerante de candidatos y enlace desde la alerta de suspensión.
+- **Pruebas pendientes:** compilación/importación Python, build React, arranque real del backend para crear `equipment_recoveries`, prueba visual en tema oscuro/claro y flujo real crear → contactar → programar visita → recuperar/no recuperar.
+- **Riesgos:** la primera versión no lleva control unitario de varios equipos separados dentro de un mismo cliente ni movimiento automático de inventario; las observaciones permiten documentar el resultado hasta definir una asociación segura con Almacén.
+- **Commits principales:** backup `5788174e32a81056d26c5fad674ecb5c0bff1662`; modelo `6307f4e08dc6b8dd8beaf585b04f1f97216af9ce`; API `e900684b5f79866d7cbce1d9f863aa8b8c833cd4`; registro modelo `44a0213fa7c35a4399e932558507dbb6395ae5e9`; servidor `0e246d30dcecb87ec1c7cd315d95d0529420a166`; UI `09cec59a95b09effcf250664681a3ce33560581c`; CSS `ffcfa572b33a7a00409a0f59b618138709c4b856`; menú `d7a5121c1d01486ec22a8fa68ff590e6dd6a7a4d`; permisos `0c104bc1b8b4b97dd7870ded9598c6acbbd74af1`; alerta `03d9c5a48cb5ff075b98db957ff182d29245e695`; integración `7e8accdb03b08d8b1cf18d80d952badb58113762`, `17176bb7a82dc6dac7f0daf52e61afe67ae31ef1`; versión `fc481c7bc8fe5005bb49c9bbc12f1df62a3680d5`.
+
 ## 1.2.35 — 2026-09-10 — Corrección del listado vacío de Clientes
 
 - **Causa confirmada:** desde 1.2.33 el frontend de `Clientes` consulta `GET /api/clients/pause-policy`; en 1.2.34 también consulta `GET /api/clients/retirement-policy`. En `backend/server.py`, el router CRUD principal de Clientes estaba registrado antes que los routers especializados. Como dicho CRUD contiene `GET /clients/{client_id}`, FastAPI podía interpretar `pause-policy` o `retirement-policy` como si fueran IDs de cliente y devolver 404.
@@ -275,6 +297,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.35**.
+- Serie cubierta: **1.2.00 → 1.2.36**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.36**, encima de 1.2.35.
+- Próxima versión funcional: **1.2.37**, encima de 1.2.36.
