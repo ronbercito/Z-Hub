@@ -1,0 +1,1 @@
+La bitácora maestra completa permanece versionada por Git en `docs/CONTINUIDAD_Z-HUB.md`. Antes de 1.2.17 se conservaron copias ejecutables de los archivos funcionales modificados en esta carpeta y el historial Git permite restaurar la bitácora exacta de 1.2.16.
