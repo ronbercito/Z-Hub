@@ -31,7 +31,13 @@ def test_auth_token_is_not_persisted_in_local_storage():
     text=source("frontend/src/context/AuthContext.js"); assert 'localStorage.setItem("fibraz_token"' not in text; assert "axios.defaults.withCredentials = true" in text
 
 def test_recovery_closed_cases_cannot_be_reopened():
-    b=source("backend/app/routers/clientes/equipment_recoveries.py"); f=source("frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx"); assert '"recovered": {"recovered"}' in b; assert '"not_recovered": {"not_recovered"}' in b; assert "CLOSED_STATUSES" in f and ">Cerrado<" in f
+    b=source("backend/app/routers/clientes/equipment_recoveries.py")
+    f=source("frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx")
+    assert '"recovered": {"recovered"}' in b
+    assert '"not_recovered": {"not_recovered"}' in b
+    assert 'const CLOSED=new Set(["recovered","not_recovered"])' in f
+    assert 'CLOSED.has(r.status)?"Ver detalle":"Gestionar"' in f
+    assert '!CLOSED.has(editing.status)' in f
 
 def test_business_timezone_defaults_to_lima():
     c=source("backend/app/core/config.py"); u=source("backend/app/core/utils.py"); assert 'APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "America/Lima")' in c; assert "def business_now()" in u; assert "def business_today()" in u
