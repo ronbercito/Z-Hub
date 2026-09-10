@@ -1,0 +1,97 @@
+/* Configuración clientes 1.2.30 — estilos locales, sin afectar otros módulos. */
+
+.client-settings-page .client-settings-shell,
+.client-settings-page .client-settings-policy {
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.client-settings-page .client-settings-group {
+  min-height: 72px;
+}
+
+@media (min-width: 1024px) {
+  .client-settings-page .client-settings-shell,
+  .client-settings-page .client-settings-policy {
+    padding: 16px !important;
+  }
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page {
+  color: #173b63;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-heading h2,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-shell h3,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy h3 {
+  color: #143f69 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-shell,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy {
+  background: #ffffff !important;
+  border-color: #cfdae5 !important;
+  box-shadow: 0 3px 10px rgba(31, 74, 112, .08) !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-shell-header,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy-header {
+  border-color: #d8e2eb !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-icon {
+  background: #e3f2f8 !important;
+  color: #0786a7 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy-icon {
+  background: #fff4d9 !important;
+  color: #a66a0a !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-group,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-toggle {
+  background: #f7fafc !important;
+  border-color: #cdd9e4 !important;
+  box-shadow: none !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-group:hover {
+  background: #f0f7fb !important;
+  border-color: #9fc4d9 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-group .text-slate-200,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-toggle .text-slate-200 {
+  color: #214f76 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-group .text-slate-500,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-toggle .text-slate-500,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-heading .text-slate-400,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-shell .text-slate-400,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy .text-slate-400,
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-policy .text-slate-500 {
+  color: #5d7891 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page .client-settings-note {
+  background: #fff9ea !important;
+  border-color: #e9cf8b !important;
+  color: #805d16 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page select {
+  background: #ffffff !important;
+  border-color: #b9cad9 !important;
+  color: #173b63 !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page button.bg-cyan-500 {
+  background: #1596b5 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-panel-theme="zhub-light"] .client-settings-page button.bg-cyan-500:hover {
+  background: #087f9c !important;
+}
