@@ -12,6 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.core.database import init_db
 from app.core import database
+from app.core.license_guard import enforce_client_capacity
 from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
 from app.models.client import Client
@@ -120,7 +121,10 @@ for router, module in (
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
     (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"), (staff_router, "staff"),
 ):
-    api.include_router(router, dependencies=[Depends(require_permission(module))])
+    dependencies = [Depends(require_permission(module))]
+    if router is clientes_router:
+        dependencies.append(Depends(enforce_client_capacity))
+    api.include_router(router, dependencies=dependencies)
 
 @api.get("/health")
 async def health():
