@@ -22,6 +22,7 @@ from app.routers.auth.router import router as auth_router
 from app.routers.clientes.router import router as clientes_router
 from app.routers.clientes.retired import router as retired_clients_router
 from app.routers.clientes.pause import router as pause_clients_router, pause_worker
+from app.routers.clientes.suspension_alerts import router as suspension_alerts_router, suspension_alert_worker
 from app.routers.clientes.services import router as client_services_router
 from app.routers.clientes.service_delete_audit import router as client_service_delete_audit_router
 from app.routers.clientes.deletion_summary import router as client_deletion_summary_router
@@ -59,12 +60,16 @@ async def lifespan(_: FastAPI):
     await init_db()
     await seed_initial_data()
     pause_task = asyncio.create_task(pause_worker())
+    suspension_alert_task = asyncio.create_task(suspension_alert_worker())
     try:
         yield
     finally:
         pause_task.cancel()
+        suspension_alert_task.cancel()
         with suppress(asyncio.CancelledError):
             await pause_task
+        with suppress(asyncio.CancelledError):
+            await suspension_alert_task
         await database.engine.dispose()
 
 app = FastAPI(title="Z-Hub ISP API", version="3.0.0", lifespan=lifespan)
@@ -97,7 +102,7 @@ for router in (ajustes_public_router, auth_router, system_update_router, setup_r
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 for router, module in (
-    (inicio_router, "dashboard"), (clientes_router, "clients"), (retired_clients_router, "clients"), (pause_clients_router, "clients"), (installations_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
+    (inicio_router, "dashboard"), (clientes_router, "clients"), (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"), (installations_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
