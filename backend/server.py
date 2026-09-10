@@ -102,8 +102,17 @@ for router in (ajustes_public_router, auth_router, system_update_router, setup_r
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
+
+# Importante: registrar primero las rutas estáticas/especializadas de Clientes.
+# El CRUD principal contiene /clients/{client_id}; si se registra antes puede capturar
+# rutas como /clients/pause-policy o /clients/retirement-policy como si fueran IDs.
 for router, module in (
-    (inicio_router, "dashboard"), (clientes_router, "clients"), (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"), (client_registration_settings_router, "clients"), (installations_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
+    (inicio_router, "dashboard"),
+    (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"),
+    (client_registration_settings_router, "clients"), (installations_router, "clients"),
+    (client_service_delete_audit_router, "clients"), (client_services_router, "clients"),
+    (client_deletion_summary_router, "clients"), (zones_router, "clients"),
+    (clientes_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
