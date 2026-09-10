@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/__init__.py
-Actualización: 2026-09-08 — registra el nuevo modelo de libro mayor de saldos.
+Actualización: 2026-09-09 — registra solicitudes persistentes de instalación.
 Función: registra todos los modelos (tablas SQL) para que SQLAlchemy los conozca al crear la base de datos.
 Trabaja con: backend/app/core/database.py y backend/app/models/*.py
 """
@@ -9,6 +9,7 @@ from .plan import Plan
 from .router import Router
 from .client import Client
 from .client_service import ClientService
+from .installation import Installation
 from .ipv4_network import IPv4Network
 from .nap_box import NapBox
 from .zone import Zone
@@ -25,6 +26,6 @@ from .task import Task
 from .setting import Setting
 
 __all__ = [
-    "User", "Plan", "Router", "Client", "ClientService", "Invoice", "ClientBalance", "Ticket",
+    "User", "Plan", "Router", "Client", "ClientService", "Installation", "Invoice", "ClientBalance", "Ticket",
     "InventoryItem", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
 ]
