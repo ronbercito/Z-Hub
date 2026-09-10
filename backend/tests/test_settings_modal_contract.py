@@ -39,6 +39,15 @@ def test_modal_is_compact_and_theme_aware():
     assert 'input[type="file"]::file-selector-button' in css
 
 
+def test_staff_permission_buttons_are_theme_aware():
+    css = read("frontend/src/modules/ajustes/settings-modal.css")
+    assert 'section.mx-auto.max-w-6xl button.bg-slate-800' in css
+    assert 'section.mx-auto.max-w-6xl button.bg-cyan-500\\/20' in css
+    assert 'background:#f7fafc!important' in css
+    assert 'background:#dff4fb!important' in css
+    assert 'border-color:#27a9cf!important' in css
+
+
 def test_release_version():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.56"' in version
+    assert 'PANEL_VERSION = "1.2.57"' in version
