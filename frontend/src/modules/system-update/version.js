@@ -1,14 +1,10 @@
-/**
- * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.2.24.
- * Función: única fuente de verdad de PANEL_VERSION y del changelog de la versión actual.
- * Nota: CHANGELOG contiene únicamente los cambios de esta versión; no acumula versiones anteriores.
- */
-export const PANEL_VERSION = "1.2.24";
+/** Z-Hub panel version — changelog contains only the current release. */
+export const PANEL_VERSION = "1.2.25";
 export const CHANGELOG = [
-  { type: "Tema claro", text: "Las pestañas Instalaciones y Registrados ahora usan colores propios compatibles con Z-Hub Claro Suave." },
-  { type: "Pestaña activa", text: "La pestaña seleccionada usa un degradado azul/cian limpio, texto e iconos blancos y un badge claro con mayor contraste." },
-  { type: "Pestaña inactiva", text: "La pestaña no seleccionada usa fondo azul-gris claro, texto azul oscuro y badge blanco, evitando el gris oscuro que desentonaba con el template." },
-  { type: "Compatibilidad", text: "No se modifican lógica de pestañas, filtros, API, base de datos, flujo de alta, Nuevo abonado ni ficha del cliente." },
-  { type: "Seguridad", text: "Se respaldó version.js y se registró el blob exacto de Installations.jsx de 1.2.23 en docs/backups/1.2.23/." },
+  { type: "Clientes", text: "Se agrega Retirar cliente con confirmación, resumen de datos y motivo obligatorio de 10 a 250 caracteres." },
+  { type: "Liberación", text: "El retiro limpia primero la configuración MikroTik y luego libera IP, plan, router, NAP/puerto, ONU y asociaciones técnicas; si MikroTik falla, la baja se cancela." },
+  { type: "Historial", text: "El cliente no se elimina: pasa a la pestaña Retirados conservando identidad, contacto, dirección, fecha y motivo del retiro." },
+  { type: "Reactivación", text: "Retirados incorpora Reactivar / volver a registrar, reutilizando el asistente oficial para asignar un servicio nuevo." },
+  { type: "DNI/RUC", text: "Nueva instalación avisa cuando el documento pertenece a un cliente retirado y dirige al flujo de reactivación." },
+  { type: "Seguridad", text: "Se creó respaldo recuperable de los archivos 1.2.24 antes de la modificación." },
 ];
