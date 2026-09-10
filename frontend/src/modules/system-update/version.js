@@ -1,9 +1,11 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.26";
+export const PANEL_VERSION = "1.2.27";
 export const CHANGELOG = [
-  { type: "Planes", text: "En el alta de clientes, Fibra óptica muestra únicamente planes de fibra e Inalámbrico únicamente planes de radio/inalámbricos." },
-  { type: "Cambio de tecnología", text: "Al cambiar entre Fibra e Inalámbrico se limpia el plan seleccionado para evitar conservar un plan incompatible." },
-  { type: "Validación", text: "El registro bloquea el guardado si el plan elegido no corresponde a la tecnología seleccionada." },
-  { type: "Compatibilidad", text: "No se modifican planes existentes, precios, MikroTik, NAP, redes IPv4, facturación ni aprovisionamiento." },
-  { type: "Seguridad", text: "Se guardó un respaldo recuperable de los blobs exactos de 1.2.25 antes del cambio." },
+  { type: "Clientes", text: "Se agrega Servicio en pausa con duración de 1 a 3 meses y motivo obligatorio." },
+  { type: "Días conservados", text: "Al pausar se guardan los días pendientes hasta la próxima fecha de facturación y se devuelven al reactivar." },
+  { type: "Reactivación", text: "La pausa vencida se reactiva automáticamente; también puede reactivarse antes desde Clientes > En pausa." },
+  { type: "Facturación", text: "Mientras el cliente está en pausa no se generan nuevas facturas mensuales ni se marcan vencimientos automáticos." },
+  { type: "Fecha de facturación", text: "En una reactivación manual se puede modificar opcionalmente el día de facturación; si se deja vacío, Z-Hub lo calcula conservando los días pendientes." },
+  { type: "Avisos", text: "Cinco días antes del final aparece una alerta interna y un botón para preparar el aviso por WhatsApp." },
+  { type: "Seguridad", text: "IP, plan, router, NAP y ONU se conservan durante la pausa; se respaldaron los archivos 1.2.26 antes de modificar." },
 ];
