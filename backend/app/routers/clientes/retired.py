@@ -11,13 +11,17 @@ from app.core.security import get_current_user
 from app.integrations.mikrotik import service as mt
 from app.models.client import Client
 from app.models.client_activity import ClientActivity
+from app.models.client_equipment import ClientEquipment
 from app.models.client_service import ClientService
+from app.models.equipment_recovery import EquipmentRecovery
 from app.models.invoice import Invoice
 from app.models.router import Router
 from app.models.setting import DEFAULT_SETTINGS, Setting
 from app.routers.clientes.services import _remove_service_queue
 
 router = APIRouter(prefix="/clients", tags=["Clientes retirados"], dependencies=[Depends(get_current_user)])
+
+OPEN_RECOVERY_STATUSES = {"pending", "contacted", "visit_scheduled"}
 
 
 class RetirementIn(BaseModel):
@@ -63,6 +67,49 @@ def _decorate_retired(client: Client) -> dict:
     except (TypeError, ValueError, json.JSONDecodeError):
         item["retirement_snapshot"] = {}
     return item
+
+
+async def _assigned_company_equipment(db: AsyncSession, client_id: str) -> list[ClientEquipment]:
+    return (await db.execute(
+        select(ClientEquipment).where(
+            ClientEquipment.client_id == client_id,
+            ClientEquipment.ownership == "company",
+            ClientEquipment.status.in_(("installed", "assigned")),
+        ).order_by(ClientEquipment.created_at)
+    )).scalars().all()
+
+
+def _equipment_rows(items: list[ClientEquipment]) -> list[dict]:
+    return [
+        {
+            "equipment_id": item.id,
+            "type": item.equipment_type or "Equipo",
+            "brand_model": item.brand_model or "",
+            "identifier": item.serial_mac or "",
+            "serial_mac": item.serial_mac or "",
+            "ownership": item.ownership,
+            "status": item.status,
+            "delivered_at": item.delivered_at or "",
+            "notes": item.notes or "",
+        }
+        for item in items
+    ]
+
+
+@router.get("/{client_id}/retirement-equipment-preview")
+async def retirement_equipment_preview(client_id: str, db: AsyncSession = Depends(get_db)):
+    client = await db.get(Client, client_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    settings = await _settings(db)
+    enabled = settings.get("client_equipment_recovery_enabled", False) is True
+    items = await _assigned_company_equipment(db, client_id) if enabled else []
+    return {
+        "enabled": enabled,
+        "requires_recovery": bool(items),
+        "count": len(items),
+        "equipment": _equipment_rows(items),
+    }
 
 
 async def _cleanup_additional_services(db: AsyncSession, client: Client) -> list[ClientService]:
@@ -123,6 +170,9 @@ async def retire_client(client_id: str, payload: RetirementIn, current_user: dic
     if reason and len(reason) < 3:
         raise HTTPException(status_code=422, detail="Si registras un motivo, debe tener al menos 3 caracteres.")
 
+    recovery_enabled = settings.get("client_equipment_recovery_enabled", False) is True
+    assigned_equipment = await _assigned_company_equipment(db, client.id) if recovery_enabled else []
+
     if policy["keep_technical_snapshot"]:
         client.retirement_technical_snapshot = json.dumps(_technical_snapshot(client), ensure_ascii=False)
     else:
@@ -154,6 +204,39 @@ async def retire_client(client_id: str, payload: RetirementIn, current_user: dic
     for service in additional_services:
         service.status = "retired"
 
+    recovery_case = None
+    if assigned_equipment:
+        existing = await db.scalar(select(EquipmentRecovery).where(
+            EquipmentRecovery.client_id == client.id,
+            EquipmentRecovery.status.in_(tuple(OPEN_RECOVERY_STATUSES)),
+        ))
+        if existing:
+            recovery_case = existing
+        else:
+            equipment_payload = {
+                "technology": client.technology or "",
+                "items": _equipment_rows(assigned_equipment),
+                "zone_name": client.zone_name or "",
+                "nap_box": client.nap_box or "",
+                "nap_port": client.nap_port,
+            }
+            recovery_case = EquipmentRecovery(
+                client_id=client.id,
+                client_name=client.full_name or "",
+                dni_ruc=client.dni_ruc or "",
+                phone=client.phone or "",
+                address=client.address or "",
+                technology=client.technology or "",
+                source_status="retired",
+                equipment_data=json.dumps(equipment_payload, ensure_ascii=False),
+                status="pending",
+                created_by=current_user.get("name") or current_user.get("username") or current_user.get("email") or "Sistema",
+            )
+            db.add(recovery_case)
+        for item in assigned_equipment:
+            item.status = "recovery_pending"
+            item.updated_at = now_iso()
+
     client.status = "retired"
     client.retired_at = now_iso()
     client.retirement_reason = reason
@@ -172,15 +255,32 @@ async def retire_client(client_id: str, payload: RetirementIn, current_user: dic
     client.antenna_type = ""; client.management_ip = ""
 
     operator = current_user.get("name") or current_user.get("username") or current_user.get("email") or "Sistema"
+    recovery_detail = f" Equipos enviados a Recuperación: {len(assigned_equipment)}." if assigned_equipment else ""
     db.add(ClientActivity(
         client_id=client.id,
         action="Cliente retirado",
-        detail=f"Retiro confirmado. Motivo: {reason or 'sin motivo'}. Se conservaron facturas, tickets, tareas, documentos, comunicaciones y actividades. Facturas pendientes anuladas: {canceled_count}. Servicios adicionales archivados: {len(additional_services)}.",
+        detail=f"Retiro confirmado. Motivo: {reason or 'sin motivo'}. Se conservaron facturas, tickets, tareas, documentos, comunicaciones y actividades. Facturas pendientes anuladas: {canceled_count}. Servicios adicionales archivados: {len(additional_services)}.{recovery_detail}",
         operator_name=operator,
     ))
     await db.commit()
     await db.refresh(client)
-    return {"ok": True, "message": "Cliente retirado, recursos liberados e historial conservado correctamente.", "client": _decorate_retired(client), "mikrotik": cleanup, "history_preserved": True, "canceled_pending_invoices": canceled_count, "archived_services": len(additional_services)}
+    if recovery_case:
+        await db.refresh(recovery_case)
+    message = "Cliente retirado, recursos liberados e historial conservado correctamente."
+    if assigned_equipment:
+        message += f" Se creó el seguimiento de recuperación para {len(assigned_equipment)} equipo(s)."
+    return {
+        "ok": True,
+        "message": message,
+        "client": _decorate_retired(client),
+        "mikrotik": cleanup,
+        "history_preserved": True,
+        "canceled_pending_invoices": canceled_count,
+        "archived_services": len(additional_services),
+        "recovery_created": bool(assigned_equipment),
+        "recovery_equipment_count": len(assigned_equipment),
+        "recovery_id": recovery_case.id if recovery_case else None,
+    }
 
 
 @router.post("/{client_id}/reactivation-complete")
