@@ -1,11 +1,11 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.46";
+export const PANEL_VERSION = "1.2.47";
 export const CHANGELOG = [
-  { type: "Equipos 1/4", text: "Inicia la primera etapa del control opcional de equipos asignados a clientes, sin quitar ni reemplazar funciones existentes." },
-  { type: "Ajustes", text: "Agrega en Ajustes / Clientes / Equipos el interruptor Usar módulo de recuperación de equipos; por defecto queda desactivado para conservar el comportamiento actual." },
-  { type: "Clientes", text: "Al activar la opción aparece la pestaña Equipos en la ficha del abonado para registrar ONU, router Wi-Fi, CPE, antena, fuente u otros equipos." },
-  { type: "Datos", text: "Cada equipo conserva tipo, marca/modelo, serial/MAC, propiedad empresa/cliente, fecha de entrega, estado y observaciones." },
-  { type: "Recuperación", text: "El submenú Recuperación se oculta cuando el módulo está desactivado y reaparece al activarlo." },
-  { type: "Seguridad", text: "Esta etapa no mueve inventario, no retira clientes y no crea recuperaciones automáticas; esas acciones quedan reservadas para las etapas siguientes." },
-  { type: "Backup", text: "Antes de comenzar se creó backup/pre-equipment-stage1-1.2.45-20260910 desde el HEAD completo de 1.2.45." },
+  { type: "Equipos", text: "Etapa 2/4: al retirar un cliente, Z-Hub detecta los equipos de propiedad de la empresa que siguen asignados al abonado." },
+  { type: "Retiro", text: "Se agrega una vista previa de equipos pendientes mediante la API de retiro para que la interfaz pueda advertir qué equipos deben recuperarse." },
+  { type: "Recuperación", text: "Al confirmar el retiro se crea automáticamente un caso de Recuperación con los equipos asignados y se evita generar casos duplicados abiertos." },
+  { type: "Trazabilidad", text: "Los equipos enviados a recuperación cambian a estado recovery_pending y el retiro registra en el Log cuántos equipos quedaron pendientes." },
+  { type: "Compatibilidad", text: "Si el módulo de equipos está desactivado o el cliente no tiene equipos de la empresa asignados, el retiro conserva exactamente el comportamiento anterior." },
+  { type: "Seguridad", text: "La etapa no mueve stock de Almacén ni marca equipos como recuperados; esas acciones quedan reservadas para etapas posteriores." },
+  { type: "Backup", text: "Antes de la etapa 2 se creó backup/pre-equipment-stage2-1.2.46-20260910 desde el estado completo de 1.2.46." },
 ];
