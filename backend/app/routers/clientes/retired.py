@@ -1,9 +1,9 @@
-"""Baja controlada de clientes: conserva identidad e historial de retiro y libera recursos técnicos."""
+"""Baja controlada de clientes: conserva historial administrativo y libera recursos técnicos."""
 import json
 
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, now_iso
@@ -11,14 +11,11 @@ from app.core.security import get_current_user
 from app.integrations.mikrotik import service as mt
 from app.models.client import Client
 from app.models.client_activity import ClientActivity
-from app.models.client_communication import ClientCommunication
-from app.models.client_document import ClientDocument
 from app.models.client_service import ClientService
 from app.models.invoice import Invoice
 from app.models.router import Router
 from app.models.setting import DEFAULT_SETTINGS, Setting
-from app.models.task import Task
-from app.models.ticket import Ticket
+from app.routers.clientes.services import _remove_service_queue
 
 router = APIRouter(prefix="/clients", tags=["Clientes retirados"], dependencies=[Depends(get_current_user)])
 
@@ -30,10 +27,6 @@ class RetirementIn(BaseModel):
 async def _settings(db: AsyncSession) -> dict:
     setting = await db.get(Setting, "system_config")
     return {**DEFAULT_SETTINGS, **((setting.data or {}) if setting else {})}
-
-
-async def _cut_list(db: AsyncSession) -> str:
-    return (await _settings(db)).get("mikrotik_cut_list") or "morosos"
 
 
 def _retirement_policy(data: dict) -> dict:
@@ -72,6 +65,28 @@ def _decorate_retired(client: Client) -> dict:
     return item
 
 
+async def _cleanup_additional_services(db: AsyncSession, client: Client) -> list[ClientService]:
+    """Retira recursos RouterOS de servicios adicionales sin borrar sus filas históricas."""
+    services = (await db.execute(
+        select(ClientService).where(ClientService.client_id == client.id)
+    )).scalars().all()
+    for service in services:
+        router_device = await db.get(Router, service.router_id) if service.router_id else None
+        if not router_device or router_device.device_type != "mikrotik" or not router_device.password:
+            if service.pppoe_user or service.ip_address:
+                raise HTTPException(status_code=502, detail=f"No se retiró al cliente: el servicio adicional {service.plan_name or service.id[:8]} no tiene un MikroTik válido para liberar sus recursos.")
+            continue
+        try:
+            async with mt.connect(router_device) as mikrotik:
+                if service.pppoe_user:
+                    await mikrotik.remove_ppp_secret(service.pppoe_user)
+                if service.ip_address:
+                    await _remove_service_queue(mikrotik, client.dni_ruc, service.ip_address)
+        except mt.MikroTikError as exc:
+            raise HTTPException(status_code=502, detail=f"No se retiró al cliente porque falló la limpieza de un servicio adicional en MikroTik: {exc}") from exc
+    return services
+
+
 @router.get("/retirement-policy")
 async def retirement_policy(db: AsyncSession = Depends(get_db)):
     return _retirement_policy(await _settings(db))
@@ -93,7 +108,7 @@ async def retired_by_dni(dni_ruc: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/{client_id}/retire")
-async def retire_client(client_id: str, payload: RetirementIn, db: AsyncSession = Depends(get_db)):
+async def retire_client(client_id: str, payload: RetirementIn, current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     client = await db.get(Client, client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
@@ -113,14 +128,31 @@ async def retire_client(client_id: str, payload: RetirementIn, db: AsyncSession 
     else:
         client.retirement_technical_snapshot = ""
 
+    # 1) Liberar el servicio principal. La BD no cambia de estado si RouterOS no confirma.
     router_device = await db.get(Router, client.router_id) if client.router_id else None
     cleanup = await mt.remove_client(client, router_device, settings.get("mikrotik_cut_list") or "morosos")
     if not cleanup.get("ok"):
         await db.rollback()
         raise HTTPException(status_code=502, detail=f"No se retiró al cliente porque no se pudo liberar MikroTik: {cleanup.get('message', 'error desconocido')}")
 
-    for model in (ClientService, Invoice, Ticket, Task, ClientCommunication, ClientDocument, ClientActivity):
-        await db.execute(delete(model).where(model.client_id == client.id))
+    # 2) Liberar también servicios adicionales; se conservan como historial con estado retired.
+    try:
+        additional_services = await _cleanup_additional_services(db, client)
+    except HTTPException:
+        await db.rollback()
+        raise
+
+    # 3) Conservar historial financiero/técnico/documental. Las facturas pendientes se anulan,
+    # no se eliminan; las pagadas y anuladas permanecen para auditoría.
+    invoices = (await db.execute(select(Invoice).where(Invoice.client_id == client.id))).scalars().all()
+    canceled_count = 0
+    for invoice in invoices:
+        if invoice.status in {"unpaid", "overdue"}:
+            invoice.status = "canceled"
+            invoice.notes = f"{invoice.notes or ''} | Anulada automáticamente por retiro del cliente.".strip(" |")
+            canceled_count += 1
+    for service in additional_services:
+        service.status = "retired"
 
     client.status = "retired"
     client.retired_at = now_iso()
@@ -138,9 +170,17 @@ async def retire_client(client_id: str, payload: RetirementIn, db: AsyncSession 
     client.zone_id = ""; client.zone_name = ""
     client.monitoring_equipment_id = ""; client.monitoring_equipment_name = ""
     client.antenna_type = ""; client.management_ip = ""
+
+    operator = current_user.get("name") or current_user.get("username") or current_user.get("email") or "Sistema"
+    db.add(ClientActivity(
+        client_id=client.id,
+        action="Cliente retirado",
+        detail=f"Retiro confirmado. Motivo: {reason or 'sin motivo'}. Se conservaron facturas, tickets, tareas, documentos, comunicaciones y actividades. Facturas pendientes anuladas: {canceled_count}. Servicios adicionales archivados: {len(additional_services)}.",
+        operator_name=operator,
+    ))
     await db.commit()
     await db.refresh(client)
-    return {"ok": True, "message": "Cliente retirado y recursos liberados correctamente.", "client": _decorate_retired(client), "mikrotik": cleanup}
+    return {"ok": True, "message": "Cliente retirado, recursos liberados e historial conservado correctamente.", "client": _decorate_retired(client), "mikrotik": cleanup, "history_preserved": True, "canceled_pending_invoices": canceled_count, "archived_services": len(additional_services)}
 
 
 @router.post("/{client_id}/reactivation-complete")
