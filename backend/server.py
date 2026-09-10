@@ -23,6 +23,7 @@ from app.routers.clientes.services import router as client_services_router
 from app.routers.clientes.service_delete_audit import router as client_service_delete_audit_router
 from app.routers.clientes.deletion_summary import router as client_deletion_summary_router
 from app.routers.clientes.identity_sync import sync_client_identity
+from app.routers.clientes.installations import router as installations_router
 from app.routers.clientes.zones import router as zones_router
 from app.routers.facturacion.router import router as facturacion_router
 from app.routers.facturacion.client_balances import router as client_balances_router
@@ -87,7 +88,7 @@ for router in (ajustes_public_router, auth_router, system_update_router, setup_r
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 for router, module in (
-    (inicio_router, "dashboard"), (clientes_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
+    (inicio_router, "dashboard"), (clientes_router, "clients"), (installations_router, "clients"), (client_service_delete_audit_router, "clients"), (client_services_router, "clients"), (client_deletion_summary_router, "clients"), (zones_router, "clients"),
     (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
     (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
     (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
