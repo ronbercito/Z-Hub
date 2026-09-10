@@ -3012,3 +3012,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Pantalla inicial:** listado de clientes/instalaciones con buscador por cliente, teléfono o dirección, filtros de fechas, tecnología, estado y acceso visible para nueva instalación.
 - **Datos:** consulta el listado existente de clientes; no modifica registros ni la provisión actual.
 - **Pruebas:** verificados menú, ruta, permisos, carga de datos y filtros visibles.
+
+
+### 1.2.12 — Tema claro para Instalaciones
+
+- **Corrección visual:** el panel, tabla, controles y estado vacío de Instalaciones dejan de heredar los tonos oscuros.
+- **Tema claro:** se usan fondo blanco, bordes azul grisáceo y textos de alto contraste coherentes con el panel claro.
+- **Compatibilidad:** el tema oscuro no cambia; no se modifica la carga ni el filtrado de datos.
+- **Pruebas:** validadas reglas del panel, tabla y controles específicos de Instalaciones.
