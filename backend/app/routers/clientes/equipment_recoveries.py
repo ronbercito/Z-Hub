@@ -15,7 +15,18 @@ from app.models.equipment_recovery import EquipmentRecovery
 router = APIRouter(prefix="/equipment-recoveries", tags=["Clientes / Recuperación de equipos"], dependencies=[Depends(get_current_user)])
 
 OPEN_STATUSES = {"pending", "contacted", "visit_scheduled"}
-VALID_STATUSES = OPEN_STATUSES | {"recovered", "not_recovered"}
+CLOSED_STATUSES = {"recovered", "not_recovered"}
+VALID_STATUSES = OPEN_STATUSES | CLOSED_STATUSES
+
+# Los casos cerrados son históricos. Para volver a trabajar el cliente se crea un caso nuevo,
+# evitando reescribir silenciosamente el resultado de una visita anterior.
+ALLOWED_TRANSITIONS = {
+    "pending": VALID_STATUSES,
+    "contacted": VALID_STATUSES,
+    "visit_scheduled": VALID_STATUSES,
+    "recovered": {"recovered"},
+    "not_recovered": {"not_recovered"},
+}
 
 
 class RecoveryUpdate(BaseModel):
@@ -68,6 +79,7 @@ def _decorate(row: EquipmentRecovery) -> dict:
         item["equipment"] = json.loads(row.equipment_data or "{}")
     except (TypeError, ValueError, json.JSONDecodeError):
         item["equipment"] = {}
+    item["closed"] = row.status in CLOSED_STATUSES
     return item
 
 
@@ -147,6 +159,9 @@ async def update_recovery(recovery_id: str, payload: RecoveryUpdate, db: AsyncSe
     status = payload.status.strip().lower()
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=422, detail="Estado de recuperación no válido.")
+    if status not in ALLOWED_TRANSITIONS.get(row.status, set()):
+        raise HTTPException(status_code=409, detail="El caso ya está cerrado. Para un nuevo intento de recuperación crea un caso nuevo.")
+
     scheduled_date = payload.scheduled_date.strip()
     if scheduled_date:
         try:
@@ -163,7 +178,7 @@ async def update_recovery(recovery_id: str, payload: RecoveryUpdate, db: AsyncSe
     row.updated_at = now_iso()
     if status == "recovered":
         row.recovered_at = row.recovered_at or now_iso()
-    elif row.recovered_at:
+    elif status not in CLOSED_STATUSES:
         row.recovered_at = ""
 
     await db.commit()
