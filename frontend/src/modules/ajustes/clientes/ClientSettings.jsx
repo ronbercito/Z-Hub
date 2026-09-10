@@ -140,7 +140,7 @@ export default function ClientSettings() {
     </section>
   );
 
-  const recoveryPanel = <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="flex items-start gap-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><PackageCheck className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Recuperación de equipos</h3><p className="mt-1 text-[11px] text-slate-400">Área preparada para seguimiento de ONU, router y CPE pendientes de recuperar.</p></div></div></section>;
+  const recoveryPanel = <section className="client-settings-detail rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl"><div className="flex items-start gap-3"><span className="client-settings-detail-icon flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><PackageCheck className="h-4 w-4"/></span><div><h3 className="text-sm font-bold text-slate-100">Recuperación de equipos</h3><p className="mt-1 text-[11px] text-slate-400">El seguimiento operativo está habilitado en <b>Clientes → Recuperación</b>. Allí puedes enviar casos, asignar responsable, programar visita y registrar si el equipo fue recuperado o no.</p><p className="mt-2 text-[10px] text-slate-500">La recuperación no mueve stock de Almacén automáticamente hasta contar con una asociación segura entre el equipo físico y un registro de inventario.</p></div></div></section>;
 
   return (
     <div className="settings-page client-settings-page space-y-4 animate-in fade-in duration-200">
