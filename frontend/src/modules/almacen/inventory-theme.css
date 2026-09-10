@@ -1,0 +1,35 @@
+.inventory-page{color:#e2e8f0}
+.inventory-page>div:first-child h2{color:#f8fafc!important}.inventory-page>div:first-child p{color:#94a3b8!important}
+.inventory-page>div:nth-child(2){background:#111827!important;border-color:#334155!important;box-shadow:0 12px 30px rgba(2,6,23,.28)!important}
+.inventory-page table thead{background:#0b1220!important;color:#cbd5e1!important;border-color:#334155!important}
+.inventory-page table tbody{color:#dbeafe!important}.inventory-page table tbody tr{border-color:#334155!important}.inventory-page table tbody tr:hover{background:#1e293b!important}
+.inventory-page table td:nth-child(1) .font-mono{color:#38bdf8!important}.inventory-page table td:nth-child(1) .font-semibold{color:#f8fafc!important}
+.inventory-page table td:nth-child(2) span:first-child{background:#273449!important;color:#fbbf24!important;border:1px solid #475569}.inventory-page table td:nth-child(2) span:last-child,.inventory-page table td:nth-child(3),.inventory-page table td:nth-child(7){color:#cbd5e1!important}
+.inventory-page table td:nth-child(6){color:#f8fafc!important}
+.inventory-page .inventory-status{display:inline-flex;align-items:center;border-radius:.55rem;padding:.3rem .6rem;font-size:.68rem;font-weight:800;border:1px solid transparent}
+.inventory-page .inventory-status-in_stock{background:#064e3b;color:#a7f3d0;border-color:#047857}.inventory-page .inventory-status-inspection{background:#78350f;color:#fde68a;border-color:#b45309}.inventory-page .inventory-status-damaged{background:#7f1d1d;color:#fecaca;border-color:#be123c}.inventory-page .inventory-status-decommissioned{background:#334155;color:#e2e8f0;border-color:#64748b}
+.inventory-page .fixed.inset-0>div{background:#0f172a!important;border-color:#334155!important;color:#e2e8f0!important}.inventory-page .fixed.inset-0 h3{color:#f8fafc!important}.inventory-page .fixed.inset-0 label{color:#cbd5e1!important}.inventory-page .fixed.inset-0 input,.inventory-page .fixed.inset-0 select{background:#020617!important;border-color:#475569!important;color:#f8fafc!important}.inventory-page .fixed.inset-0 input::placeholder{color:#64748b!important}
+
+html[data-panel-theme="zhub-light"] .inventory-page,html.zhub-light .inventory-page{color:#173f63}
+html[data-panel-theme="zhub-light"] .inventory-page>div:first-child h2,html.zhub-light .inventory-page>div:first-child h2{color:#123b60!important}
+html[data-panel-theme="zhub-light"] .inventory-page>div:first-child p,html.zhub-light .inventory-page>div:first-child p{color:#557491!important}
+html[data-panel-theme="zhub-light"] .inventory-page>div:nth-child(2),html.zhub-light .inventory-page>div:nth-child(2){background:#fff!important;border-color:#c9d9e8!important;box-shadow:0 8px 22px rgba(31,78,121,.10)!important}
+html[data-panel-theme="zhub-light"] .inventory-page table thead,html.zhub-light .inventory-page table thead{background:#244f75!important;color:#fff!important;border-color:#244f75!important}
+html[data-panel-theme="zhub-light"] .inventory-page table tbody,html.zhub-light .inventory-page table tbody{color:#173f63!important}
+html[data-panel-theme="zhub-light"] .inventory-page table tbody tr,html.zhub-light .inventory-page table tbody tr{background:#fff!important;border-color:#d8e4ee!important}
+html[data-panel-theme="zhub-light"] .inventory-page table tbody tr:nth-child(even),html.zhub-light .inventory-page table tbody tr:nth-child(even){background:#f7fbfe!important}
+html[data-panel-theme="zhub-light"] .inventory-page table tbody tr:hover,html.zhub-light .inventory-page table tbody tr:hover{background:#eef7fd!important}
+html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(1) .font-mono,html.zhub-light .inventory-page table td:nth-child(1) .font-mono{color:#0277bd!important}
+html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(1) .font-semibold,html.zhub-light .inventory-page table td:nth-child(1) .font-semibold{color:#123b60!important}
+html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(2) span:first-child,html.zhub-light .inventory-page table td:nth-child(2) span:first-child{background:#fff3d6!important;color:#8a5300!important;border-color:#f3c969!important}
+html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(2) span:last-child,html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(3),html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(7),html.zhub-light .inventory-page table td:nth-child(2) span:last-child,html.zhub-light .inventory-page table td:nth-child(3),html.zhub-light .inventory-page table td:nth-child(7){color:#456987!important}
+html[data-panel-theme="zhub-light"] .inventory-page table td:nth-child(6),html.zhub-light .inventory-page table td:nth-child(6){color:#173f63!important}
+html[data-panel-theme="zhub-light"] .inventory-page .inventory-status-in_stock,html.zhub-light .inventory-page .inventory-status-in_stock{background:#d9f7e8;color:#08734f;border-color:#93dfbd}
+html[data-panel-theme="zhub-light"] .inventory-page .inventory-status-inspection,html.zhub-light .inventory-page .inventory-status-inspection{background:#fff2cf;color:#9a5a00;border-color:#f2cf76}
+html[data-panel-theme="zhub-light"] .inventory-page .inventory-status-damaged,html.zhub-light .inventory-page .inventory-status-damaged{background:#ffe1e5;color:#b4233d;border-color:#f4a9b6}
+html[data-panel-theme="zhub-light"] .inventory-page .inventory-status-decommissioned,html.zhub-light .inventory-page .inventory-status-decommissioned{background:#e8eef4;color:#526d84;border-color:#c6d3df}
+html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0>div,html.zhub-light .inventory-page .fixed.inset-0>div{background:#fff!important;border-color:#c9d9e8!important;color:#173f63!important}
+html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0 h3,html.zhub-light .inventory-page .fixed.inset-0 h3{color:#123b60!important}
+html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0 label,html.zhub-light .inventory-page .fixed.inset-0 label{color:#315b7b!important}
+html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0 input,html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0 select,html.zhub-light .inventory-page .fixed.inset-0 input,html.zhub-light .inventory-page .fixed.inset-0 select{background:#fff!important;border-color:#bcd0e0!important;color:#173f63!important}
+html[data-panel-theme="zhub-light"] .inventory-page .fixed.inset-0 input::placeholder,html.zhub-light .inventory-page .fixed.inset-0 input::placeholder{color:#7890a5!important}
