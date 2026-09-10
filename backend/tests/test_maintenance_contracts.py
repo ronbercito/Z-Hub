@@ -65,8 +65,23 @@ def test_new_client_registration_uses_same_progressive_service_flow():
 
 def test_clients_list_restores_pending_invoice_badge_and_red_total():
     text=source("frontend/src/modules/clientes/Clients.jsx")
+    css=source("frontend/src/modules/clientes/clients-theme.css")
     assert 'Number(c.balance_due||0)>0' in text
     assert 'c.unpaid_invoices_count' in text
     assert 'factura(s) pendiente(s)' in text
-    assert 'text-rose-400' in text and 'bg-rose-500' in text
+    assert 'client-debt-positive' in text and 'client-debt-count' in text
     assert '<span>S/. {Number(c.balance_due||0).toFixed(2)}</span>' in text
+    assert '.client-debt-positive' in css and '.client-debt-count' in css
+
+def test_clients_main_table_has_separate_columns_and_map_action():
+    text=source("frontend/src/modules/clientes/Clients.jsx")
+    css=source("frontend/src/modules/clientes/clients-theme.css")
+    expected=['<th>Abonado</th>','<th>Contacto</th>','<th>Plan / Tarifa</th>','<th>IP / Conexión</th>','<th>Deuda</th>','<th>Estado</th>']
+    positions=[text.index(item) for item in expected]
+    assert positions == sorted(positions)
+    assert 'colSpan="7"' in text
+    assert 'title="Ver en mapa"' in text and 'client-action-map' in text
+    assert 'DNI: {c.dni_ruc||"—"}' in text
+    assert '{c.phone||"—"}' in text and '{c.email||"—"}' in text
+    assert '.clients-main-table' in css and '.client-status-pill' in css
+    assert 'html[data-panel-theme="zhub-light"] .clients-page .client-main-row' in css
