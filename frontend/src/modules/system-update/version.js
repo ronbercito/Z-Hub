@@ -10,4 +10,5 @@ export const CHANGELOG = [
   { type: "Instalaciones", text: "Se agregó botón GPS para completar automáticamente latitud y longitud desde el dispositivo." },
   { type: "Instalaciones", text: "Las solicitudes pendientes se muestran en tarjetas con botón Dar de alta cliente." },
   { type: "Abonados", text: "Dar de alta cliente transfiere los datos capturados al formulario existente de Nuevo abonado sin modificar sus opciones." },
+  { type: "Seguridad", text: "Se generaron respaldos de los archivos de Instalaciones y versión previos a 1.2.17 en docs/backups/1.2.16/." },
 ];
