@@ -1,305 +1,126 @@
-<!--
-ARCHIVO INTERNO DE CONTINUIDAD — NO ES PARTE DEL PANEL
-Archivo: docs/CONTINUIDAD_Z-HUB-v1.2.md
-Serie: Z-Hub 1.2.xx
-Propósito: conservar reglas prioritarias y el historial técnico de la serie 1.2.xx.
-
-IMPORTANTE:
-- No importar este archivo desde React, FastAPI, Nginx ni ningún bundle/build.
-- No colocar contraseñas, tokens, claves privadas, .env ni datos sensibles.
-- Este archivo es documental; una corrección solo documental NO aumenta PANEL_VERSION.
--->
-
 # Z-Hub — Bitácora de continuidad v1.2
 
-## 0. REGLAS PRIORITARIAS — LEER ANTES DE MODIFICAR Z-HUB
+## REGLAS PRIORITARIAS — LEER ANTES DE MODIFICAR
 
-Estas reglas se heredan de `docs/CONTINUIDAD_Z-HUB.md` y son obligatorias para toda la serie 1.2.xx.
+**Antes de modificar Z-Hub, leer esta bitácora y revisar el estado real de `main` en `ronbercito/Z-Hub`.** El repositorio MikroHub es legado y no se usa para desarrollo nuevo.
 
-### Regla principal
-
-**Antes de modificar Z-Hub, leer esta bitácora y revisar el estado real de `main` en `ronbercito/Z-Hub`.**
-
-- Repositorio principal y autoritativo: `ronbercito/Z-Hub`.
-- Rama de publicación: `main`.
-- `ronbercito/mirkohub` es legado/fallback y no debe utilizarse para desarrollo nuevo salvo rollback o emergencia documentada.
-
-### Cierre obligatorio de cada cambio — prioridad máxima
-
-**Un cambio NO está terminado, NO debe declararse finalizado y NO debe informarse como listo hasta cumplir el cierre documental.**
-
-Orden obligatorio:
-
-1. Identificar el propietario real del comportamiento y modificar solo los archivos necesarios.
-2. Ejecutar pruebas razonables y registrar exactamente qué se probó y qué quedó pendiente.
-3. Si el cambio es funcional, actualizar `frontend/src/modules/system-update/version.js` y reemplazar su `CHANGELOG` con únicamente los cambios de esa versión.
-4. Actualizar esta bitácora en la misma entrega con versión, fecha, objetivo/causa, solución, archivos, compatibilidad, pruebas, resultado, riesgos y pendientes.
-5. Verificar en GitHub que código, versión y bitácora estén realmente en `main`.
-6. Recién entonces comunicar que la actualización fue publicada.
-
-Si aparece un cambio funcional previo sin documentación, reconstruir primero su entrada usando código, `version.js`, backups y commits reales.
-
-### Regla de versiones
-
-- Cambio funcional → aumenta `PANEL_VERSION`.
-- Cambio solo documental → NO aumenta `PANEL_VERSION`.
-- Serie actual: `1.2.00` a `1.2.99`; después continúa `1.3.00`.
-- Fuente de verdad: `frontend/src/modules/system-update/version.js`.
-
-### Regla de orden de esta bitácora
-
-**La versión más nueva siempre debe quedar PRIMERA. Las versiones inferiores quedan debajo.**
-
-Ejemplo:
-
-```text
-1.2.24  ← nueva, siempre arriba
-1.2.23
-1.2.22
-...
-1.2.01
-1.2.00  ← más antigua, abajo
-```
-
-Nunca agregar una nueva versión al final del historial.
-
-### Regla de arquitectura
-
-Seguir siempre el propietario real del comportamiento:
-
-```text
-Vista React
-  ↓
-llamada API
-  ↓
-router FastAPI
-  ↓
-modelo / base de datos / integración
-  ↓
-resultado
-  ↓
-build y despliegue
-```
-
-No corregir en Layout un defecto que pertenece a Clientes, Red, Facturación u otro módulo. No realizar cambios globales a ciegas.
-
-### Seguridad y mantenimiento
-
-Nunca:
-- borrar la base de datos para corregir una pantalla;
-- eliminar datos reales por un defecto de UI;
-- subir `.env`, contraseñas, tokens o claves reales;
-- ocultar errores de backend con cambios visuales;
-- afirmar que una función fue probada si no se probó;
-- cambiar un módulo ajeno para resolver un defecto local;
-- realizar una modificación funcional sin versión, changelog y bitácora.
-
-Siempre:
-- conservar datos existentes;
-- mantener compatibilidad con la operación actual;
-- validar frontend/API/backend según el alcance real;
-- registrar pruebas realizadas y pendientes sin inventarlas;
-- crear respaldo antes de modificar archivos críticos o delicados cuando sea posible;
-- mantener el changelog visible breve y los detalles técnicos en esta bitácora.
+1. Identificar el propietario real del comportamiento y modificar solo lo necesario.
+2. Crear respaldo antes de cambios críticos o delicados.
+3. Probar razonablemente y declarar exactamente qué se probó y qué queda pendiente.
+4. Todo cambio funcional incrementa `frontend/src/modules/system-update/version.js`; el CHANGELOG contiene solo la versión actual.
+5. Actualizar esta bitácora en la misma entrega.
+6. Verificar código, versión y bitácora en `main` antes de declarar la actualización publicada.
+7. Nunca borrar la base de datos para corregir UI, subir secretos, ocultar errores de backend ni afirmar pruebas no realizadas.
+8. Conservar datos reales y compatibilidad operacional. Seguir Vista React → API → FastAPI → modelo/DB/integración → resultado → build/despliegue.
+9. La versión nueva siempre se inserta PRIMERA; las versiones inferiores permanecen debajo.
+10. Cambio solo documental no incrementa `PANEL_VERSION`.
 
 ---
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
-## 1.2.24 — 2026-09-09 — Pestañas adaptadas al tema Claro Suave
+## 1.2.25 — 2026-09-09 — Baja controlada y Clientes retirados
 
-- **Objetivo:** corregir los colores apagados/oscuros de `Instalaciones` y `Registrados` en el template claro para que se parezcan al diseño visual aprobado.
-- **Causa:** las clases Tailwind usadas por las pestañas eran alcanzadas por reglas globales del tema claro y la pestaña inactiva terminaba con un gris oscuro que no combinaba con Z-Hub Claro Suave.
-- **Solución:** se añadieron estilos locales y específicos dentro de `Installations.jsx`, con prioridad suficiente para estas dos pestañas sin modificar la hoja global `panel-theme.css`.
-- **Pestaña activa:** degradado azul/cian, borde cian, texto e iconos blancos, badge semitransparente claro y sombra azul suave.
-- **Pestaña inactiva en tema claro:** fondo azul-gris muy claro, borde suave, texto azul oscuro, icono heredando el mismo color y badge blanco con sombra mínima.
-- **Tema oscuro:** conserva una variante oscura independiente; la corrección del tema claro no obliga a usar colores claros en oscuro.
-- **Archivos modificados:** `frontend/src/modules/clientes/instalaciones/Installations.jsx` y `frontend/src/modules/system-update/version.js`.
-- **Backend/Base de datos:** sin cambios.
-- **Flujo preservado:** pestañas, filtros, conteos, `Nueva instalación`, `Dar de alta cliente`, `/api/installations`, `/api/clients` y el asistente oficial permanecen sin cambios funcionales.
-- **Backups:** `version.js` de 1.2.23 guardado en `docs/backups/1.2.23/version.js`; el blob exacto previo de `Installations.jsx` quedó registrado en `docs/backups/1.2.23/README.md` como `4e8a55055a83185306262e06e20e41623ee97215`.
-- **Pruebas realizadas:** revisión estática de selectores, prioridad CSS local, estados activo/inactivo y preservación de handlers/render condicional.
-- **Pruebas pendientes:** build React y validación visual real después de instalar 1.2.24 en el servidor.
-- **Resultado:** corrección visual publicada en `main`; no altera datos ni lógica de negocio.
-- **Commits principales:** UI `7223c35f6f7060e1ecf743476d4960a1b1b83fef`; versión `4902f8932cbb4f969d18857806780c4f37fbdbdd`; backup versión `a41e61880420d348f8382a6c468baca0e90e8f27`; referencia de rollback `9fbfef7a46666bfd7ee2cd10d8ef2228547cd699`.
+- **Objetivo:** reemplazar la eliminación como procedimiento normal de salida por una baja controlada que conserve la identidad del cliente.
+- **UI Clientes:** nuevo botón `Retirar cliente` y pestaña `Retirados`.
+- **Confirmación:** muestra nombre, DNI/RUC, teléfono, dirección y recursos que serán liberados.
+- **Motivo:** obligatorio, mínimo 10 y máximo 250 caracteres. `retired_at` guarda la fecha/hora automáticamente y `retirement_reason` conserva el motivo.
+- **Seguridad MikroTik:** antes de archivar se ejecuta `mt.remove_client`. Si MikroTik no puede liberar la configuración, la operación se cancela y el cliente permanece sin retirar.
+- **Liberación:** después de confirmar limpieza se liberan IP, PPPoE, plan, router, red IPv4, NAP/puerto, ONU, potencia, zona y asociaciones inalámbricas. Se eliminan registros operativos asociados (servicios, facturas, tickets, tareas, comunicaciones, documentos y actividad) y se conserva la identidad/contacto/dirección/coordenadas del cliente junto con fecha y motivo de retiro.
+- **Estado:** el mismo registro `clients` pasa a `status=retired`; no se crea un duplicado ni se elimina el cliente histórico.
+- **Reactivación:** `Retirados` incorpora `Reactivar / volver a registrar`; reutiliza `ClientRegistrationWizard` existente con datos personales precargados y obliga a asignar nuevamente servicio, plan, router, IP/NAP/ONU según corresponda. Tras aprovisionar correctamente se limpia el estado de retiro.
+- **DNI/RUC retirado:** al intentar crear una nueva solicitud de Instalaciones con un DNI/RUC retirado, la API devuelve un aviso legible con nombre, fecha y motivo y dirige a `Clientes > Retirados > Volver a registrar`.
+- **Base de datos:** se agregan automáticamente `clients.retired_at` y `clients.retirement_reason` mediante la migración ligera existente de `init_db`.
+- **Archivos:** `backend/app/models/client.py`, `backend/app/routers/clientes/retired.py` (nuevo), `backend/app/routers/clientes/installations.py`, `backend/server.py`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Compatibilidad:** no se modifica `ClientRegistrationWizard.jsx`; se reutiliza el asistente oficial.
+- **Backup:** referencias exactas de blobs 1.2.24 en `docs/backups/1.2.24/RETIREMENT_CHANGE_BACKUP.md`.
+- **Pruebas realizadas:** revisión estática de rutas, modelo, migración ligera existente, validación 10–250, abortar ante fallo MikroTik, limpieza de campos técnicos y flujo de reactivación en código.
+- **Pruebas pendientes:** build React, compilación Python, arranque/migración MariaDB y prueba real contra MikroTik después de instalar 1.2.25. No se ha ejecutado una baja real sobre un cliente de producción desde este entorno.
+- **Riesgo operativo:** Retirar es una acción destructiva sobre la configuración de servicio y registros operativos asociados; usar únicamente cuando la baja sea real. El botón Eliminar continúa separado para registros creados por error.
+
+## 1.2.24 — 2026-09-09 — Pestañas adaptadas al tema Claro Suave
+- Instalaciones/Registrados reciben estilos locales para evitar que el tema global oscurezca la pestaña inactiva.
+- Activa azul/cian; inactiva azul-gris clara; sin cambios de backend ni flujo.
 
 ## 1.2.23 — 2026-09-09 — Pestañas Instalaciones y Registrados
+- Dos pestañas con contadores. Instalaciones muestra pendientes; Registrados muestra clientes dados de alta.
+- El alta oficial continúa mediante `zhub_installation_draft` y el asistente existente.
 
-- **Objetivo:** separar visualmente el trabajo pendiente de instalación de los clientes cuyo alta ya terminó correctamente, siguiendo el diseño aprobado por el administrador.
-- **Interfaz:** se agregan dos pestañas superiores: `Instalaciones` y `Registrados`, cada una con su contador.
-- **Instalaciones:** muestra únicamente solicitudes pendientes de alta. Conserva búsqueda, filtros de fecha, `Nueva instalación`, tarjetas de solicitud y `Dar de alta cliente`.
-- **Registrados:** muestra los clientes que ya existen en el módulo oficial de Clientes, con búsqueda, filtros, datos principales y badge `REGISTRADO`.
-- **Paso automático:** cuando una solicitud pendiente encuentra un cliente creado con el mismo DNI/RUC, la lógica existente elimina la solicitud pendiente de `/api/installations`; el cliente permanece disponible en `Registrados` porque ya existe en `/api/clients`.
-- **Alta oficial preservada:** `Dar de alta cliente` continúa usando `zhub_installation_draft` para transferir los datos al asistente oficial. No se modifican las opciones del formulario Nuevo abonado.
-- **Diseño:** encabezado en tarjeta, pestaña activa azul/cian, pestaña inactiva sobria, conteos visibles, controles agrupados y estados más claros.
-- **Archivo funcional:** `frontend/src/modules/clientes/instalaciones/Installations.jsx`.
-- **Versión/changelog:** `frontend/src/modules/system-update/version.js` → `1.2.23`.
-- **Backend/Base de datos:** sin cambios; se reutilizan `/api/installations`, `/api/clients` y la tabla `installations` existentes.
-- **Compatibilidad:** no se modifican `NewInstallationModal`, `Clients.jsx`, `ClientRegistrationWizard`, ficha del cliente, facturación, MikroTik, NAP, planes ni aprovisionamiento.
-- **Backups:** `Installations.jsx` y `version.js` de 1.2.22 guardados en `docs/backups/1.2.22/` antes de modificar.
-- **Pruebas realizadas:** revisión estática del JSX, estados de pestaña, filtros, conteos, render condicional, preservación de handlers, flujo `Dar de alta cliente` y cierre automático por DNI/RUC.
-- **Pruebas pendientes:** build React y validación visual/funcional real después de instalar 1.2.23 en el servidor.
-- **Resultado:** código publicado en `main`; validación real en servidor pendiente.
-- **Commits principales:** backup `4035e501c39be1bb03c6122f058e7319ed4b77bc`, backup versión `151cdddb60b2f2d295f8e19cc627f80a7955a797`, interfaz `2d3ca94cac10e13afb1a7018ecedc0cb933d7283`, versión `1bfa47cc6c0580ddc4bf49a7285eec55f9b423fd`.
+## 1.2.22 — 2026-09-09 — Nueva instalación junto a filtros
+- `Nueva instalación` se mueve a la fila de búsqueda/fechas y se refuerza la legibilidad de registros.
 
-## 1.2.22 — 2026-09-09 — Nueva instalación junto a filtros y registros más legibles
+## 1.2.21 — 2026-09-09 — Progreso continuo del actualizador
+- Porcentaje visual avanza 1 a 1 hasta 99%; 100% solo con éxito confirmado y versión objetivo instalada.
 
-- `Nueva instalación` se mueve a la misma fila de buscador y filtros de fecha.
-- Botón con mayor presencia visual azul/cian.
-- Títulos, encabezados y datos de registros ganan tamaño y peso tipográfico.
-- Sin cambios en API, base de datos, alta, ficha, facturación ni aprovisionamiento.
-- Backups de 1.2.21 en `docs/backups/1.2.21/`.
+## 1.2.20 — 2026-09-09 — Control de Clientes
+- Encabezado `Control de Clientes`; se retiran `Nuevo Abonado` y lápiz de la vista principal; tema claro más vivo.
 
-## 1.2.21 — 2026-09-09 — Progreso visual continuo del actualizador
+## 1.2.19 — 2026-09-09 — Ubicación mediante minimapa
+- Nueva instalación reutiliza `CoordinatesPicker`; clic/arrastre llena coordenadas sin depender de GPS del navegador.
 
-- Porcentaje visible avanza de 1% en 1%.
-- Mientras una etapa tarda puede avanzar gradualmente hasta 99%.
-- 100% solo aparece cuando backend confirma éxito y versión objetivo instalada.
-- Sin cambios en Clientes, Instalaciones, base de datos, facturación ni aprovisionamiento.
-- Backup en `docs/backups/1.2.20/`.
+## 1.2.18 — 2026-09-09 — Cierre resistente del instalador
+- Comprobación final del backend con reintentos y diagnóstico Supervisor/log.
 
-## 1.2.20 — 2026-09-09 — Control de Clientes y simplificación de acciones
+## 1.2.17 — 2026-09-09 — Instalaciones persistentes
+- Tabla/API `installations`, solicitudes pendientes y `Dar de alta cliente`; cancelar alta no pierde la solicitud.
 
-- Encabezado cambiado a `Control de Clientes`.
-- Retirado botón `Nuevo Abonado` de la vista principal.
-- Retirado botón de edición con lápiz de la tabla.
-- Tema claro con más contraste y color.
-- Alta oficial continúa desde Instalaciones → `Dar de alta cliente`.
-- No se modifican asistente oficial, ficha, backend, DB, facturación ni aprovisionamiento.
+## 1.2.16 — 2026-09-09 — Modal sin cubrir pantalla
+- Nueva instalación centrada sin overlay opaco.
 
-## 1.2.19 — 2026-09-09 — Ubicación mediante minimapa de Google Maps
-
-- Nueva instalación reutiliza `CoordinatesPicker`.
-- Clic/arrastre del marcador completa latitud y longitud.
-- Se elimina la dependencia del permiso GPS del navegador para este flujo.
-- No modifica Nuevo abonado ni ficha.
-
-## 1.2.18 — 2026-09-09 — Cierre más resistente del instalador
-
-- Comprobación final del backend reintenta hasta 10 veces.
-- Si falla, muestra estado de Supervisor y log del backend.
-- Cambio limitado al cierre del instalador.
-
-## 1.2.17 — 2026-09-09 — Registro persistente de instalaciones y alta posterior
-
-- Separación entre solicitud de instalación y alta definitiva.
-- Nueva tabla `installations` y API `/api/installations`.
-- Solicitudes pendientes en tarjetas.
-- `Dar de alta cliente` transfiere datos mediante `zhub_installation_draft`.
-- Cancelar el alta no elimina la solicitud.
-- Cuando ya existe cliente con mismo DNI/RUC, la solicitud deja de aparecer pendiente.
-- No se modifican las opciones oficiales de Nuevo abonado.
-- Backups de 1.2.16 en `docs/backups/1.2.16/`.
-
-## 1.2.16 — 2026-09-09 — Ventana de instalación sin cubrir la pantalla
-
-- Se elimina overlay opaco/desenfoque de Nueva instalación.
-- El formulario permanece centrado y el módulo visible alrededor.
-
-## 1.2.15 — 2026-09-09 — Flujo de preinscripción desde Instalaciones
-
-- `Nueva instalación` captura datos iniciales.
-- Transferencia temporal al asistente oficial de Nuevo abonado.
-- Este diseño temporal fue sustituido por persistencia real en 1.2.17.
+## 1.2.15 — 2026-09-09 — Preinscripción desde Instalaciones
+- Captura inicial y transferencia al asistente; posteriormente sustituida por persistencia real 1.2.17.
 
 ## 1.2.14 — 2026-09-09 — Botón Nueva instalación adaptado al tema
+- Botón azul/cian sin cambios de datos.
 
-- Botón ubicado debajo del título en esa versión.
-- Clase visual propia azul/cian.
-- Sin cambios de datos.
+## 1.2.13 — 2026-09-09 — Recarga segura tras actualizar
+- No cierra sesión; recarga solo con éxito y versión coincidente.
 
-## 1.2.13 — 2026-09-09 — Recarga segura al terminar actualización
-
-- Ya no cierra sesión al terminar una actualización.
-- Recarga únicamente después de éxito confirmado y coincidencia de versión.
-
-## 1.2.12 — 2026-09-09 — Tema claro para Instalaciones
-
-- Panel, tabla y controles dejan de heredar tonos oscuros.
-- Fondo claro y textos de mayor contraste.
+## 1.2.12 — 2026-09-09 — Tema claro Instalaciones
+- Panel, tabla y controles claros con mayor contraste.
 
 ## 1.2.11 — 2026-09-09 — Submódulo Instalaciones
+- Se agrega `Clientes → Instalaciones` con listado, búsqueda y filtros.
 
-- Se agrega `Clientes → Instalaciones`.
-- Listado, búsqueda, filtros y acceso a Nueva instalación.
+## 1.2.10 — 2026-09-09 — Identificación centrada en footer
+- `Panel Z-Hub · vX` centrado y legible.
 
-## 1.2.10 — 2026-09-09 — Identificación centrada en el pie
+## 1.2.09 — 2026-09-09 — Pie y fondo tema claro
+- Contenedor y footer con estilo claro.
 
-- `Panel Z-Hub · vX` centrado en footer.
-- Mejor contraste en tema claro.
-
-## 1.2.09 — 2026-09-09 — Pie y fondo del tema claro
-
-- Contenedor principal y footer reciben estilo claro propio.
-- Sin cambios funcionales.
-
-## 1.2.08 — 2026-09-09 — Planes agrupados y velocidades visibles
-
-- Planes separados por Fibra, Radioenlace y Hotspot.
-- Mejor contraste para velocidades Bajada/Subida.
+## 1.2.08 — 2026-09-09 — Planes agrupados
+- Fibra, Radioenlace y Hotspot separados; velocidades más visibles.
 
 ## 1.2.07 — 2026-09-09 — Tarjetas de planes compactas
+- Tarjetas reducidas y colores por tecnología.
 
-- Tarjetas reducidas aproximadamente 30%.
-- Fibra azul, Radioenlace violeta, Hotspot ámbar.
+## 1.2.06 — 2026-09-09 — Tarjetas por tecnología
+- Cuadrícula responsive y color automático.
 
-## 1.2.06 — 2026-09-09 — Tarjetas de planes por tecnología
+## 1.2.05 — 2026-09-09 — Zonas a Gestión de Red
+- Zonas se mueve preservando permiso `client_zones`.
 
-- Cuadrícula responsive.
-- Color automático según tecnología.
+## 1.2.04 — 2026-09-09 — Buscador PPPoE
+- Filtro por usuario, perfil, IP remota o comentario.
 
-## 1.2.05 — 2026-09-09 — Zonas pasa a Gestión de Red
-
-- `Zonas` se mueve de Clientes a Gestión de Red.
-- Se conserva permiso e identificador `client_zones`.
-
-## 1.2.04 — 2026-09-09 — Buscador de PPPoE secrets
-
-- Filtro local por usuario, perfil, IP remota o comentario.
-- No modifica secretos MikroTik.
-
-## 1.2.03 — 2026-09-09 — Buscador de Colas simples
-
+## 1.2.03 — 2026-09-09 — Buscador Colas simples
 - Filtro por nombre, comentario o IP/target.
-- No modifica colas MikroTik.
 
-## 1.2.02 — 2026-09-09 — Queue type visible en Colas simples
+## 1.2.02 — 2026-09-09 — Queue type visible
+- Nueva columna Queue type con valor RouterOS.
 
-- Nueva columna `Queue type` usando valor real de RouterOS.
+## 1.2.01 — 2026-09-09 — Comentario primero
+- Comentario pasa a primera posición en Colas simples.
 
-## 1.2.01 — 2026-09-09 — Comentario primero en Colas simples
-
-- Columna Comentario pasa a primera posición.
-- Redistribución de anchos.
-
-## 1.2.00 — 2026-09-09 — Límites de velocidad legibles en Colas simples
-
-- Max-limit convertido a Mbps/Gbps.
-- `0/0` se muestra como `Sin límite`.
+## 1.2.00 — 2026-09-09 — Límites de velocidad legibles
+- Max-limit en Mbps/Gbps; `0/0` se muestra como `Sin límite`.
 
 ---
 
-## Plantilla obligatoria para la próxima versión 1.2.xx
-
-> Insertar siempre la nueva entrada inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`.
-
-```text
-## 1.2.XX — AAAA-MM-DD — Título
-
-- Objetivo/Causa: ...
-- Solución: ...
-- Archivos modificados: ...
-- Compatibilidad/Base de datos/Integraciones: ...
-- Backups: ...
-- Pruebas realizadas: ...
-- Pruebas pendientes: ...
-- Resultado: ...
-- Riesgos/Pendientes: ...
-- Commit(s): ...
-```
+## Plantilla obligatoria próxima versión
+Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-
-- Serie cubierta: **1.2.00 → 1.2.24**.
-- Orden: **descendente, versión más reciente primero**.
-- Próxima entrada: si corresponde `1.2.25`, debe insertarse **encima de 1.2.24**.
+- Serie cubierta: **1.2.00 → 1.2.25**.
+- Orden: **descendente; versión más reciente primero**.
+- Próxima versión funcional: **1.2.26**, encima de 1.2.25.
