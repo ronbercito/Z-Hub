@@ -1,70 +1,45 @@
-# Getting Started with Create React App
+# Frontend Z-Hub
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Interfaz React del panel ISP Z-Hub. El frontend consume la API FastAPI bajo `/api` y se compila con CRACO.
 
-## Available Scripts
+## Estructura principal
 
-In the project directory, you can run:
+- `src/components/layout/`: Sidebar, Navbar y Layout.
+- `src/context/AuthContext.js`: sesión y URL de API.
+- `src/modules/clientes/`: abonados, instalaciones, mapa y recuperación de equipos.
+- `src/modules/red/`: MikroTik, OLT, IPv4, NAP y monitoreo.
+- `src/modules/facturacion/`: facturación y pagos.
+- `src/modules/ajustes/`: configuración, personal y permisos.
+- `src/modules/system-update/`: versión visible y Centro de Actualización.
 
-### `npm start`
+## Desarrollo
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```bash
+yarn install
+yarn start
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+`REACT_APP_BACKEND_URL` puede apuntar al backend de desarrollo. En el despliegue oficial se deja vacío para utilizar el mismo origen de Nginx (`/api`).
 
-### `npm test`
+## Build de producción
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+yarn install --network-timeout 100000
+env DISABLE_ESLINT_PLUGIN=true CI= yarn build
+```
 
-### `npm run build`
+El instalador oficial publica el contenido de `build/` en `/var/www/z-hub/web`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Autenticación
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Desde 1.2.37 la sesión persistente utiliza la cookie `access_token` httpOnly. El token devuelto por login se conserva solo en memoria por compatibilidad con componentes existentes; no debe volver a almacenarse en `localStorage`.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Reglas del proyecto
 
-### `npm run eject`
+- No introducir lógica global en `Layout.jsx` cuando corresponde al módulo dueño del comportamiento.
+- Los submenús deben respetar `staff/permissions.js`.
+- Toda llamada que pueda sobrevivir a una recarga debe funcionar con la cookie httpOnly.
+- Los cambios funcionales requieren incremento de `PANEL_VERSION` y actualización de la bitácora activa.
+- Antes de modificar flujos críticos, crear backup recuperable.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+La continuidad vigente de la serie actual está documentada en `../docs/CONTINUIDAD_Z-HUB-v1.2.md`.
