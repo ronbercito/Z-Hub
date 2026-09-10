@@ -8,7 +8,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import axios from "axios";
-import { Download, X, Sparkles, RefreshCw, AlertTriangle, CheckCircle2, LogOut } from "lucide-react";
+import { Download, X, Sparkles, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { PANEL_VERSION } from "./version";
 
@@ -19,12 +19,12 @@ const Changelog = ({ items = [] }) => items.map((item, index) => (
 ));
 
 export default function UpdateCenter() {
-  const { API, token, logout } = useAuth();
+  const { API, token } = useAuth();
   const [open, setOpen] = useState(false), [confirmOpen, setConfirmOpen] = useState(false);
   const [status, setStatus] = useState(null), [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [installing, setInstalling] = useState(false), [error, setError] = useState("");
-  const startedHere = useRef(false), logoutQueued = useRef(false);
+  const startedHere = useRef(false), reloadQueued = useRef(false), targetVersion = useRef("");
   const headers = token ? { Authorization: "Bearer " + token } : {};
 
   const check = useCallback(async (showFeedback = false) => {
@@ -41,9 +41,17 @@ export default function UpdateCenter() {
       if (["rolled_back", "rollback_failed"].includes(next.installation?.state)) {
         setInstalling(false);
       }
-      if (next.installation?.state === "success" && startedHere.current && !logoutQueued.current) {
-        logoutQueued.current = true; setInstalling(false);
-        window.setTimeout(async () => { await logout(); setOpen(false); }, 1600);
+      const completedTarget = next.installation?.state === "success"
+        && targetVersion.current
+        && next.current?.version === targetVersion.current;
+      if (completedTarget && startedHere.current && !reloadQueued.current) {
+        reloadQueued.current = true;
+        setInstalling(false);
+        window.setTimeout(() => {
+          const url = new URL(window.location.href);
+          url.searchParams.set("updated", Date.now().toString());
+          window.location.replace(url.toString());
+        }, 1400);
       }
     } catch (err) {
       setError(err.response?.data?.detail || "No se pudo consultar el estado de actualizaciones.");
@@ -55,7 +63,7 @@ export default function UpdateCenter() {
         if (showFeedback) setChecking(false);
       }, remaining);
     }
-  }, [API, token, logout]);
+  }, [API, token]);
 
   useEffect(() => {
     check();
@@ -64,7 +72,7 @@ export default function UpdateCenter() {
   }, [check, installing]);
 
   const start = async () => {
-    setConfirmOpen(false); setInstalling(true); startedHere.current = true; logoutQueued.current = false; setError("");
+    setConfirmOpen(false); setInstalling(true); startedHere.current = true; reloadQueued.current = false; targetVersion.current = status?.remote?.version || ""; setError("");
     try {
       await axios.post(API + "/system-update/install", {}, { headers, withCredentials: true });
       await check();
@@ -83,8 +91,8 @@ export default function UpdateCenter() {
   const confirmation = confirmOpen ? createPortal(
     <div className="update-confirm-overlay fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
       <section className="update-confirm-dialog w-full max-w-sm rounded-2xl border border-cyan-500/30 bg-slate-900 p-5 shadow-2xl">
-        <div className="flex items-center gap-2 text-cyan-300"><LogOut className="w-5 h-5" /><b>Confirmar actualización</b></div>
-        <p className="mt-4 text-sm text-slate-200">Se instalará la versión {status?.remote?.version}. Al llegar al 100 %, la sesión se cerrará para que ingreses nuevamente y veas los cambios.</p>
+        <div className="flex items-center gap-2 text-cyan-300"><Sparkles className="w-5 h-5" /><b>Confirmar actualización</b></div>
+        <p className="mt-4 text-sm text-slate-200">Se instalará la versión {status?.remote?.version}. El panel esperará la confirmación completa del servidor y luego recargará automáticamente sin cerrar tu sesión.</p>
         <div className="mt-5 flex gap-3">
           <button onClick={() => setConfirmOpen(false)} className="flex-1 rounded-xl border border-slate-600 py-2.5 text-sm text-slate-200">Cancelar</button>
           <button onClick={start} className="flex-1 rounded-xl bg-cyan-500 py-2.5 text-sm font-bold text-slate-950">Continuar</button>
@@ -103,7 +111,7 @@ export default function UpdateCenter() {
           <div className="update-current-status mt-5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">{status.available ? <><p className="text-sm font-semibold text-cyan-200">Nueva versión {status.remote.version} disponible</p><p className="mt-1 text-xs text-slate-300">Instalada: versión {status.current.version}</p></> : <p className="text-sm text-emerald-200">El panel ya está actualizado: versión {status.current.version}.</p>}</div>
           {status.available && <><p className="mt-5 text-xs uppercase tracking-wider text-slate-500">Cambios de la nueva versión</p><div className="mt-2 space-y-2"><Changelog items={status.remote.changelog} /></div></>}
           {previousSuccess && <div className="update-success-status mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-100"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización versión {status.current.version} instalada correctamente.</div>}
-          {showProgress && <div className="mt-5 rounded-xl border border-cyan-500/30 bg-slate-950/70 p-4"><div className="flex justify-between text-xs text-slate-200"><span>{failed ? "No se pudo completar la actualización" : installation?.phase || "Preparando actualización"}</span><b>{progress}%</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700"><div className={"h-full rounded-full transition-all duration-500 " + (failed ? "bg-rose-500" : "bg-cyan-400")} style={{ width: progress + "%" }} /></div>{installation?.state === "success" && <p className="mt-3 text-xs text-emerald-200"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización finalizada. Cerrando sesión…</p>}{failed && <><p className="mt-3 text-xs text-rose-200"><AlertTriangle className="mr-1 inline w-4 h-4" />Se restauró la versión anterior.</p>{installation?.error && <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-lg bg-rose-950/30 p-2 text-[11px] text-rose-200">{installation.error}</pre>}</>}</div>}
+          {showProgress && <div className="mt-5 rounded-xl border border-cyan-500/30 bg-slate-950/70 p-4"><div className="flex justify-between text-xs text-slate-200"><span>{failed ? "No se pudo completar la actualización" : installation?.phase || "Preparando actualización"}</span><b>{progress}%</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700"><div className={"h-full rounded-full transition-all duration-500 " + (failed ? "bg-rose-500" : "bg-cyan-400")} style={{ width: progress + "%" }} /></div>{installation?.state === "success" && <p className="mt-3 text-xs text-emerald-200"><CheckCircle2 className="mr-1 inline w-4 h-4" />Actualización finalizada. Verificando componentes y recargando el panel…</p>}{failed && <><p className="mt-3 text-xs text-rose-200"><AlertTriangle className="mr-1 inline w-4 h-4" />Se restauró la versión anterior.</p>{installation?.error && <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-lg bg-rose-950/30 p-2 text-[11px] text-rose-200">{installation.error}</pre>}</>}</div>}
         </>}
         <div className="mt-5 flex gap-3">
           <button onClick={() => check(true)} disabled={loading || installing || checking} aria-busy={checking} className={"update-check-button " + (checking ? "relative overflow-hidden border-cyan-300/80 bg-cyan-500/20 text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.38)] -translate-y-0.5 animate-pulse " : "border-slate-600 bg-slate-900 text-slate-200 hover:border-cyan-400/60 hover:bg-slate-800 ") + "min-w-[150px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-wait disabled:opacity-80"}>
