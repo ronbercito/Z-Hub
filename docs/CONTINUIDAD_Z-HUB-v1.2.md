@@ -106,6 +106,21 @@ Siempre:
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.22 — 2026-09-09 — Nueva instalación junto a filtros y registros más legibles
+
+- **Objetivo:** aprovechar el espacio libre de la franja superior de Instalaciones y dar más presencia visual a los datos registrados, siguiendo la ubicación marcada por el administrador.
+- **Interfaz:** `Nueva instalación` deja el encabezado y se ubica en la misma fila de buscador y filtros de fecha, inmediatamente después del segundo selector de fecha.
+- **Color:** el botón conserva la clase `installation-new-button` y su combinación azul/cian, con mayor peso, relleno y realce suave sin convertirlo en una acción excesivamente grande.
+- **Legibilidad:** títulos, subtítulos, encabezados de tabla, datos de registros, estados y tarjetas pendientes usan mayor tamaño/peso tipográfico para que nombre, ubicación, fecha, teléfono y tecnología tengan más presencia.
+- **Compatibilidad:** no se modifican filtros, consultas, API, base de datos, persistencia de instalaciones, `Dar de alta cliente`, Nuevo abonado, ficha del cliente, facturación ni aprovisionamiento.
+- **Archivo funcional:** `frontend/src/modules/clientes/instalaciones/Installations.jsx`.
+- **Versión/changelog:** `frontend/src/modules/system-update/version.js` actualizado a 1.2.22 con changelog exclusivo de esta versión.
+- **Backups:** `Installations.jsx` y `version.js` de 1.2.21 guardados en `docs/backups/1.2.21/` antes de modificar.
+- **Pruebas realizadas:** revisión estática del JSX, posición del botón, clases responsive, preservación de handlers, filtros, tabla, tarjetas pendientes y puente `zhub_installation_draft`.
+- **Pruebas pendientes:** build React y validación visual real después de instalar 1.2.22 en el servidor.
+- **Resultado:** cambio visual publicado en `main`; no altera lógica funcional ni datos.
+- **Commits:** backup `15d07518c704992fb37bbfb794522f13c88f51cd` y `120ff51702cfb809246a7fb5f6aa4b682a73e2fa`; UI `32ae07c9b6f95e74c05ad869406f334e92c74ea2`; versión `813828cf2abce29742c6ce8bbb186342ed98c774`.
+
 ## 1.2.21 — 2026-09-09 — Progreso visual continuo del actualizador
 
 - **Actualizaciones:** el porcentaje visible avanza de 1% en 1% en lugar de saltar directamente entre hitos como 20% y 70%.
@@ -274,7 +289,7 @@ Siempre:
 
 ## Estado documental
 
-- Serie cubierta: **1.2.00 → 1.2.21**.
+- Serie cubierta: **1.2.00 → 1.2.22**.
 - Orden: **descendente, versión más reciente primero**.
-- Próxima entrada, si la siguiente versión es 1.2.22: debe insertarse **encima de 1.2.21**.
-- Esta creación es exclusivamente documental y no modifica `PANEL_VERSION`.
+- Próxima entrada, si la siguiente versión es 1.2.23: debe insertarse **encima de 1.2.22**.
+- Esta actualización documental acompaña la versión funcional 1.2.22 y no agrega una versión adicional por sí sola.
