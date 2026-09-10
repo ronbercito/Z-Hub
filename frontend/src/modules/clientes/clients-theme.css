@@ -146,13 +146,13 @@ html[data-panel-theme="zhub-light"] .clients-page .client-action-delete:hover {
   text-transform: uppercase;
   white-space: nowrap;
 }
-.clients-main-table thead th:nth-child(1) { width: 20%; }
-.clients-main-table thead th:nth-child(2) { width: 15%; }
-.clients-main-table thead th:nth-child(3) { width: 14%; }
-.clients-main-table thead th:nth-child(4) { width: 18%; }
-.clients-main-table thead th:nth-child(5) { width: 12%; }
-.clients-main-table thead th:nth-child(6) { width: 9%; }
-.clients-main-table thead th:nth-child(7) { width: 18%; }
+.clients-main-table thead th:nth-child(1) { width: 18%; }
+.clients-main-table thead th:nth-child(2) { width: 13%; }
+.clients-main-table thead th:nth-child(3) { width: 12%; }
+.clients-main-table thead th:nth-child(4) { width: 16%; }
+.clients-main-table thead th:nth-child(5) { width: 11%; }
+.clients-main-table thead th:nth-child(6) { width: 8%; }
+.clients-main-table thead th:nth-child(7) { width: 22%; }
 .client-main-row {
   background: #111b2d;
   transition: background .15s ease;
