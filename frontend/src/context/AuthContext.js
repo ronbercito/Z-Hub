@@ -9,6 +9,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
+// La cookie httpOnly es la fuente persistente de autenticación. Esto cubre también
+// módulos antiguos que no especifican withCredentials individualmente.
+axios.defaults.withCredentials = true;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
