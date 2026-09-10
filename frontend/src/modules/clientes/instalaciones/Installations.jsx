@@ -29,12 +29,12 @@ export default function Installations() {
   }), [clients, query, from, to]);
 
   return <div className="installations-page space-y-5 animate-in fade-in duration-200">
-    <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <header className="flex flex-col items-start gap-3">
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-100"><ClipboardList className="h-6 w-6 text-cyan-400" /> Instalaciones</h2>
         <p className="mt-0.5 text-xs text-slate-400">Control de altas e instalaciones de clientes.</p>
       </div>
-      <button type="button" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-600/20"><Plus className="h-4 w-4" /> Nueva instalación</button>
+      <button type="button" className="installation-new-button inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-white"><Plus className="h-4 w-4" /> Nueva instalación</button>
     </header>
 
     <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl">
