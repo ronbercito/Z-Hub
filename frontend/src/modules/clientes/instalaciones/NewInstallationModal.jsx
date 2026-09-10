@@ -23,7 +23,7 @@ export default function NewInstallationModal({ onClose, onContinue }) {
     onContinue(draft);
   };
 
-  return <div className="installation-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+  return <div className="installation-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-transparent p-4">
     <form onSubmit={submit} className="installation-modal w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
       <header className="flex items-start justify-between border-b border-slate-800 px-6 py-4">
         <div><h3 className="flex items-center gap-2 text-lg font-bold text-slate-100"><ClipboardList className="h-5 w-5 text-cyan-400" /> Nueva instalación</h3><p className="mt-1 text-xs text-slate-400">Registra los datos iniciales y continúa con el alta del abonado.</p></div>
