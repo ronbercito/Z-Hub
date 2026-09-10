@@ -19,6 +19,25 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.32 — 2026-09-10 — Preferencias funcionales de Registro y altas
+
+- **Objetivo:** convertir `Ajustes → Configuración clientes → Registro y altas` en una sección funcional para definir valores predeterminados y una validación del alta de nuevos abonados.
+- **Configuración:** se agregan cuatro preferencias: día de facturación sugerido **1–30**, tecnología predeterminada **Fibra/Inalámbrico**, fecha de instalación **obligatoria/opcional** y estado inicial de `Crear primera factura` **activado/desactivado**.
+- **Persistencia:** las preferencias se guardan en la fila JSON de `settings`; `DEFAULT_SETTINGS` incorpora valores seguros para instalaciones existentes: día 5, Fibra, fecha obligatoria y primera factura activada.
+- **Aplicación en alta:** el asistente oficial consulta `/api/settings` al abrirse y aplica las preferencias a nuevos abonados. No sobrescribe datos de un cliente que se está editando.
+- **Instalaciones prellenadas:** si el alta llega con identidad/datos de una instalación previa, se conserva la tecnología ya registrada en ese borrador; sí se aplican el día de facturación y la preferencia de primera factura.
+- **Fecha opcional:** cuando la política permite fecha opcional, el asistente muestra `Sin fecha` para poder dejar el campo vacío. Cuando es obligatoria, valida antes de continuar/finalizar.
+- **Primera factura:** la preferencia es un valor inicial; el operador conserva el checkbox individual del asistente y puede modificarlo antes de registrar.
+- **Tecnología:** la preferencia es un valor inicial y no elimina la posibilidad de cambiar Fibra/Inalámbrico durante el alta; el filtro de planes por tecnología de 1.2.26 continúa vigente.
+- **Archivos modificados:** `backend/app/models/setting.py`, `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, `frontend/src/modules/clientes/usuarios/ClientRegistrationWizard.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Backend/Base de datos:** no se agregan columnas ni tablas; se amplía únicamente el JSON de settings. No se modifica aprovisionamiento MikroTik.
+- **Compatibilidad:** no se cambian NAP, OLT, retiros, pausas, suspensión prolongada, facturación de clientes ya existentes ni datos reales.
+- **Backup:** `docs/backups/1.2.31/REGISTRATION_SETTINGS_BACKUP.md` conserva los blobs exactos previos de 1.2.31.
+- **Pruebas realizadas:** revisión estática de lectura/guardado de las cuatro preferencias, límites del día 1–30, preservación de tecnología en borradores prellenados y validación condicional de fecha de instalación.
+- **Pruebas pendientes:** build React, arranque real del frontend/backend y prueba visual/funcional completa en servidor después de instalar 1.2.32.
+- **Resultado esperado:** el administrador puede fijar las cuatro políticas desde Configuración clientes y las nuevas altas reciben esos valores sin cambiar la lógica operativa ya estable.
+- **Commits principales:** backup `85a2b63f62742775de058ca2cc40034e9ab7f70b`; settings `02d562258bfee0fa93a7261be39ddb2446e73078`; UI Ajustes `5e4247ce8e35a20101c7ebc446482d58b770f4b9`; asistente `993cb65da5d013dea4a6337c382b14955eb4c775`; versión `b2d38f3934411ab065f19cd809b081f891f88212`.
+
 ## 1.2.31 — 2026-09-09 — Tarjetas funcionales en Configuración clientes
 
 - **Objetivo:** corregir que las cuatro tarjetas superiores de `Ajustes → Configuración clientes` parecían botones pero no respondían al clic.
@@ -200,6 +219,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.31**.
+- Serie cubierta: **1.2.00 → 1.2.32**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.32**, encima de 1.2.31.
+- Próxima versión funcional: **1.2.33**, encima de 1.2.32.
