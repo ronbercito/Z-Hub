@@ -2,9 +2,6 @@
  * Archivo: frontend/src/components/layout/Layout.jsx
  * Función: Estructura principal del panel una vez autenticado: barra lateral, barra
  *          superior y el área de contenido que muestra el módulo activo (pestaña).
- * Trabaja con: components/layout/Sidebar.jsx, components/layout/Navbar.jsx,
- *              modules/<modulo>/*.jsx (Dashboard, Network, Plans, Clients, Billing,
- *              Hotspot, Tasks, Inventory, Tickets, Messaging, Settings)
  */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -19,6 +16,7 @@ import Monitoring from "../../modules/red/monitoring/Monitoring";
 import Plans from "../../modules/planes/Plans";
 import Users from "../../modules/clientes/usuarios/Users";
 import Installations from "../../modules/clientes/instalaciones/Installations";
+import EquipmentRecovery from "../../modules/clientes/recuperacion/EquipmentRecovery";
 import Zones from "../../modules/clientes/zonas/Zones";
 import ClientMap from "../../modules/clientes/mapa/ClientMap";
 import Billing from "../../modules/facturacion/Billing";
@@ -53,9 +51,7 @@ export default function Layout() {
         applyPanelTheme(response.data.panel_theme || "dark");
         localStorage.setItem("fibraz_company_name", name);
         localStorage.setItem("fibraz_logo_data", logo);
-      } catch (_) {
-        // Se conserva el último nombre conocido si el backend no está disponible.
-      }
+      } catch (_) {}
     };
     loadCompanyName();
   }, [API, token]);
@@ -80,66 +76,37 @@ export default function Layout() {
     if (activeTab === "settings_clients") return <ClientSettings />;
     if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
     switch (activeTab) {
-      case "inicio":
-        return <Dashboard setActiveTab={setActiveTab} />;
+      case "inicio": return <Dashboard setActiveTab={setActiveTab} />;
       case "red":
-      case "routers":
-        return <Network focus="mikrotik" />;
-      case "olts":
-        return <Network focus="olt" />;
-      case "red_ipv4":
-        return <IPv4Networks />;
-      case "nap_boxes":
-        return <NapBoxes />;
-      case "monitoring":
-        return <Monitoring />;
-      case "servicios":
-        return <Plans />;
+      case "routers": return <Network focus="mikrotik" />;
+      case "olts": return <Network focus="olt" />;
+      case "red_ipv4": return <IPv4Networks />;
+      case "nap_boxes": return <NapBoxes />;
+      case "monitoring": return <Monitoring />;
+      case "servicios": return <Plans />;
       case "clientes":
-      case "client_users":
-        return <Users />;
-      case "client_zones":
-        return <Zones />;
-      case "client_installations":
-        return <Installations onContinueToClient={() => setActiveTab("client_users")} />;
-      case "client_map":
-        return <ClientMap />;
-      case "facturacion":
-        return <Billing />;
-      case "hotspot":
-        return <Hotspot />;
-      case "tareas":
-        return <Tasks />;
-      case "almacen":
-        return <Inventory />;
-      case "tickets":
-        return <Tickets />;
-      case "mensajeria":
-        return <Messaging />;
-      case "ajustes":
-        return <Settings />;
-      default:
-        return <Dashboard setActiveTab={setActiveTab} />;
+      case "client_users": return <Users />;
+      case "client_zones": return <Zones />;
+      case "client_installations": return <Installations onContinueToClient={() => setActiveTab("client_users")} />;
+      case "client_recovery": return <EquipmentRecovery />;
+      case "client_map": return <ClientMap />;
+      case "facturacion": return <Billing />;
+      case "hotspot": return <Hotspot />;
+      case "tareas": return <Tasks />;
+      case "almacen": return <Inventory />;
+      case "tickets": return <Tickets />;
+      case "mensajeria": return <Messaging />;
+      case "ajustes": return <Settings />;
+      default: return <Dashboard setActiveTab={setActiveTab} />;
     }
   };
 
   return (
     <div className="app-shell min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        companyName={companyName}
-        logoData={logoData}
-      />
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        sidebarOpen ? "ml-64" : "ml-20"
-      }`}>
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
         <Navbar setActiveTab={setActiveTab} />
-        <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">
-          {renderContent()}
-        </main>
+        <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">{renderContent()}</main>
         <footer className="panel-footer mt-auto border-t px-6 py-3 text-center text-sm font-bold tracking-wide text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
       </div>
     </div>
