@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/__init__.py
-Actualización: 2026-09-10 — registra recuperación persistente de equipos.
+Actualización: 2026-09-10 — registra recuperación y equipos asignados de clientes.
 Función: registra todos los modelos (tablas SQL) para que SQLAlchemy los conozca al crear la base de datos.
 Trabaja con: backend/app/core/database.py y backend/app/models/*.py
 """
@@ -22,11 +22,12 @@ from .client_communication import ClientCommunication
 from .client_document import ClientDocument
 from .inventory import InventoryItem
 from .equipment_recovery import EquipmentRecovery
+from .client_equipment import ClientEquipment
 from .hotspot import HotspotVoucher
 from .task import Task
 from .setting import Setting
 
 __all__ = [
     "User", "Plan", "Router", "Client", "ClientService", "Installation", "Invoice", "ClientBalance", "Ticket",
-    "InventoryItem", "EquipmentRecovery", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
+    "InventoryItem", "EquipmentRecovery", "ClientEquipment", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
 ]
