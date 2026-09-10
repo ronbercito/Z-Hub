@@ -1,0 +1,129 @@
+/* Z-Hub 1.2.20 — color y contraste exclusivo para Clientes en tema Claro Suave. */
+html[data-panel-theme="zhub-light"] .clients-page {
+  color: #173b63;
+}
+
+html[data-panel-theme="zhub-light"] .clients-page .clients-header {
+  background: linear-gradient(135deg, #e7f2ff 0%, #eef7ff 48%, #edf9f5 100%) !important;
+  border: 1px solid #bfd7ef !important;
+  border-left: 5px solid #2477c4 !important;
+  box-shadow: 0 4px 14px rgba(36, 119, 196, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-title {
+  color: #153f70 !important;
+  font-weight: 850 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-title svg {
+  color: #087c9d !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-subtitle {
+  color: #527493 !important;
+  font-weight: 600 !important;
+}
+
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls {
+  background: #ffffff !important;
+  border-color: #c9dbee !important;
+  box-shadow: 0 4px 14px rgba(30, 95, 154, .08) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls input {
+  background: #f7fbff !important;
+  border-color: #a8c7e5 !important;
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls input:focus {
+  border-color: #2477c4 !important;
+  box-shadow: 0 0 0 3px rgba(36, 119, 196, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls button.bg-cyan-500 {
+  background: #2477c4 !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls button.bg-emerald-500 {
+  background: #159577 !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls button.bg-rose-500 {
+  background: #c94b62 !important;
+  color: #ffffff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-controls button.bg-slate-800 {
+  background: #e8f0f8 !important;
+  border: 1px solid #c3d5e6 !important;
+  color: #365a79 !important;
+}
+
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card {
+  background: #ffffff !important;
+  border-color: #c7daec !important;
+  box-shadow: 0 6px 18px rgba(23, 59, 99, .09) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card thead {
+  background: linear-gradient(90deg, #174f86, #2477c4) !important;
+  border-color: #174f86 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card thead th {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  letter-spacing: .035em;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody {
+  color: #294b70 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody tr:nth-child(even) {
+  background: #f5f9fd !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody tr:hover {
+  background: #e8f4ff !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card tbody td {
+  border-color: #dce8f2 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card .text-slate-100 {
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card .text-cyan-300,
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card .text-cyan-400 {
+  color: #087c9d !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card .text-emerald-400 {
+  color: #147153 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .clients-table-card .text-rose-400 {
+  color: #b4334d !important;
+}
+
+html[data-panel-theme="zhub-light"] .clients-page .client-action-view {
+  background: #dff3fb !important;
+  color: #087c9d !important;
+  border-color: #8dd3e5 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-service {
+  background: #fff0f2 !important;
+  color: #bd3852 !important;
+  border-color: #ef9dad !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-onu {
+  background: #e7efff !important;
+  color: #345fb4 !important;
+  border-color: #9ab3ea !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-whatsapp {
+  background: #e5f7ef !important;
+  color: #147153 !important;
+  border-color: #8bd0b4 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-delete {
+  background: #fff0f2 !important;
+  color: #b4334d !important;
+  border-color: #efabb7 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-view:hover,
+html[data-panel-theme="zhub-light"] .clients-page .client-action-onu:hover {
+  filter: brightness(.96);
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-action-service:hover,
+html[data-panel-theme="zhub-light"] .clients-page .client-action-whatsapp:hover,
+html[data-panel-theme="zhub-light"] .clients-page .client-action-delete:hover {
+  filter: saturate(1.15) brightness(.97);
+}
