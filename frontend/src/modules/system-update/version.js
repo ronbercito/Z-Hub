@@ -1,10 +1,10 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.29";
+export const PANEL_VERSION = "1.2.30";
 export const CHANGELOG = [
-  { type: "Clientes", text: "Se agrega alerta visual para clientes que permanecen suspendidos durante un período prolongado." },
-  { type: "Política", text: "En Ajustes > Configuración clientes se puede activar la alerta y elegir un umbral de 1 a 6 meses." },
-  { type: "Recuperación", text: "La alerta muestra cliente, contacto, dirección, router/ONU, fecha de suspensión y tiempo suspendido para facilitar recuperación de equipos." },
-  { type: "Estados", text: "La política aplica únicamente a Suspendidos; los clientes en Pausa temporal no generan esta alerta." },
-  { type: "Seguridad", text: "La alerta es informativa: no retira, elimina ni libera recursos automáticamente." },
-  { type: "Backup", text: "Se guardaron referencias recuperables de los archivos 1.2.28 antes del cambio." },
+  { type: "Configuración clientes", text: "Se reorganizan las cuatro áreas para separar Registro y altas, Pausas, Suspensiones/retiros/reactivaciones y Recuperación de equipos." },
+  { type: "Recuperación", text: "Avisos del cliente se reemplaza por Recuperación de equipos para evitar duplicar las notificaciones que ya existen en Facturación del abonado." },
+  { type: "Diseño", text: "Las tarjetas de Configuración clientes se hacen más compactas, conservando espacio suficiente para futuras opciones." },
+  { type: "Tema claro", text: "Se agregan estilos locales para que tarjetas, bordes, textos, selector y política de suspensión prolongada respeten el tema Z-Hub Claro." },
+  { type: "Compatibilidad", text: "No se modifica backend, facturación, MikroTik ni la lógica actual de suspensión prolongada." },
+  { type: "Backup", text: "Se guardaron referencias recuperables de los archivos 1.2.29 afectados antes del cambio." },
 ];
