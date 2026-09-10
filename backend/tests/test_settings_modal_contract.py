@@ -30,8 +30,15 @@ def test_modal_is_compact_and_theme_aware():
     assert 'max-height:min(82vh,820px)' in css
     assert '.settings-modal-scroll' in css
     assert 'html[data-panel-theme="zhub-light"]' in css
+    assert 'html[data-panel-theme="zhub-dark"]' in css
+    assert '--sm-surface:#ffffff' in css
+    assert '--sm-surface:#14243a' in css
+    assert '.settings-modal-panel input:not([type="checkbox"])' in css
+    assert '.settings-modal-panel select' in css
+    assert '.settings-modal-panel textarea' in css
+    assert 'input[type="file"]::file-selector-button' in css
 
 
 def test_release_version():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.55"' in version
+    assert 'PANEL_VERSION = "1.2.56"' in version
