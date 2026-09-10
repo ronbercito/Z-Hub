@@ -19,6 +19,21 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.28 — 2026-09-09 — Ajustes → Configuración clientes
+
+- **Objetivo:** crear un espacio propio dentro de Ajustes donde se concentren las opciones futuras relacionadas con el panel de Clientes.
+- **Navegación:** se agrega `Configuración clientes` como submenú de `Ajustes`, inmediatamente después de `General`.
+- **Pantalla dedicada:** se crea `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, con una vista inicial organizada en Registro y altas, Pausas de servicio, Retiros/reactivaciones y Avisos del cliente.
+- **Alcance actual:** esta entrega crea únicamente la estructura y el acceso; no agrega todavía nuevos interruptores ni reglas configurables para evitar inventar comportamientos no solicitados.
+- **Ruta:** `settings_clients` se resuelve de forma explícita en `Layout.jsx` hacia `ClientSettings`; las demás secciones de Ajustes continúan usando el flujo existente de `Settings.jsx`.
+- **Archivos:** `frontend/src/modules/ajustes/navigation/settingsSections.js`, `frontend/src/modules/ajustes/clientes/ClientSettings.jsx` (nuevo), `frontend/src/components/layout/Layout.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Compatibilidad:** no se modifica base de datos, backend, facturación, MikroTik, pausas, retiros, Instalaciones, planes ni datos de clientes.
+- **Backups:** `docs/backups/1.2.27/CLIENT_SETTINGS_MENU_BACKUP.md` y `docs/backups/1.2.27/LAYOUT_CLIENT_SETTINGS_BACKUP.md` registran los blobs exactos previos de 1.2.27.
+- **Pruebas realizadas:** revisión estática de la generación automática del submenú desde `SETTINGS_SECTIONS`, resolución de `settings_clients` antes del manejador genérico `settings_*`, import correcto de `ClientSettings` y verificación de que no existen llamadas API ni mutaciones de datos en la nueva pantalla.
+- **Pruebas pendientes:** build React y validación visual real después de instalar 1.2.28.
+- **Resultado esperado:** al desplegar Ajustes debe aparecer `Configuración clientes`; al abrirlo debe mostrarse la nueva pantalla dedicada sin afectar las otras categorías.
+- **Commits principales:** backup `fd3be93f0818f821d09f2b4e0a09575122c8b433`; backup Layout `def13ae13db6a14a24bc5b2f51f99ece9baf0853`; navegación `bcfe1e278f686f3723bd1c7e02c937cabc481b07`; pantalla `01f8272e0dd9ec6c92da1e69840f2b91f4e62549`; ruta Layout `d96ad15bca705118de72b3f004f273156eedaf4a`; versión `b3dd3a037307c08696ed450711af58817cae7e0f`.
+
 ## 1.2.27 — 2026-09-09 — Servicio en pausa temporal
 
 - **Objetivo:** permitir congelar temporalmente el servicio de un cliente por viaje, construcción u otra ausencia sin retirarlo ni liberar sus recursos técnicos.
@@ -37,8 +52,8 @@
 - **Archivos:** `backend/app/models/client.py`, `backend/app/routers/clientes/pause.py` (nuevo), `backend/app/routers/facturacion/router.py`, `backend/server.py`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
 - **Compatibilidad:** no se modifican aprovisionamiento inicial, planes, NAP, ONU, Instalaciones, Retirados ni el asistente oficial de Nuevo abonado.
 - **Backup:** `docs/backups/1.2.26/SERVICE_PAUSE_BACKUP.md` contiene los blobs exactos previos de 1.2.26.
-- **Pruebas realizadas:** revisión estática de estado `paused`, validaciones 1–3 meses y motivo 10–250, corte/restauración MikroTik, cálculo calendario, congelamiento de facturación, reactivación manual/automática y render de la pestaña/alerta/WhatsApp.
-- **Pruebas pendientes:** build React, compilación Python, arranque real con migración MariaDB, prueba de corte/restauración contra MikroTik, prueba de una pausa vencida y validación visual después de instalar 1.2.27.
+- **Pruebas realizadas:** revisión estática de estado `paused`, validaciones 1–3 meses y motivo 10–250, corte/restauración MikroTik, cálculo calendario, congelamiento de facturación, reactivación manual/automática y render de la pestaña/alerta/WhatsApp. **Validación operativa posterior del administrador:** pausa manual y reactivación manual probadas en el panel, con devolución correcta de los días guardados.
+- **Pruebas pendientes:** reactivación automática al vencer la pausa y validación del aviso de 5 días antes.
 - **Riesgo operativo:** la reactivación automática depende de que el backend permanezca en ejecución y el MikroTik esté accesible; ante fallo no se marca al cliente activo falsamente y se reintenta.
 - **Commits principales:** backup `2ec3443f65c2f7fc3cdceda36ab1bd0c2787f9e4`; backend pausa `e12fabfb0526b75e46b3f668a41b58040d675b47`; modelo `8bdae240d9a8c75823b9d6acb2bcb85dfe17c572`; servidor `48f9a0e14b5f14c88922d98bc510b46434bd85e8`; facturación `0a7dcc33bc636fda0266ee3f6d20ff7dcd228e02`; UI `e98cf10a1e1ecda5e8ea1f2b8521f1b866780a5e`; versión `25e69ac8dc0457463ad4dfede33bf310929f04e0`.
 
@@ -145,6 +160,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.27**.
+- Serie cubierta: **1.2.00 → 1.2.28**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.28**, encima de 1.2.27.
+- Próxima versión funcional: **1.2.29**, encima de 1.2.28.
