@@ -19,6 +19,20 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.35 — 2026-09-10 — Corrección del listado vacío de Clientes
+
+- **Causa confirmada:** desde 1.2.33 el frontend de `Clientes` consulta `GET /api/clients/pause-policy`; en 1.2.34 también consulta `GET /api/clients/retirement-policy`. En `backend/server.py`, el router CRUD principal de Clientes estaba registrado antes que los routers especializados. Como dicho CRUD contiene `GET /clients/{client_id}`, FastAPI podía interpretar `pause-policy` o `retirement-policy` como si fueran IDs de cliente y devolver 404.
+- **Efecto visual:** `Clients.jsx` usaba `Promise.all`; el fallo de una sola política auxiliar descartaba también la respuesta correcta de `GET /api/clients`, por lo que la pantalla mostraba `Clientes (0)` aunque el abonado siguiera guardado y su configuración permaneciera en MikroTik.
+- **Datos:** el problema era de resolución/carga de API; esta corrección no elimina, recrea ni modifica clientes existentes, facturas, IP, ONU, NAP ni configuración MikroTik.
+- **Backend:** se reordenan las rutas de Clientes en `backend/server.py` para registrar primero `retired`, `pause`, alertas, instalaciones, servicios y demás rutas estáticas/especializadas, dejando `clientes_router` después. Así `/clients/pause-policy` y `/clients/retirement-policy` ya no pueden ser capturadas por `/clients/{client_id}`.
+- **Frontend resistente:** `Clients.jsx` cambia la carga a `Promise.allSettled`. La lista principal `/clients` es la fuente obligatoria; si una API auxiliar de políticas, retirados, pausas, planes o red falla, ya no se borra visualmente la lista principal de clientes y se conservan los valores previamente cargados o por defecto para el dato auxiliar.
+- **Compatibilidad:** se mantienen sin cambios funcionales las políticas de Registro y altas, Pausas de servicio, Suspensiones, retiros y reactivaciones y la futura Recuperación de equipos.
+- **Backup:** `docs/backups/1.2.34/CLIENT_ROUTE_ORDER_BACKUP.md` conserva los blobs previos de `backend/server.py`, `frontend/src/modules/clientes/Clients.jsx`, `version.js` y bitácora.
+- **Pruebas realizadas:** revisión estática del orden efectivo de `include_router`, confirmación de la existencia de `GET /clients/{client_id}`, `GET /clients/pause-policy` y `GET /clients/retirement-policy`, y revisión de la lógica de carga parcial del frontend.
+- **Pruebas pendientes:** actualización real del servidor, reinicio del backend, comprobación visual de que reaparece el cliente existente y prueba de las políticas de pausa/retiro desde el navegador.
+- **Resultado esperado:** después de actualizar/reiniciar, el cliente existente vuelve a mostrarse. Si una política auxiliar falla en el futuro, la tabla principal no quedará vacía por ese fallo secundario.
+- **Commits principales:** backup inicial `cc48aa17ca69d2ac464cdb1689af6f9b79467fde`; backup ampliado `703c3e307ee9b01c885b92d19e301c9cc5f52f73`; orden de rutas `2f908a836b69ec695624950656633be7cc225d36`; carga resistente Clientes `cd629853c53e912af8e2277c73cbd15f6bc40a28`; versión `73eb349d3a866c447987ed0b6cbe23336966da54`.
+
 ## 1.2.34 — 2026-09-10 — Políticas de Suspensiones, retiros y reactivaciones
 
 - **Objetivo:** convertir `Ajustes → Configuración clientes → Suspensiones, retiros y reactivaciones` en una sección funcional más completa, manteniendo la alerta por suspensión prolongada y añadiendo reglas de retiro/retorno.
@@ -261,6 +275,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.34**.
+- Serie cubierta: **1.2.00 → 1.2.35**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.35**, encima de 1.2.34.
+- Próxima versión funcional: **1.2.36**, encima de 1.2.35.
