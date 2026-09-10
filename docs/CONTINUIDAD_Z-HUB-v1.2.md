@@ -19,6 +19,21 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.38 — 2026-09-10 — Republicación integral del saneamiento 1.2.37
+
+- **Objetivo:** volver a entregar todo el saneamiento y las correcciones de 1.2.37 bajo un número de versión nuevo para que el Centro de Actualizaciones detecte una actualización completa como `1.2.38`.
+- **Contenido:** 1.2.38 conserva íntegramente las correcciones de seguridad, integridad Z-Hub ↔ MikroTik, pagos, historial de retirados, autenticación con cookie httpOnly, cifrado independiente, zona horaria `America/Lima`, workers con logging, cierre de casos de Recuperación, permisos y calidad introducidas en 1.2.37.
+- **Código funcional:** no se reescriben ni revierten los cambios ya saneados de 1.2.37; `main` mantiene esos archivos y se incrementa `PANEL_VERSION` para provocar una nueva entrega completa mediante el actualizador.
+- **Backup integral previo:** antes de republicar se creó `backup/pre-republish-1.2.37-20260910`, apuntando exactamente al commit `8abd0aaccd422c10ba4d101758ba88a15447936d`.
+- **Backup documental:** `docs/backups/1.2.37/REPUBLISH_1.2.38_BACKUP.md` registra la rama, commit y blobs previos.
+- **Versión/changelog:** `frontend/src/modules/system-update/version.js` pasa a `1.2.38`; el changelog vuelve a enumerar el saneamiento completo y añade que se trata de una republicación solicitada.
+- **Compatibilidad:** no se borra, reinicializa ni migra destructivamente MariaDB; no se eliminan clientes, facturas, ONU, NAP, IP, historial ni configuraciones MikroTik existentes.
+- **Pruebas heredadas:** la base saneada de 1.2.37 ya había pasado compilación Python, contratos pytest y build React en GitHub Actions.
+- **Pruebas de 1.2.38:** GitHub Actions debe volver a validar el nuevo HEAD; no se considera cerrada esa comprobación hasta que los jobs terminen.
+- **Pruebas pendientes en producción:** actualizar desde el Centro de Actualizaciones, reiniciar/verificar backend contra MariaDB real, confirmar login/recarga, listado de clientes, MikroTik, facturación, pausas, retiros, Recuperación y OLT.
+- **Resultado esperado:** un servidor que ya veía 1.2.37 debe detectar 1.2.38 y volver a aplicar el estado completo actual de `main` sin borrar datos.
+- **Siguiente versión funcional:** `1.2.39`.
+
 ## 1.2.37 — 2026-09-10 — Saneamiento de seguridad, integridad y calidad
 
 - **Objetivo:** corregir los hallazgos críticos y altos de la auditoría de 1.2.36 antes de continuar agregando funciones, protegiendo secretos, datos históricos y la sincronización con MikroTik.
@@ -323,6 +338,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.37**.
+- Serie cubierta: **1.2.00 → 1.2.38**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.38**, encima de 1.2.37.
+- Próxima versión funcional: **1.2.39**, encima de 1.2.38.
