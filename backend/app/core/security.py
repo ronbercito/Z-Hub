@@ -2,7 +2,7 @@
 Archivo: backend/app/core/security.py
 Función: Seguridad y autenticación: hash de contraseñas con bcrypt, emisión y
          validación de tokens JWT, y la dependencia get_current_user que protege
-         todas las rutas privadas (prioriza la cabecera Bearer y luego la cookie httpOnly).
+         todas las rutas privadas (acepta Bearer válido y, en su ausencia, cookie httpOnly).
 Trabaja con: backend/app/core/config.py, backend/app/models/user.py,
              backend/app/routers/auth/router.py y todas las rutas protegidas.
 """
@@ -48,7 +48,10 @@ def create_access_token(user_id: str, email: str, role: str) -> str:
 
 async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> dict:
     auth_header = request.headers.get("Authorization", "")
-    token = auth_header[7:] if auth_header.startswith("Bearer ") else request.cookies.get("access_token")
+    bearer = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+    # Algunos componentes antiguos pueden enviar "Authorization: Bearer " tras una recarga.
+    # Un Bearer vacío nunca debe bloquear el fallback a la cookie httpOnly.
+    token = bearer or request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autenticado")
     try:
