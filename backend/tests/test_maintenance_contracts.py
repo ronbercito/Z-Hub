@@ -39,6 +39,14 @@ def test_recovery_closed_cases_cannot_be_reopened():
     assert 'CLOSED.has(r.status)?"Ver detalle":"Gestionar"' in f
     assert '!CLOSED.has(editing.status)' in f
 
+def test_recovery_legacy_equipment_states_still_show_resolution_actions():
+    f=source("frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx")
+    assert 'rawStatus=i.status||"pending"' in f
+    assert 'st=CLOSED.has(rawStatus)?rawStatus:"pending"' in f
+    assert 'st==="pending"' in f
+    assert '>No recuperado</button>' in f
+    assert '>Recuperado</button>' in f
+
 def test_business_timezone_defaults_to_lima():
     c=source("backend/app/core/config.py"); u=source("backend/app/core/utils.py"); assert 'APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "America/Lima")' in c; assert "def business_now()" in u; assert "def business_today()" in u
 
