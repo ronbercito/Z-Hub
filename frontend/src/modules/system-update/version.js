@@ -1,14 +1,12 @@
 /**
  * Archivo: frontend/src/modules/system-update/version.js
- * Actualización: 2026-09-09 — versión 1.2.17.
+ * Actualización: 2026-09-09 — versión 1.2.18.
  * Función: única fuente de verdad de PANEL_VERSION y del changelog de la versión actual.
  * Nota: CHANGELOG contiene únicamente los cambios de esta versión; no acumula versiones anteriores.
  */
-export const PANEL_VERSION = "1.2.17";
+export const PANEL_VERSION = "1.2.18";
 export const CHANGELOG = [
-  { type: "Instalaciones", text: "Nueva instalación ahora se guarda como solicitud pendiente en la base de datos de Z-Hub y ya no abre inmediatamente Nuevo abonado." },
-  { type: "Instalaciones", text: "Se agregó botón GPS para completar automáticamente latitud y longitud desde el dispositivo." },
-  { type: "Instalaciones", text: "Las solicitudes pendientes se muestran en tarjetas con sus datos y el botón Dar de alta cliente." },
-  { type: "Abonados", text: "Dar de alta cliente transfiere los datos capturados al formulario existente de Nuevo abonado sin modificar sus opciones ni la ficha del cliente." },
-  { type: "Seguridad", text: "Se conservaron respaldos de los archivos 1.2.16 afectados antes de esta actualización en docs/backups/1.2.16/." },
+  { type: "Actualización", text: "La comprobación final del backend ahora reintenta hasta 10 veces en lugar de abortar por un único fallo transitorio." },
+  { type: "Diagnóstico", text: "Si el backend no responde después de los reintentos, el instalador muestra el estado de Supervisor y las últimas líneas del log de error para identificar la causa real." },
+  { type: "Compatibilidad", text: "No se modifican Instalaciones, Abonados, base de datos, facturación ni aprovisionamiento; el cambio está limitado al cierre del instalador." },
 ];
