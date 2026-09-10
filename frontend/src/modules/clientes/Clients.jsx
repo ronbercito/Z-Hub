@@ -27,15 +27,40 @@ export default function Clients() {
   const installationDraftConsumed=useRef(false);
   const activePlans=plans.filter(p=>p.is_active), mikrotikRouters=routers.filter(r=>r.device_type==="mikrotik");
 
-  const fetchData=async()=>{ setLoading(true); try { const [a,b,p,pauseCfg,retireCfg,c,d,e,f]=await Promise.all([
-    axios.get(`${API}/clients`,{params:{search,status:statusFilter},headers}),
-    axios.get(`${API}/clients/retired/list`,{params:{search},headers}),
-    axios.get(`${API}/clients/paused/list`,{params:{search},headers}),
-    axios.get(`${API}/clients/pause-policy`,{headers}),
-    axios.get(`${API}/clients/retirement-policy`,{headers}),
-    axios.get(`${API}/plans`,{headers}), axios.get(`${API}/routers`,{headers}), axios.get(`${API}/ipv4-networks`,{headers}), axios.get(`${API}/nap-boxes`,{headers})]);
-    setClients((Array.isArray(a.data)?a.data:[]).filter(x=>x.status!=="retired")); setRetired(Array.isArray(b.data)?b.data:[]); setPaused(Array.isArray(p.data)?p.data:[]); setPausePolicy(pauseCfg.data||{}); setRetirementPolicy(retireCfg.data||{}); setPlans(c.data); setRouters(d.data); setIpv4Networks(e.data); setNapBoxes(f.data);
-  } catch(e){ console.error(e); toast.error("Error al cargar clientes"); } finally { setLoading(false); }};
+  const fetchData=async()=>{
+    setLoading(true);
+    try {
+      const results=await Promise.allSettled([
+        axios.get(`${API}/clients`,{params:{search,status:statusFilter},headers}),
+        axios.get(`${API}/clients/retired/list`,{params:{search},headers}),
+        axios.get(`${API}/clients/paused/list`,{params:{search},headers}),
+        axios.get(`${API}/clients/pause-policy`,{headers}),
+        axios.get(`${API}/clients/retirement-policy`,{headers}),
+        axios.get(`${API}/plans`,{headers}),
+        axios.get(`${API}/routers`,{headers}),
+        axios.get(`${API}/ipv4-networks`,{headers}),
+        axios.get(`${API}/nap-boxes`,{headers}),
+      ]);
+      const [a,b,p,pauseCfg,retireCfg,c,d,e,f]=results;
+      if(a.status!=="fulfilled") throw a.reason;
+      setClients((Array.isArray(a.value.data)?a.value.data:[]).filter(x=>x.status!=="retired"));
+      if(b.status==="fulfilled") setRetired(Array.isArray(b.value.data)?b.value.data:[]);
+      if(p.status==="fulfilled") setPaused(Array.isArray(p.value.data)?p.value.data:[]);
+      if(pauseCfg.status==="fulfilled") setPausePolicy(pauseCfg.value.data||{});
+      if(retireCfg.status==="fulfilled") setRetirementPolicy(retireCfg.value.data||{});
+      if(c.status==="fulfilled") setPlans(Array.isArray(c.value.data)?c.value.data:[]);
+      if(d.status==="fulfilled") setRouters(Array.isArray(d.value.data)?d.value.data:[]);
+      if(e.status==="fulfilled") setIpv4Networks(Array.isArray(e.value.data)?e.value.data:[]);
+      if(f.status==="fulfilled") setNapBoxes(Array.isArray(f.value.data)?f.value.data:[]);
+      const auxiliaryFailures=results.slice(1).filter(r=>r.status==="rejected");
+      if(auxiliaryFailures.length) console.warn("Carga parcial de Clientes: una API auxiliar no respondió", auxiliaryFailures.map(r=>r.reason?.response?.status||r.reason?.message));
+    } catch(e){
+      console.error(e);
+      toast.error("Error al cargar clientes");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(()=>{fetchData();},[search,statusFilter]);
   useEffect(()=>{ if(loading||installationDraftConsumed.current)return; installationDraftConsumed.current=true; const raw=sessionStorage.getItem("zhub_installation_draft"); if(!raw)return; try{const draft=JSON.parse(raw);setSelectedClient(null);setFormData({...emptyForm(activePlans[0]?.id||"",mikrotikRouters[0]?.id||""),...draft});setShowAddModal(true);}catch(_){}finally{sessionStorage.removeItem("zhub_installation_draft");}},[loading,plans,routers]);
 
