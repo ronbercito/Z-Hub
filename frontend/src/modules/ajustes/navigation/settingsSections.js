@@ -1,6 +1,7 @@
 /** Opciones de Ajustes: menú lateral y contenido aislado por identificador. */
 export const SETTINGS_SECTIONS = [
   { id:"general", label:"General" },
+  { id:"clients", label:"Configuración clientes" },
   { id:"staff", label:"Gestión personal" },
   { id:"mail", label:"Servidor de correo" },
   { id:"billing", label:"Facturación" },
