@@ -8,7 +8,7 @@ export const permissionsByTab = {
   nap_boxes:"network", monitoring:"monitoring", servicios:"plans", clientes:"clients",
   client_users:"clients", client_installations:"clients", client_recovery:"clients", client_zones:"clients", client_map:"clients", facturacion:"billing",
   hotspot:"hotspot", tareas:"tasks", almacen:"inventory", tickets:"tickets",
-  mensajeria:"messaging", ajustes:"settings", settings_google:"settings",
+  mensajeria:"messaging", ajustes:"settings",
 };
 export function permissionsFor(user) {
   return Object.keys(user?.permissions || {}).length ? user.permissions : (roleDefaults[user?.role] || {});
@@ -21,6 +21,11 @@ export function canPermission(user, module, action = "view") {
   const permissions = permissionsFor(user);
   return Boolean((permissions[module] || []).includes(action));
 }
+export function permissionModuleForTab(tab) {
+  if (String(tab || "").startsWith("settings_")) return "settings";
+  return permissionsByTab[tab];
+}
 export function canViewTab(user, tab) {
-  return canPermission(user, permissionsByTab[tab], "view");
+  const module = permissionModuleForTab(tab);
+  return Boolean(module) && canPermission(user, module, "view");
 }
