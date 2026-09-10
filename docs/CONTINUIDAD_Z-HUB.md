@@ -3020,3 +3020,11 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Tema claro:** se usan fondo blanco, bordes azul grisáceo y textos de alto contraste coherentes con el panel claro.
 - **Compatibilidad:** el tema oscuro no cambia; no se modifica la carga ni el filtrado de datos.
 - **Pruebas:** validadas reglas del panel, tabla y controles específicos de Instalaciones.
+
+
+### 1.2.13 — Recarga segura al terminar una actualización
+
+- **Cambio:** el panel ya no cierra sesión al finalizar una actualización.
+- **Garantía:** continúa consultando el estado mientras instala y solo recarga cuando el servidor informa éxito **y** la versión instalada coincide con la versión objetivo.
+- **Recarga:** se usa una URL con marcador de actualización para solicitar los recursos nuevos; sesión y credenciales permanecen activas.
+- **Pruebas:** validada ausencia de logout, condición de éxito, coincidencia de versión y recarga única controlada.
