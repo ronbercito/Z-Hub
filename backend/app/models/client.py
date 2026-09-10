@@ -1,12 +1,6 @@
 """
 Archivo: backend/app/models/client.py
-Función: Tabla `clients` — abonados del ISP: datos personales (DNI/RUC, teléfono,
-         dirección), datos técnicos (IP, MAC, ONU, NAP, potencia óptica), tipo de
-         conexión (PPPoE / IP Estática / DHCP), plan y router asignado, estado de
-         servicio y deuda acumulada.
-Trabaja con: backend/app/routers/clientes/router.py, backend/app/models/plan.py,
-             backend/app/models/router.py, backend/app/models/invoice.py,
-             backend/app/integrations/mikrotik/service.py (corte / reactivación)
+Función: Tabla `clients` — datos personales, servicio activo e historial de retiro.
 """
 from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,7 +24,7 @@ class Client(Base):
     ip_address: Mapped[str] = mapped_column(String(60), default="", index=True)
     mac_address: Mapped[str] = mapped_column(String(40), default="")
     onu_sn: Mapped[str] = mapped_column(String(60), default="")
-    connection_type: Mapped[str] = mapped_column(String(30), default="PPPoE")  # PPPoE | IP Estática | DHCP
+    connection_type: Mapped[str] = mapped_column(String(30), default="PPPoE")
     pppoe_user: Mapped[str] = mapped_column(String(80), default="")
     pppoe_password: Mapped[str] = mapped_column(String(80), default="")
 
@@ -45,7 +39,7 @@ class Client(Base):
     nap_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
     optical_power_dbm: Mapped[float | None] = mapped_column(Float, nullable=True)
     installation_date: Mapped[str] = mapped_column(String(10), default="")
-    technology: Mapped[str] = mapped_column(String(20), default="fiber")  # fiber | wireless
+    technology: Mapped[str] = mapped_column(String(20), default="fiber")
     zone_id: Mapped[str] = mapped_column(String(36), default="", index=True)
     zone_name: Mapped[str] = mapped_column(String(120), default="")
     monitoring_equipment_id: Mapped[str] = mapped_column(String(36), default="", index=True)
@@ -53,9 +47,11 @@ class Client(Base):
     antenna_type: Mapped[str] = mapped_column(String(80), default="")
     management_ip: Mapped[str] = mapped_column(String(60), default="")
 
-    status: Mapped[str] = mapped_column(String(30), default="active")  # active | suspended | canceled | pending_install
+    status: Mapped[str] = mapped_column(String(30), default="active")  # active | suspended | retired | pending_install
+    retired_at: Mapped[str] = mapped_column(String(40), default="", index=True)
+    retirement_reason: Mapped[str] = mapped_column(String(250), default="")
     billing_day: Mapped[int] = mapped_column(Integer, default=5)
-    billing_type: Mapped[str] = mapped_column(String(20), default="prepaid")  # prepaid | postpaid
+    billing_type: Mapped[str] = mapped_column(String(20), default="prepaid")
     invoice_lead_days: Mapped[int] = mapped_column(Integer, default=5)
     grace_days: Mapped[int] = mapped_column(Integer, default=5)
     cut_after_months: Mapped[int] = mapped_column(Integer, default=1)
