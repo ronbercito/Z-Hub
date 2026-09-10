@@ -1,11 +1,11 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.49";
+export const PANEL_VERSION = "1.2.50";
 export const CHANGELOG = [
-  { type: "Recuperación", text: "Se republica la Etapa 3/4 con la validación corregida: Gestionar mantiene responsable, contacto, visita, observaciones y resolución individual de equipos." },
-  { type: "Calidad", text: "La regresión de casos cerrados fue actualizada para validar la interfaz actual: los casos Recuperado/No recuperado quedan en modo Ver detalle y no se reabren desde la UI." },
-  { type: "Dependencias", text: "Se fijan memfs y @jsonjoy.com/fs-snapshot en una versión disponible para evitar el 404 que impidió instalar dependencias durante el CI de 1.2.48." },
-  { type: "Flujo", text: "Cada equipo puede quedar Recuperado o No recuperado y el caso se cierra automáticamente cuando todos sus equipos han sido resueltos." },
-  { type: "Seguridad", text: "Almacén continúa sin modificarse automáticamente; la integración de inventario sigue reservada para la Etapa 4/4." },
-  { type: "Compatibilidad", text: "Los casos creados en 1.2.47 siguen siendo compatibles y no se eliminan clientes, facturas, servicios ni recuperaciones existentes." },
-  { type: "Backup", text: "Antes de corregir el release fallido 1.2.48 se creó backup/pre-ci-fix-1.2.48-20260910." },
+  { type: "Recuperación", text: "Corrige la Etapa 3/4 para que los equipos heredados de casos creados al retirar clientes muestren las acciones Recuperado y No recuperado." },
+  { type: "Compatibilidad", text: "Los estados técnicos instalados/assigned/recovery_pending de casos ya existentes se interpretan visualmente como Pendiente hasta que el equipo sea resuelto." },
+  { type: "Equipos", text: "Cada equipo pendiente vuelve a mostrar campo de observación y los botones Recuperado / No recuperado dentro de Gestionar." },
+  { type: "Flujo", text: "Al resolver el último equipo, el backend mantiene el cierre automático del caso como Recuperado o No recuperado." },
+  { type: "Seguridad", text: "Almacén sigue sin modificarse automáticamente; esta corrección solo completa la Etapa 3/4." },
+  { type: "Calidad", text: "Se agrega una regresión específica que exige que estados heredados pendientes conserven visibles las acciones de resolución." },
+  { type: "Backup", text: "Antes de la corrección se creó backup/pre-recovery-actions-fix-1.2.49-20260910 desde el HEAD completo de 1.2.49." },
 ];
