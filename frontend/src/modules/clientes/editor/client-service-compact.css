@@ -1,0 +1,13 @@
+/* Z-Hub 1.2.42 — modal compacto inspirado en el formulario clásico. */
+.service-wizard-modal--compact{width:min(980px,calc(100vw - 32px));max-height:min(760px,88vh)}
+.service-wizard-modal--compact .service-wizard-card{border-radius:15px;box-shadow:none}
+.service-wizard-modal--compact .service-wizard-column{min-height:0}
+.service-wizard-modal--compact .service-wizard-input{min-height:40px;padding:8px 12px;font-size:13px}
+.service-wizard-modal--compact .service-wizard-label{font-size:11px;text-transform:none;letter-spacing:0}
+.service-wizard-modal--compact .service-wizard-step-number{width:25px;height:25px;font-size:11px}
+.service-wizard-modal--compact .service-wizard-step-line{min-width:18px}
+@media(min-width:1024px){.service-wizard-modal--compact form{align-items:stretch}.service-wizard-modal--compact .service-wizard-column{height:100%}}
+@media(max-width:767px){.service-wizard-modal--compact{width:calc(100vw - 16px);max-height:94vh}.service-wizard-modal--compact .service-wizard-stepper{overflow-x:auto}.service-wizard-modal--compact .service-wizard-step-label{display:none}}
+html[data-panel-theme="zhub-light"] .service-wizard-modal--compact{background:#fff!important;border-color:#c7d7e5!important}
+html[data-panel-theme="zhub-light"] .service-wizard-modal--compact .service-wizard-card{background:#fff!important;border-color:#cadbe9!important}
+html[data-panel-theme="zhub-light"] .service-wizard-modal--compact .service-wizard-stepper{background:#f4f8fb!important}
