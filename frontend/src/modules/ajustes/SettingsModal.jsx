@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import axios from "axios";
 import { X } from "lucide-react";
 import Settings from "./Settings";
 import ClientSettings from "./clientes/ClientSettings";
@@ -12,6 +13,19 @@ export default function SettingsModal({ section, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [section, onClose]);
 
+  useEffect(() => {
+    if (!section) return undefined;
+    const interceptor = axios.interceptors.response.use((response) => {
+      const method = String(response?.config?.method || "").toLowerCase();
+      const url = String(response?.config?.url || "");
+      const isWrite = ["post", "put", "patch", "delete"].includes(method);
+      const isUtilityAction = /\/test(?:\?|$)/.test(url);
+      if (isWrite && !isUtilityAction) window.setTimeout(() => onClose?.(), 120);
+      return response;
+    }, (error) => Promise.reject(error));
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [section, onClose]);
+
   if (!section) return null;
   const title = section === "clients" ? "Configuración clientes" : null;
 
@@ -19,7 +33,7 @@ export default function SettingsModal({ section, onClose }) {
     <section className="settings-modal-panel" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={title || "Configuración"}>
       <button type="button" className="settings-modal-close" onClick={onClose} aria-label="Cerrar"><X /></button>
       <div className="settings-modal-scroll">
-        {section === "clients" ? <ClientSettings onSaved={onClose} compact /> : <Settings section={section} onSaved={onClose} compact />}
+        {section === "clients" ? <ClientSettings compact /> : <Settings section={section} compact />}
       </div>
     </section>
   </div>;
