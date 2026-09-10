@@ -49,3 +49,16 @@ def test_new_service_modal_is_compact_sequential_and_defaults_static_ip():
 
 def test_new_service_wizard_has_explicit_light_theme_skin():
     css=source("frontend/src/modules/clientes/editor/client-service-wizard.css"); assert 'html[data-panel-theme="zhub-light"] .service-wizard-modal' in css; assert 'html[data-panel-theme="zhub-light"] .service-wizard-card' in css; assert 'html[data-panel-theme="zhub-light"] .service-wizard-input' in css
+
+def test_new_client_registration_uses_same_progressive_service_flow():
+    text=source("frontend/src/modules/clientes/usuarios/ClientRegistrationWizard.jsx")
+    css=source("frontend/src/modules/clientes/usuarios/client-registration-service.css")
+    assert 'connection_type: "IP Estática"' in text
+    assert 'label="Router *"' in text and 'label="Tecnología *"' in text and 'label="Plan de internet *"' in text and 'label="Tipo de conexión *"' in text
+    assert 'label="MikroTik *"' not in text
+    assert 'disabled={!routerReady}' in text and 'disabled={!technologyReady}' in text and 'disabled={!planReady}' in text and 'disabled={!connectionReady}' in text
+    assert 'disabled={!networkReady' in text
+    assert 'planTechnology(plan.type) === selectedTechnology' in text
+    assert 'disabled={!serviceReady}' in text
+    assert 'client-registration-service.css' in text
+    assert 'html[data-panel-theme="zhub-light"] .client-registration-service' in css
