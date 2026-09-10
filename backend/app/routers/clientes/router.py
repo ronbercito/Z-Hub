@@ -1,13 +1,13 @@
 """
-Archivo: backend/app/routers/clientes/router.py (actualizado 2026-09-08)
-Actualización: 2026-09-08 — separa guardado de Resumen y Servicio para preservar datos y evitar errores de validación.
+Archivo: backend/app/routers/clientes/router.py
+Actualización: 2026-09-10 — protege consistencia Cliente↔MikroTik y corrige estados de comunicaciones.
 Función: CRUD de abonados (/api/clients): listar con búsqueda y filtro, detalle con
          facturas y tickets, crear (aprovisiona PPPoE/cola en el MikroTik y emite la
          primera factura), editar (re-aprovisiona), eliminar (limpia el MikroTik) y
          corte / reactivación de servicio real vía API RouterOS. GET /{id}/onu-status busca la ONU
          del abonado (onu_sn) en las OLT VSOL registradas y devuelve estado y potencia óptica.
          GET /{id}/invoices lista todas las facturas del cliente con filtros opcionales.
-         GET /{id}/communications lista Email y SMS; POST send-email y send-sms registran nuevos.
+         GET /{id}/communications registra comunicaciones; no afirma envío externo si no existe proveedor.
 Trabaja con: backend/app/models/client.py, plan.py, router.py, invoice.py, ticket.py,
              backend/app/models/client_communication.py,
              backend/app/integrations/mikrotik/service.py, backend/app/routers/ajustes/router.py,
@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, now_iso
 from app.core.security import get_current_user, is_admin_role
-from app.core.utils import apply_updates, correlative, current_period, get_or_404
+from app.core.utils import apply_updates, business_now, correlative, current_period, get_or_404
 from app.integrations.mikrotik import service as mt
 from app.integrations.olt import service as olt
 from app.models.client import Client
@@ -44,15 +44,17 @@ from app.routers.clientes.schemas import ClientIn, ClientServiceUpdate, ClientSu
 
 router = APIRouter(prefix="/clients", tags=["Clientes"], dependencies=[Depends(get_current_user)])
 
-# Schemas para comunicaciones
+
 class EmailIn(BaseModel):
     to: str
     subject: str
     body: str
     template: Optional[str] = "none"
 
+
 class SmsIn(BaseModel):
     message: str
+
 
 def _activity(db: AsyncSession, client_id: str, action: str, detail: str):
     """Registra un evento operativo sin interrumpir la transacción del cliente."""
@@ -63,6 +65,7 @@ async def _cut_list(db: AsyncSession) -> str:
     s = await db.get(Setting, "system_config")
     return (s.data or {}).get("mikrotik_cut_list") or "morosos"
 
+
 async def _technician_visibility_minutes(db: AsyncSession) -> int:
     setting = await db.get(Setting, "system_config")
     value = (setting.data or {}).get("technician_client_visibility_minutes", 720) if setting else 720
@@ -70,6 +73,7 @@ async def _technician_visibility_minutes(db: AsyncSession) -> int:
         return max(30, min(720, int(value)))
     except (TypeError, ValueError):
         return 720
+
 
 def _can_view_client(client: Client, user: dict, visibility_minutes: int) -> bool:
     if is_admin_role(user.get("role")) or user.get("role") != "tecnico":
@@ -84,10 +88,10 @@ def _can_view_client(client: Client, user: dict, visibility_minutes: int) -> boo
         return False
     return datetime.now(timezone.utc) <= created_at + timedelta(minutes=visibility_minutes)
 
+
 async def _get_visible_client(db: AsyncSession, client_id: str, user: dict) -> Client:
     client = await get_or_404(db, Client, client_id, "Cliente")
     if not _can_view_client(client, user, await _technician_visibility_minutes(db)):
-        # Respondemos 404 para no revelar registros ajenos al técnico.
         raise HTTPException(status_code=404, detail="Cliente no disponible")
     return client
 
@@ -225,7 +229,7 @@ async def get_client(client_id: str, db: AsyncSession = Depends(get_db), current
 @router.get("/{client_id}/invoices")
 async def get_client_invoices(client_id: str, status: Optional[str] = None, search: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """Lista facturas del cliente con filtros opcionales (estado, búsqueda)."""
-    c = await _get_visible_client(db, client_id, current_user)
+    await _get_visible_client(db, client_id, current_user)
     q = select(Invoice).where(Invoice.client_id == client_id)
     if status and status != "all":
         q = q.where(Invoice.status == status)
@@ -238,65 +242,58 @@ async def get_client_invoices(client_id: str, status: Optional[str] = None, sear
 
 @router.get("/{client_id}/communications")
 async def get_client_communications(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Lista historial de Email y SMS enviados al cliente."""
-    c = await _get_visible_client(db, client_id, current_user)
+    """Lista el historial de comunicaciones registradas para el cliente."""
+    await _get_visible_client(db, client_id, current_user)
     comms = (await db.execute(
         select(ClientCommunication)
         .where(ClientCommunication.client_id == client_id)
         .order_by(ClientCommunication.created_at.desc())
     )).scalars().all()
-    return [{"id": comm.id, "type": comm.type or comm.channel, "recipient": comm.recipient, 
-             "subject": comm.subject, "message": comm.message, "status": comm.status, 
+    return [{"id": comm.id, "type": comm.type or comm.channel, "recipient": comm.recipient,
+             "subject": comm.subject, "message": comm.message, "status": comm.status,
              "created_at": comm.created_at} for comm in comms]
 
 
 @router.post("/{client_id}/communications/send-email")
 async def send_email(client_id: str, data: EmailIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Registra y envía un correo al cliente."""
-    c = await _get_visible_client(db, client_id, current_user)
-    
-    # Validar entrada
+    """Registra un correo preparado. El envío real requiere un proveedor/canal conectado."""
+    await _get_visible_client(db, client_id, current_user)
     if not data.to.strip():
         raise HTTPException(status_code=400, detail="Correo destinatario requerido.")
     if not data.subject.strip():
         raise HTTPException(status_code=400, detail="Asunto requerido.")
     if not data.body.strip():
         raise HTTPException(status_code=400, detail="Cuerpo del correo requerido.")
-    
-    # Registrar comunicación
+
     comm = ClientCommunication(
         client_id=client_id,
         type="email",
         channel="email",
-        recipient=data.to,
-        subject=data.subject,
+        recipient=data.to.strip(),
+        subject=data.subject.strip(),
         message=data.body,
         template=data.template or "none",
-        status="sent",
+        status="registered",
         operator_id=current_user.get("id", ""),
         operator_name=current_user.get("name", "Sistema")
     )
     db.add(comm)
-    _activity(db, client_id, "Correo enviado", f"Asunto: {data.subject} a {data.to}")
+    _activity(db, client_id, "Correo registrado", f"Correo preparado para {data.to.strip()}; pendiente de proveedor de envío.")
     await db.commit()
-    
-    return {"ok": True, "id": comm.id, "message": "Correo registrado y enviado correctamente."}
+    return {"ok": True, "sent": False, "id": comm.id, "status": "registered", "message": "Correo registrado. No se marcó como enviado porque no hay un proveedor de envío conectado."}
 
 
 @router.post("/{client_id}/communications/send-sms")
 async def send_sms(client_id: str, data: SmsIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Registra y envía un SMS/WhatsApp al cliente."""
+    """Registra un SMS/WhatsApp preparado sin afirmar un envío externo inexistente."""
     c = await _get_visible_client(db, client_id, current_user)
-    
-    # Validar entrada
     if not data.message.strip():
         raise HTTPException(status_code=400, detail="Mensaje requerido.")
     if len(data.message) > 900:
         raise HTTPException(status_code=400, detail="El mensaje no puede exceder 900 caracteres.")
     if not c.phone:
         raise HTTPException(status_code=400, detail="El cliente no tiene teléfono registrado.")
-    
-    # Registrar comunicación
+
     comm = ClientCommunication(
         client_id=client_id,
         type="sms",
@@ -304,15 +301,14 @@ async def send_sms(client_id: str, data: SmsIn, db: AsyncSession = Depends(get_d
         recipient=c.phone,
         subject="",
         message=data.message,
-        status="sent",
+        status="registered",
         operator_id=current_user.get("id", ""),
         operator_name=current_user.get("name", "Sistema")
     )
     db.add(comm)
-    _activity(db, client_id, "SMS enviado", f"A {c.phone}: {data.message[:50]}...")
+    _activity(db, client_id, "Mensaje registrado", f"Mensaje preparado para {c.phone}; pendiente de proveedor de envío.")
     await db.commit()
-    
-    return {"ok": True, "id": comm.id, "message": "SMS registrado y enviado correctamente."}
+    return {"ok": True, "sent": False, "id": comm.id, "status": "registered", "message": "Mensaje registrado. No se marcó como enviado porque no hay un proveedor SMS/WhatsApp conectado."}
 
 
 @router.get("/{client_id}/onu-status")
@@ -350,7 +346,7 @@ async def create_client(data: ClientIn, db: AsyncSession = Depends(get_db), curr
         raise HTTPException(status_code=502, detail=f"No se pudo registrar el abonado en MikroTik: {result['message']}")
 
     if data.create_first_invoice:
-        now = datetime.now(timezone.utc)
+        now = business_now()
         db.add(Invoice(invoice_number=correlative("REC"), client_id=c.id, client_name=c.full_name,
                        client_dni_ruc=c.dni_ruc, client_address=c.address, client_phone=c.phone,
                        plan_name=c.plan_name, amount=c.plan_price, month_period=current_period(),
@@ -384,7 +380,6 @@ async def update_client_summary(client_id: str, data: ClientSummaryUpdate, db: A
         else:
             updates["zone_name"] = ""
 
-    # Los campos numéricos del modelo no son nulos; vacío en el formulario equivale a sin coordenadas.
     for field in ("latitude", "longitude"):
         if field in updates and updates[field] is None:
             updates[field] = 0.0
@@ -404,7 +399,6 @@ async def update_client_service(client_id: str, data: ClientServiceUpdate, db: A
     c = await _get_visible_client(db, client_id, current_user)
     updates = data.model_dump(exclude_unset=True)
 
-    # Normaliza campos de texto vacíos antes de las validaciones del servicio.
     for field in (
         "plan_id", "router_id", "connection_type", "ipv4_network_id", "ip_address",
         "pppoe_user", "pppoe_password", "technology", "zone_id", "nap_box_id",
@@ -424,7 +418,6 @@ async def update_client_service(client_id: str, data: ClientServiceUpdate, db: A
     return {**c.to_dict(), "mikrotik": result}
 
 
-
 @router.put("/{client_id}")
 async def update_client(client_id: str, data: ClientIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     c = await _get_visible_client(db, client_id, current_user)
@@ -442,9 +435,16 @@ async def update_client(client_id: str, data: ClientIn, db: AsyncSession = Depen
 @router.delete("/{client_id}")
 async def delete_client(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     c = await _get_visible_client(db, client_id, current_user)
-    rtr = await db.get(Router, c.router_id) if c.router_id else None
-    result = await mt.remove_client(c, rtr, await _cut_list(db))
-    _activity(db, c.id, "Cliente eliminado", f"Cliente eliminado del sistema. {result.get('message', '')}")
+    # Un retirado ya no tiene recursos técnicos asignados; en ese caso la eliminación local es segura.
+    if c.status != "retired" and c.router_id:
+        rtr = await db.get(Router, c.router_id)
+        result = await mt.remove_client(c, rtr, await _cut_list(db))
+        if not result.get("ok"):
+            await db.rollback()
+            raise HTTPException(status_code=502, detail=f"No se eliminó el cliente porque no se pudo limpiar MikroTik: {result.get('message', 'error desconocido')}")
+    else:
+        result = {"ok": True, "message": "Sin recursos MikroTik pendientes de limpiar."}
+    _activity(db, c.id, "Cliente eliminado", f"Eliminación definitiva confirmada. {result.get('message', '')}")
     await db.delete(c)
     await db.commit()
     return {"message": "Cliente eliminado correctamente", "mikrotik": result}
@@ -453,15 +453,25 @@ async def delete_client(client_id: str, db: AsyncSession = Depends(get_db), curr
 @router.post("/{client_id}/toggle-status")
 async def toggle_status(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     c = await _get_visible_client(db, client_id, current_user)
+    if c.status not in {"active", "suspended"}:
+        raise HTTPException(status_code=409, detail="Esta acción solo aplica a clientes activos o suspendidos.")
     rtr = await db.get(Router, c.router_id) if c.router_id else None
     cut_list = await _cut_list(db)
+
     if c.status == "active":
-        c.status, c.is_online = "suspended", False
         result = await mt.cut_client(c, rtr, cut_list)
+        if not result.get("ok"):
+            await db.rollback()
+            raise HTTPException(status_code=502, detail=f"No se suspendió el cliente porque MikroTik rechazó el corte: {result.get('message', 'error desconocido')}")
+        c.status, c.is_online = "suspended", False
     else:
+        result = await mt.restore_client(c, rtr, cut_list)
+        if not result.get("ok"):
+            await db.rollback()
+            raise HTTPException(status_code=502, detail=f"No se reactivó el cliente porque MikroTik no confirmó la restauración: {result.get('message', 'error desconocido')}")
         c.status, c.is_online = "active", True
         c.last_connection_time = now_iso()
-        result = await mt.restore_client(c, rtr, cut_list)
-    _activity(db, c.id, "Servicio actualizado", result["message"])
+
+    _activity(db, c.id, "Servicio actualizado", result.get("message", "Operación aplicada en MikroTik"))
     await db.commit()
-    return {"id": c.id, "status": c.status, "is_online": c.is_online, "message": result["message"], "mikrotik": result}
+    return {"id": c.id, "status": c.status, "is_online": c.is_online, "message": result.get("message", "Operación completada"), "mikrotik": result}
