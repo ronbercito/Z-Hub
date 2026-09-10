@@ -61,17 +61,23 @@ async def _config(db: AsyncSession) -> tuple[bool, int]:
 
 
 async def _ensure_tracking(db: AsyncSession, clients: list[Client]) -> bool:
-    """Inicializa la fecha si es un registro antiguo que aún no la tenía."""
+    """Mantiene el inicio del período suspendido y evita arrastrarlo tras reactivaciones."""
     changed = False
     for client in clients:
-        if client.status == "suspended" and not client.suspended_at:
-            inferred = _parse_date(client.last_connection_time)
-            if inferred:
-                client.suspended_at = f"{inferred.isoformat()}T00:00:00+00:00"
-            else:
-                client.suspended_at = now_iso()
-            changed = True
-        elif client.status != "suspended" and client.suspended_at:
+        suspended = _parse_date(client.suspended_at)
+        last_active = _parse_date(client.last_connection_time)
+        if client.status == "suspended":
+            if not suspended:
+                if last_active:
+                    client.suspended_at = f"{last_active.isoformat()}T00:00:00+00:00"
+                else:
+                    client.suspended_at = now_iso()
+                changed = True
+            elif last_active and last_active > suspended:
+                # Hubo una reactivación posterior a la suspensión anterior; comienza un ciclo nuevo.
+                client.suspended_at = f"{last_active.isoformat()}T00:00:00+00:00"
+                changed = True
+        elif client.suspended_at:
             client.suspended_at = ""
             changed = True
     if changed:
