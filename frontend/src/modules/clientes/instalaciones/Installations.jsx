@@ -43,7 +43,6 @@ export default function Installations({ onContinueToClient }) {
 
   useEffect(() => { fetchData(); }, [API, token]);
 
-  // Migra una sola vez cualquier registro temporal creado durante la transición 1.2.17.
   useEffect(() => {
     if (loading) return;
     const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -68,7 +67,6 @@ export default function Installations({ onContinueToClient }) {
     migrate();
   }, [loading, API, token]);
 
-  // Cuando el alta ya existe como cliente, la solicitud sale de Instalaciones y queda visible en Registrados.
   useEffect(() => {
     if (loading || !clients.length || !pendingInstallations.length) return;
     const registeredDocuments = new Set(clients.map((client) => String(client.dni_ruc || "").trim()).filter(Boolean));
@@ -126,6 +124,72 @@ export default function Installations({ onContinueToClient }) {
   const visibleCount = activeTab === "installations" ? pendingRows.length : rows.length;
 
   return <div className="installations-page space-y-4 animate-in fade-in duration-200">
+    <style>{`
+      .installations-page .installation-tab {
+        position: relative;
+        min-width: 176px;
+        justify-content: center;
+        border-width: 1px !important;
+        border-bottom-width: 3px !important;
+      }
+      .installations-page .installation-tab:not(.installation-tab-active) {
+        background: rgba(30, 41, 59, .72) !important;
+        border-color: rgba(100, 116, 139, .38) !important;
+        color: #cbd5e1 !important;
+        box-shadow: none !important;
+      }
+      .installations-page .installation-tab:not(.installation-tab-active):hover {
+        background: rgba(51, 65, 85, .82) !important;
+        color: #f8fafc !important;
+      }
+      .installations-page .installation-tab-active {
+        background: linear-gradient(135deg, #06b6d4 0%, #1689d8 52%, #2563eb 100%) !important;
+        border-color: #22d3ee !important;
+        color: #ffffff !important;
+        box-shadow: 0 7px 16px rgba(14, 165, 233, .24) !important;
+      }
+      .installations-page .installation-tab svg { color: currentColor !important; }
+      .installations-page .installation-tab > span {
+        min-width: 24px;
+        text-align: center;
+      }
+      .installations-page .installation-tab-active > span {
+        background: rgba(255,255,255,.24) !important;
+        color: #ffffff !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab:not(.installation-tab-active) {
+        background: linear-gradient(180deg, #f2f7fb 0%, #e6eef5 100%) !important;
+        border-color: #cfdeea !important;
+        border-bottom-color: #b8cedd !important;
+        color: #123e65 !important;
+        box-shadow: 0 2px 6px rgba(31, 74, 112, .08) !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab:not(.installation-tab-active):hover {
+        background: linear-gradient(180deg, #e9f5fc 0%, #dcecf7 100%) !important;
+        border-color: #8ecae7 !important;
+        color: #0f4f7d !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab:not(.installation-tab-active) > span {
+        background: #ffffff !important;
+        color: #173b63 !important;
+        box-shadow: 0 1px 3px rgba(31, 74, 112, .12) !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab-active {
+        background: linear-gradient(135deg, #09b6ca 0%, #168fd3 52%, #2477c4 100%) !important;
+        border-color: #19abc8 !important;
+        border-bottom-color: #0794bd !important;
+        color: #ffffff !important;
+        box-shadow: 0 7px 16px rgba(17, 137, 190, .22) !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab-active svg,
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab-active > span {
+        color: #ffffff !important;
+      }
+      html[data-panel-theme="zhub-light"] .installations-page .installation-tab-active > span {
+        background: rgba(255,255,255,.26) !important;
+      }
+    `}</style>
+
     <header className="rounded-2xl border border-slate-800 bg-slate-900/90 px-5 pt-5 shadow-lg">
       <div>
         <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-slate-100"><ClipboardList className="h-6 w-6 text-cyan-400" /> Instalaciones</h2>
@@ -133,21 +197,13 @@ export default function Installations({ onContinueToClient }) {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2 border-b border-slate-800">
-        <button
-          type="button"
-          onClick={() => setActiveTab("installations")}
-          className={`installation-tab -mb-px inline-flex items-center gap-2 rounded-t-xl border px-5 py-3 text-sm font-extrabold transition ${activeTab === "installations" ? "installation-tab-active border-cyan-400 bg-cyan-500 text-white shadow-lg" : "border-transparent bg-slate-800/70 text-slate-300 hover:bg-slate-800"}`}
-        >
+        <button type="button" onClick={() => setActiveTab("installations")} className={`installation-tab -mb-px inline-flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-extrabold transition ${activeTab === "installations" ? "installation-tab-active" : ""}`}>
           <Wrench className="h-4 w-4" /> Instalaciones
-          <span className={`rounded-full px-2 py-0.5 text-xs font-black ${activeTab === "installations" ? "bg-white/20 text-white" : "bg-slate-700 text-slate-300"}`}>{pendingInstallations.length}</span>
+          <span className="rounded-full px-2 py-0.5 text-xs font-black">{pendingInstallations.length}</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("registered")}
-          className={`installation-tab -mb-px inline-flex items-center gap-2 rounded-t-xl border px-5 py-3 text-sm font-extrabold transition ${activeTab === "registered" ? "installation-tab-active border-cyan-400 bg-cyan-500 text-white shadow-lg" : "border-transparent bg-slate-800/70 text-slate-300 hover:bg-slate-800"}`}
-        >
+        <button type="button" onClick={() => setActiveTab("registered")} className={`installation-tab -mb-px inline-flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-extrabold transition ${activeTab === "registered" ? "installation-tab-active" : ""}`}>
           <BadgeCheck className="h-4 w-4" /> Registrados
-          <span className={`rounded-full px-2 py-0.5 text-xs font-black ${activeTab === "registered" ? "bg-white/20 text-white" : "bg-slate-700 text-slate-300"}`}>{clients.length}</span>
+          <span className="rounded-full px-2 py-0.5 text-xs font-black">{clients.length}</span>
         </button>
       </div>
     </header>
