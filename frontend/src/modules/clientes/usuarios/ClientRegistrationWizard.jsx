@@ -47,13 +47,13 @@ export default function ClientRegistrationWizard({ selectedClient, formData, set
   const [equipment, setEquipment] = useState([]);
 
   useEffect(() => {
-    axios.get(`${api}/settings`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${api}/client-registration-settings`, { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => {
         const policy = {
-          billingDay: Math.min(30, Math.max(1, Number(response.data.client_registration_default_billing_day || 5))),
-          technology: response.data.client_registration_default_technology === "wireless" ? "wireless" : "fiber",
-          installationDateRequired: response.data.client_registration_installation_date_required !== false,
-          createFirstInvoice: response.data.client_registration_create_first_invoice_default !== false,
+          billingDay: Math.min(30, Math.max(1, Number(response.data.billing_day || 5))),
+          technology: response.data.technology === "wireless" ? "wireless" : "fiber",
+          installationDateRequired: response.data.installation_date_required !== false,
+          createFirstInvoice: response.data.create_first_invoice_default !== false,
         };
         setRegistrationPolicy(policy);
         if (!selectedClient) {
