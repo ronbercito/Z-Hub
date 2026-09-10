@@ -68,6 +68,10 @@ DEFAULT_SETTINGS = {
     "smtp_sent_count": 0,
     "initial_setup_completed": False,
     "license_key": "",
+    "license_type": "",
+    "license_plan": "",
+    "license_max_clients": None,
+    "license_activated_at": "",
 }
 
 
