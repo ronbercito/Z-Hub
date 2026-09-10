@@ -47,6 +47,20 @@ def test_recovery_legacy_equipment_states_still_show_resolution_actions():
     assert '>No recuperado</button>' in f
     assert '>Recuperado</button>' in f
 
+def test_recovered_equipment_inventory_return_is_exact_and_idempotent():
+    b=source("backend/app/routers/clientes/equipment_recoveries.py")
+    f=source("frontend/src/modules/clientes/recuperacion/EquipmentRecovery.jsx")
+    inv=source("frontend/src/modules/almacen/Inventory.jsx")
+    assert 'inventory-matches' in b and 'inventory-return' in b
+    assert 'target.get("status") != "recovered"' in b
+    assert 'target.get("inventory_returned_at")' in b
+    assert 'El registro seleccionado no coincide exactamente con el Serial/MAC recuperado.' in b
+    assert 'Se bloqueó el retorno para evitar duplicar existencias.' in b
+    assert 'create_new' in b and 'correlative("INV")' in b
+    assert 'Enviar a Almacén' in f and 'Retorno a Almacén' in f
+    assert 'Disponible para reutilizar' in f and 'En revisión' in f and 'Averiado' in f and 'Baja' in f
+    assert 'STATUS_LABELS' in inv and 'En revisión' in inv and 'Averiado' in inv and 'Baja' in inv
+
 def test_business_timezone_defaults_to_lima():
     c=source("backend/app/core/config.py"); u=source("backend/app/core/utils.py"); assert 'APP_TIMEZONE = os.environ.get("APP_TIMEZONE", "America/Lima")' in c; assert "def business_now()" in u; assert "def business_today()" in u
 
