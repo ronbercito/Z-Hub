@@ -19,41 +19,48 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.27 — 2026-09-09 — Servicio en pausa temporal
+
+- **Objetivo:** permitir congelar temporalmente el servicio de un cliente por viaje, construcción u otra ausencia sin retirarlo ni liberar sus recursos técnicos.
+- **UI Clientes:** se agrega el botón `Pausar servicio` para clientes activos y una pestaña `En pausa` con contador, fecha de inicio, fecha programada de reactivación, días guardados, motivo y acciones.
+- **Duración:** se puede seleccionar 1, 2 o 3 meses. El final se calcula por mes calendario conservando el día cuando exista y usando el último día válido en meses más cortos.
+- **Motivo:** obligatorio, entre 10 y 250 caracteres.
+- **Días conservados:** al iniciar la pausa Z-Hub calcula los días que faltan hasta la próxima fecha de facturación del cliente y guarda ese saldo de tiempo en `pause_saved_days`.
+- **MikroTik:** la pausa usa el mecanismo de corte existente (`mt.cut_client`) sin eliminar PPPoE, Queue, IP, plan, router, NAP, ONU ni demás asociaciones. Si MikroTik no logra suspender el servicio, la pausa no se registra.
+- **Facturación congelada:** mientras `status=paused`, la generación mensual automática omite al cliente y el proceso de marcar facturas vencidas no avanza sus vencimientos. Las deudas existentes no se eliminan.
+- **Reactivación automática:** `pause_worker` revisa una vez por hora las pausas vencidas. Primero intenta `mt.restore_client`; solo si MikroTik confirma la restauración cambia el cliente a activo. Si falla, la pausa queda pendiente y se reintenta posteriormente.
+- **Devolución de días:** al reactivar, Z-Hub suma los días guardados desde la fecha real de reactivación y ajusta el día de facturación resultante.
+- **Reactivación anticipada:** la pestaña `En pausa` incorpora `Reactivar ahora`. El usuario puede dejar la fecha de facturación en modo automático o escoger opcionalmente un día de facturación del 1 al 30.
+- **Aviso 5 días antes:** cuando faltan 5 días o menos aparece `Pausa por finalizar` y un botón `Avisar WhatsApp`, que prepara un mensaje con nombre, fecha de reactivación y días conservados. No se agregó envío automático por una API externa de WhatsApp.
+- **Fechas de facturación:** `_billing_dates` deja de forzar todos los días 29/30 al 28 y ahora respeta días 1–30, ajustándose al último día válido del mes cuando corresponda.
+- **Base de datos:** `init_db` agregará mediante su migración ligera las columnas `pause_active`, `pause_started_at`, `pause_until`, `pause_months`, `pause_reason`, `pause_saved_days`, `pause_original_billing_day`, `pause_resumed_at` y `pause_billing_day_after` sin borrar datos existentes.
+- **Archivos:** `backend/app/models/client.py`, `backend/app/routers/clientes/pause.py` (nuevo), `backend/app/routers/facturacion/router.py`, `backend/server.py`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Compatibilidad:** no se modifican aprovisionamiento inicial, planes, NAP, ONU, Instalaciones, Retirados ni el asistente oficial de Nuevo abonado.
+- **Backup:** `docs/backups/1.2.26/SERVICE_PAUSE_BACKUP.md` contiene los blobs exactos previos de 1.2.26.
+- **Pruebas realizadas:** revisión estática de estado `paused`, validaciones 1–3 meses y motivo 10–250, corte/restauración MikroTik, cálculo calendario, congelamiento de facturación, reactivación manual/automática y render de la pestaña/alerta/WhatsApp.
+- **Pruebas pendientes:** build React, compilación Python, arranque real con migración MariaDB, prueba de corte/restauración contra MikroTik, prueba de una pausa vencida y validación visual después de instalar 1.2.27.
+- **Riesgo operativo:** la reactivación automática depende de que el backend permanezca en ejecución y el MikroTik esté accesible; ante fallo no se marca al cliente activo falsamente y se reintenta.
+- **Commits principales:** backup `2ec3443f65c2f7fc3cdceda36ab1bd0c2787f9e4`; backend pausa `e12fabfb0526b75e46b3f668a41b58040d675b47`; modelo `8bdae240d9a8c75823b9d6acb2bcb85dfe17c572`; servidor `48f9a0e14b5f14c88922d98bc510b46434bd85e8`; facturación `0a7dcc33bc636fda0266ee3f6d20ff7dcd228e02`; UI `e98cf10a1e1ecda5e8ea1f2b8521f1b866780a5e`; versión `25e69ac8dc0457463ad4dfede33bf310929f04e0`.
+
 ## 1.2.26 — 2026-09-09 — Planes filtrados por tecnología en el alta
 
 - **Objetivo:** evitar que durante el registro de un abonado se pueda escoger un plan que pertenezca a otra tecnología.
 - **Comportamiento:** cuando la tecnología seleccionada es `Fibra óptica`, el selector `Plan de internet` muestra únicamente planes activos clasificados como fibra; cuando se selecciona `Inalámbrico`, muestra únicamente planes activos de radio/inalámbricos.
-- **Clasificación:** se reutiliza el criterio ya usado por el módulo Planes: tipos con `radio`, `inalam/inalám`, `Ubiquiti` o `Mimosa` se consideran inalámbricos; `Hotspot` queda fuera de ambos selectores; los demás tipos corresponden a fibra.
+- **Clasificación:** tipos con `radio`, `inalam/inalám`, `Ubiquiti` o `Mimosa` se consideran inalámbricos; `Hotspot` queda fuera de ambos selectores; los demás tipos corresponden a fibra.
 - **Cambio de tecnología:** al cambiar de Fibra a Inalámbrico o viceversa se limpia `plan_id`, obligando a escoger un plan válido para la nueva tecnología.
-- **Validación:** antes de guardar, el asistente verifica que el `plan_id` seleccionado exista dentro de los planes activos compatibles con la tecnología actual; si no coincide, bloquea el registro y muestra un aviso.
+- **Validación:** antes de guardar, el asistente verifica que el `plan_id` seleccionado exista dentro de los planes activos compatibles con la tecnología actual.
 - **Archivo funcional:** `frontend/src/modules/clientes/usuarios/ClientRegistrationWizard.jsx`.
 - **Versión/changelog:** `frontend/src/modules/system-update/version.js` → `1.2.26`.
-- **Backend/Base de datos:** sin cambios; no se modifican planes existentes ni su estructura.
+- **Backend/Base de datos:** sin cambios.
 - **Compatibilidad:** se conservan MikroTik, PPPoE, redes IPv4, NAP, ONU, facturación, Instalaciones, reactivación y aprovisionamiento actuales.
-- **Backup:** `docs/backups/1.2.25/PLAN_TECH_FILTER_BACKUP.md`, con blobs exactos recuperables de los archivos 1.2.25 previos al cambio.
-- **Pruebas realizadas:** revisión estática del filtro por `plan.type`, cambio reactivo al modificar `formData.technology`, limpieza de `plan_id`, placeholder contextual y validación previa al submit.
-- **Pruebas pendientes:** build React y prueba visual/funcional real en el servidor después de instalar 1.2.26, comprobando al menos Fibra → solo fibra e Inalámbrico → solo radio/inalámbricos.
-- **Resultado:** código funcional y versión publicados en `main`; validación operativa real queda pendiente hasta instalar 1.2.26.
-- **Commits principales:** backup `9aa0bc6dc9ade5f5d19a347bd9e78bdf76f174e5`; asistente `0010aea308e100979fb6a364af9dc93b993ecc5c`; versión `591330496adedd9d9bab687980d30ee86f3190cb`.
+- **Backup:** `docs/backups/1.2.25/PLAN_TECH_FILTER_BACKUP.md`.
+- **Pruebas realizadas:** revisión estática del filtro, cambio de tecnología, limpieza de `plan_id` y validación previa al submit.
+- **Pruebas pendientes:** build React y prueba visual/funcional real en servidor.
 
 ## 1.2.25 — 2026-09-09 — Baja controlada y Clientes retirados
-
-- **Objetivo:** reemplazar la eliminación como procedimiento normal de salida por una baja controlada que conserve la identidad del cliente.
-- **UI Clientes:** nuevo botón `Retirar cliente` y pestaña `Retirados`.
-- **Confirmación:** muestra nombre, DNI/RUC, teléfono, dirección y recursos que serán liberados.
-- **Motivo:** obligatorio, mínimo 10 y máximo 250 caracteres. `retired_at` guarda la fecha/hora automáticamente y `retirement_reason` conserva el motivo.
-- **Seguridad MikroTik:** antes de archivar se ejecuta `mt.remove_client`. Si MikroTik no puede liberar la configuración, la operación se cancela y el cliente permanece sin retirar.
-- **Liberación:** después de confirmar limpieza se liberan IP, PPPoE, plan, router, red IPv4, NAP/puerto, ONU, potencia, zona y asociaciones inalámbricas. Se eliminan registros operativos asociados (servicios, facturas, tickets, tareas, comunicaciones, documentos y actividad) y se conserva la identidad/contacto/dirección/coordenadas del cliente junto con fecha y motivo de retiro.
-- **Estado:** el mismo registro `clients` pasa a `status=retired`; no se crea un duplicado ni se elimina el cliente histórico.
-- **Reactivación:** `Retirados` incorpora `Reactivar / volver a registrar`; reutiliza `ClientRegistrationWizard` existente con datos personales precargados y obliga a asignar nuevamente servicio, plan, router, IP/NAP/ONU según corresponda. Tras aprovisionar correctamente se limpia el estado de retiro.
-- **DNI/RUC retirado:** al intentar crear una nueva solicitud de Instalaciones con un DNI/RUC retirado, la API devuelve un aviso legible con nombre, fecha y motivo y dirige a `Clientes > Retirados > Volver a registrar`.
-- **Base de datos:** se agregan automáticamente `clients.retired_at` y `clients.retirement_reason` mediante la migración ligera existente de `init_db`.
-- **Archivos:** `backend/app/models/client.py`, `backend/app/routers/clientes/retired.py` (nuevo), `backend/app/routers/clientes/installations.py`, `backend/server.py`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
-- **Compatibilidad:** no se modifica `ClientRegistrationWizard.jsx`; se reutiliza el asistente oficial.
-- **Backup:** referencias exactas de blobs 1.2.24 en `docs/backups/1.2.24/RETIREMENT_CHANGE_BACKUP.md`.
-- **Pruebas realizadas:** revisión estática de rutas, modelo, migración ligera existente, validación 10–250, abortar ante fallo MikroTik, limpieza de campos técnicos y flujo de reactivación en código.
-- **Pruebas pendientes:** build React, compilación Python, arranque/migración MariaDB y prueba real contra MikroTik después de instalar 1.2.25. No se ha ejecutado una baja real sobre un cliente de producción desde este entorno.
-- **Riesgo operativo:** Retirar es una acción destructiva sobre la configuración de servicio y registros operativos asociados; usar únicamente cuando la baja sea real. El botón Eliminar continúa separado para registros creados por error.
+- `Retirar cliente` conserva identidad, contacto, fecha y motivo; libera recursos técnicos después de limpiar MikroTik.
+- Pestaña `Retirados`, detección por DNI/RUC y `Reactivar / volver a registrar`.
+- Motivo obligatorio 10–250 caracteres. Backup en `docs/backups/1.2.24/`.
 
 ## 1.2.24 — 2026-09-09 — Pestañas adaptadas al tema Claro Suave
 - Instalaciones/Registrados reciben estilos locales para evitar que el tema global oscurezca la pestaña inactiva.
@@ -138,6 +145,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.26**.
+- Serie cubierta: **1.2.00 → 1.2.27**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.27**, encima de 1.2.26.
+- Próxima versión funcional: **1.2.28**, encima de 1.2.27.
