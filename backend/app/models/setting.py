@@ -51,6 +51,7 @@ DEFAULT_SETTINGS = {
     "client_retirement_reason_required": True,
     "client_retirement_keep_technical_snapshot": True,
     "client_retirement_allow_reactivation": True,
+    "client_equipment_recovery_enabled": False,
     "google_maps_api_key": "",
     "system_alert_emails": [],
     "system_alert_phones": [],
