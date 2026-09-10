@@ -1,0 +1,42 @@
+/* Z-Hub 1.2.43 — servicio técnico progresivo en el alta de abonados. */
+.client-registration-service .client-registration-service-card {
+  min-height: 100%;
+}
+.client-registration-service .client-registration-service-input:disabled {
+  cursor: not-allowed;
+}
+.client-registration-submit:disabled {
+  filter: saturate(.55);
+}
+
+html[data-panel-theme="zhub-light"] .client-registration-service .client-registration-service-card {
+  background: #ffffff !important;
+  border-color: #cbdbe8 !important;
+  box-shadow: 0 4px 14px rgba(33, 76, 111, .07);
+}
+html[data-panel-theme="zhub-light"] .client-registration-service .client-registration-service-card h4,
+html[data-panel-theme="zhub-light"] .client-registration-service label,
+html[data-panel-theme="zhub-light"] .client-registration-service label > span {
+  color: #173b63 !important;
+}
+html[data-panel-theme="zhub-light"] .client-registration-service .client-registration-service-input {
+  background: #ffffff !important;
+  color: #173b63 !important;
+  border-color: #b8cad9 !important;
+}
+html[data-panel-theme="zhub-light"] .client-registration-service .client-registration-service-input:focus {
+  border-color: #2a89c8 !important;
+  box-shadow: 0 0 0 3px rgba(42, 137, 200, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .client-registration-service .client-registration-service-input:disabled {
+  background: #e9eff4 !important;
+  color: #8093a4 !important;
+  border-color: #d0dce5 !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 767px) {
+  .client-registration-service {
+    gap: 12px;
+  }
+}
