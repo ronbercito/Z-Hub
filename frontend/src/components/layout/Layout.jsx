@@ -28,6 +28,7 @@ import Inventory from "../../modules/almacen/Inventory";
 import Tickets from "../../modules/tickets/Tickets";
 import Messaging from "../../modules/mensajeria/Messaging";
 import Settings from "../../modules/ajustes/Settings";
+import ClientSettings from "../../modules/ajustes/clientes/ClientSettings";
 import { PANEL_VERSION } from "../../modules/system-update/version";
 import { applyPanelTheme } from "../../modules/appearance/panelThemes";
 
@@ -76,6 +77,7 @@ export default function Layout() {
   useEffect(() => { document.title = `${companyName} · Z-Hub`; }, [companyName]);
 
   const renderContent = () => {
+    if (activeTab === "settings_clients") return <ClientSettings />;
     if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
     switch (activeTab) {
       case "inicio":
