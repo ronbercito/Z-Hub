@@ -62,3 +62,11 @@ def test_new_client_registration_uses_same_progressive_service_flow():
     assert 'disabled={!serviceReady}' in text
     assert 'client-registration-service.css' in text
     assert 'html[data-panel-theme="zhub-light"] .client-registration-service' in css
+
+def test_clients_list_restores_pending_invoice_badge_and_red_total():
+    text=source("frontend/src/modules/clientes/Clients.jsx")
+    assert 'Number(c.balance_due||0)>0' in text
+    assert 'c.unpaid_invoices_count' in text
+    assert 'factura(s) pendiente(s)' in text
+    assert 'text-rose-400' in text and 'bg-rose-500' in text
+    assert '<span>S/. {Number(c.balance_due||0).toFixed(2)}</span>' in text
