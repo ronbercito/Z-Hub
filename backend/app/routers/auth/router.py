@@ -1,7 +1,7 @@
 """
 Archivo: backend/app/routers/auth/router.py
 Función: Rutas de autenticación: POST /api/auth/login (email + contraseña => JWT en
-         cookie httpOnly y en la respuesta), GET /api/auth/me (usuario actual),
+         cookie httpOnly y en la respuesta por compatibilidad), GET /api/auth/me (usuario actual),
          POST /api/auth/logout, y gestión de usuarios del panel (solo admin).
 Trabaja con: backend/app/core/security.py, backend/app/models/user.py,
              frontend/src/context/AuthContext.js, frontend/src/modules/auth/Login.jsx
@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import SESSION_COOKIE_SECURE
 from app.core.database import get_db
 from app.core.security import create_access_token, get_current_user, hash_password, require_role, verify_password
 from app.core.utils import get_or_404
@@ -26,7 +27,17 @@ async def login(req: LoginRequest, response: Response, db: AsyncSession = Depend
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
     token = create_access_token(user.id, user.email, user.role)
-    response.set_cookie("access_token", token, httponly=True, secure=False, samesite="lax", max_age=86400, path="/")
+    response.set_cookie(
+        "access_token",
+        token,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        max_age=86400,
+        path="/",
+    )
+    # Se mantiene el token en la respuesta durante la transición para no romper clientes API antiguos.
+    # El frontend Z-Hub 1.2.37 ya no lo persiste en localStorage.
     return {"token": token, "user": user.to_dict(exclude=("password_hash",)), "message": f"Bienvenido {user.name}"}
 
 
@@ -37,7 +48,7 @@ async def me(current_user: dict = Depends(get_current_user)):
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("access_token", path="/", secure=SESSION_COOKIE_SECURE, samesite="lax")
     return {"message": "Sesión cerrada correctamente"}
 
 
