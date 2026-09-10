@@ -1,0 +1,42 @@
+name: Z-Hub Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile Python
+        run: python -m compileall -q backend/app backend/server.py
+      - name: Install pytest for maintenance contracts
+        run: python -m pip install 'pytest>=8,<9'
+      - name: Maintenance regression contracts
+        run: pytest -q -c /dev/null backend/tests/test_maintenance_contracts.py
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile --network-timeout 100000
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          CI: 'false'
+          DISABLE_ESLINT_PLUGIN: 'true'
+          REACT_APP_BACKEND_URL: ''
+        run: yarn build
