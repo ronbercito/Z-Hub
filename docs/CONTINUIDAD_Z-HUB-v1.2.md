@@ -19,6 +19,25 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.34 — 2026-09-10 — Políticas de Suspensiones, retiros y reactivaciones
+
+- **Objetivo:** convertir `Ajustes → Configuración clientes → Suspensiones, retiros y reactivaciones` en una sección funcional más completa, manteniendo la alerta por suspensión prolongada y añadiendo reglas de retiro/retorno.
+- **Configuración:** junto a la alerta de 1–6 meses se agregan tres políticas: motivo obligatorio al retirar, conservar ficha técnica previa al retiro y permitir/bloquear reactivación de clientes retirados.
+- **Motivo de retiro:** si la política está activa, se mantiene el requisito de 10–250 caracteres. Si se desactiva, el motivo puede quedar vacío; si se escribe uno, debe tener al menos 3 caracteres.
+- **Historial técnico:** cuando está activo, antes de liberar recursos se guarda una copia del servicio anterior con tecnología, plan, router, IP, tipo de conexión, usuario PPPoE, ONU, NAP/puerto, zona, CPE/base, antena, IP de administración y fecha de instalación.
+- **Base de datos:** se agrega `retirement_technical_snapshot` al modelo `Client` como texto JSON. La migración ligera de `init_db` debe crear la columna sin borrar clientes ni datos existentes.
+- **Retirados:** la API devuelve `retirement_snapshot` ya convertido a objeto; la pestaña Retirados muestra una columna `Ficha técnica anterior` cuando existe información conservada.
+- **Reactivación:** la política `Permitir reactivar clientes retirados` controla el botón `Reactivar / volver a registrar`; el endpoint de finalización también rechaza la reactivación cuando la política está desactivada.
+- **Seguridad operacional:** el retiro sigue siendo manual. La alerta de suspensión prolongada nunca retira automáticamente ni libera recursos por sí sola.
+- **MikroTik:** la secuencia de retiro existente se conserva: primero se intenta liberar el cliente en MikroTik y solo si la operación confirma éxito se completa la baja en base de datos.
+- **Compatibilidad:** no se modifican pausas, facturación, altas, NAP/OLT, suspensión automática ni clientes activos. Los clientes retirados antes de 1.2.34 no tendrán ficha técnica histórica retroactiva si esos datos ya fueron eliminados.
+- **Archivos modificados:** `backend/app/models/setting.py`, `backend/app/models/client.py`, `backend/app/routers/clientes/retired.py`, `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Backup:** `docs/backups/1.2.33/SUSPENSION_RETIREMENT_SETTINGS_BACKUP.md` conserva los blobs exactos previos de 1.2.33.
+- **Pruebas realizadas:** revisión estática de valores por defecto, lectura/guardado de políticas, validación condicional de motivo, captura de ficha técnica antes del vaciado de recursos, decoración de Retirados y visibilidad del botón de reactivación.
+- **Pruebas pendientes:** build React, compilación/importación Python, arranque real para verificar migración de `retirement_technical_snapshot`, retiro real contra MikroTik y prueba visual/funcional en servidor.
+- **Riesgos:** la ficha técnica conserva solo el último retiro registrado en la fila del cliente; no sustituye todavía un historial estructurado de múltiples ciclos. La recuperación física de equipos se implementará aparte en `Recuperación de equipos`.
+- **Commits principales:** backup `977047f4a2c35d410b6c2b3f39a1669f7395586b`; settings `20996fc6dfdc58ed91840e584d03d7f53e68f62b`; modelo cliente `361ec7455d7be831602cd9fa69d699dfcf91e909`; backend retiro `de51dacf3b029abe8b4c2db35989094daef658a4`; UI Ajustes `2c9bd3fe39ea6c44f797bf072f35621c8dfc79ba`; UI Clientes `5fce86d925715e4c8aab63622d9a35b67523a6a5`; versión `9ab3429c4b48a2e0529d566f4d75dc53de8b1bdf`.
+
 ## 1.2.33 — 2026-09-10 — Preferencias funcionales de Pausas de servicio
 
 - **Objetivo:** convertir `Ajustes → Configuración clientes → Pausas de servicio` en una sección funcional sin romper el flujo de pausa validado en 1.2.27.
@@ -242,6 +261,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.33**.
+- Serie cubierta: **1.2.00 → 1.2.34**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.34**, encima de 1.2.33.
+- Próxima versión funcional: **1.2.35**, encima de 1.2.34.
