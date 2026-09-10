@@ -7,9 +7,9 @@ import React from "react";
 import Clients from "../Clients";
 import SuspensionRecoveryAlerts from "./SuspensionRecoveryAlerts";
 
-export default function Users() {
+export default function Users({ onOpenRecovery }) {
   return <>
-    <SuspensionRecoveryAlerts />
+    <SuspensionRecoveryAlerts onOpenRecovery={onOpenRecovery} />
     <Clients />
   </>;
 }
