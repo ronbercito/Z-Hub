@@ -4,7 +4,7 @@
  * Función: listado, alta/edición y gestión operativa de abonados; la ubicación permite consultar el mapa sin modificar coordenadas.
  * Trabaja con: backend/app/routers/clientes/router.py, ClientRegistrationWizard.jsx, ClientDetail.jsx y CoordinatesPicker.jsx.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { TEST_IDS } from "../../constants/testIds";
@@ -43,6 +43,7 @@ export default function Clients({ onSelectClient }) {
   const [selectedClient, setSelectedClient] = useState(null);
   const [locationClient, setLocationClient] = useState(null);
   const [formData, setFormData] = useState(emptyForm());
+  const installationDraftConsumed = useRef(false);
 
   const activePlans = plans.filter((plan) => plan.is_active);
   const mikrotikRouters = routers.filter((router) => router.device_type === "mikrotik");
@@ -72,6 +73,27 @@ export default function Clients({ onSelectClient }) {
   };
 
   useEffect(() => { fetchData(); }, [search, statusFilter]);
+
+  // La preinscripción de Instalaciones se consume una sola vez al abrir Nuevo abonado.
+  useEffect(() => {
+    if (loading || installationDraftConsumed.current) return;
+    installationDraftConsumed.current = true;
+    const raw = sessionStorage.getItem("zhub_installation_draft");
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw);
+      setSelectedClient(null);
+      setFormData({
+        ...emptyForm(activePlans[0]?.id || "", mikrotikRouters[0]?.id || ""),
+        ...draft,
+      });
+      setShowAddModal(true);
+    } catch (_) {
+      // Si una preinscripción quedó incompleta, se descarta sin bloquear el módulo.
+    } finally {
+      sessionStorage.removeItem("zhub_installation_draft");
+    }
+  }, [loading, plans, routers]);
 
   const handleToggleStatus = async (id, name) => {
     try {
