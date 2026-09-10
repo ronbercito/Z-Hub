@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, now_iso
 from app.core.security import get_current_user
+from app.core.utils import correlative
 from app.models.client import Client
 from app.models.client_equipment import ClientEquipment
 from app.models.equipment_recovery import EquipmentRecovery
+from app.models.inventory import InventoryItem
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/equipment-recoveries", tags=["Clientes / Recuperación de equipos"], dependencies=[Depends(get_current_user)])
@@ -26,6 +28,14 @@ ALLOWED_TRANSITIONS = {
     "recovered": {"recovered"},
     "not_recovered": {"not_recovered"},
 }
+INVENTORY_DISPOSITIONS = {"available", "inspection", "damaged", "decommissioned"}
+INVENTORY_STATUS = {
+    "available": "in_stock",
+    "inspection": "inspection",
+    "damaged": "damaged",
+    "decommissioned": "decommissioned",
+}
+
 
 class RecoveryUpdate(BaseModel):
     status: str
@@ -33,18 +43,30 @@ class RecoveryUpdate(BaseModel):
     scheduled_date: str = Field(default="", max_length=10)
     notes: str = Field(default="", max_length=2000)
 
+
 class EquipmentResultUpdate(BaseModel):
     status: str
     notes: str = Field(default="", max_length=1000)
+
+
+class InventoryReturnIn(BaseModel):
+    disposition: str
+    inventory_item_id: str = ""
+    create_new: bool = False
+    location: str = Field(default="Almacén Central", max_length=120)
+    notes: str = Field(default="", max_length=1000)
+
 
 async def _enabled(db: AsyncSession) -> bool:
     setting = await db.get(Setting, "system_config")
     data = {**DEFAULT_SETTINGS, **((setting.data if setting else {}) or {})}
     return data.get("client_equipment_recovery_enabled", False) is True
 
+
 async def _require_enabled(db: AsyncSession) -> None:
     if not await _enabled(db):
         raise HTTPException(status_code=404, detail="El módulo de Recuperación de equipos está desactivado.")
+
 
 def _safe_snapshot(client: Client) -> dict:
     if client.status != "retired" or not client.retirement_technical_snapshot:
@@ -54,6 +76,7 @@ def _safe_snapshot(client: Client) -> dict:
         return data if isinstance(data, dict) else {}
     except (TypeError, ValueError, json.JSONDecodeError):
         return {}
+
 
 async def _assigned_items(db: AsyncSession, client: Client) -> list[dict]:
     rows = (await db.execute(select(ClientEquipment).where(
@@ -68,6 +91,7 @@ async def _assigned_items(db: AsyncSession, client: Client) -> list[dict]:
         "status": "pending", "source_status": row.status,
         "delivered_at": row.delivered_at or "", "notes": row.notes or "",
     } for row in rows]
+
 
 async def _equipment_for(db: AsyncSession, client: Client) -> dict:
     snapshot = _safe_snapshot(client)
@@ -93,6 +117,7 @@ async def _equipment_for(db: AsyncSession, client: Client) -> dict:
         "nap_port": snapshot.get("nap_port") if "nap_port" in snapshot else client.nap_port,
         "zone_name": snapshot.get("zone_name") or client.zone_name or ""}
 
+
 def _equipment_payload(row: EquipmentRecovery) -> dict:
     try:
         data = json.loads(row.equipment_data or "{}")
@@ -100,17 +125,45 @@ def _equipment_payload(row: EquipmentRecovery) -> dict:
     except (TypeError, ValueError, json.JSONDecodeError):
         return {}
 
+
 def _decorate(row: EquipmentRecovery) -> dict:
     item = row.to_dict()
     item["equipment"] = _equipment_payload(row)
     item["closed"] = row.status in CLOSED_STATUSES
     return item
 
+
 def _add_history(data: dict, action: str, detail: str, user: str = "Sistema") -> None:
     history = data.setdefault("history", [])
     history.append({"at": now_iso(), "action": action, "detail": detail, "user": user})
     if len(history) > 100:
         del history[:-100]
+
+
+def _identifier(value: str) -> str:
+    return "".join(ch.lower() for ch in (value or "").strip() if ch.isalnum())
+
+
+def _looks_like_mac(value: str) -> bool:
+    normalized = _identifier(value)
+    return len(normalized) == 12 and all(ch in "0123456789abcdef" for ch in normalized)
+
+
+def _inventory_category(item: dict) -> str:
+    kind = (item.get("type") or "").lower()
+    if "onu" in kind: return "ONU GPON"
+    if "router" in kind: return "Router WiFi"
+    if "cpe" in kind or "antena" in kind: return "CPE / Radio"
+    return "Equipo recuperado"
+
+
+async def _matching_inventory(db: AsyncSession, identifier: str) -> list[InventoryItem]:
+    needle = _identifier(identifier)
+    if not needle:
+        return []
+    rows = (await db.execute(select(InventoryItem))).scalars().all()
+    return [row for row in rows if needle in {_identifier(row.serial_number), _identifier(row.mac_address)}]
+
 
 @router.get("")
 async def list_recoveries(search: str = "", status: str = "all", db: AsyncSession = Depends(get_db)):
@@ -127,6 +180,7 @@ async def list_recoveries(search: str = "", status: str = "all", db: AsyncSessio
     rows = (await db.execute(q.order_by(EquipmentRecovery.created_at.desc()))).scalars().all()
     return [_decorate(row) for row in rows]
 
+
 @router.get("/summary")
 async def recovery_summary(db: AsyncSession = Depends(get_db)):
     await _require_enabled(db)
@@ -137,6 +191,7 @@ async def recovery_summary(db: AsyncSession = Depends(get_db)):
     counts["open"] = sum(counts[state] for state in OPEN_STATUSES)
     counts["total"] = len(rows)
     return counts
+
 
 @router.post("/from-client/{client_id}")
 async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
@@ -157,6 +212,7 @@ async def create_from_client(client_id: str, db: AsyncSession = Depends(get_db),
                 assigned.status = "recovery_pending"; assigned.updated_at = now_iso()
     await db.commit(); await db.refresh(row)
     return {"ok": True, "message": "Cliente enviado a Recuperación de equipos.", "recovery": _decorate(row)}
+
 
 @router.patch("/{recovery_id}")
 async def update_recovery(recovery_id: str, payload: RecoveryUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
@@ -181,9 +237,10 @@ async def update_recovery(recovery_id: str, payload: RecoveryUpdate, db: AsyncSe
     await db.commit(); await db.refresh(row)
     return {"ok": True, "message": "Seguimiento de recuperación actualizado.", "recovery": _decorate(row)}
 
+
 @router.patch("/{recovery_id}/equipment/{equipment_id}")
 async def update_equipment_result(recovery_id: str, equipment_id: str, payload: EquipmentResultUpdate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    """Resuelve un equipo individualmente. No mueve stock de Almacén (Etapa 4)."""
+    """Resuelve un equipo individualmente. El movimiento de stock se realiza aparte en Etapa 4."""
     await _require_enabled(db)
     row = await db.get(EquipmentRecovery, recovery_id)
     if not row: raise HTTPException(status_code=404, detail="Caso de recuperación no encontrado.")
@@ -209,3 +266,97 @@ async def update_equipment_result(recovery_id: str, equipment_id: str, payload: 
     row.equipment_data = json.dumps(data, ensure_ascii=False); row.updated_at = now_iso()
     await db.commit(); await db.refresh(row)
     return {"ok": True, "message": "Resultado del equipo actualizado.", "recovery": _decorate(row)}
+
+
+@router.get("/{recovery_id}/equipment/{equipment_id}/inventory-matches")
+async def inventory_matches(recovery_id: str, equipment_id: str, db: AsyncSession = Depends(get_db)):
+    """Devuelve únicamente coincidencias exactas por Serial/MAC para evitar asociaciones aproximadas."""
+    await _require_enabled(db)
+    row = await db.get(EquipmentRecovery, recovery_id)
+    if not row: raise HTTPException(status_code=404, detail="Caso de recuperación no encontrado.")
+    data = _equipment_payload(row); items = data.get("items") or []
+    target = next((item for item in items if str(item.get("equipment_id") or item.get("identifier") or "") == equipment_id), None)
+    if not target: raise HTTPException(status_code=404, detail="Equipo no encontrado en este caso.")
+    if target.get("status") != "recovered": raise HTTPException(status_code=409, detail="Solo un equipo recuperado puede retornar a Almacén.")
+    identifier = (target.get("identifier") or target.get("serial_mac") or "").strip()
+    matches = await _matching_inventory(db, identifier)
+    return {"identifier": identifier, "already_returned": bool(target.get("inventory_returned_at")), "matches": [item.to_dict() for item in matches]}
+
+
+@router.post("/{recovery_id}/equipment/{equipment_id}/inventory-return")
+async def return_equipment_to_inventory(recovery_id: str, equipment_id: str, payload: InventoryReturnIn, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """Etapa 4: registra el destino físico y actualiza Almacén solo con asociación exacta o alta nueva controlada."""
+    await _require_enabled(db)
+    row = await db.get(EquipmentRecovery, recovery_id)
+    if not row: raise HTTPException(status_code=404, detail="Caso de recuperación no encontrado.")
+    data = _equipment_payload(row); items = data.get("items") or []
+    target = next((item for item in items if str(item.get("equipment_id") or item.get("identifier") or "") == equipment_id), None)
+    if not target: raise HTTPException(status_code=404, detail="Equipo no encontrado en este caso.")
+    if target.get("status") != "recovered": raise HTTPException(status_code=409, detail="Solo un equipo marcado Recuperado puede ingresar a Almacén.")
+    if target.get("inventory_returned_at"): raise HTTPException(status_code=409, detail="Este equipo ya fue registrado en Almacén.")
+
+    disposition = payload.disposition.strip().lower()
+    if disposition not in INVENTORY_DISPOSITIONS:
+        raise HTTPException(status_code=422, detail="Destino de Almacén no válido.")
+    identifier = (target.get("identifier") or target.get("serial_mac") or "").strip()
+    if not _identifier(identifier):
+        raise HTTPException(status_code=409, detail="El equipo no tiene Serial/MAC; no se puede asociar de forma segura con Almacén.")
+
+    matches = await _matching_inventory(db, identifier)
+    inventory_item = None
+    if payload.create_new:
+        if matches:
+            raise HTTPException(status_code=409, detail="Ya existe un registro de Almacén con este Serial/MAC. Selecciona la coincidencia existente.")
+        is_mac = _looks_like_mac(identifier)
+        inventory_item = InventoryItem(
+            item_code=correlative("INV"),
+            name=(target.get("type") or "Equipo recuperado").strip(),
+            category=_inventory_category(target),
+            brand_model=(target.get("brand_model") or "").strip(),
+            serial_number="" if is_mac else identifier,
+            mac_address=identifier if is_mac else "",
+            stock=1 if disposition == "available" else 0,
+            unit="Unidad",
+            unit_cost=0.0,
+            status=INVENTORY_STATUS[disposition],
+            location=payload.location.strip() or "Almacén Central",
+        )
+        db.add(inventory_item)
+        await db.flush()
+    else:
+        selected_id = payload.inventory_item_id.strip()
+        if not selected_id:
+            if len(matches) == 1:
+                inventory_item = matches[0]
+            elif not matches:
+                raise HTTPException(status_code=409, detail="No existe una coincidencia exacta en Almacén. Autoriza crear un registro nuevo para este Serial/MAC.")
+            else:
+                raise HTTPException(status_code=409, detail="Existe más de una coincidencia. Selecciona explícitamente el registro correcto de Almacén.")
+        else:
+            inventory_item = await db.get(InventoryItem, selected_id)
+            if not inventory_item:
+                raise HTTPException(status_code=404, detail="Registro de Almacén no encontrado.")
+            if inventory_item not in matches:
+                raise HTTPException(status_code=409, detail="El registro seleccionado no coincide exactamente con el Serial/MAC recuperado.")
+        if inventory_item.stock > 0:
+            raise HTTPException(status_code=409, detail="El registro seleccionado ya figura con stock disponible. Se bloqueó el retorno para evitar duplicar existencias.")
+        inventory_item.stock = 1 if disposition == "available" else 0
+        inventory_item.status = INVENTORY_STATUS[disposition]
+        inventory_item.location = payload.location.strip() or inventory_item.location or "Almacén Central"
+
+    target["inventory_item_id"] = inventory_item.id
+    target["inventory_item_code"] = inventory_item.item_code
+    target["inventory_disposition"] = disposition
+    target["inventory_returned_at"] = now_iso()
+    target["inventory_return_notes"] = payload.notes.strip()
+    linked_id = target.get("equipment_id")
+    if linked_id:
+        assigned = await db.get(ClientEquipment, linked_id)
+        if assigned:
+            assigned.status = INVENTORY_STATUS[disposition]
+            assigned.updated_at = now_iso()
+    operator = current_user.get("name") or current_user.get("username") or current_user.get("email") or "Sistema"
+    _add_history(data, "inventory_return", f"{target.get('type','Equipo')} {identifier} → {disposition} ({inventory_item.item_code})", operator)
+    row.equipment_data = json.dumps(data, ensure_ascii=False); row.updated_at = now_iso()
+    await db.commit(); await db.refresh(inventory_item); await db.refresh(row)
+    return {"ok": True, "message": "Equipo registrado correctamente en Almacén.", "inventory_item": inventory_item.to_dict(), "recovery": _decorate(row)}
