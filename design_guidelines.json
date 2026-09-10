@@ -1,5 +1,5 @@
 {
-  "app_name": "FibraZ ISP Manager",
+  "app_name": "Z-Hub ISP Manager",
   "currency": "S/. (Soles Peruanos)",
   "context": "Dashboards & Admin Panels / Telecommunication ISP Management System",
   "archetype": "THE PERFORMANCE PRO (Elite Athleticism, Precision & Networking Command Center)",
@@ -18,7 +18,7 @@
     "warning": "#FF9F0A"
   },
   "modules_included": [
-    "Dashboard FibraZ (online stats, 7-day traffic chart, speedometer, system status)",
+    "Dashboard Z-Hub (online stats, 7-day traffic chart, speedometer, system status)",
     "Gestión de Clientes (active, suspended, GPS maps, manual/auto suspend)",
     "Facturación y Pagos S/. (invoices, receipts, Yape/Plin/Effec, PDF thermal print, income reports)",
     "Gestión de Red y Routers MikroTik / OLT (live ping, live throughput kbps/Mbps, simple queues, PPPoE)",
@@ -41,5 +41,5 @@
       "description": "Server rack in telecom room"
     }
   ],
-  "instructions_to_main_agent": "Ensure all interactive elements have data-testid attributes, use React with Tailwind CSS, Lucide icons, Recharts for analytics, and JWT authentication flow. Support Soles (S/.) formatting throughout."
+  "instructions_to_main_agent": "Ensure all interactive elements have data-testid attributes, use React with Tailwind CSS, Lucide icons, Recharts for analytics, and JWT/cookie authentication flow. Support Soles (S/.) formatting throughout."
 }
