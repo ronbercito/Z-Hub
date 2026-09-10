@@ -25,17 +25,19 @@ import Tasks from "../../modules/tareas/Tasks";
 import Inventory from "../../modules/almacen/Inventory";
 import Tickets from "../../modules/tickets/Tickets";
 import Messaging from "../../modules/mensajeria/Messaging";
-import Settings from "../../modules/ajustes/Settings";
 import SettingsHome from "../../modules/ajustes/SettingsHome";
-import ClientSettings from "../../modules/ajustes/clientes/ClientSettings";
+import SettingsModal from "../../modules/ajustes/SettingsModal";
 import { PANEL_VERSION } from "../../modules/system-update/version";
 import { applyPanelTheme } from "../../modules/appearance/panelThemes";
 
 export default function Layout() {
   const { API, token } = useAuth();
+  const storedTab = localStorage.getItem("fibraz_active_tab") || "inicio";
+  const legacySettingsSection = storedTab === "settings_clients" ? "clients" : storedTab.startsWith("settings_") ? storedTab.replace("settings_", "") : null;
   const [companyName, setCompanyName] = useState(() => localStorage.getItem("fibraz_company_name") || "Z-Hub");
   const [logoData, setLogoData] = useState(() => localStorage.getItem("fibraz_logo_data") || "");
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("fibraz_active_tab") || "inicio");
+  const [activeTab, setActiveTab] = useState(() => legacySettingsSection ? "ajustes" : storedTab);
+  const [settingsModalSection, setSettingsModalSection] = useState(legacySettingsSection);
   const [sidebarOpen, setSidebarOpen] = useState(() => localStorage.getItem("fibraz_sidebar_open") !== "false");
 
   useEffect(() => { localStorage.setItem("fibraz_active_tab", activeTab); }, [activeTab]);
@@ -47,11 +49,8 @@ export default function Layout() {
         const response = await axios.get(`${API}/settings`, { headers: { Authorization: `Bearer ${token}` } });
         const name = response.data.company_name?.trim() || "Z-Hub";
         const logo = response.data.logo_data || "";
-        setCompanyName(name);
-        setLogoData(logo);
-        applyPanelTheme(response.data.panel_theme || "dark");
-        localStorage.setItem("fibraz_company_name", name);
-        localStorage.setItem("fibraz_logo_data", logo);
+        setCompanyName(name); setLogoData(logo); applyPanelTheme(response.data.panel_theme || "dark");
+        localStorage.setItem("fibraz_company_name", name); localStorage.setItem("fibraz_logo_data", logo);
       } catch (_) {}
     };
     loadCompanyName();
@@ -61,11 +60,9 @@ export default function Layout() {
     const syncName = (event) => {
       const name = event.detail?.companyName?.trim() || "Z-Hub";
       const logo = event.detail?.logoData || "";
-      setCompanyName(name);
-      setLogoData(logo);
+      setCompanyName(name); setLogoData(logo);
       if (event.detail?.panelTheme) applyPanelTheme(event.detail.panelTheme);
-      localStorage.setItem("fibraz_company_name", name);
-      localStorage.setItem("fibraz_logo_data", logo);
+      localStorage.setItem("fibraz_company_name", name); localStorage.setItem("fibraz_logo_data", logo);
     };
     window.addEventListener("fibraz-branding", syncName);
     return () => window.removeEventListener("fibraz-branding", syncName);
@@ -73,11 +70,10 @@ export default function Layout() {
 
   useEffect(() => { document.title = `${companyName} · Z-Hub`; }, [companyName]);
 
-  const openSettingsSection = (section) => setActiveTab(section === "clients" ? "settings_clients" : `settings_${section}`);
+  const openSettingsSection = (section) => setSettingsModalSection(section);
+  const closeSettingsModal = () => setSettingsModalSection(null);
 
   const renderContent = () => {
-    if (activeTab === "settings_clients") return <ClientSettings />;
-    if (activeTab.startsWith("settings_")) return <Settings section={activeTab.replace("settings_", "")} />;
     switch (activeTab) {
       case "inicio": return <Dashboard setActiveTab={setActiveTab} />;
       case "red":
@@ -106,12 +102,13 @@ export default function Layout() {
 
   return (
     <div className="app-shell min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
+      <Sidebar activeTab={activeTab} setActiveTab={(tab) => { closeSettingsModal(); setActiveTab(tab); }} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-        <Navbar setActiveTab={setActiveTab} />
+        <Navbar setActiveTab={(tab) => { closeSettingsModal(); setActiveTab(tab); }} />
         <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">{renderContent()}</main>
         <footer className="panel-footer mt-auto border-t px-6 py-3 text-center text-sm font-bold tracking-wide text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
       </div>
+      {activeTab === "ajustes" && <SettingsModal section={settingsModalSection} onClose={closeSettingsModal} />}
     </div>
   );
 }
