@@ -19,6 +19,27 @@
 
 # HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO
 
+## 1.2.33 — 2026-09-10 — Preferencias funcionales de Pausas de servicio
+
+- **Objetivo:** convertir `Ajustes → Configuración clientes → Pausas de servicio` en una sección funcional sin romper el flujo de pausa validado en 1.2.27.
+- **Configuración:** se agregan seis preferencias: duración máxima **1–3 meses**, aviso previo **3/5/7 días**, permitir reactivación anticipada, permitir cambio manual del día de facturación, mostrar botón de aviso por WhatsApp y reactivación automática al vencer.
+- **Persistencia:** todas las preferencias se guardan en el JSON de `settings`; no se crean nuevas tablas ni columnas.
+- **Backend:** `pause.py` lee la política en cada operación. El límite de meses y las restricciones de reactivación/cambio de facturación también se validan en servidor, no solo en la interfaz.
+- **API Clientes:** `GET /api/clients/pause-policy` expone únicamente las preferencias necesarias para el módulo Clientes y queda cubierto por el permiso `clients` ya aplicado al router de pausas.
+- **Aviso configurable:** `pause_alert_due` deja de estar fijo en 5 días y usa la política seleccionada. Se distingue además `pause_due` cuando la fecha ya venció.
+- **Reactivación automática/manual:** si `client_pause_auto_resume` está activa, el worker conserva el comportamiento anterior y reintenta cada hora. Si está desactivada, la pausa vencida permanece pendiente de reactivación manual.
+- **Reactivación anticipada:** si está desactivada, no aparece el botón antes del vencimiento y el backend rechaza intentos anticipados. Al vencer sí puede reactivarse manualmente.
+- **Día de facturación:** si el cambio manual está desactivado, el selector desaparece y el backend rechaza un `billing_day` enviado manualmente; se mantiene el cálculo automático que devuelve los días guardados.
+- **WhatsApp:** el botón se muestra únicamente durante el período de aviso previo y solo si la política está activa. El texto se adapta según la reactivación sea automática o manual.
+- **Duración:** el modal de pausa ofrece solo 1..N meses según el máximo configurado; el backend vuelve a verificar el límite antes de cortar el servicio.
+- **Compatibilidad:** se preservan días guardados, congelamiento de facturación, recursos técnicos, MikroTik cut/restore, retiros y suspensión prolongada.
+- **Archivos modificados:** `backend/app/models/setting.py`, `backend/app/routers/clientes/pause.py`, `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`, `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/system-update/version.js`.
+- **Backup:** `docs/backups/1.2.32/PAUSE_SETTINGS_BACKUP.md` conserva los blobs exactos de 1.2.32 previos al cambio.
+- **Pruebas realizadas:** revisión estática de límites 1–3, avisos 3/5/7, bloqueo de reactivación anticipada, bloqueo de cambio manual de facturación, worker condicionado por `auto_resume`, exposición de `pause-policy` y render de controles en Clientes.
+- **Pruebas pendientes:** build React, compilación/importación Python, arranque real del backend, prueba visual y prueba operativa de cada combinación de política en servidor.
+- **Riesgos:** al desactivar reactivación automática, una pausa vencida seguirá sin servicio hasta que un operador la reactive manualmente; esto es intencional y se señala en la pestaña En pausa.
+- **Commits principales:** backup `2562fb6b7ce69efa617c05e72cdc5b91d3de866e`; settings `9562940eac8c8ff907802622d38143eafe8d2c3f`; backend pausas `584a004c5d01991ed0301def0bf713724e5646ca`; UI Ajustes `693992bf27a19226ec0b535bca784ac6ff914735`; UI Clientes `601ea54f525ac8a05817ceb4206d17a227b1dd00`; versión `9f6bf306a94bb5695f9d4cfe6bf376a871116e10`.
+
 ## 1.2.32 — 2026-09-10 — Preferencias funcionales de Registro y altas
 
 - **Objetivo:** convertir `Ajustes → Configuración clientes → Registro y altas` en una sección funcional para definir valores predeterminados y una validación del alta de nuevos abonados.
@@ -221,6 +242,6 @@
 Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: versión, fecha, objetivo/causa, solución, archivos, compatibilidad, backups, pruebas realizadas, pruebas pendientes, resultado, riesgos y commits.
 
 ## Estado documental
-- Serie cubierta: **1.2.00 → 1.2.32**.
+- Serie cubierta: **1.2.00 → 1.2.33**.
 - Orden: **descendente; versión más reciente primero**.
-- Próxima versión funcional: **1.2.33**, encima de 1.2.32.
+- Próxima versión funcional: **1.2.34**, encima de 1.2.33.
