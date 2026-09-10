@@ -1,7 +1,8 @@
 """Servicio en pausa: congela temporalmente el acceso sin liberar recursos técnicos."""
 import asyncio
 import calendar
-from datetime import date, datetime, timedelta, timezone
+import logging
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import SessionLocal, get_db, now_iso
 from app.core.security import get_current_user
+from app.core.utils import business_today
 from app.integrations.mikrotik import service as mt
 from app.models.client import Client
 from app.models.client_activity import ClientActivity
@@ -17,6 +19,7 @@ from app.models.router import Router
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/clients", tags=["Servicio en pausa"], dependencies=[Depends(get_current_user)])
+logger = logging.getLogger("zhub.pause")
 
 
 class PauseIn(BaseModel):
@@ -76,7 +79,7 @@ def _activity(db: AsyncSession, client: Client, action: str, detail: str, operat
 
 def _decorate(client: Client, policy: dict, today: date | None = None) -> dict:
     item = client.to_dict()
-    today = today or datetime.now(timezone.utc).date()
+    today = today or business_today()
     try:
         until = date.fromisoformat((client.pause_until or "")[:10])
         raw_days = (until - today).days
@@ -97,7 +100,7 @@ async def _resume_client(db: AsyncSession, client: Client, billing_day: int | No
     if not result.get("ok"):
         return {"ok": False, "message": result.get("message", "No se pudo reactivar MikroTik")}
 
-    today = datetime.now(timezone.utc).date()
+    today = business_today()
     saved_days = max(0, int(client.pause_saved_days or 0))
     restored_until = today + timedelta(days=saved_days)
     new_billing_day = billing_day if billing_day is not None else min(restored_until.day, 30)
@@ -153,7 +156,7 @@ async def pause_client(client_id: str, payload: PauseIn, current_user: dict = De
         await db.rollback()
         raise HTTPException(status_code=502, detail=f"No se inició la pausa porque MikroTik no pudo suspender el servicio: {cut.get('message', 'error desconocido')}")
 
-    today = datetime.now(timezone.utc).date()
+    today = business_today()
     next_due = _next_billing_date(client, today)
     saved_days = max(0, (next_due - today).days)
     until = _add_months(today, payload.months)
@@ -185,7 +188,7 @@ async def resume_pause(client_id: str, payload: ResumeIn, current_user: dict = D
         raise HTTPException(status_code=409, detail="El cliente no se encuentra en pausa.")
 
     policy = await _pause_policy(db)
-    today = datetime.now(timezone.utc).date()
+    today = business_today()
     try:
         until = date.fromisoformat((client.pause_until or "")[:10])
     except ValueError:
@@ -205,7 +208,7 @@ async def resume_pause(client_id: str, payload: ResumeIn, current_user: dict = D
 
 async def process_due_pauses() -> int:
     """Reactiva pausas vencidas solo cuando la política de reactivación automática está activa."""
-    today = datetime.now(timezone.utc).date()
+    today = business_today()
     count = 0
     async with SessionLocal() as db:
         policy = await _pause_policy(db)
@@ -216,12 +219,15 @@ async def process_due_pauses() -> int:
             try:
                 until = date.fromisoformat((client.pause_until or "")[:10])
             except ValueError:
+                logger.warning("Pausa %s del cliente %s tiene fecha inválida: %r", client.id if hasattr(client, "id") else "", client.id, client.pause_until)
                 continue
             if until > today:
                 continue
             result = await _resume_client(db, client, None, "Sistema")
             if result.get("ok"):
                 count += 1
+            else:
+                logger.warning("No se pudo reactivar automáticamente al cliente %s: %s", client.id, result.get("message"))
     return count
 
 
@@ -231,5 +237,5 @@ async def pause_worker():
         try:
             await process_due_pauses()
         except Exception:
-            pass
+            logger.exception("Error no controlado en el worker de pausas; se reintentará en una hora")
         await asyncio.sleep(3600)
