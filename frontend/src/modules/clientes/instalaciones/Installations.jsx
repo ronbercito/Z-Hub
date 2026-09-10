@@ -1,17 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { CalendarDays, ClipboardList, Plus, Search } from "lucide-react";
+import NewInstallationModal from "./NewInstallationModal";
 import { useAuth } from "../../../context/AuthContext";
 
 const value = (item, key) => String(item?.[key] ?? "").toLowerCase();
 
-export default function Installations() {
+export default function Installations({ onContinueToClient }) {
   const { API, token } = useAuth();
   const [clients, setClients] = useState([]);
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showNewInstallation, setShowNewInstallation] = useState(false);
 
   useEffect(() => {
     axios.get(`${API}/clients`, { headers: { Authorization: `Bearer ${token}` } })
@@ -34,7 +36,7 @@ export default function Installations() {
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-100"><ClipboardList className="h-6 w-6 text-cyan-400" /> Instalaciones</h2>
         <p className="mt-0.5 text-xs text-slate-400">Control de altas e instalaciones de clientes.</p>
       </div>
-      <button type="button" className="installation-new-button inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-white"><Plus className="h-4 w-4" /> Nueva instalación</button>
+      <button type="button" onClick={() => setShowNewInstallation(true)} className="installation-new-button inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-white"><Plus className="h-4 w-4" /> Nueva instalación</button>
     </header>
 
     <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl">
@@ -54,5 +56,6 @@ export default function Installations() {
         </table>
       </div>
     </section>
+    {showNewInstallation && <NewInstallationModal onClose={() => setShowNewInstallation(false)} onContinue={(draft) => { sessionStorage.setItem("zhub_installation_draft", JSON.stringify(draft)); setShowNewInstallation(false); onContinueToClient?.(); }} />}
   </div>;
 }
