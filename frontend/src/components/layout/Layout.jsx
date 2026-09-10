@@ -99,7 +99,7 @@ export default function Layout() {
       case "client_zones":
         return <Zones />;
       case "client_installations":
-        return <Installations />;
+        return <Installations onContinueToClient={() => setActiveTab("client_users")} />;
       case "client_map":
         return <ClientMap />;
       case "facturacion":
