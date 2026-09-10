@@ -144,6 +144,10 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
 async def update_settings(data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     s = await _get(db)
     data.pop("id", None)
+    # Settings.jsx mezcla la respuesta de GET en su estado; por compatibilidad, si devuelve
+    # campos internos de solo lectura los ignoramos al guardar en vez de romper el formulario.
+    for key in PROTECTED_GENERIC_SETTINGS:
+        data.pop(key, None)
     unknown = sorted(set(data) - EDITABLE_SETTINGS)
     if unknown:
         raise HTTPException(status_code=422, detail=f"Configuración no permitida: {', '.join(unknown)}")
@@ -186,7 +190,6 @@ def _smtp_password(data: dict) -> str:
     try:
         return _fernet().decrypt(raw).decode("utf-8")
     except InvalidToken:
-        # Compatibilidad: contraseñas guardadas antes de 1.2.37 estaban cifradas con JWT_SECRET.
         if APP_ENCRYPTION_KEY:
             try:
                 return _legacy_fernet().decrypt(raw).decode("utf-8")
