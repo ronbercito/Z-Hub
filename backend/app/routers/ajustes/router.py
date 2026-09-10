@@ -20,11 +20,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import APP_ENCRYPTION_KEY, JWT_SECRET
 from app.core.database import get_db
+from app.core.license_manager import get_license
 from app.core.security import get_current_user, require_role
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
 router = APIRouter(prefix="/settings", tags=["Ajustes"], dependencies=[Depends(get_current_user)])
 public_router = APIRouter(prefix="/settings", tags=["Ajustes públicos"])
+
+LICENSE_INTERNAL_SETTINGS = {
+    "license_key",
+    "license_type",
+    "license_plan",
+    "license_max_clients",
+    "license_activated_at",
+}
 
 # La API genérica solo puede modificar claves conocidas. Los secretos/contadores internos
 # se administran en endpoints específicos y nunca mediante PUT /settings.
@@ -33,7 +42,7 @@ PROTECTED_GENERIC_SETTINGS = {
     "smtp_sent_date",
     "smtp_sent_count",
     "initial_setup_completed",
-    "license_key",
+    *LICENSE_INTERNAL_SETTINGS,
 }
 EDITABLE_SETTINGS = set(DEFAULT_SETTINGS) - PROTECTED_GENERIC_SETTINGS
 
@@ -83,8 +92,9 @@ def _legacy_fernet() -> Fernet:
 
 
 def _public_settings(data: dict) -> dict:
-    """Nunca exponer secretos aunque settings sea leído por el panel."""
-    return {key: value for key, value in data.items() if key != "smtp_password_encrypted"}
+    """Nunca exponer secretos ni metadatos internos de licencia en el GET genérico."""
+    hidden = {"smtp_password_encrypted", *LICENSE_INTERNAL_SETTINGS}
+    return {key: value for key, value in data.items() if key not in hidden}
 
 
 def _mail_public(data: dict) -> dict:
@@ -113,6 +123,15 @@ def _recipients(values: list[str]) -> list[str]:
     return result
 
 
+def _mask_license_key(value: str) -> str:
+    key = str(value or "").strip()
+    if not key:
+        return ""
+    if len(key) <= 8:
+        return "•" * max(4, len(key) - 2) + key[-2:]
+    return f"{key[:4]}-••••-••••-{key[-4:]}"
+
+
 async def _get(db: AsyncSession) -> Setting:
     s = await db.get(Setting, "system_config")
     if not s:
@@ -138,6 +157,14 @@ async def get_public_branding(db: AsyncSession = Depends(get_db)):
 async def get_settings(db: AsyncSession = Depends(get_db)):
     s = await _get(db)
     return {"id": s.id, **_public_settings({**DEFAULT_SETTINGS, **(s.data or {})})}
+
+
+@router.get("/license-info")
+async def get_license_info(db: AsyncSession = Depends(get_db)):
+    """Resumen de licencia para Ajustes sin exponer la clave completa."""
+    info = await get_license(db)
+    key = info.pop("key", "")
+    return {**info, "license_key_masked": _mask_license_key(key)}
 
 
 @router.put("")

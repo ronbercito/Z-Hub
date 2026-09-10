@@ -37,7 +37,7 @@ const MODULES = [
   { id:"server", label:"Servidor", desc:"Estado y servicios", icon:Server, tone:"blue" },
   { id:"migrate", label:"Migrar", desc:"Transferir datos", icon:RefreshCw, tone:"orange" },
   { id:"freeradius", label:"FreeRADIUS", desc:"Autenticación de red", icon:KeyRound, tone:"violet" },
-  { id:"license", label:"Licencia", desc:"Información de licencia", icon:ShieldAlert, tone:"green" },
+  { id:"license", label:"Licencia Z-Hub", desc:"Plan, estado y capacidad de abonados", icon:ShieldAlert, tone:"green", live:true },
 ];
 
 export default function SettingsHome({ onOpen }) {
