@@ -1,11 +1,12 @@
 """
 Archivo: backend/app/routers/facturacion/router.py
-Actualización: 2026-09-08 — la facturación mensual y el estado vencido respetan las reglas guardadas en cada abonado.
+Actualización: 2026-09-09 — la facturación mensual respeta el estado de servicio en pausa.
 Función: Facturación y cobros: listar/crear facturas, facturación masiva mensual, marcar vencidas y pagos,
          manteniendo cada recibo asociado al cliente y aplicando créditos/deudas del libro mayor.
 Trabaja con: invoice.py, client.py, client_service.py, client_balance.py, client_activity.py,
              backend/app/routers/facturacion/balances.py, frontend/src/modules/clientes/editor/billing/ClientBilling.jsx
 """
+import calendar
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -46,14 +47,17 @@ def _activity(db: AsyncSession, client_id: str, action: str, detail: str, user: 
 
 
 def _billing_dates(client: Client, now: datetime) -> tuple[str, str, str]:
-    """Calcula emisión y vencimiento usando el día de pago y anticipación del cliente."""
-    billing_day = min(max(int(client.billing_day or 5), 1), 28)
-    due = now.replace(day=billing_day, hour=0, minute=0, second=0, microsecond=0)
+    """Calcula emisión y vencimiento usando el día 1-30 configurado en el abonado."""
+    billing_day = min(max(int(client.billing_day or 5), 1), 30)
+    due_day = min(billing_day, calendar.monthrange(now.year, now.month)[1])
+    due = now.replace(day=due_day, hour=0, minute=0, second=0, microsecond=0)
     if due < now.replace(hour=0, minute=0, second=0, microsecond=0):
         if due.month == 12:
-            due = due.replace(year=due.year + 1, month=1)
+            year, month = due.year + 1, 1
         else:
-            due = due.replace(month=due.month + 1)
+            year, month = due.year, due.month + 1
+        due_day = min(billing_day, calendar.monthrange(year, month)[1])
+        due = due.replace(year=year, month=month, day=due_day)
     lead = max(int(client.invoice_lead_days or 0), 0)
     issue = due - timedelta(days=lead)
     return issue.strftime("%Y-%m-%d"), due.strftime("%Y-%m-%d"), due.strftime("%Y-%m")
@@ -181,6 +185,8 @@ async def mass_generate(db: AsyncSession = Depends(get_db), current_user: dict =
     auto_paid = 0
     periods = []
     for c in clients:
+        if c.status == "paused":
+            continue
         issue_date, due_date, period = _billing_dates(c, now)
         exists = (await db.execute(select(func.count()).select_from(Invoice).where(Invoice.client_id == c.id, Invoice.month_period == period, Invoice.service_id.is_(None)))).scalar()
         if exists or not c.plan_price:
@@ -218,6 +224,8 @@ async def mark_overdue(db: AsyncSession = Depends(get_db), current_user: dict = 
     grace_values = []
     for invoice in rows:
         client = await db.get(Client, invoice.client_id)
+        if client and client.status == "paused":
+            continue
         grace = max(0, int(client.grace_days or 0)) if client else 0
         try:
             due = datetime.strptime(invoice.due_date, "%Y-%m-%d").date()
