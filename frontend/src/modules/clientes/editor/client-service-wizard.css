@@ -1,0 +1,275 @@
+/*
+ * Z-Hub — Nuevo servicio guiado
+ * Tema oscuro por defecto y adaptación explícita para data-panel-theme="zhub-light".
+ */
+.service-wizard-overlay {
+  background: rgba(2, 8, 23, .78);
+  backdrop-filter: blur(7px);
+}
+
+.service-wizard-modal {
+  background: linear-gradient(180deg, #0c1929 0%, #0a1422 100%);
+  border: 1px solid #36516c;
+  color: #e8f0f8;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .48);
+}
+
+.service-wizard-header,
+.service-wizard-footer {
+  border-color: #294158;
+  background: rgba(9, 22, 37, .96);
+}
+
+.service-wizard-title { color: #f4f8fc; }
+.service-wizard-subtitle { color: #9fb2c6; }
+.service-wizard-close { color: #8ea6bc; }
+.service-wizard-close:hover { color: #ffffff; background: #182c40; }
+
+.service-wizard-stepper {
+  border-top: 1px solid #21384e;
+  border-bottom: 1px solid #21384e;
+  background: rgba(7, 18, 31, .62);
+}
+.service-wizard-step { color: #7890a7; }
+.service-wizard-step.is-ready { color: #b9c9d8; }
+.service-wizard-step.is-active { color: #eaf5ff; }
+.service-wizard-step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: 1px solid #55718a;
+  background: #102338;
+  color: #9eb2c5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+.service-wizard-step.is-ready .service-wizard-step-number {
+  background: #123c5d;
+  border-color: #258bcb;
+  color: #dff4ff;
+}
+.service-wizard-step.is-active .service-wizard-step-number {
+  background: #1292e2;
+  border-color: #35adf6;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(18, 146, 226, .12);
+}
+.service-wizard-step-line {
+  height: 2px;
+  min-width: 34px;
+  flex: 1 1 52px;
+  background: #314a61;
+}
+.service-wizard-step-line.is-ready { background: #168ed0; }
+
+.service-wizard-card {
+  background: linear-gradient(180deg, rgba(20, 43, 65, .86), rgba(12, 31, 49, .88));
+  border: 1px solid #35536d;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+.service-wizard-card.is-locked { opacity: .72; }
+.service-wizard-card-title { color: #f0f6fb; }
+.service-wizard-card-subtitle { color: #91a8bd; }
+.service-wizard-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6cc5ff;
+  background: rgba(20, 145, 224, .13);
+  border: 1px solid rgba(57, 168, 238, .28);
+}
+
+.service-wizard-flow {
+  background: linear-gradient(145deg, rgba(8, 50, 84, .72), rgba(8, 32, 54, .9));
+  border: 1px solid #0c8edb;
+  border-radius: 16px;
+}
+.service-wizard-flow-title { color: #77d2ff; }
+.service-wizard-flow-text { color: #aac0d2; }
+.service-wizard-flow-index {
+  width: 25px;
+  height: 25px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: #29475f;
+  color: #d8e6f0;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.service-wizard-label {
+  color: #b6c8d7;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.service-wizard-hint { color: #7893aa; }
+.service-wizard-input {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 11px;
+  border: 1px solid #3b5b75;
+  background: #0a1d30;
+  color: #edf6fd;
+  padding: 10px 13px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease, opacity .16s ease;
+}
+.service-wizard-input:focus {
+  border-color: #22a6ef;
+  box-shadow: 0 0 0 3px rgba(34, 166, 239, .12);
+}
+.service-wizard-input:disabled {
+  cursor: not-allowed;
+  color: #71879a;
+  border-color: #2e465b;
+  background: #142638;
+  opacity: .72;
+}
+.service-wizard-input::placeholder { color: #71879a; }
+
+.service-wizard-info {
+  background: rgba(10, 74, 118, .38);
+  border: 1px solid #167fbd;
+  color: #a9ddfb;
+}
+.service-wizard-success {
+  background: rgba(7, 89, 76, .28);
+  border: 1px solid #109a80;
+  color: #8cebd8;
+}
+.service-wizard-error {
+  background: rgba(127, 29, 29, .28);
+  border: 1px solid rgba(248, 113, 113, .42);
+  color: #fecaca;
+}
+.service-wizard-save:disabled {
+  cursor: not-allowed;
+  background: #263d53 !important;
+  color: #7890a7 !important;
+}
+
+/* Tema Z-Hub Claro: no reutiliza los grises oscuros del modal. */
+html[data-panel-theme="zhub-light"] .service-wizard-overlay {
+  background: rgba(19, 48, 77, .34) !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-modal {
+  background: #f7fafc !important;
+  border-color: #b8cad9 !important;
+  color: #173b63 !important;
+  box-shadow: 0 24px 65px rgba(32, 68, 101, .2) !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-header,
+html[data-panel-theme="zhub-light"] .service-wizard-footer {
+  background: #ffffff !important;
+  border-color: #d4e0ea !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-title { color: #13395f !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-subtitle { color: #607c97 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-close { color: #527391 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-close:hover { color: #173b63 !important; background: #eaf2f8 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-stepper {
+  background: #f2f7fb !important;
+  border-color: #d7e4ee !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-step { color: #7790a7 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-step.is-ready { color: #355d7d !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-step.is-active { color: #173b63 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-step-number {
+  background: #ffffff !important;
+  border-color: #a8bdcf !important;
+  color: #6f879e !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-step.is-ready .service-wizard-step-number {
+  background: #dff1fb !important;
+  border-color: #4da9dc !important;
+  color: #126b9e !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-step.is-active .service-wizard-step-number {
+  background: #2477c4 !important;
+  border-color: #2477c4 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(36, 119, 196, .11) !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-step-line { background: #c7d6e2 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-step-line.is-ready { background: #4a9dd0 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-card {
+  background: #ffffff !important;
+  border-color: #ccdbe7 !important;
+  box-shadow: 0 4px 14px rgba(33, 76, 111, .07) !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-card.is-locked { opacity: .78 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-card-title { color: #173b63 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-card-subtitle { color: #6c849b !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-icon {
+  color: #1978b6 !important;
+  background: #eaf5fb !important;
+  border-color: #c8e4f3 !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-flow {
+  background: #edf7fd !important;
+  border-color: #5eb3df !important;
+  box-shadow: none !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-flow-title { color: #146b9f !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-flow-text { color: #4c6e89 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-flow-index {
+  background: #d7e8f3 !important;
+  color: #315d7b !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-label { color: #4f6f8c !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-hint { color: #7890a5 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-input {
+  background: #ffffff !important;
+  color: #173b63 !important;
+  border-color: #b8cad9 !important;
+  box-shadow: none !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-input:focus {
+  border-color: #2a89c8 !important;
+  box-shadow: 0 0 0 3px rgba(42, 137, 200, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-input:disabled {
+  background: #e8eef3 !important;
+  color: #8093a4 !important;
+  border-color: #d0dce5 !important;
+  opacity: 1 !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-input::placeholder { color: #8295a7 !important; }
+html[data-panel-theme="zhub-light"] .service-wizard-info {
+  background: #e9f5fc !important;
+  border-color: #7ec4e8 !important;
+  color: #276b96 !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-success {
+  background: #e7f7f2 !important;
+  border-color: #78c7b4 !important;
+  color: #24705d !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-error {
+  background: #fff0f2 !important;
+  border-color: #e9a5ae !important;
+  color: #9b3d4c !important;
+}
+html[data-panel-theme="zhub-light"] .service-wizard-save:disabled {
+  background: #d9e3eb !important;
+  color: #8094a6 !important;
+}
+
+@media (max-width: 767px) {
+  .service-wizard-step-label { display: none; }
+  .service-wizard-step-line { min-width: 14px; }
+}
