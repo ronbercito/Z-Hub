@@ -1,10 +1,12 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.36";
+export const PANEL_VERSION = "1.2.37";
 export const CHANGELOG = [
-  { type: "Clientes", text: "Se habilita el módulo operativo Recuperación de equipos para clientes suspendidos y retirados." },
-  { type: "Seguimiento", text: "Los casos pueden pasar por Pendiente, Contactado, Visita programada, Recuperado o No recuperado, con responsable, fecha y observaciones." },
-  { type: "Equipos", text: "Se conserva una ficha del equipo por recuperar, usando ONU para fibra o CPE/datos técnicos para inalámbrico cuando estén disponibles." },
-  { type: "Alertas", text: "Los clientes con suspensión prolongada pueden abrir directamente Recuperación desde la alerta de Clientes." },
-  { type: "Seguridad", text: "Marcar un equipo como recuperado no altera automáticamente el stock de Almacén mientras no exista una asociación inequívoca con inventario." },
-  { type: "Backup", text: "Se creó respaldo del estado 1.2.35 antes de implementar el nuevo módulo." },
+  { type: "Seguridad", text: "El instalador protege backend/.env, separa permisos de archivos/directorios y agrega una clave de cifrado independiente para datos sensibles." },
+  { type: "MikroTik", text: "Cortes, reactivaciones y eliminaciones ya no cambian el estado local si RouterOS no confirma la operación." },
+  { type: "Pagos", text: "Un pago se conserva aunque falle la reactivación en MikroTik; el cliente permanece suspendido y se informa la incidencia." },
+  { type: "Historial", text: "Retirar un cliente conserva facturas, tickets, tareas, documentos, comunicaciones, actividades y servicios; las deudas pendientes se anulan en vez de borrarse." },
+  { type: "Sesión", text: "La autenticación persistente pasa a cookie httpOnly y el JWT deja de guardarse en localStorage; SESSION_COOKIE_SECURE queda configurable para HTTPS." },
+  { type: "Operación", text: "Fechas de negocio usan America/Lima por defecto, los workers registran errores y los casos de recuperación cerrados no pueden reabrirse silenciosamente." },
+  { type: "Calidad", text: "Se agregan regresiones estáticas y un workflow de GitHub Actions para compilación Python y build React." },
+  { type: "Backup", text: "Antes del saneamiento se creó una rama de respaldo integral del estado 1.2.36 y un documento de rollback." },
 ];
