@@ -2313,7 +2313,7 @@ Realizar una prueba visual en navegador:
 3. Activar `Recordar mi cuenta`.
 4. Iniciar sesión.
 5. Cerrar sesión.
-6. Volver al login y comprobar que el correo aparezca precargado.
+6. Volver al Login y comprobar que el correo aparezca precargado.
 7. Desactivar la casilla y volver a iniciar sesión.
 8. Comprobar que el correo ya no quede recordado.
 
@@ -3050,3 +3050,23 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 
 - **Corrección visual:** se elimina la capa opaca y el desenfoque que cubrían la vista de Instalaciones al abrir Nueva instalación.
 - **Resultado:** el formulario sigue siendo una ventana emergente centrada, mientras el contenido del módulo permanece visible alrededor, tanto en tema claro como oscuro.
+
+
+### 1.2.17 — Registro persistente de instalaciones y alta posterior de abonado
+
+- **Objetivo:** separar el registro inicial de una instalación del alta definitiva del abonado, sin modificar las opciones existentes de **Nuevo abonado** ni la ficha del cliente.
+- **Nueva instalación:** el botón principal cambia a **Registrar instalación** y se agrega **Obtener ubicación GPS**, que usa la geolocalización del dispositivo para completar latitud y longitud; se mantienen los campos manuales.
+- **Persistencia:** se crea la tabla `installations` y la API `/api/installations` para guardar solicitudes pendientes en la base de datos de Z-Hub, evitando depender únicamente del navegador.
+- **Vista Instalaciones:** las solicitudes pendientes se muestran como tarjetas con nombre, DNI/RUC, celular, fecha, dirección, referencia, tecnología y coordenadas.
+- **Dar de alta cliente:** conserva el puente existente `zhub_installation_draft`; transfiere los datos capturados al formulario oficial de Nuevo abonado y no cambia sus campos, opciones, facturación, planes ni aprovisionamiento.
+- **Continuidad:** abrir o cancelar Nuevo abonado no borra la solicitud. La instalación deja de mostrarse como pendiente únicamente cuando Z-Hub ya encuentra un abonado creado con el mismo DNI/RUC.
+- **Compatibilidad:** existe migración de una sola vez para posibles registros temporales guardados durante la transición en `zhub_pending_installations`.
+- **Archivos nuevos:** `backend/app/models/installation.py` y `backend/app/routers/clientes/installations.py`.
+- **Archivos modificados:** `frontend/src/modules/clientes/instalaciones/NewInstallationModal.jsx`, `frontend/src/modules/clientes/instalaciones/Installations.jsx`, `backend/app/models/__init__.py`, `backend/server.py` y `frontend/src/modules/system-update/version.js`.
+- **No modificados deliberadamente:** `frontend/src/modules/clientes/Clients.jsx`, `frontend/src/modules/clientes/usuarios/ClientRegistrationWizard.jsx`, `frontend/src/modules/clientes/ClientDetail.jsx`, lógica de MikroTik, NAP, planes, facturación y creación normal de abonados.
+- **Base de datos:** nueva tabla `installations`; el arranque existente de `init_db()` registra los modelos y ejecuta `Base.metadata.create_all`, por lo que no se borra ni reemplaza la tabla `clients`.
+- **Permisos:** la API de instalaciones usa autenticación normal y el permiso existente de `clients`.
+- **Backups:** los archivos originales afectados de 1.2.16 se conservaron en `docs/backups/1.2.16/`, incluyendo Instalaciones, modal, versión, `server.py` y el registro de modelos.
+- **Pruebas realizadas:** revisión estática del flujo React → API → SQLAlchemy; verificación del puente existente hacia Nuevo abonado; revisión de autenticación/ID del usuario; revisión del registro del router y creación automática de la tabla al arrancar.
+- **Pruebas pendientes en servidor:** build React, arranque/compilación Python real, pruebas GET/POST/DELETE contra la base de datos, GPS en HTTPS y recorrido completo Registrar instalación → tarjeta → Dar de alta cliente → crear abonado → desaparición de pendiente.
+- **Resultado:** código y documentación publicados en `main`; la validación operativa real queda pendiente hasta instalar 1.2.17 y probar el flujo en el servidor.
