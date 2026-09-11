@@ -1,9 +1,10 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.65";
+export const PANEL_VERSION = "1.2.66";
 export const CHANGELOG = [
-  { type: "Licencia", text: "Se corrige la causa por la que una licencia histórica válida podía seguir mostrando LICENCIA NO VÁLIDA después de actualizar: el fallback anterior se eliminaba del disco durante el instalador." },
-  { type: "Runtime", text: "El catálogo de compatibilidad ahora viaja dentro del backend como license_fallback.txt y permanece disponible después de instalar o actualizar Z-Hub." },
-  { type: "Prioridad", text: "El registro privado /etc/zhub/licencia/licencias.txt conserva prioridad cuando define la misma clave; estados INACTIVA o SUSPENDIDA siguen bloqueando correctamente." },
-  { type: "Compatibilidad", text: "La clave histórica ZHUB-2026-DEMO-002 vuelve a poder resolverse desde el fallback cuando no existe en el registro privado del servidor." },
-  { type: "Backup", text: "Se creó backup/pre-license-runtime-fallback-1.2.65-20260910 antes de aplicar la corrección funcional." },
+  { type: "Etapa 6", text: "Z-Hub incorpora cliente de License Server remoto por HTTPS con validación de licencia, plan, capacidad e instalación autorizada." },
+  { type: "Continuidad", text: "Las validaciones remotas correctas generan una autorización RS256 firmada que se conserva localmente para mantener operación durante una caída temporal del VPS." },
+  { type: "Seguridad", text: "Un rechazo explícito del License Server no reutiliza una autorización anterior; la clave privada permanece exclusivamente en el VPS y Z-Hub solo necesita la clave pública." },
+  { type: "VPS", text: "Se agregó el servicio license_server con base SQLite, historial de validaciones, autorización por installation_id, plantillas systemd/Nginx y generación de claves." },
+  { type: "Transición", text: "Mientras el License Server no esté configurado o durante la migración inicial, se conserva temporalmente el registro local; no se elimina hasta validar el servicio remoto." },
+  { type: "Backup", text: "Se creó backup/pre-license-stage6-1.2.65-20260910 antes de iniciar la Etapa 6/7." },
 ];
