@@ -3190,3 +3190,12 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - `docs/CONTINUIDAD_Z-HUB-v1.2.md` queda como única bitácora específica de la serie 1.2; `docs/CONTINUIDAD_Z-HUB.md` se conserva como bitácora maestra general del proyecto.
 - Los documentos `INFORME_*` y `docs/backups/` no forman parte de esta consolidación y se conservan.
 - Cambio exclusivamente documental: no incrementa `PANEL_VERSION`.
+
+
+## 2026-09-11 — Punto de continuidad integral 1.2.79 / License Center 7/7
+
+- Se dejó un handover integral y operativo en `docs/CONTINUIDAD_Z-HUB-v1.2.md` con el estado de Z-Hub 1.2.79, License Server 1.3.0, Etapas 1/7–7/7, TLS/CA, RS256/JWT, Supervisor, despliegues confirmados, pendientes exactos y reglas de seguridad.
+- Para cualquier conversación futura sobre la serie 1.2, leer primero el bloque `PUNTO DE CONTINUIDAD ACTUAL — 2026-09-11 — Z-Hub 1.2.79 / Licencias 7/7` dentro de la bitácora v1.2.
+- Estado de despliegue documentado sin asumir lo no comprobado: `z2` confirmado en 1.2.77 y `web-licencia` confirmado en commit 1.2.78/License Server 1.3.0; 1.2.79 está en `main` y requiere despliegue/validación final.
+- No se registran valores de Admin Token, claves privadas ni licencia completa.
+- Cambio exclusivamente documental: `PANEL_VERSION` permanece en 1.2.79.
