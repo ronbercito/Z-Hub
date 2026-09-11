@@ -26,6 +26,7 @@ const MODULES = [
   { id:"locations", label:"Ubicaciones", desc:"Zonas y oficinas", icon:MapPin, tone:"violet" },
   { id:"custom_fields", label:"Campos personalizados", desc:"Datos adicionales", icon:SlidersHorizontal, tone:"blue" },
   { id:"messaging", label:"Mensajería", desc:"Canales de contacto", icon:MessageSquare, tone:"green" },
+  { id:"whatsapp_automatizadovip", label:"WhatsApp AutomatizadoVIP", desc:"Gateway automático, API Key, pruebas e historial", icon:MessageSquare, tone:"green", live:true },
   { id:"cloud", label:"Cloud", desc:"Sincronización", icon:Cloud, tone:"blue" },
   { id:"google", label:"Google", desc:"Google Maps y APIs", icon:MapPin, tone:"multi", live:true },
   { id:"database", label:"Base de datos", desc:"Respaldo y datos", icon:Database, tone:"slate" },
