@@ -15,6 +15,7 @@ def test_license_manager_centralizes_plan_and_capacity_contract():
     assert '"PLAN_1000": 1000' in manager
     assert '"UNLIMITED": None' in manager
     assert 'TRIAL_DAYS = 30' in manager
+    assert 'TRIAL_MAX_CLIENTS = 20' in manager
     assert 'NON_COUNTING_CLIENT_STATUSES = {"retired"}' in manager
 
 
@@ -34,12 +35,13 @@ def test_license_manager_exposes_stage2_api():
         assert f"def {name}(" in manager or f"async def {name}(" in manager
 
 
-def test_legacy_licenses_remain_unlimited_and_trial_is_time_only():
+def test_legacy_paid_licenses_remain_unlimited_but_trial_is_limited():
     manager = read("backend/app/core/license_manager.py")
     assert 'plan = plan or "UNLIMITED"' in manager
     assert 'if license_type == "TRIAL":' in manager
-    assert 'max_clients = None' in manager
-    assert 'return True\n    limit = get_client_limit(data)' in manager
+    assert 'max_clients = TRIAL_MAX_CLIENTS' in manager
+    assert 'if is_trial(data):\n        return TRIAL_MAX_CLIENTS' in manager
+    assert 'if str(info.get("type", "")).upper() == "TRIAL":\n        return True' not in manager
 
 
 def test_setup_uses_license_manager_instead_of_own_parser():
