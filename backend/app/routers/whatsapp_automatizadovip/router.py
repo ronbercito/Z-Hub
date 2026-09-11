@@ -16,10 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.setting import Setting
+from app.models.whatsapp_automatizadovip_log import WhatsAppAutomatizadoVIPLog
 from app.services.whatsapp_automatizadovip import (
     DEFAULT_GATEWAY_URL,
     MAX_MESSAGE_LENGTH,
     WhatsAppGatewayError,
+    normalize_phone,
     send_messages,
 )
 
@@ -51,6 +53,7 @@ class ConfigUpdate(BaseModel):
 class MessageItem(BaseModel):
     number: str = Field(min_length=1)
     message: str = Field(min_length=1, max_length=MAX_MESSAGE_LENGTH)
+    client_id: str | None = None
 
 
 class SendRequest(BaseModel):
@@ -100,6 +103,22 @@ async def update_config(data: ConfigUpdate, db: AsyncSession = Depends(get_db)):
     return _public_config(current)
 
 
+async def _log_batch(db: AsyncSession, contacts: list[MessageItem], status: str, http_status: int | None = None, response_data: Any = None, error_message: str | None = None):
+    for item in contacts:
+        db.add(
+            WhatsAppAutomatizadoVIPLog(
+                client_id=item.client_id,
+                phone=item.number,
+                message=item.message,
+                status=status,
+                http_status=http_status,
+                response_data=response_data,
+                error_message=error_message,
+            )
+        )
+    await db.commit()
+
+
 @router.post("/send")
 async def send(data: SendRequest, db: AsyncSession = Depends(get_db)):
     s = await db.get(Setting, "system_config")
@@ -109,17 +128,21 @@ async def send(data: SendRequest, db: AsyncSession = Depends(get_db)):
     if not str(cfg.get("api_key") or "").strip():
         raise HTTPException(status_code=409, detail="Configure la API Key de AutomatizadoVIP")
 
+    contacts = [item.model_dump(exclude_none=True) for item in data.contacts]
+    gateway_contacts = [{"number": item["number"], "message": item["message"]} for item in contacts]
     try:
         result = await send_messages(
             api_key=cfg["api_key"],
-            contacts=[item.model_dump() for item in data.contacts],
+            contacts=gateway_contacts,
             gateway_url=cfg["gateway_url"],
             country_code=cfg["country_code"],
             verify=cfg["verify"],
         )
     except (ValueError, WhatsAppGatewayError) as exc:
+        await _log_batch(db, data.contacts, "failed", error_message=str(exc))
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    await _log_batch(db, data.contacts, "sent", http_status=result.status_code, response_data=result.response)
     return {
         "ok": result.ok,
         "status_code": result.status_code,
@@ -139,12 +162,14 @@ async def test_gateway(data: MessageItem, db: AsyncSession = Depends(get_db)):
     try:
         result = await send_messages(
             api_key=cfg["api_key"],
-            contacts=[data.model_dump()],
+            contacts=[{"number": data.number, "message": data.message}],
             gateway_url=cfg["gateway_url"],
             country_code=cfg["country_code"],
             verify=cfg["verify"],
         )
     except (ValueError, WhatsAppGatewayError) as exc:
+        await _log_batch(db, [data], "failed", error_message=str(exc))
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    await _log_batch(db, [data], "sent", http_status=result.status_code, response_data=result.response)
     return {"ok": result.ok, "status_code": result.status_code, "gateway_response": result.response}
