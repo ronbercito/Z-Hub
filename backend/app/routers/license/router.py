@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import ZHUB_LICENSE_PAYMENT_URL, ZHUB_LICENSE_WHATSAPP
 from app.core.database import get_db
 from app.core.license_manager import apply_license_metadata, get_license, get_license_record, get_setting_data
 from app.core.security import get_current_user, require_role
@@ -31,12 +32,17 @@ def _mask_license_key(value: str) -> str:
 async def _public_info(db: AsyncSession) -> dict:
     info = await get_license(db)
     key = info.pop("key", "")
-    return {**info, "license_key_masked": _mask_license_key(key)}
+    return {
+        **info,
+        "license_key_masked": _mask_license_key(key),
+        "sales_whatsapp": ZHUB_LICENSE_WHATSAPP,
+        "payment_url": ZHUB_LICENSE_PAYMENT_URL,
+    }
 
 
 @router.get("/info")
 async def license_info(db: AsyncSession = Depends(get_db)):
-    """Estado seguro de licencia para cualquier usuario autenticado."""
+    """Estado seguro de licencia y opciones comerciales para cualquier usuario autenticado."""
     return await _public_info(db)
 
 
