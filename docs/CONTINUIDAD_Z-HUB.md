@@ -1,3 +1,15 @@
+## 2026-09-11 — Web-Licence separado a repositorio privado
+
+- El servidor central de licencias y su License Center fueron migrados a `ronbercito/web-licence` (repositorio privado).
+- Z-Hub ya no contiene el código del servidor (`license_server/`) ni sus pruebas/UI específicas.
+- Z-Hub conserva únicamente el cliente de licenciamiento remoto, cache/JWT, activación y enforcement necesarios para comunicarse con Web-Licence.
+- Los informes históricos `INFORME_LICENSE*` / `INFORME_LICENCIAS*` se migraron al nuevo repositorio antes de retirarlos de Z-Hub.
+- No se movieron ni versionaron secretos, Admin Token, claves privadas, certificados privados ni SQLite productivo.
+- Repo Web-Licence: `ronbercito/web-licence`.
+- Backup previo de Z-Hub: `backup/pre-separate-web-licence-20260911`.
+- Este cambio es estructural/documental; no altera el contrato remoto `/v1/licenses/validate` usado por el panel.
+
+
 <!--
 ARCHIVO INTERNO DE CONTINUIDAD — NO ES PARTE DEL PANEL
 Archivo: docs/CONTINUIDAD_Z-HUB.md
