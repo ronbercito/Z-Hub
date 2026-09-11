@@ -1,0 +1,96 @@
+/**
+ * Tema visual del Centro de plantillas.
+ * Se mantiene separado del componente para no mezclar presentación y lógica.
+ * El alcance usa :has() para afectar únicamente el modal que contiene las plantillas.
+ */
+
+/* Tema oscuro: superficies profundas, texto claro y acentos controlados. */
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) {
+  background: #0b1220 !important;
+  border-color: #26364a !important;
+  color: #e5edf6 !important;
+}
+
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-900\/75,
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-900\/80 {
+  background: #101a2a !important;
+}
+
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/60,
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/80 {
+  background: #0a1220 !important;
+}
+
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) .border-slate-800 {
+  border-color: #26364a !important;
+}
+
+html[data-panel-theme="dark"] .settings-modal-panel:has(textarea[maxlength="1000"]) textarea {
+  background: #0b1422 !important;
+  color: #edf4fb !important;
+  border-color: #33465d !important;
+}
+
+/* Tema claro: superficies azul-gris suaves, contraste limpio y sin fondos negros. */
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) {
+  background: #f7fafc !important;
+  border-color: #cbd9e6 !important;
+  color: #173b63 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-900\/75,
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-900\/80 {
+  background: #ffffff !important;
+  border-color: #d1dde8 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/60,
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/80 {
+  background: #f1f6fa !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/50,
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-950\/40 {
+  background: #eef4f8 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-slate-800 {
+  background: #e6eef5 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .border-slate-800,
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .border-slate-700 {
+  border-color: #cbd9e6 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) textarea {
+  background: #ffffff !important;
+  color: #173b63 !important;
+  border-color: #b8c9d9 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) textarea:focus {
+  border-color: #2477c4 !important;
+  box-shadow: 0 0 0 2px rgba(36, 119, 196, 0.10) !important;
+}
+
+/* Los cuatro estados conservan identidad cromática en claro y oscuro. */
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-emerald-"],
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-green-"] { color: #147153 !important; }
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-amber-"],
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-orange-"] { color: #90631f !important; }
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-blue-"] { color: #1e5f9a !important; }
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-violet-"],
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) [class*="text-purple-"] { color: #5c4b98 !important; }
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .text-cyan-300 {
+  color: #087c9d !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .bg-emerald-600 {
+  background: #159577 !important;
+}
+
+html[data-panel-theme="zhub-light"] .settings-modal-panel:has(textarea[maxlength="1000"]) .hover\:bg-emerald-500:hover {
+  background: #117d65 !important;
+}
