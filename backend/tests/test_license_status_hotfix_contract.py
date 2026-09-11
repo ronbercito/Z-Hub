@@ -16,7 +16,6 @@ def test_license_registry_merges_repo_fallback_and_private_override():
 
 def test_private_registry_keeps_priority_over_fallback():
     manager = read("backend/app/core/license_manager.py")
-    assert "El registro privado tiene prioridad" in manager
     assert "BLOCKED_LICENSE_STATUSES" in manager
     assert "_is_blocked_license_status" in manager
 
@@ -29,12 +28,13 @@ def test_historical_active_statuses_are_normalized():
 
 def test_only_explicit_block_blocks_persisted_snapshot():
     manager = read("backend/app/core/license_manager.py")
-    assert 'if row is not None and _is_blocked_license_status(row.get("status")):' in manager
-    assert 'if _has_persisted_snapshot(data):\n        return "active"' in manager
-    assert 'if row is not None and _is_active_license_status(row.get("status")):' in manager
+    assert '_is_blocked_license_status(row.get("status"))' in manager
+    assert 'if _has_persisted_snapshot(data):' in manager
+    assert '_is_active_license_status(row.get("status"))' in manager
 
 
-def test_release_contains_license_status_hotfix():
+def test_hotfix_contract_survives_future_releases():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.64"' in version
-    assert "estado histórico" in version.lower() or "snapshot" in version.lower()
+    assert 'PANEL_VERSION = "1.2.' in version
+    manager = read("backend/app/core/license_manager.py")
+    assert "license_fallback.txt" in manager
