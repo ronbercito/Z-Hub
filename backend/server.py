@@ -12,7 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.core.database import init_db
 from app.core import database
-from app.core.license_guard import enforce_client_capacity
+from app.core.license_guard import enforce_client_capacity, enforce_trial_write_access
 from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
 from app.models.client import Client
@@ -38,6 +38,7 @@ from app.routers.facturacion.client_balances import router as client_balances_ro
 from app.routers.facturacion.invoice_actions import router as invoice_actions_router
 from app.routers.hotspot.router import router as hotspot_router
 from app.routers.inicio.router import router as inicio_router
+from app.routers.license.router import router as license_router
 from app.routers.mensajeria.router import router as mensajeria_router
 from app.routers.planes.router import router as planes_router
 from app.routers.red.router import router as red_router
@@ -98,10 +99,10 @@ async def sync_summary_identity(request, call_next):
                     logger.warning("%s %s", result["message"], result["routers"])
     return response
 
-api = APIRouter(prefix="/api")
+api = APIRouter(prefix="/api", dependencies=[Depends(enforce_trial_write_access)])
 for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
     api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
-for router in (ajustes_public_router, auth_router, system_update_router, setup_router):
+for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
 api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])

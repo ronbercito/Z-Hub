@@ -1,16 +1,16 @@
 """Motor central de licencias para instalaciones locales de Z-Hub.
 
-Etapa 2/7:
+Etapas 2-5/7:
 - mantiene compatibilidad con el registro local actual de licencias;
 - normaliza plan, tipo y capacidad;
 - calcula consumo de abonados localmente;
+- controla Trial de 30 días y su estado de solo lectura al vencer;
 - prepara la interfaz que usará el futuro License Server.
-
-La Etapa 3 será responsable de aplicar el bloqueo efectivo al alta de abonados.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+import math
 import os
 import re
 from pathlib import Path
@@ -136,12 +136,17 @@ def licenses() -> dict[str, dict[str, Any]]:
     return rows
 
 
-def get_license_record(key: str | None) -> dict[str, Any] | None:
-    """Obtiene una licencia activa por clave; las suspendidas no validan."""
+def get_license_row(key: str | None) -> dict[str, Any] | None:
+    """Obtiene el registro local aunque esté suspendido/inactivo."""
     normalized = str(key or "").strip().upper()
     if not normalized:
         return None
-    row = licenses().get(normalized)
+    return licenses().get(normalized)
+
+
+def get_license_record(key: str | None) -> dict[str, Any] | None:
+    """Obtiene una licencia activa por clave; las suspendidas no validan."""
+    row = get_license_row(key)
     if not row or row.get("status") != "ACTIVA":
         return None
     return row
@@ -171,29 +176,81 @@ def _parse_datetime(value: Any) -> datetime | None:
         return None
 
 
-def trial_days_remaining(data: dict[str, Any], now: datetime | None = None) -> int | None:
-    if str(data.get("license_type", "")).upper() != "TRIAL":
+def trial_started_at(data: dict[str, Any]) -> datetime | None:
+    if not is_trial(data):
         return None
-    started = _parse_datetime(data.get("license_activated_at"))
-    if not started:
+    return _parse_datetime(data.get("license_activated_at"))
+
+
+def trial_expires_at(data: dict[str, Any]) -> datetime | None:
+    started = trial_started_at(data)
+    return started + timedelta(days=TRIAL_DAYS) if started else None
+
+
+def trial_days_remaining(data: dict[str, Any], now: datetime | None = None) -> int | None:
+    if not is_trial(data):
+        return None
+    expires = trial_expires_at(data)
+    if not expires:
         return TRIAL_DAYS
-    current = now or datetime.now(timezone.utc)
-    elapsed_days = max(0, (current.astimezone(timezone.utc) - started).days)
-    return max(0, TRIAL_DAYS - elapsed_days)
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    seconds = (expires - current).total_seconds()
+    if seconds <= 0:
+        return 0
+    return min(TRIAL_DAYS, max(1, math.ceil(seconds / 86400)))
+
+
+def trial_warning_level(data: dict[str, Any], now: datetime | None = None) -> str | None:
+    remaining = trial_days_remaining(data, now=now)
+    if remaining is None:
+        return None
+    if remaining == 0:
+        return "expired"
+    if remaining <= 1:
+        return "critical"
+    if remaining <= 3:
+        return "urgent"
+    if remaining <= 7:
+        return "warning"
+    return "normal"
 
 
 def is_trial(data: dict[str, Any]) -> bool:
     return str(data.get("license_type", "")).upper() == "TRIAL"
 
 
+def _has_persisted_snapshot(data: dict[str, Any]) -> bool:
+    """Reconoce instalaciones ya activadas aunque el archivo legado no viaje en una actualización.
+
+    Un registro explícitamente presente como INACTIVA/SUSPENDIDA sigue invalidando la
+    licencia. El fallback solo aplica cuando la clave ya no está en el registro local,
+    evitando el falso "Licencia no válida" observado tras actualizar instalaciones.
+    """
+    license_type = str(data.get("license_type", "")).upper()
+    return bool(data.get("license_key") and license_type in {"PAID", "TRIAL"} and data.get("license_plan"))
+
+
 def get_status(data: dict[str, Any]) -> str:
-    if not data.get("license_key"):
+    key = str(data.get("license_key") or "").strip().upper()
+    if not key:
         return "missing"
-    if not get_license_record(data.get("license_key")):
+
+    row = get_license_row(key)
+    if row is not None and row.get("status") != "ACTIVA":
         return "invalid"
+
     if is_trial(data) and trial_days_remaining(data) == 0:
         return "trial_expired"
-    return "active"
+
+    if row is not None:
+        return "active"
+
+    # Compatibilidad temporal hasta la Etapa 6: una instalación que ya guardó el
+    # snapshot normalizado continúa activa si la clave desapareció del fallback
+    # local durante una actualización. No se ignora un ESTADO inactivo explícito.
+    if _has_persisted_snapshot(data):
+        return "active"
+    return "invalid"
 
 
 def get_client_limit(data: dict[str, Any]) -> int | None:
@@ -217,26 +274,34 @@ async def get_client_usage(db: AsyncSession) -> int:
 async def get_license(db: AsyncSession) -> dict[str, Any]:
     """Vista normalizada del estado de licencia de la instalación."""
     _, data = await get_setting_data(db)
-    record = get_license_record(data.get("license_key"))
+    row = get_license_row(data.get("license_key"))
+    record = row if row and row.get("status") == "ACTIVA" else None
     usage = await get_client_usage(db)
     limit = get_client_limit(data)
     remaining = None if limit is None else max(0, limit - usage)
+    status = get_status(data)
+    started = trial_started_at(data)
+    expires = trial_expires_at(data)
     return {
         "key": data.get("license_key", ""),
-        "status": get_status(data),
+        "status": status,
         "type": data.get("license_type") or (record or {}).get("type") or "",
         "plan": data.get("license_plan") or (record or {}).get("plan") or "",
         "max_clients": limit,
         "client_usage": usage,
         "available_clients": remaining,
         "trial_days_remaining": trial_days_remaining(data),
+        "trial_started_at": started.isoformat() if started else None,
+        "trial_expires_at": expires.isoformat() if expires else None,
+        "trial_warning_level": trial_warning_level(data),
+        "read_only": status == "trial_expired",
         "owner": (record or {}).get("name", ""),
         "email": (record or {}).get("email", ""),
     }
 
 
 async def can_create_client(db: AsyncSession) -> bool:
-    """Prepara la decisión de capacidad; la Etapa 3 la aplicará al endpoint de alta."""
+    """Decide si la licencia permite aumentar el número de abonados contabilizados."""
     _, data = await get_setting_data(db)
     if get_status(data) != "active":
         return False

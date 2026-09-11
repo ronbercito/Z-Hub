@@ -1,4 +1,4 @@
-"""Aplicación del límite comercial de abonados (Licencias Etapa 3/7)."""
+"""Aplicación de reglas comerciales de licencia de Z-Hub (Etapas 3 y 5/7)."""
 from __future__ import annotations
 
 import re
@@ -11,6 +11,21 @@ from app.core.license_manager import get_license
 from app.models.client import Client
 
 CLIENT_LIMIT_CODE = "CLIENT_LIMIT_REACHED"
+TRIAL_EXPIRED_CODE = "TRIAL_EXPIRED"
+TRIAL_EXPIRED_MESSAGE = (
+    "El período de prueba de 30 días ha finalizado. Z-Hub permanece disponible en modo consulta; "
+    "activa una licencia pagada para volver a modificar datos."
+)
+WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+TRIAL_WRITE_EXEMPT_PATHS = {
+    "/api/auth/login",
+    "/api/auth/logout",
+    "/api/license/activate",
+}
+TRIAL_WRITE_EXEMPT_PREFIXES = (
+    "/api/setup/",
+    "/api/system-update",
+)
 
 
 def _limit_message(usage: int, limit: int) -> str:
@@ -24,8 +39,6 @@ def _limit_message(usage: int, limit: int) -> str:
 async def _raise_if_capacity_full(db: AsyncSession) -> None:
     license_info = await get_license(db)
     if license_info.get("status") != "active":
-        # La política de Trial vencido pertenece a la Etapa 5. En esta etapa solo
-        # se aplica el límite de capacidad a licencias activas con límite finito.
         return
     limit = license_info.get("max_clients")
     if limit is None:
@@ -45,12 +58,7 @@ async def _raise_if_capacity_full(db: AsyncSession) -> None:
 
 
 async def enforce_client_capacity(request: Request, db: AsyncSession = Depends(get_db)) -> None:
-    """Protege altas nuevas y reactivación de un cliente retirado.
-
-    Se instala como dependencia del CRUD principal de Clientes. Solo consulta
-    licencia para las operaciones que pueden aumentar el número de abonados que
-    consumen cupo; editar clientes ya contabilizados sigue permitido.
-    """
+    """Protege altas nuevas y reactivación de un cliente retirado."""
     path = request.url.path.rstrip("/")
 
     if request.method == "POST" and path == "/api/clients":
@@ -63,3 +71,32 @@ async def enforce_client_capacity(request: Request, db: AsyncSession = Depends(g
             client = await db.get(Client, match.group(1))
             if client and client.status == "retired":
                 await _raise_if_capacity_full(db)
+
+
+def _trial_write_is_exempt(path: str) -> bool:
+    if path in TRIAL_WRITE_EXEMPT_PATHS:
+        return True
+    return any(path.startswith(prefix) for prefix in TRIAL_WRITE_EXEMPT_PREFIXES)
+
+
+async def enforce_trial_write_access(request: Request, db: AsyncSession = Depends(get_db)) -> None:
+    """Tras vencer el Trial deja la API autenticada en modo consulta.
+
+    Login/logout, activación de licencia, setup y actualización del sistema siguen
+    disponibles para que el administrador pueda recuperar una instalación sin perder datos.
+    """
+    if request.method.upper() not in WRITE_METHODS:
+        return
+    path = request.url.path.rstrip("/") or "/"
+    if _trial_write_is_exempt(path):
+        return
+
+    info = await get_license(db)
+    if info.get("status") != "trial_expired":
+        return
+
+    raise HTTPException(
+        status_code=403,
+        detail=f"{TRIAL_EXPIRED_CODE}: {TRIAL_EXPIRED_MESSAGE}",
+        headers={"X-ZHub-Error-Code": TRIAL_EXPIRED_CODE},
+    )

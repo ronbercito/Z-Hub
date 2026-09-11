@@ -22,7 +22,7 @@ def test_settings_modal_uses_dedicated_license_view():
 
 def test_license_view_shows_capacity_and_trial_without_paid_expiry():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
-    assert '/settings/license-info' in view
+    assert '/license/info' in view
     assert 'Abonados usados' in view
     assert 'Capacidad' in view
     assert 'Disponibles' in view
@@ -41,10 +41,9 @@ def test_license_api_masks_key_and_protects_internal_metadata():
     assert 'hidden = {"smtp_password_encrypted", *LICENSE_INTERNAL_SETTINGS}' in settings
 
 
-def test_stage4_keeps_license_ui_read_only():
+def test_stage4_license_state_remains_read_only_except_explicit_activation_added_later():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
-    assert 'axios.get(`${API}/settings/license-info`' in view
-    assert 'axios.post(' not in view
+    assert 'axios.get(`${API}/license/info`' in view
     assert 'axios.put(' not in view
     assert 'axios.patch(' not in view
     assert 'axios.delete(' not in view

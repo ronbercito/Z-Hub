@@ -1,10 +1,11 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.60";
+export const PANEL_VERSION = "1.2.61";
 export const CHANGELOG = [
-  { type: "Licencias", text: "Se incorpora en Ajustes la tarjeta operativa Licencia Z-Hub con una ventana dedicada para consultar estado, plan y capacidad." },
-  { type: "Capacidad", text: "Las licencias pagadas muestran abonados usados, máximo autorizado, disponibles y una barra visual de consumo; Ilimitado se presenta sin vencimiento ni límite." },
-  { type: "Trial", text: "El Trial muestra los días restantes de los 30 días de prueba y mantiene indicado que todas las funciones están disponibles sin límite por cantidad de abonados." },
-  { type: "Seguridad", text: "La API de licencia entrega la clave enmascarada y los metadatos internos de licencia dejan de exponerse o editarse mediante el endpoint genérico de Ajustes." },
-  { type: "Compatibilidad", text: "La Etapa 4 es informativa: no modifica clientes, planes, MikroTik, OLT, facturación ni las reglas de límite implementadas en la Etapa 3." },
-  { type: "Backup", text: "Se creó backup/pre-license-stage4-1.2.59-20260910 antes de implementar la interfaz de licencia." },
+  { type: "Trial", text: "Se activa el Trial real de 30 días con acceso completo durante la prueba y conteo exacto de días restantes." },
+  { type: "Vencimiento", text: "Al finalizar el Trial, Z-Hub conserva todos los datos y pasa a modo consulta: lectura y acceso continúan disponibles, mientras las operaciones de escritura quedan bloqueadas." },
+  { type: "Activación", text: "El administrador puede activar una licencia pagada desde Ajustes → Licencia Z-Hub sin reinstalar ni perder información; login, logout y actualización del sistema siguen disponibles aunque el Trial haya vencido." },
+  { type: "Avisos", text: "La cartilla de licencia muestra inicio, fin, días restantes y avisos reforzados cuando faltan 7, 3 y 1 día, además del estado Trial finalizado." },
+  { type: "Compatibilidad", text: "Se corrige el falso estado LICENCIA NO VÁLIDA en instalaciones ya activadas cuando la clave desaparece del archivo fallback durante una actualización; una licencia marcada explícitamente inactiva sigue invalidándose." },
+  { type: "Seguridad", text: "La activación local solo acepta licencias pagadas activas y requiere rol administrador; esta fuente local será reemplazada por el servidor de licencias en la Etapa 6." },
+  { type: "Backup", text: "Se creó backup/pre-license-stage5-1.2.60-20260910 antes de implementar la Etapa 5/7." },
 ];
