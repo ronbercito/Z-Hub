@@ -4,6 +4,8 @@
  *          del tema seleccionado sin tocar la lógica funcional de los módulos.
  * Trabaja con: Layout.jsx, Login.jsx, App.js y Ajustes > General.
  */
+import "./message-templates-theme.css";
+
 export const PANEL_THEME_DARK = "dark";
 export const PANEL_THEME_ZHUB_LIGHT = "zhub-light";
 export const PANEL_THEME_STORAGE_KEY = "zhub_panel_theme";
