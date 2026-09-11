@@ -17,7 +17,7 @@ def test_license_card_is_operational_in_settings_home():
 def test_settings_modal_uses_dedicated_license_view():
     modal = read("frontend/src/modules/ajustes/SettingsModal.jsx")
     assert 'import LicenseSettings from "./LicenseSettings"' in modal
-    assert 'section === "license" ? <LicenseSettings />' in modal
+    assert 'section === "license" ? <LicenseSettings locked={locked} />' in modal
 
 
 def test_license_view_shows_capacity_trial_and_remote_validation_state():
