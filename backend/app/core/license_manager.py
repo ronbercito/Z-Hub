@@ -38,6 +38,41 @@ TRIAL_DAYS = 30
 # exista una baja definitiva. En el modelo actual `retired` representa esa baja.
 NON_COUNTING_CLIENT_STATUSES = {"retired"}
 
+# Compatibilidad temporal con registros históricos creados antes de Etapa 6.
+# Solo los estados explícitamente bloqueados deben invalidar una instalación ya
+# activada. Estados activos equivalentes se normalizan a ACTIVA; un valor legado
+# desconocido no puede tumbar un snapshot pagado ya persistido, pero tampoco
+# permite activar una licencia nueva.
+ACTIVE_LICENSE_STATUSES = {"ACTIVA", "ACTIVO", "ACTIVE", "VALIDA", "VÁLIDA"}
+BLOCKED_LICENSE_STATUSES = {
+    "INACTIVA",
+    "INACTIVO",
+    "INACTIVE",
+    "SUSPENDIDA",
+    "SUSPENDIDO",
+    "SUSPENDED",
+    "REVOCADA",
+    "REVOCADO",
+    "REVOKED",
+}
+
+
+def _normalize_license_status(value: Any) -> str:
+    raw = str(value or "ACTIVA").strip().upper()
+    if raw in ACTIVE_LICENSE_STATUSES:
+        return "ACTIVA"
+    if raw in BLOCKED_LICENSE_STATUSES:
+        return raw
+    return raw or "ACTIVA"
+
+
+def _is_active_license_status(value: Any) -> bool:
+    return _normalize_license_status(value) == "ACTIVA"
+
+
+def _is_blocked_license_status(value: Any) -> bool:
+    return str(value or "").strip().upper() in BLOCKED_LICENSE_STATUSES
+
 
 def _normalize_max_clients(value: Any, plan: str) -> int | None:
     raw = str(value or "").strip().upper()
@@ -55,7 +90,7 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
     if not key:
         return None
 
-    status = current.get("status", "ACTIVA").strip().upper()
+    status = _normalize_license_status(current.get("status", "ACTIVA"))
     license_type = current.get("type", "PAID").strip().upper() or "PAID"
     if license_type not in {"PAID", "TRIAL"}:
         license_type = "PAID"
@@ -150,7 +185,7 @@ def get_license_row(key: str | None) -> dict[str, Any] | None:
 def get_license_record(key: str | None) -> dict[str, Any] | None:
     """Obtiene una licencia activa por clave; las suspendidas no validan."""
     row = get_license_row(key)
-    if not row or row.get("status") != "ACTIVA":
+    if not row or not _is_active_license_status(row.get("status")):
         return None
     return row
 
@@ -234,15 +269,22 @@ def get_status(data: dict[str, Any]) -> str:
         return "missing"
 
     row = get_license_row(key)
-    if row is not None and row.get("status") != "ACTIVA":
+
+    # Una revocación o suspensión explícita del registro privado/local siempre
+    # prevalece. Este caso sí invalida incluso un snapshot histórico.
+    if row is not None and _is_blocked_license_status(row.get("status")):
         return "invalid"
 
     if is_trial(data) and trial_days_remaining(data) == 0:
         return "trial_expired"
 
-    if row is not None:
+    # Los estados activos históricos (ACTIVA/ACTIVO/ACTIVE/VÁLIDA) se aceptan.
+    if row is not None and _is_active_license_status(row.get("status")):
         return "active"
 
+    # Durante la transición a Etapa 6, un valor de estado legado desconocido no
+    # debe convertir en inválida una licencia pagada ya activada y persistida.
+    # Sin snapshot previo, el mismo registro desconocido continúa sin validar.
     if _has_persisted_snapshot(data):
         return "active"
     return "invalid"
@@ -270,7 +312,7 @@ async def get_license(db: AsyncSession) -> dict[str, Any]:
     """Vista normalizada del estado de licencia de la instalación."""
     _, data = await get_setting_data(db)
     row = get_license_row(data.get("license_key"))
-    record = row if row and row.get("status") == "ACTIVA" else None
+    record = row if row and _is_active_license_status(row.get("status")) else None
     usage = await get_client_usage(db)
     limit = get_client_limit(data)
     remaining = None if limit is None else max(0, limit - usage)
