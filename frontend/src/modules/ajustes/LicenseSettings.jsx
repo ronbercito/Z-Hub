@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { AlertTriangle, CheckCircle2, Clock3, Infinity as InfinityIcon, KeyRound, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Infinity as InfinityIcon, KeyRound, MessageCircle, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./license-settings.css";
 
@@ -60,6 +60,9 @@ export default function LicenseSettings() {
   const remainingDays = Number(data?.trial_days_remaining ?? 0);
   const isExpired = data?.status === "trial_expired" || Boolean(data?.read_only);
   const percent = useMemo(() => max && max > 0 ? Math.min(100, Math.max(0, Math.round((usage / max) * 100))) : 0, [usage, max]);
+  const whatsappDigits = String(data?.sales_whatsapp || "").replace(/\D/g, "");
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hola, mi Trial de Z-Hub finalizó y deseo adquirir una licencia pagada. ¿Me pueden ayudar con los planes y el pago?")}` : "";
+  const paymentUrl = String(data?.payment_url || "").trim();
 
   const activateLicense = async (event) => {
     event.preventDefault();
@@ -110,7 +113,7 @@ export default function LicenseSettings() {
         <AlertTriangle/>
         <div>
           <b>{isExpired ? "Período de prueba finalizado" : remainingDays <= 7 ? "Tu Trial está próximo a finalizar" : "Trial de 30 días activo"}</b>
-          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está en modo consulta: puedes ingresar y revisar información, pero las operaciones que modifican datos quedan bloqueadas hasta activar una licencia pagada." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. Activa una licencia pagada antes del vencimiento para continuar operando sin interrupción.` : "Durante los 30 días tienes acceso a todas las funciones del panel sin límite de abonados."}</p>
+          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está en modo consulta. Para continuar operando, activa una licencia pagada o adquiere una desde las opciones comerciales de esta pantalla." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. Activa una licencia pagada antes del vencimiento para continuar operando sin interrupción.` : "Durante los 30 días tienes acceso a todas las funciones del panel sin límite de abonados."}</p>
         </div>
       </section>
     </> : <>
@@ -134,6 +137,15 @@ export default function LicenseSettings() {
       {data?.owner && <div><span>Titular</span><b>{data.owner}</b></div>}
       {data?.email && <div><span>Correo</span><b>{data.email}</b></div>}
     </section>
+
+    {isExpired && <section className="license-commercial">
+      <div className="commercial-title"><CreditCard/><div><b>Comprar o renovar licencia</b><span>Elige pago directo o contacto comercial por WhatsApp.</span></div></div>
+      <div className="commercial-actions">
+        <button type="button" className="pay" disabled={!paymentUrl} onClick={() => paymentUrl && window.open(paymentUrl, "_blank", "noopener,noreferrer")}><CreditCard/>Pagar licencia</button>
+        <button type="button" className="whatsapp" disabled={!whatsappUrl} onClick={() => whatsappUrl && window.open(whatsappUrl, "_blank", "noopener,noreferrer")}><MessageCircle/>Contactar por WhatsApp</button>
+      </div>
+      {(!paymentUrl || !whatsappUrl) && <p className="commercial-hint">Las opciones comerciales se habilitan al configurar ZHUB_LICENSE_PAYMENT_URL y ZHUB_LICENSE_WHATSAPP en el servidor.</p>}
+    </section>}
 
     {user?.role === "admin" && <form className="license-activation" onSubmit={activateLicense}>
       <div className="activation-title"><KeyRound/><div><b>{isTrial ? "Activar licencia pagada" : "Cambiar licencia"}</b><span>{isTrial ? "Puedes convertir el Trial en una licencia pagada sin perder ningún dato." : "Usa una clave activa para cambiar el plan de esta instalación."}</span></div></div>
