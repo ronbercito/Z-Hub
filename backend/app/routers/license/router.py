@@ -1,8 +1,7 @@
 """API autenticada de licencia Z-Hub.
 
-Etapa 5/7: expone estado seguro para el panel y permite al administrador
-convertir Trial/instalación en una licencia pagada usando el registro local.
-La validación remota se sustituirá en la Etapa 6.
+Etapa 6/7: expone estado seguro para el panel y valida altas/cambios contra el
+License Server remoto cuando está configurado, conservando transición local segura.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -10,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import ZHUB_LICENSE_PAYMENT_URL, ZHUB_LICENSE_WHATSAPP
 from app.core.database import get_db
-from app.core.license_manager import apply_license_metadata, get_license, get_license_record, get_setting_data
+from app.core.license_manager import apply_license_metadata, get_license, get_setting_data, resolve_license_record
 from app.core.security import get_current_user, require_role
 
 router = APIRouter(prefix="/license", tags=["Licencia"], dependencies=[Depends(get_current_user)])
@@ -42,17 +41,16 @@ async def _public_info(db: AsyncSession) -> dict:
 
 @router.get("/info")
 async def license_info(db: AsyncSession = Depends(get_db)):
-    """Estado seguro de licencia y opciones comerciales para cualquier usuario autenticado."""
     return await _public_info(db)
 
 
 @router.post("/activate", dependencies=[Depends(require_role("admin"))])
 async def activate_paid_license(payload: LicenseActivationIn, db: AsyncSession = Depends(get_db)):
-    """Activa/cambia a una licencia pagada sin borrar datos de la instalación."""
     key = payload.license_key.strip().upper()
-    record = get_license_record(key)
+    record, validation = await resolve_license_record(db, key)
     if not record:
-        raise HTTPException(status_code=400, detail="La licencia ingresada no es válida o no está activa.")
+        detail = validation.get("message") or "La licencia ingresada no es válida o no está activa."
+        raise HTTPException(status_code=400, detail=detail)
     if record.get("type") != "PAID":
         raise HTTPException(status_code=422, detail="Desde esta pantalla solo puede activarse una licencia pagada.")
 
@@ -62,5 +60,6 @@ async def activate_paid_license(payload: LicenseActivationIn, db: AsyncSession =
     return {
         "ok": True,
         "message": "Licencia pagada activada correctamente.",
+        "validation_source": validation.get("source"),
         "license": await _public_info(db),
     }
