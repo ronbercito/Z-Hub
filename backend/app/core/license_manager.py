@@ -1,7 +1,7 @@
 """Motor central de licencias para instalaciones locales de Z-Hub.
 
 Etapas 2-6/7:
-- mantiene compatibilidad temporal con el registro local;
+- mantiene compatibilidad temporal con el registro local privado;
 - normaliza plan, tipo y capacidad;
 - calcula consumo de abonados localmente;
 - controla Trial de 30 días;
@@ -30,7 +30,6 @@ from app.core.license_remote import (
 from app.models.client import Client
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
-REPO_LICENSE_FILE = Path(__file__).resolve().parent / "license_fallback.txt"
 PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licencias.txt"))
 
 PLAN_LIMITS: dict[str, int | None] = {
@@ -144,9 +143,8 @@ def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def licenses() -> dict[str, dict[str, Any]]:
-    rows = _parse_license_file(REPO_LICENSE_FILE)
-    rows.update(_parse_license_file(PRIVATE_LICENSE_FILE))
-    return rows
+    """Registro local privado. El catálogo demo empaquetado ya no autoriza producción."""
+    return _parse_license_file(PRIVATE_LICENSE_FILE)
 
 
 def get_license_row(key: str | None) -> dict[str, Any] | None:
@@ -242,11 +240,6 @@ def is_trial(data: dict[str, Any]) -> bool:
     return str(data.get("license_type", "")).upper() == "TRIAL"
 
 
-def _has_persisted_snapshot(data: dict[str, Any]) -> bool:
-    license_type = str(data.get("license_type", "")).upper()
-    return bool(data.get("license_key") and license_type in {"PAID", "TRIAL"} and data.get("license_plan"))
-
-
 def get_status(data: dict[str, Any]) -> str:
     key = str(data.get("license_key") or "").strip().upper()
     if not key:
@@ -258,8 +251,9 @@ def get_status(data: dict[str, Any]) -> str:
         return "trial_expired"
     if row is not None and _is_active_license_status(row.get("status")):
         return "active"
-    if _has_persisted_snapshot(data):
-        return "active"
+    # Un snapshot guardado en la BD describe la última licencia conocida, pero
+    # no constituye una autorización. Sin registro local válido, autorización
+    # remota o caché firmada, la instalación debe pedir una nueva licencia.
     return "invalid"
 
 
@@ -363,7 +357,7 @@ async def get_license(db: AsyncSession) -> dict[str, Any]:
         "trial_started_at": started.isoformat() if started else None,
         "trial_expires_at": expires.isoformat() if expires else None,
         "trial_warning_level": trial_warning_level(data),
-        "read_only": status == "trial_expired",
+        "read_only": status in {"invalid", "missing", "trial_expired"},
         "owner": (active_record or {}).get("name", ""),
         "email": (active_record or {}).get("email", ""),
         "installation_id": installation_id,
