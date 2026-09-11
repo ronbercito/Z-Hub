@@ -20,6 +20,7 @@ export const SETTINGS_SECTIONS = [
   { id:"locations", label:"Ubicaciones" },
   { id:"custom_fields", label:"Campos personalizados" },
   { id:"messaging", label:"Mensajería" },
+  { id:"whatsapp_automatizadovip", label:"WhatsApp AutomatizadoVIP" },
   { id:"cloud", label:"Cloud" },
   { id:"google", label:"Google Maps y APIs" },
   { id:"database", label:"Base de datos" },
