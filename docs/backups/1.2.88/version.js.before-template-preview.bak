@@ -1,0 +1,7 @@
+/** Backup de versión 1.2.87 antes de incorporar la vista previa de mensajes. */
+export const PANEL_VERSION = "1.2.87";
+export const CHANGELOG = [
+  { type: "UI", text: "Centro de Plantillas rediseñado con flujo visual de envío, numeración, iconos y categorías para identificar cada comunicación." },
+  { type: "UX", text: "Cada plantilla muestra propósito, evento asociado, variables disponibles, contador de caracteres y acciones de guardar/restaurar." },
+  { type: "Orden", text: "Las plantillas se presentan en el orden lógico del ciclo de comunicación: preventivo, cobranza, confirmación y operativo." },
+];
