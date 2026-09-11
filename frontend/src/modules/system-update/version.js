@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.88";
+export const PANEL_VERSION = "1.2.89";
 export const CHANGELOG = [
-  { type: "UI", text: "Centro de Plantillas incorpora una vista previa visual estilo WhatsApp para cada mensaje." },
-  { type: "UX", text: "La vista previa reemplaza variables con datos de demostración y permite revisar el mensaje final antes de guardarlo." },
-  { type: "Seguridad", text: "La vista previa es local y no realiza ningún envío real de WhatsApp." },
+  { type: "Fix", text: "Corrección de compilación JSX en el Centro de Plantillas para producción." },
+  { type: "UI", text: "Se conserva la vista previa visual estilo WhatsApp de las plantillas." },
+  { type: "Seguridad", text: "La vista previa continúa siendo local y no realiza envíos reales de WhatsApp." },
 ];
