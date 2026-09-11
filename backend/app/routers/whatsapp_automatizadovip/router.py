@@ -1,9 +1,4 @@
-"""API protegida para integración WhatsApp AutomatizadoVIP.
-
-No sustituye el módulo existente de Mensajería. Permite configurar el gateway,
-probar conexión mediante un envío real opcional y enviar mensajes manuales o
-lotes desde Z-Hub.
-"""
+"""API protegida para integración WhatsApp AutomatizadoVIP."""
 
 from __future__ import annotations
 
@@ -21,7 +16,6 @@ from app.services.whatsapp_automatizadovip import (
     DEFAULT_GATEWAY_URL,
     MAX_MESSAGE_LENGTH,
     WhatsAppGatewayError,
-    normalize_phone,
     send_messages,
 )
 
@@ -32,6 +26,15 @@ router = APIRouter(
 )
 
 SETTINGS_KEY = "whatsapp_automatizadovip"
+DEFAULT_AUTOMATION = {
+    "enabled": False,
+    "reminder_enabled": True,
+    "reminder_days_before": 3,
+    "cut_warning_enabled": True,
+    "payment_confirmation_enabled": True,
+    "run_interval_minutes": 30,
+    "max_batch": 50,
+}
 DEFAULT_CONFIG = {
     "enabled": False,
     "gateway_url": DEFAULT_GATEWAY_URL,
@@ -39,7 +42,18 @@ DEFAULT_CONFIG = {
     "verify": True,
     "api_key": "",
     "max_message_length": MAX_MESSAGE_LENGTH,
+    "automation": DEFAULT_AUTOMATION,
 }
+
+
+class AutomationConfig(BaseModel):
+    enabled: bool = False
+    reminder_enabled: bool = True
+    reminder_days_before: int = Field(default=3, ge=0, le=30)
+    cut_warning_enabled: bool = True
+    payment_confirmation_enabled: bool = True
+    run_interval_minutes: int = Field(default=30, ge=5, le=1440)
+    max_batch: int = Field(default=50, ge=1, le=200)
 
 
 class ConfigUpdate(BaseModel):
@@ -48,6 +62,7 @@ class ConfigUpdate(BaseModel):
     country_code: str = "51"
     verify: bool = True
     api_key: str = ""
+    automation: AutomationConfig = AutomationConfig()
 
 
 class MessageItem(BaseModel):
@@ -61,8 +76,9 @@ class SendRequest(BaseModel):
 
 
 def _read_config(s: Setting | None) -> dict[str, Any]:
-    cfg = ((s.data if s else {}) or {}).get(SETTINGS_KEY) or {}
-    return {**DEFAULT_CONFIG, **cfg}
+    raw = ((s.data if s else {}) or {}).get(SETTINGS_KEY) or {}
+    automation = {**DEFAULT_AUTOMATION, **(raw.get("automation") or {})}
+    return {**DEFAULT_CONFIG, **raw, "automation": automation}
 
 
 def _public_config(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -74,6 +90,7 @@ def _public_config(cfg: dict[str, Any]) -> dict[str, Any]:
         "verify": bool(cfg.get("verify", True)),
         "configured": bool(str(cfg.get("api_key") or "").strip()),
         "max_message_length": MAX_MESSAGE_LENGTH,
+        "automation": {**DEFAULT_AUTOMATION, **(cfg.get("automation") or {})},
     }
 
 
@@ -91,12 +108,12 @@ async def update_config(data: ConfigUpdate, db: AsyncSession = Depends(get_db)):
 
     current = _read_config(s)
     incoming = data.model_dump()
-    # Un formulario puede conservar la API Key oculta; una cadena vacía no la borra.
     if not incoming["api_key"].strip():
         incoming["api_key"] = current.get("api_key", "")
     current.update(incoming)
     current["gateway_url"] = current["gateway_url"].strip() or DEFAULT_GATEWAY_URL
     current["country_code"] = "".join(ch for ch in current["country_code"] if ch.isdigit()) or "51"
+    current["automation"] = {**DEFAULT_AUTOMATION, **incoming.get("automation", {})}
 
     s.data = {**(s.data or {}), SETTINGS_KEY: current}
     await db.commit()
@@ -105,17 +122,15 @@ async def update_config(data: ConfigUpdate, db: AsyncSession = Depends(get_db)):
 
 async def _log_batch(db: AsyncSession, contacts: list[MessageItem], status: str, http_status: int | None = None, response_data: Any = None, error_message: str | None = None):
     for item in contacts:
-        db.add(
-            WhatsAppAutomatizadoVIPLog(
-                client_id=item.client_id,
-                phone=item.number,
-                message=item.message,
-                status=status,
-                http_status=http_status,
-                response_data=response_data,
-                error_message=error_message,
-            )
-        )
+        db.add(WhatsAppAutomatizadoVIPLog(
+            client_id=item.client_id,
+            phone=item.number,
+            message=item.message,
+            status=status,
+            http_status=http_status,
+            response_data=response_data,
+            error_message=error_message,
+        ))
     await db.commit()
 
 
@@ -128,8 +143,7 @@ async def send(data: SendRequest, db: AsyncSession = Depends(get_db)):
     if not str(cfg.get("api_key") or "").strip():
         raise HTTPException(status_code=409, detail="Configure la API Key de AutomatizadoVIP")
 
-    contacts = [item.model_dump(exclude_none=True) for item in data.contacts]
-    gateway_contacts = [{"number": item["number"], "message": item["message"]} for item in contacts]
+    gateway_contacts = [{"number": item.number, "message": item.message} for item in data.contacts]
     try:
         result = await send_messages(
             api_key=cfg["api_key"],
@@ -143,17 +157,11 @@ async def send(data: SendRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     await _log_batch(db, data.contacts, "sent", http_status=result.status_code, response_data=result.response)
-    return {
-        "ok": result.ok,
-        "status_code": result.status_code,
-        "sent": len(data.contacts),
-        "gateway_response": result.response,
-    }
+    return {"ok": result.ok, "status_code": result.status_code, "sent": len(data.contacts), "gateway_response": result.response}
 
 
 @router.post("/test")
 async def test_gateway(data: MessageItem, db: AsyncSession = Depends(get_db)):
-    """Prueba el gateway con el número y mensaje indicados por el administrador."""
     s = await db.get(Setting, "system_config")
     cfg = _read_config(s)
     if not str(cfg.get("api_key") or "").strip():
