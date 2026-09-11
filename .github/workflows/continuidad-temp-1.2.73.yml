@@ -13,36 +13,13 @@ jobs:
         with:
           ref: work/license-lock-1.2.73
       - name: Append continuity
+        env:
+          CONTINUITY_B64: "LS0tCgojIyMgMS4yLjcyIOKAlCAyMDI2LTA5LTExIOKAlCBFc3RhZG8gZGVsIExpY2Vuc2UgU2VydmVyIHZpc2libGUgZW4gZWwgcGFuZWwKLSBBanVzdGVzIOKGkiBMaWNlbmNpYSBaLUh1YiBtdWVzdHJhIGVzdGFkbyBkZWwgTGljZW5zZSBTZXJ2ZXIsIGZ1ZW50ZSBkZSB2YWxpZGFjacOzbiwgSUQgZGUgaW5zdGFsYWNpw7NuIHkgcGVyw61vZG8gZGUgZ3JhY2lhIGN1YW5kbyBleGlzdGUuCi0gTGEgcGFudGFsbGEgVFJJQUwgc2UgYWxpbmXDsyBjb24gZWwgbMOtbWl0ZSByZWFsIGRlIDIwIGFib25hZG9zIHkgbXVlc3RyYSB1c2Fkb3MsIGNhcGFjaWRhZCB5IGRpc3BvbmlibGVzLgotIExhIGFjdHVhbGl6YWNpw7NuIG5vIGFjdGl2YSBuaSByZWVtcGxhemEgYXV0b23DoXRpY2FtZW50ZSBsYSBsaWNlbmNpYSBsb2NhbCB2aWdlbnRlLgotIEJhY2t1cCBwcmV2aW86IGBiYWNrdXAvcHJlLWxpY2Vuc2UtcGFuZWwtMS4yLjcyLTIwMjYwOTExYC4KCiMjIyAxLjIuNzMg4oCUIDIwMjYtMDktMTEg4oCUIFJlY3VwZXJhY2nDs24gb2JsaWdhdG9yaWEgZGUgbGljZW5jaWEKLSAqKkNhdXNhOioqIHVuYSBsaWNlbmNpYSBlbGltaW5hZGEsIHN1c3BlbmRpZGEsIHJldm9jYWRhLCBpbnbDoWxpZGEgbyBhdXNlbnRlIHBvZMOtYSBkZWphciBhbCB1c3VhcmlvIGRlbnRybyBkZWwgcGFuZWwgc2luIHVuIGZsdWpvIG9ibGlnYXRvcmlvIHBhcmEgaW5ncmVzYXIgdW5hIG51ZXZhIGNsYXZlLgotICoqU29sdWNpw7NuIFVJOioqIGBMYXlvdXQuanN4YCBjb25zdWx0YSBgL2FwaS9saWNlbnNlL2luZm9gOyBwYXJhIGBpbnZhbGlkYCwgYG1pc3NpbmdgLCBgdHJpYWxfZXhwaXJlZGAgbyBgcmVhZF9vbmx5YCBhYnJlIEFqdXN0ZXMg4oaSIExpY2VuY2lhIHkgYmxvcXVlYSBlc2EgdmVudGFuYSBoYXN0YSByZWN1cGVyYXIgdW5hIGxpY2VuY2lhIHbDoWxpZGEuCi0gKipNb2RhbDoqKiBgU2V0dGluZ3NNb2RhbC5qc3hgIG5vIHBlcm1pdGUgY2VycmFyIGNvbiBYLCBFc2NhcGUgbmkgY2xpYyBmdWVyYSBtaWVudHJhcyBsYSByZWN1cGVyYWNpw7NuIGRlIGxpY2VuY2lhIGVzdMOhIGJsb3F1ZWFkYS4KLSAqKlBhbnRhbGxhIGRlIGxpY2VuY2lhOioqIGBMaWNlbnNlU2V0dGluZ3MuanN4YCBtdWVzdHJhIHVuYSBhZHZlcnRlbmNpYSBleHBsw61jaXRhIHkgZWwgZm9ybXVsYXJpbyAqKkFjdGl2YXIgbnVldmEgbGljZW5jaWEqKi4gVW5hIGNsYXZlIGluY29ycmVjdGEgbyBkZXNhY3RpdmFkYSBjb25zZXJ2YSBsYSB2ZW50YW5hIGJsb3F1ZWFkYTsgdW5hIGNsYXZlIHbDoWxpZGEgZGlzcGFyYSBgemh1Yi1saWNlbnNlLXVwZGF0ZWRgIHkgbGliZXJhIGVsIHBhbmVsLgotICoqQmFja2VuZDoqKiBgbGljZW5zZV9ndWFyZC5weWAgYmxvcXVlYSBlc2NyaXR1cmFzIHBhcmEgVHJpYWwgdmVuY2lkbywgbGljZW5jaWEgaW52w6FsaWRhIG8gYXVzZW5jaWEgZGUgbGljZW5jaWE7IHNlIG1hbnRpZW5lbiBsb2dpbi9sb2dvdXQsIGAvYXBpL2xpY2Vuc2UvYWN0aXZhdGVgLCBzZXR1cCB5IGFjdHVhbGl6YWNpb25lcyBjb21vIHJ1dGFzIGRlIHJlY3VwZXJhY2nDs24uCi0gKipQcm90ZWNjacOzbiBkZSBkYXRvczoqKiBubyBzZSBib3JyYW4gY2xpZW50ZXMsIGZhY3R1cmFzLCBjb25maWd1cmFjacOzbiBuaSBkYXRvcyBwb3IgdW4gcHJvYmxlbWEgZGUgbGljZW5jaWEuCi0gKipQcnVlYmFzOioqIGNvbnRyYXRvcyBkZSBsaWNlbmNpYXMgYWN0dWFsaXphZG9zOyBjb21waWxhY2nDs24gUHl0aG9uLCBwcnVlYmFzIGJhY2tlbmQgeSBidWlsZCBSZWFjdCB2YWxpZGFkb3MgcG9yIEdpdEh1YiBBY3Rpb25zIGVuIGxhIHJhbWEgZGUgdHJhYmFqby4KLSAqKkJhY2t1cCBwcmV2aW86KiogYGJhY2t1cC9wcmUtbGljZW5zZS1sb2NrLTEuMi43My0yMDI2MDkxMWAuCi0gKipQZW5kaWVudGU6KiogYWN0aXZhciBlbCBMaWNlbnNlIFNlcnZlciByZW1vdG8gc29sbyBkZXNwdcOpcyBkZSBtaWdyYXIvYXV0b3JpemFyIGxhIGxpY2VuY2lhIHByb2R1Y3RpdmEgeSBkaXN0cmlidWlyIENBICsgY2xhdmUgcMO6YmxpY2EgZGUgZm9ybWEgc2VndXJhLgo="
         run: |
-          if grep -q '1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia' docs/CONTINUIDAD_Z-HUB.md; then
-            exit 0
-          fi
-          cat >> docs/CONTINUIDAD_Z-HUB.md <<'EOF'
-
----
-
-### 1.2.72 — 2026-09-11 — Estado del License Server visible en el panel
-- Ajustes → Licencia Z-Hub muestra estado del License Server, fuente de validación, ID de instalación y período de gracia cuando existe.
-- La pantalla TRIAL se alineó con el límite real de 20 abonados y muestra usados, capacidad y disponibles.
-- La actualización no activa ni reemplaza automáticamente la licencia local vigente.
-- Backup previo: `backup/pre-license-panel-1.2.72-20260911`.
-
-### 1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia
-- **Causa:** una licencia eliminada, suspendida, revocada, inválida o ausente podía dejar al usuario dentro del panel sin un flujo obligatorio para ingresar una nueva clave.
-- **Solución UI:** `Layout.jsx` consulta `/api/license/info`; para `invalid`, `missing`, `trial_expired` o `read_only` abre Ajustes → Licencia y bloquea esa ventana hasta recuperar una licencia válida.
-- **Modal:** `SettingsModal.jsx` no permite cerrar con X, Escape ni clic fuera mientras la recuperación de licencia está bloqueada.
-- **Pantalla de licencia:** `LicenseSettings.jsx` muestra una advertencia explícita y el formulario **Activar nueva licencia**. Una clave incorrecta o desactivada conserva la ventana bloqueada; una clave válida dispara `zhub-license-updated` y libera el panel.
-- **Backend:** `license_guard.py` bloquea escrituras para Trial vencido, licencia inválida o ausencia de licencia; se mantienen login/logout, `/api/license/activate`, setup y actualizaciones como rutas de recuperación.
-- **Protección de datos:** no se borran clientes, facturas, configuración ni datos por un problema de licencia.
-- **Pruebas:** contratos de licencias actualizados; compilación Python, pruebas backend y build React validados por GitHub Actions en la rama de trabajo.
-- **Backup previo:** `backup/pre-license-lock-1.2.73-20260911`.
-- **Pendiente:** activar el License Server remoto solo después de migrar/autorizar la licencia productiva y distribuir CA + clave pública de forma segura.
-EOF
+          if grep -q '1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia' docs/CONTINUIDAD_Z-HUB.md; then exit 0; fi
+          printf '%s' "$CONTINUITY_B64" | base64 -d >> docs/CONTINUIDAD_Z-HUB.md
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/CONTINUIDAD_Z-HUB.md
-          if git diff --cached --quiet; then
-            exit 0
-          fi
           git commit -m 'docs: registrar continuidad Z-Hub 1.2.73'
           git push origin HEAD:work/license-lock-1.2.73
