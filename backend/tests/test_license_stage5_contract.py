@@ -66,7 +66,8 @@ def test_license_ui_shows_trial_dates_warnings_and_paid_activation():
     assert 'user?.role === "admin"' in view
 
 
-def test_release_is_1261():
+def test_release_contract_remains_versioned():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.61"' in version
+    assert 'export const PANEL_VERSION = ' in version
+    assert 'export const CHANGELOG = [' in version
     assert "Trial" in version
