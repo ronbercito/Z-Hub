@@ -57,6 +57,22 @@ export default function Layout() {
   }, [API, token]);
 
   useEffect(() => {
+    const checkLicense = async () => {
+      try {
+        const response = await axios.get(`${API}/license/info`, { headers: token ? { Authorization:`Bearer ${token}` } : {} });
+        if (response.data?.status === "trial_expired" || response.data?.read_only) {
+          setActiveTab("ajustes");
+          setSettingsModalSection("license");
+        }
+      } catch (_) {}
+    };
+    checkLicense();
+    const onLicenseUpdated = () => checkLicense();
+    window.addEventListener("zhub-license-updated", onLicenseUpdated);
+    return () => window.removeEventListener("zhub-license-updated", onLicenseUpdated);
+  }, [API, token]);
+
+  useEffect(() => {
     const syncName = (event) => {
       const name = event.detail?.companyName?.trim() || "Z-Hub";
       const logo = event.detail?.logoData || "";
