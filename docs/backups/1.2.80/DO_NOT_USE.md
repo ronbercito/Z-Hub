@@ -1,0 +1,1 @@
+This marker records that existing application files must be backed up before modification.
