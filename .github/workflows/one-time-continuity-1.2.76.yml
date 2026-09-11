@@ -18,6 +18,8 @@ jobs:
           fetch-depth: 0
       - name: Append canonical continuity entry once
         shell: bash
+        env:
+          CONTINUITY_B64: CgotLS0KCiMjIyAxLjIuNzYg4oCUIDIwMjYtMDktMTEg4oCUIFZlbmNpbWllbnRvIFRSSUFMIGNlbnRyYWwgeSBjaWVycmUgb3BlcmF0aXZvIGRlIEV0YXBhIDYKLSAqKkNhdXNhOioqIGVsIExpY2Vuc2UgU2VydmVyIHlhIGVtaXTDrWEgYGV4cGlyZXNfYXRgIGRlbnRybyBkZWwgSldUIFJTMjU2LCBwZXJvIFotSHViIG5vIGxvIGNvbnNlcnZhYmE7IGVsIGNsaWVudGUgY2FsY3VsYWJhIGVsIHZlbmNpbWllbnRvIGNvbW8gYGxpY2Vuc2VfYWN0aXZhdGVkX2F0ICsgMzAgZMOtYXNgLCBwb3IgbG8gcXVlIGxhIGluc3RhbGFjacOzbiBsb2NhbCBwb2TDrWEgY29uc3RydWlyIHVuYSBmZWNoYSBkaXN0aW50YSBkZSBsYSBhdXRvcmlkYWQgY2VudHJhbC4KLSAqKlNvbHVjacOzbjoqKiBgYmFja2VuZC9hcHAvY29yZS9saWNlbnNlX3JlbW90ZS5weWAgY29uc2VydmEgYGV4cGlyZXNfYXRgOyBgYmFja2VuZC9hcHAvY29yZS9saWNlbnNlX21hbmFnZXIucHlgIHBlcnNpc3RlIGBsaWNlbnNlX2V4cGlyZXNfYXRgIHkgbG8gcHJpb3JpemEgcGFyYSBgdHJpYWxfZXhwaXJlc19hdGAsIGB0cmlhbF9kYXlzX3JlbWFpbmluZ2AgeSBlbCBibG9xdWVvIGB0cmlhbF9leHBpcmVkYC4KLSAqKkNvbXBhdGliaWxpZGFkOioqIGxvcyBUcmlhbHMgbG9jYWxlcyBvIGhpc3TDs3JpY29zIHF1ZSBubyB0ZW5nYW4gYGxpY2Vuc2VfZXhwaXJlc19hdGAgc2lndWVuIHVzYW5kbyBgbGljZW5zZV9hY3RpdmF0ZWRfYXQgKyAzMCBkw61hc2AuIE5vIHNlIHJvbXBlIGVsIG1vZG8gbG9jYWwgZGUgdHJhbnNpY2nDs24uCi0gKipQZXJzaXN0ZW5jaWE6KiogYHNldHRpbmdzLmRhdGFgIGluY29ycG9yYSBgbGljZW5zZV9leHBpcmVzX2F0YDsgYWwgc2VyIEpTT04gZXhpc3RlbnRlIG5vIHJlcXVpZXJlIG1pZ3JhY2nDs24gU1FMIG5pIGVsaW1pbmEgZGF0b3MuCi0gKipFdGFwYSA2IHZhbGlkYWRhIGV4dHJlbW8gYSBleHRyZW1vIGVuIGB6MmA6KioKICAtIExpY2Vuc2UgU2VydmVyIGB3ZWItbGljZW5jaWFgIGFjY2VzaWJsZSBwb3IgSFRUUFMgZW4gYDE5Mi4xNjguMTAuMjQwYDsKICAtIENBIHByaXZhZGEgY29ycmVnaWRhIGNvbiBgQ0E6VFJVRWAgeSBLZXkgVXNhZ2UgZGUgZmlybWEgZGUgY2VydGlmaWNhZG9zL0NSTDsgY2VydGlmaWNhZG8gVExTIGRlbCBzZXJ2aWRvciBjb24gYENBOkZBTFNFYCwgYHNlcnZlckF1dGhgIHkgU0FOIHBhcmEgYGxpY2Vuc2Uuemh1Yi5sb2NhbGAgeSBgMTkyLjE2OC4xMC4yNDBgOwogIC0gQ0EgcMO6YmxpY2EgaW5zdGFsYWRhIGVuIGxhIGNvbmZpYW56YSBkZWwgc2lzdGVtYSBkZSBgejJgOwogIC0gY2xhdmUgcMO6YmxpY2EgUlNBIGRlbCBMaWNlbnNlIFNlcnZlciBpbnN0YWxhZGEgZW4gYC9ldGMvemh1Yi9saWNlbmNpYS9zZXJ2ZXItcHVibGljLnBlbWA7IGxhcyBjbGF2ZXMgcHJpdmFkYXMgcGVybWFuZWNlbiBleGNsdXNpdmFtZW50ZSBlbiBgd2ViLWxpY2VuY2lhYDsKICAtIFN1cGVydmlzb3IgY2FyZ2EgYFpIVUJfTElDRU5TRV9TRVJWRVJfVVJMPWh0dHBzOi8vMTkyLjE2OC4xMC4yNDBgIHkgYFpIVUJfTElDRU5TRV9TRVJWRVJfUFVCTElDX0tFWV9GSUxFPS9ldGMvemh1Yi9saWNlbmNpYS9zZXJ2ZXItcHVibGljLnBlbWAgZW4gZWwgYmFja2VuZCByZWFsOwogIC0gYGN1cmxgIHkgZWwgUHl0aG9uIGRlbCB2ZW52IGRlIFotSHViIHZhbGlkYW4gSFRUUFMgc2luIGAta2A7CiAgLSBgUE9TVCAvdjEvbGljZW5zZXMvdmFsaWRhdGVgIGRldnVlbHZlIEhUVFAgMjAwIHBhcmEgbGEgaW5zdGFsYWNpw7NuIGF1dG9yaXphZGEsIGNvbiBsaWNlbmNpYSBUUklBTCBBQ1RJVkEgeSBjYXBhY2lkYWQgZGUgMjAgYWJvbmFkb3M7CiAgLSBaLUh1YiB2YWxpZGEgY29ycmVjdGFtZW50ZSBKV1QgUlMyNTYsIGlzc3VlciwgYXVkaWVuY2UsIGxpY2VuY2lhIGUgaW5zdGFsbGF0aW9uIElEOwogIC0gZWwgcGFuZWwgbXVlc3RyYSBgVFJJQUwgQUNUSVZPYCwgTGljZW5zZSBTZXJ2ZXIgYENvbmVjdGFkb2AsIGZ1ZW50ZSBgU2Vydmlkb3IgcmVtb3RvYCwgY2FwYWNpZGFkIDIwIHkgcGVyw61vZG8gZGUgZ3JhY2lhOwogIC0gZWwgZmx1am8gZGUgcmVjdXBlcmFjacOzbiBkZSAxLjIuNzUgZnVlIHByb2JhZG8geSBkZXNibG9xdWXDsyBlbCBwYW5lbCBzaW4gcMOpcmRpZGEgZGUgZGF0b3MuCi0gKipDYWNow6kvZ3JhY2lhOioqIHNlIGNvbnNlcnZhIGxhIGF1dG9yaXphY2nDs24gSldUIGZpcm1hZGEgcGFyYSBpbmRpc3BvbmliaWxpZGFkIHRlbXBvcmFsOyB1biByZWNoYXpvIGV4cGzDrWNpdG8gZGVsIHNlcnZpZG9yIG51bmNhIHNlIHN1c3RpdHV5ZSBwb3IgY2FjaMOpIGFudGVyaW9yLgotICoqU2VndXJpZGFkOioqIG5vIHNlIHVzYSBgLWtgIGVuIGVsIG1lY2FuaXNtbyBwcm9kdWN0aXZvOyBubyBzZSBkaXN0cmlidXllbiBjbGF2ZXMgcHJpdmFkYXMgbmkgdG9rZW4gYWRtaW5pc3RyYXRpdm8uCi0gKipBcmNoaXZvcyBmdW5jaW9uYWxlczoqKiBgYmFja2VuZC9hcHAvY29yZS9saWNlbnNlX3JlbW90ZS5weWAsIGBiYWNrZW5kL2FwcC9jb3JlL2xpY2Vuc2VfbWFuYWdlci5weWAsIGBiYWNrZW5kL2FwcC9tb2RlbHMvc2V0dGluZy5weWAsIGBiYWNrZW5kL3Rlc3RzL3Rlc3RfbGljZW5zZV9zdGFnZTJfY29udHJhY3QucHlgIHkgYGZyb250ZW5kL3NyYy9tb2R1bGVzL3N5c3RlbS11cGRhdGUvdmVyc2lvbi5qc2AuCi0gKipQcnVlYmFzOioqIHNpbnRheGlzL2NvbXBpbGFjacOzbiBQeXRob24gY29ycmVjdGE7IGJ1aWxkIGZyb250ZW5kIGNvcnJlY3RvOyBjb250cmF0b3MgYmFja2VuZCBjb3JyZWN0b3M7IEdpdEh1YiBBY3Rpb25zIGBaLUh1YiBRdWFsaXR5YCBxdWVkw7MgdmVyZGUgZGVzcHXDqXMgZGUgYWp1c3RhciBlbCBjb250cmF0byBkZSBjaGFuZ2Vsb2c7IHZhbGlkYWNpw7NuIHJlYWwgSFRUUFMvQVBJL0pXVC9wYW5lbCByZWFsaXphZGEgZW4gYHoyYC4KLSAqKkJhY2t1cCBwcmV2aW86KiogYGJhY2t1cC9wcmUtcmVtb3RlLXRyaWFsLWRhdGVzLTEuMi43Ni0yMDI2MDkxMWAuCi0gKipSZXN1bHRhZG86KiogRXRhcGEgNiBxdWVkYSBvcGVyYXRpdmEgZGUgZXh0cmVtbyBhIGV4dHJlbW8uIEVsIHBlbmRpZW50ZSBkZSBpbmZyYWVzdHJ1Y3R1cmEgaW5kaWNhZG8gZW4gMS4yLjc1IHF1ZWRhIGNlcnJhZG8gcG9yIGVzdGEgdmFsaWRhY2nDs24uCi0gKipQZW5kaWVudGUgcG9zdGVyaW9yOioqIGluc3RhbGFyIDEuMi43NiBlbiBgejJgIG1lZGlhbnRlIGVsIGFjdHVhbGl6YWRvciBkZWwgcGFuZWwgeSBjb21wcm9iYXIgcXVlIGxhIGZlY2hhL2TDrWFzIHJlc3RhbnRlcyBtb3N0cmFkb3MgcHJvdmllbmVuIGRlIGBleHBpcmVzX2F0YCBjZW50cmFsLgo=
         run: |
           set -euo pipefail
           FILE='docs/CONTINUIDAD_Z-HUB.md'
@@ -26,34 +28,7 @@ jobs:
             echo 'Continuity entry already present; nothing to commit.'
             exit 0
           fi
-          cat >> "$FILE" <<'EOF'
-
----
-
-### 1.2.76 — 2026-09-11 — Vencimiento TRIAL central y cierre operativo de Etapa 6
-- **Causa:** el License Server ya emitía `expires_at` dentro del JWT RS256, pero Z-Hub no lo conservaba; el cliente calculaba el vencimiento como `license_activated_at + 30 días`, por lo que la instalación local podía construir una fecha distinta de la autoridad central.
-- **Solución:** `backend/app/core/license_remote.py` conserva `expires_at`; `backend/app/core/license_manager.py` persiste `license_expires_at` y lo prioriza para `trial_expires_at`, `trial_days_remaining` y el bloqueo `trial_expired`.
-- **Compatibilidad:** los Trials locales o históricos que no tengan `license_expires_at` siguen usando `license_activated_at + 30 días`. No se rompe el modo local de transición.
-- **Persistencia:** `settings.data` incorpora `license_expires_at`; al ser JSON existente no requiere migración SQL ni elimina datos.
-- **Etapa 6 validada extremo a extremo en `z2`:**
-  - License Server `web-licencia` accesible por HTTPS en `192.168.10.240`;
-  - CA privada corregida con `CA:TRUE` y Key Usage de firma de certificados/CRL; certificado TLS del servidor con `CA:FALSE`, `serverAuth` y SAN para `license.zhub.local` y `192.168.10.240`;
-  - CA pública instalada en la confianza del sistema de `z2`;
-  - clave pública RSA del License Server instalada en `/etc/zhub/licencia/server-public.pem`; las claves privadas permanecen exclusivamente en `web-licencia`;
-  - Supervisor carga `ZHUB_LICENSE_SERVER_URL=https://192.168.10.240` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE=/etc/zhub/licencia/server-public.pem` en el backend real;
-  - `curl` y el Python del venv de Z-Hub validan HTTPS sin `-k`;
-  - `POST /v1/licenses/validate` devuelve HTTP 200 para la instalación autorizada, con licencia TRIAL ACTIVA y capacidad de 20 abonados;
-  - Z-Hub valida correctamente JWT RS256, issuer, audience, licencia e installation ID;
-  - el panel muestra `TRIAL ACTIVO`, License Server `Conectado`, fuente `Servidor remoto`, capacidad 20 y período de gracia;
-  - el flujo de recuperación de 1.2.75 fue probado y desbloqueó el panel sin pérdida de datos.
-- **Caché/gracia:** se conserva la autorización JWT firmada para indisponibilidad temporal; un rechazo explícito del servidor nunca se sustituye por caché anterior.
-- **Seguridad:** no se usa `-k` en el mecanismo productivo; no se distribuyen claves privadas ni token administrativo.
-- **Archivos funcionales:** `backend/app/core/license_remote.py`, `backend/app/core/license_manager.py`, `backend/app/models/setting.py`, `backend/tests/test_license_stage2_contract.py` y `frontend/src/modules/system-update/version.js`.
-- **Pruebas:** sintaxis/compilación Python correcta; build frontend correcto; contratos backend correctos; GitHub Actions `Z-Hub Quality` quedó verde después de ajustar el contrato de changelog; validación real HTTPS/API/JWT/panel realizada en `z2`.
-- **Backup previo:** `backup/pre-remote-trial-dates-1.2.76-20260911`.
-- **Resultado:** Etapa 6 queda operativa de extremo a extremo. El pendiente de infraestructura indicado en 1.2.75 queda cerrado por esta validación.
-- **Pendiente posterior:** instalar 1.2.76 en `z2` mediante el actualizador del panel y comprobar que la fecha/días restantes mostrados provienen de `expires_at` central.
-EOF
+          python -c "import base64,os,pathlib; p=pathlib.Path('docs/CONTINUIDAD_Z-HUB.md'); p.write_text(p.read_text(encoding='utf-8').rstrip()+base64.b64decode(os.environ['CONTINUITY_B64']).decode('utf-8')+'\n', encoding='utf-8')"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$FILE"
