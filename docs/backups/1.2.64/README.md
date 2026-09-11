@@ -1,0 +1,1 @@
+Estado previo protegido para el hotfix 1.2.65. La rama de rollback es `backup/pre-license-status-hotfix-1.2.65-20260910` y apunta al último estado funcional 1.2.64 antes del cambio del motor de licencias.
