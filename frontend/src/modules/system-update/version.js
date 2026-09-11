@@ -1,11 +1,9 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.68";
+export const PANEL_VERSION = "1.2.69";
 export const CHANGELOG = [
-  { type: "Claves automáticas", text: "El License Center genera claves únicas con formato ZHUB-AAAA-XXXXXXXX desde el servidor y permite regenerarlas antes de guardar." },
-  { type: "Clientes", text: "Al seleccionar Cliente / ISP, Titular y Correo se completan automáticamente desde la ficha del cliente y siguen siendo editables." },
-  { type: "Planes", text: "Los planes comerciales quedan normalizados a PLAN_100, PLAN_300, PLAN_500, PLAN_1000 e ILIMITADO; la capacidad se completa y valida automáticamente en servidor y web." },
-  { type: "TRIAL", text: "Las licencias TRIAL reciben vencimiento automático de 30 días, se bloquean al vencer y el JWT nunca extiende la gracia más allá del vencimiento." },
-  { type: "Estados", text: "Las licencias incorporan estado REVOCADA además de ACTIVA y SUSPENDIDA para control comercial desde el License Center." },
-  { type: "Compatibilidad", text: "La base SQLite existente se conserva; expires_at se agrega mediante migración no destructiva al iniciar el License Server." },
-  { type: "Backup", text: "Se creó backup/pre-license-center-automation-1.2.68-20260910 antes de aplicar estas mejoras." },
+  { type: "Claves 192-bit", text: "El License Center genera nuevas claves con 24 bytes aleatorios criptográficamente seguros: 48 caracteres hexadecimales después del prefijo ZHUB-AAAA-." },
+  { type: "Formato", text: "El formato oficial queda ZHUB-AAAA-<48 HEX>, sin símbolos especiales para mantener compatibilidad con API, JSON, terminales y base de datos." },
+  { type: "Unicidad", text: "La clave se genera con Web Crypto CSPRNG y la clave primaria de SQLite impide guardar una licencia duplicada." },
+  { type: "Compatibilidad", text: "Las licencias existentes conservan su clave; el nuevo formato se aplica solamente a claves nuevas o regeneradas antes de guardar." },
+  { type: "Backup", text: "Se creó backup/pre-license-key-192bit-1.2.69-20260910 antes del cambio." },
 ];
