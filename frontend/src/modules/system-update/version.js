@@ -1,9 +1,9 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.64";
+export const PANEL_VERSION = "1.2.65";
 export const CHANGELOG = [
-  { type: "Licencia", text: "Se corrige el falso estado LICENCIA NO VÁLIDA en instalaciones pagadas que ya conservan un snapshot válido de licencia y reciben un estado histórico/legado no reconocido desde el registro local." },
-  { type: "Compatibilidad", text: "Los estados activos históricos ACTIVA, ACTIVO, ACTIVE, VALIDA y VÁLIDA se normalizan como licencia activa durante la transición al License Server." },
-  { type: "Seguridad", text: "INACTIVA, SUSPENDIDA y estados equivalentes continúan teniendo prioridad y bloquean la licencia aunque exista un snapshot anterior." },
-  { type: "Persistencia", text: "Un estado legado desconocido ya no invalida una licencia pagada previamente activada; sin snapshot persistido, ese mismo registro no permite una activación nueva." },
-  { type: "Backup", text: "Se creó backup/pre-license-status-hotfix-1.2.64-20260910 antes de modificar el motor de licencias." },
+  { type: "Licencia", text: "Se corrige la causa por la que una licencia histórica válida podía seguir mostrando LICENCIA NO VÁLIDA después de actualizar: el fallback anterior se eliminaba del disco durante el instalador." },
+  { type: "Runtime", text: "El catálogo de compatibilidad ahora viaja dentro del backend como license_fallback.txt y permanece disponible después de instalar o actualizar Z-Hub." },
+  { type: "Prioridad", text: "El registro privado /etc/zhub/licencia/licencias.txt conserva prioridad cuando define la misma clave; estados INACTIVA o SUSPENDIDA siguen bloqueando correctamente." },
+  { type: "Compatibilidad", text: "La clave histórica ZHUB-2026-DEMO-002 vuelve a poder resolverse desde el fallback cuando no existe en el registro privado del servidor." },
+  { type: "Backup", text: "Se creó backup/pre-license-runtime-fallback-1.2.65-20260910 antes de aplicar la corrección funcional." },
 ];
