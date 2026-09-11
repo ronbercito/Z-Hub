@@ -1,7 +1,8 @@
 """Renderizador común de plantillas WhatsApp compatibles con la sintaxis de WispHub.
 
 Soporta variables {{variable}}, marcadores %vip% y formato WhatsApp con asteriscos.
-La salida conserva el texto visible y normaliza únicamente los marcadores de espaciado.
+La salida conserva el formato visible y evita acumulaciones accidentales de líneas
+vacías producidas por combinar saltos de línea literales con %vip%.
 """
 from __future__ import annotations
 
@@ -12,10 +13,14 @@ VARIABLE_PATTERN = re.compile(r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}")
 
 
 def normalize_template(text: str) -> str:
-    """Convierte marcadores %vip% en saltos de línea sin eliminar formato WhatsApp."""
-    value = str(text or "").replace("%vip%", "\n")
+    """Normaliza espaciado sin romper negritas ni saltos intencionales."""
+    value = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    value = value.replace("%vip%", "\n")
     value = re.sub(r"\n[ \t]+", "\n", value)
     value = re.sub(r"[ \t]+\n", "\n", value)
+    # %vip%%vip% representa separación de párrafo; junto con los saltos
+    # literales de la plantilla no debe convertirse en tres o más líneas.
+    value = re.sub(r"\n{3,}", "\n\n", value)
     return value.strip()
 
 
