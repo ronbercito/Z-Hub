@@ -171,13 +171,12 @@ async def get_license_info(db: AsyncSession = Depends(get_db)):
 async def update_settings(data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
     s = await _get(db)
     data.pop("id", None)
-    # Settings.jsx mezcla la respuesta de GET en su estado; por compatibilidad, si devuelve
-    # campos internos de solo lectura los ignoramos al guardar en vez de romper el formulario.
+    # Settings.jsx mezcla la respuesta de GET en su estado y puede conservar claves
+    # heredadas de instalaciones antiguas. Las claves no reconocidas nunca se escriben,
+    # pero tampoco deben bloquear una actualización válida como panel_theme.
     for key in PROTECTED_GENERIC_SETTINGS:
         data.pop(key, None)
-    unknown = sorted(set(data) - EDITABLE_SETTINGS)
-    if unknown:
-        raise HTTPException(status_code=422, detail=f"Configuración no permitida: {', '.join(unknown)}")
+    data = {key: value for key, value in data.items() if key in EDITABLE_SETTINGS}
     s.data = {**(s.data or {}), **data}
     await db.commit()
     return {"id": s.id, **_public_settings({**DEFAULT_SETTINGS, **s.data})}
