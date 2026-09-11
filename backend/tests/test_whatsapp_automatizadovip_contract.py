@@ -1,9 +1,5 @@
 from app.services.whatsapp_automatizadovip import build_payload, normalize_phone
-from app.services.whatsapp_automatizadovip_automation import (
-    cut_warning,
-    payment_confirmation,
-    payment_reminder,
-)
+from app.services.whatsapp_automatizadovip_automation import cut_warning, payment_confirmation, payment_reminder
 
 
 def test_normalize_phone_adds_peru_country_code():
@@ -12,8 +8,9 @@ def test_normalize_phone_adds_peru_country_code():
 
 
 def test_build_payload_matches_automatizadovip_v2_contract():
-    assert build_payload([{"number": "999111222", "message": "Hola"}], "51") == {
-        "contact": [{"number": "51999111222", "message": "Hola"}]
+    assert build_payload([{"number": "999111222", "message": "Hola"}], "51", True) == {
+        "contact": [{"number": "51999111222", "message": "Hola"}],
+        "verify": True,
     }
 
 
