@@ -1,11 +1,12 @@
 """Motor central de licencias para instalaciones locales de Z-Hub.
 
-Etapas 2-5/7:
-- mantiene compatibilidad con el registro local actual de licencias;
+Etapas 2-6/7:
+- mantiene compatibilidad temporal con el registro local;
 - normaliza plan, tipo y capacidad;
 - calcula consumo de abonados localmente;
-- controla Trial de 30 días y su estado de solo lectura al vencer;
-- prepara la interfaz que usará el futuro License Server.
+- controla Trial de 30 días;
+- consulta el License Server remoto cuando está configurado;
+- conserva continuidad mediante autorización firmada/caché durante caídas temporales.
 """
 from __future__ import annotations
 
@@ -13,18 +14,22 @@ from datetime import datetime, timedelta, timezone
 import math
 import os
 import re
+import uuid
 from pathlib import Path
 from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.license_remote import (
+    LicenseServerRejected,
+    LicenseServerUnavailable,
+    remote_enabled,
+    resolve_remote_license,
+)
 from app.models.client import Client
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
-# Fallback empaquetado dentro del backend. A diferencia del antiguo
-# `<repo>/licencia/licencias.txt`, este archivo no es eliminado por deploy/install.sh
-# y por tanto sigue disponible después de cada actualización del servidor.
 REPO_LICENSE_FILE = Path(__file__).resolve().parent / "license_fallback.txt"
 PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licencias.txt"))
 
@@ -36,27 +41,13 @@ PLAN_LIMITS: dict[str, int | None] = {
     "UNLIMITED": None,
 }
 TRIAL_DAYS = 30
-
-# Regla comercial acordada: todo abonado registrado consume cupo mientras no
-# exista una baja definitiva. En el modelo actual `retired` representa esa baja.
 NON_COUNTING_CLIENT_STATUSES = {"retired"}
 
-# Compatibilidad temporal con registros históricos creados antes de Etapa 6.
-# Solo los estados explícitamente bloqueados deben invalidar una instalación ya
-# activada. Estados activos equivalentes se normalizan a ACTIVA; un valor legado
-# desconocido no puede tumbar un snapshot pagado ya persistido, pero tampoco
-# permite activar una licencia nueva.
 ACTIVE_LICENSE_STATUSES = {"ACTIVA", "ACTIVO", "ACTIVE", "VALIDA", "VÁLIDA"}
 BLOCKED_LICENSE_STATUSES = {
-    "INACTIVA",
-    "INACTIVO",
-    "INACTIVE",
-    "SUSPENDIDA",
-    "SUSPENDIDO",
-    "SUSPENDED",
-    "REVOCADA",
-    "REVOCADO",
-    "REVOKED",
+    "INACTIVA", "INACTIVO", "INACTIVE",
+    "SUSPENDIDA", "SUSPENDIDO", "SUSPENDED",
+    "REVOCADA", "REVOCADO", "REVOKED",
 }
 
 
@@ -82,8 +73,7 @@ def _normalize_max_clients(value: Any, plan: str) -> int | None:
     if raw in {"", "NONE", "NULL", "UNLIMITED", "ILIMITADO", "∞"}:
         return PLAN_LIMITS.get(plan) if plan in PLAN_LIMITS else None
     try:
-        parsed = int(raw)
-        return max(0, parsed)
+        return max(0, int(raw))
     except (TypeError, ValueError):
         return PLAN_LIMITS.get(plan) if plan in PLAN_LIMITS else None
 
@@ -92,12 +82,10 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
     key = current.get("key", "").strip().upper()
     if not key:
         return None
-
     status = _normalize_license_status(current.get("status", "ACTIVA"))
     license_type = current.get("type", "PAID").strip().upper() or "PAID"
     if license_type not in {"PAID", "TRIAL"}:
         license_type = "PAID"
-
     plan = current.get("plan", "").strip().upper()
     if license_type == "TRIAL":
         plan = plan or "TRIAL"
@@ -105,7 +93,6 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
     else:
         plan = plan or "UNLIMITED"
         max_clients = _normalize_max_clients(current.get("max_clients"), plan)
-
     return {
         "key": key,
         "name": current.get("name", "").strip(),
@@ -119,30 +106,21 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
 
 
 def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
-    """Parsea un registro de licencias. Un archivo inexistente equivale a vacío."""
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
         return {}
-
     rows: dict[str, dict[str, Any]] = {}
     current: dict[str, str] = {}
     fields = {
-        "LICENCIA": "key",
-        "NOMBRE": "name",
-        "CORREO": "email",
-        "ESTADO": "status",
-        "TIPO": "type",
-        "PLAN": "plan",
-        "MAX_CLIENTS": "max_clients",
-        "LIMITE_CLIENTES": "max_clients",
+        "LICENCIA": "key", "NOMBRE": "name", "CORREO": "email",
+        "ESTADO": "status", "TIPO": "type", "PLAN": "plan",
+        "MAX_CLIENTS": "max_clients", "LIMITE_CLIENTES": "max_clients",
     }
-
     def flush() -> None:
         row = _normalize_license(current)
         if row:
             rows[row["key"]] = row
-
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -165,20 +143,12 @@ def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def licenses() -> dict[str, dict[str, Any]]:
-    """Combina fallback empaquetado con el registro privado del servidor.
-
-    El registro privado tiene prioridad cuando define la misma clave, por lo que
-    un ESTADO=INACTIVA/SUSPENDIDA privado nunca puede ser reactivado por el fallback.
-    Si el archivo privado existe pero no contiene una licencia histórica, el
-    fallback empaquetado sigue disponible durante la transición a Etapa 6.
-    """
     rows = _parse_license_file(REPO_LICENSE_FILE)
     rows.update(_parse_license_file(PRIVATE_LICENSE_FILE))
     return rows
 
 
 def get_license_row(key: str | None) -> dict[str, Any] | None:
-    """Obtiene el registro local aunque esté suspendido/inactivo."""
     normalized = str(key or "").strip().upper()
     if not normalized:
         return None
@@ -186,7 +156,7 @@ def get_license_row(key: str | None) -> dict[str, Any] | None:
 
 
 def get_license_record(key: str | None) -> dict[str, Any] | None:
-    """Obtiene una licencia activa por clave; las suspendidas no validan."""
+    """Compatibilidad local. Nuevas rutas deben preferir resolve_license_record()."""
     row = get_license_row(key)
     if not row or not _is_active_license_status(row.get("status")):
         return None
@@ -203,6 +173,17 @@ async def get_setting_data(db: AsyncSession) -> tuple[Setting, dict[str, Any]]:
     if setting.data:
         data.update(setting.data)
     return setting, data
+
+
+async def _ensure_installation_id(db: AsyncSession, setting: Setting, data: dict[str, Any]) -> str:
+    installation_id = str(data.get("license_installation_id") or "").strip()
+    if installation_id:
+        return installation_id
+    installation_id = str(uuid.uuid4())
+    data["license_installation_id"] = installation_id
+    setting.data = dict(data)
+    await db.commit()
+    return installation_id
 
 
 def _parse_datetime(value: Any) -> datetime | None:
@@ -261,7 +242,6 @@ def is_trial(data: dict[str, Any]) -> bool:
 
 
 def _has_persisted_snapshot(data: dict[str, Any]) -> bool:
-    """Reconoce instalaciones ya activadas aunque el registro legado cambie."""
     license_type = str(data.get("license_type", "")).upper()
     return bool(data.get("license_key") and license_type in {"PAID", "TRIAL"} and data.get("license_plan"))
 
@@ -270,24 +250,13 @@ def get_status(data: dict[str, Any]) -> str:
     key = str(data.get("license_key") or "").strip().upper()
     if not key:
         return "missing"
-
     row = get_license_row(key)
-
-    # Una revocación o suspensión explícita del registro privado/local siempre
-    # prevalece. Este caso sí invalida incluso un snapshot histórico.
     if row is not None and _is_blocked_license_status(row.get("status")):
         return "invalid"
-
     if is_trial(data) and trial_days_remaining(data) == 0:
         return "trial_expired"
-
-    # Los estados activos históricos (ACTIVA/ACTIVO/ACTIVE/VÁLIDA) se aceptan.
     if row is not None and _is_active_license_status(row.get("status")):
         return "active"
-
-    # Durante la transición a Etapa 6, un valor de estado legado desconocido no
-    # debe convertir en inválida una licencia pagada ya activada y persistida.
-    # Sin snapshot previo, el mismo registro desconocido continúa sin validar.
     if _has_persisted_snapshot(data):
         return "active"
     return "invalid"
@@ -306,55 +275,11 @@ def get_client_limit(data: dict[str, Any]) -> int | None:
 
 
 async def get_client_usage(db: AsyncSession) -> int:
-    """Cuenta clientes registrados salvo baja definitiva (`retired`)."""
     query = select(func.count(Client.id)).where(Client.status.notin_(NON_COUNTING_CLIENT_STATUSES))
     return int((await db.scalar(query)) or 0)
 
 
-async def get_license(db: AsyncSession) -> dict[str, Any]:
-    """Vista normalizada del estado de licencia de la instalación."""
-    _, data = await get_setting_data(db)
-    row = get_license_row(data.get("license_key"))
-    record = row if row and _is_active_license_status(row.get("status")) else None
-    usage = await get_client_usage(db)
-    limit = get_client_limit(data)
-    remaining = None if limit is None else max(0, limit - usage)
-    status = get_status(data)
-    started = trial_started_at(data)
-    expires = trial_expires_at(data)
-    return {
-        "key": data.get("license_key", ""),
-        "status": status,
-        "type": data.get("license_type") or (record or {}).get("type") or "",
-        "plan": data.get("license_plan") or (record or {}).get("plan") or "",
-        "max_clients": limit,
-        "client_usage": usage,
-        "available_clients": remaining,
-        "trial_days_remaining": trial_days_remaining(data),
-        "trial_started_at": started.isoformat() if started else None,
-        "trial_expires_at": expires.isoformat() if expires else None,
-        "trial_warning_level": trial_warning_level(data),
-        "read_only": status == "trial_expired",
-        "owner": (record or {}).get("name", ""),
-        "email": (record or {}).get("email", ""),
-    }
-
-
-async def can_create_client(db: AsyncSession) -> bool:
-    """Decide si la licencia permite aumentar el número de abonados contabilizados."""
-    _, data = await get_setting_data(db)
-    if get_status(data) != "active":
-        return False
-    if is_trial(data):
-        return True
-    limit = get_client_limit(data)
-    if limit is None:
-        return True
-    return await get_client_usage(db) < limit
-
-
 def apply_license_metadata(data: dict[str, Any], record: dict[str, Any], *, now: datetime | None = None) -> dict[str, Any]:
-    """Guarda un snapshot compatible con el futuro License Server."""
     result = dict(data)
     result["license_key"] = record["key"]
     result["license_type"] = record["type"]
@@ -366,3 +291,95 @@ def apply_license_metadata(data: dict[str, Any], record: dict[str, Any], *, now:
     elif record["type"] != "TRIAL":
         result["license_activated_at"] = ""
     return result
+
+
+async def resolve_license_record(db: AsyncSession, key: str | None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    normalized = str(key or "").strip().upper()
+    if not normalized:
+        return None, {"source": "local", "remote_enabled": remote_enabled(), "server_online": None}
+    setting, data = await get_setting_data(db)
+    installation_id = await _ensure_installation_id(db, setting, data)
+    if remote_enabled():
+        try:
+            return await resolve_remote_license(normalized, installation_id)
+        except LicenseServerRejected as exc:
+            return None, {"source": "remote", "remote_enabled": True, "server_online": True, "rejected": True, "message": str(exc)}
+        except LicenseServerUnavailable as exc:
+            return get_license_record(normalized), {"source": "local-transition", "remote_enabled": True, "server_online": False, "message": str(exc)}
+    return get_license_record(normalized), {"source": "local", "remote_enabled": False, "server_online": None}
+
+
+async def get_license(db: AsyncSession) -> dict[str, Any]:
+    setting, data = await get_setting_data(db)
+    installation_id = await _ensure_installation_id(db, setting, data)
+    key = str(data.get("license_key") or "").strip().upper()
+    validation_meta: dict[str, Any] = {"source": "local", "remote_enabled": remote_enabled(), "server_online": None}
+    record: dict[str, Any] | None = None
+    remote_rejected = False
+
+    if key and remote_enabled():
+        try:
+            record, validation_meta = await resolve_remote_license(key, installation_id)
+            if record:
+                updated = apply_license_metadata(data, record)
+                updated["license_installation_id"] = installation_id
+                if updated != data:
+                    setting.data = updated
+                    await db.commit()
+                    data = updated
+        except LicenseServerRejected as exc:
+            remote_rejected = True
+            validation_meta = {"source": "remote", "remote_enabled": True, "server_online": True, "rejected": True, "message": str(exc)}
+        except LicenseServerUnavailable as exc:
+            record = get_license_record(key)
+            validation_meta = {"source": "local-transition", "remote_enabled": True, "server_online": False, "message": str(exc)}
+    elif key:
+        record = get_license_record(key)
+
+    if remote_rejected:
+        status = "invalid"
+    elif record is not None:
+        status = "trial_expired" if is_trial(data) and trial_days_remaining(data) == 0 else "active"
+    else:
+        status = get_status(data)
+
+    usage = await get_client_usage(db)
+    limit = get_client_limit(data)
+    remaining = None if limit is None else max(0, limit - usage)
+    started = trial_started_at(data)
+    expires = trial_expires_at(data)
+    active_record = record if record and _is_active_license_status(record.get("status")) else None
+
+    return {
+        "key": data.get("license_key", ""),
+        "status": status,
+        "type": data.get("license_type") or (active_record or {}).get("type") or "",
+        "plan": data.get("license_plan") or (active_record or {}).get("plan") or "",
+        "max_clients": limit,
+        "client_usage": usage,
+        "available_clients": remaining,
+        "trial_days_remaining": trial_days_remaining(data),
+        "trial_started_at": started.isoformat() if started else None,
+        "trial_expires_at": expires.isoformat() if expires else None,
+        "trial_warning_level": trial_warning_level(data),
+        "read_only": status == "trial_expired",
+        "owner": (active_record or {}).get("name", ""),
+        "email": (active_record or {}).get("email", ""),
+        "installation_id": installation_id,
+        "validation_source": validation_meta.get("source"),
+        "license_server_enabled": bool(validation_meta.get("remote_enabled")),
+        "license_server_online": validation_meta.get("server_online"),
+        "grace_until": validation_meta.get("grace_until"),
+    }
+
+
+async def can_create_client(db: AsyncSession) -> bool:
+    info = await get_license(db)
+    if info.get("status") != "active":
+        return False
+    if str(info.get("type", "")).upper() == "TRIAL":
+        return True
+    limit = info.get("max_clients")
+    if limit is None:
+        return True
+    return int(info.get("client_usage") or 0) < int(limit)
