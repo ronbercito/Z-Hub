@@ -3169,3 +3169,15 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Validación requerida después del merge:** desplegar el nuevo `license_server/` en `web-licencia`, reiniciar `zhub-license-server`, confirmar `/health` versión `1.3.0`, entrar a `/admin-ui`, comprobar filtros/métricas/renovación y verificar desde `z2` que la licencia remota continúa validando.
 - **Estado de etapas:** **7/7 completadas en código**. Después de la validación operativa del VPS, el sistema de licenciamiento queda cerrado y pasa a mantenimiento/hardening incremental, no a una nueva etapa numerada.
 
+
+
+## 2026-09-11 — Z-Hub 1.2.79 — cierre endurecido y pruebas finales Etapa 7/7
+
+- Estado: **Etapa 7/7 cerrada** después de validar en laboratorio el License Center 1.3.0 y el flujo remoto de Z-Hub.
+- Seguridad visual: `license_key` e `installation_id` quedan enmascarados por defecto en Resumen, Licencias, Instalaciones y Validaciones.
+- Operación: los botones **Copiar clave** y **Copiar ID** conservan el valor real únicamente dentro de la sesión administrativa autenticada.
+- Se mantienen clientes/ISP, PAID/TRIAL, planes, capacidad, vencimiento, renovación TRIAL, suspensión, revocación, instalaciones autorizadas, filtros y auditoría de validaciones.
+- La autoridad sigue en el License Server: plan, capacidad, estado, vencimiento e instalación; JWT RS256 y período de gracia no cambian.
+- Se retira `docs/CONTINUIDAD_Z-HUB-1.2.71.md`; la única bitácora maestra vigente es `docs/CONTINUIDAD_Z-HUB.md`.
+- Backup previo: `backup/pre-stage7-hardening-1.2.79-20260911`.
+- Validación requerida para cierre: contrato License Center, sintaxis JS/Python, CI backend y build frontend en verde; despliegue final de 1.2.79 en `z2` y actualización del License Server desde `main`.

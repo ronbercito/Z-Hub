@@ -101,3 +101,15 @@ def test_stage7_commercial_center_is_complete():
     assert 'renewTrial' in js and 'copyText' in js
     assert 'licenseType' in js and 'licenseStatus' in js and 'licensePlan' in js
     assert '.filters{' in css
+
+
+def test_stage7_hardening_masks_sensitive_identifiers_but_keeps_copy_actions():
+    js = read("license_server/static/app.js")
+    assert "function maskLicense(" in js
+    assert "function maskInstallation(" in js
+    assert "maskLicense(v.license_key)" in js
+    assert "maskInstallation(v.installation_id)" in js
+    assert "maskLicense(l.license_key)" in js
+    assert "maskInstallation(i.installation_id)" in js
+    assert "copyText('${esc(l.license_key)}','Licencia')" in js
+    assert "copyText('${esc(i.installation_id)}','Installation ID')" in js
