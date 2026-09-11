@@ -39,18 +39,9 @@ TRIAL_DAYS = 30
 NON_COUNTING_CLIENT_STATUSES = {"retired"}
 
 
-def _license_file() -> Path:
-    """Prioriza el registro privado del servidor y conserva fallback legado."""
-    if PRIVATE_LICENSE_FILE.is_file():
-        return PRIVATE_LICENSE_FILE
-    return REPO_LICENSE_FILE
-
-
 def _normalize_max_clients(value: Any, plan: str) -> int | None:
     raw = str(value or "").strip().upper()
     if raw in {"", "NONE", "NULL", "UNLIMITED", "ILIMITADO", "∞"}:
-        # Una licencia antigua sin PLAN/MAX_CLIENTS se conserva ilimitada para no
-        # reducir capacidad de instalaciones existentes durante la migración.
         return PLAN_LIMITS.get(plan) if plan in PLAN_LIMITS else None
     try:
         parsed = int(raw)
@@ -74,7 +65,6 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
         plan = plan or "TRIAL"
         max_clients = None
     else:
-        # Licencias históricas sin campos nuevos equivalen a ilimitadas.
         plan = plan or "UNLIMITED"
         max_clients = _normalize_max_clients(current.get("max_clients"), plan)
 
@@ -90,10 +80,10 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
     }
 
 
-def licenses() -> dict[str, dict[str, Any]]:
-    """Lee y normaliza el registro local sin exponerlo por API."""
+def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
+    """Parsea un registro de licencias. Un archivo inexistente equivale a vacío."""
     try:
-        text = _license_file().read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8")
     except OSError:
         return {}
 
@@ -133,6 +123,19 @@ def licenses() -> dict[str, dict[str, Any]]:
             current = {}
         current[fields[field]] = value
     flush()
+    return rows
+
+
+def licenses() -> dict[str, dict[str, Any]]:
+    """Combina fallback del repositorio con el registro privado del servidor.
+
+    El registro privado tiene prioridad cuando define la misma clave, por lo que
+    un ESTADO=INACTIVA/SUSPENDIDA privado nunca puede ser reactivado por el fallback.
+    Si el archivo privado existe pero no contiene una licencia histórica, el
+    fallback del repositorio sigue disponible durante la transición a Etapa 6.
+    """
+    rows = _parse_license_file(REPO_LICENSE_FILE)
+    rows.update(_parse_license_file(PRIVATE_LICENSE_FILE))
     return rows
 
 
@@ -220,12 +223,7 @@ def is_trial(data: dict[str, Any]) -> bool:
 
 
 def _has_persisted_snapshot(data: dict[str, Any]) -> bool:
-    """Reconoce instalaciones ya activadas aunque el archivo legado no viaje en una actualización.
-
-    Un registro explícitamente presente como INACTIVA/SUSPENDIDA sigue invalidando la
-    licencia. El fallback solo aplica cuando la clave ya no está en el registro local,
-    evitando el falso "Licencia no válida" observado tras actualizar instalaciones.
-    """
+    """Reconoce instalaciones ya activadas aunque el registro legado cambie."""
     license_type = str(data.get("license_type", "")).upper()
     return bool(data.get("license_key") and license_type in {"PAID", "TRIAL"} and data.get("license_plan"))
 
@@ -245,9 +243,6 @@ def get_status(data: dict[str, Any]) -> str:
     if row is not None:
         return "active"
 
-    # Compatibilidad temporal hasta la Etapa 6: una instalación que ya guardó el
-    # snapshot normalizado continúa activa si la clave desapareció del fallback
-    # local durante una actualización. No se ignora un ESTADO inactivo explícito.
     if _has_persisted_snapshot(data):
         return "active"
     return "invalid"
