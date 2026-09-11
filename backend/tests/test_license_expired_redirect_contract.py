@@ -7,21 +7,35 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_layout_redirects_expired_trial_to_license_settings():
+def test_layout_locks_invalid_missing_or_expired_license_in_settings():
     layout = read("frontend/src/components/layout/Layout.jsx")
     assert '/license/info' in layout
-    assert 'response.data?.status === "trial_expired"' in layout
+    assert 'LOCKED_LICENSE_STATUSES' in layout
+    assert '"trial_expired", "invalid", "missing"' in layout
+    assert 'setLicenseLocked(blocked)' in layout
     assert 'setActiveTab("ajustes")' in layout
     assert 'setSettingsModalSection("license")' in layout
+    assert 'locked={licenseLocked && settingsModalSection === "license"}' in layout
 
 
-def test_license_view_has_commercial_actions():
+def test_settings_modal_cannot_close_while_license_is_locked():
+    modal = read("frontend/src/modules/ajustes/SettingsModal.jsx")
+    assert "locked = false" in modal
+    assert "if (!section || locked) return undefined" in modal
+    assert "locked ? undefined : onClose" in modal
+    assert "{!locked && <button" in modal
+    assert "<LicenseSettings locked={locked} />" in modal
+
+
+def test_license_view_has_recovery_and_commercial_actions():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
-    assert 'Pagar licencia' in view
-    assert 'Contactar por WhatsApp' in view
-    assert 'sales_whatsapp' in view
-    assert 'payment_url' in view
-    assert 'wa.me' in view
+    assert "Esta instalación necesita una nueva licencia" in view
+    assert "esta ventana permanecerá bloqueada" in view
+    assert "Pagar licencia" in view
+    assert "Contactar por WhatsApp" in view
+    assert "sales_whatsapp" in view
+    assert "payment_url" in view
+    assert "wa.me" in view
 
 
 def test_backend_exposes_commercial_contact_without_hardcoding():

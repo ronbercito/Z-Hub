@@ -1,4 +1,4 @@
-"""Aplicación de reglas comerciales de licencia de Z-Hub (Etapas 3 y 5/7)."""
+"""Aplicación de reglas comerciales de licencia de Z-Hub (Etapas 3, 5 y 6/7)."""
 from __future__ import annotations
 
 import re
@@ -12,9 +12,14 @@ from app.models.client import Client
 
 CLIENT_LIMIT_CODE = "CLIENT_LIMIT_REACHED"
 TRIAL_EXPIRED_CODE = "TRIAL_EXPIRED"
+LICENSE_REQUIRED_CODE = "LICENSE_REQUIRED"
 TRIAL_EXPIRED_MESSAGE = (
     "El período de prueba de 30 días ha finalizado. Z-Hub permanece disponible en modo consulta; "
     "activa una licencia pagada para volver a modificar datos."
+)
+LICENSE_REQUIRED_MESSAGE = (
+    "La instalación no tiene una licencia válida y activa. Ingresa una nueva licencia para continuar. "
+    "Los datos existentes permanecen intactos."
 )
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 TRIAL_WRITE_EXEMPT_PATHS = {
@@ -26,6 +31,7 @@ TRIAL_WRITE_EXEMPT_PREFIXES = (
     "/api/setup/",
     "/api/system-update",
 )
+BLOCKED_LICENSE_STATUSES = {"trial_expired", "invalid", "missing"}
 
 
 def _limit_message(usage: int, limit: int) -> str:
@@ -80,10 +86,14 @@ def _trial_write_is_exempt(path: str) -> bool:
 
 
 async def enforce_trial_write_access(request: Request, db: AsyncSession = Depends(get_db)) -> None:
-    """Tras vencer el Trial deja la API autenticada en modo consulta.
+    """Bloquea escrituras cuando la licencia requiere recuperación.
 
-    Login/logout, activación de licencia, setup y actualización del sistema siguen
-    disponibles para que el administrador pueda recuperar una instalación sin perder datos.
+    Aplica a Trial vencido, licencia inválida o instalación sin licencia. Login/logout,
+    activación de licencia, setup y actualización del sistema permanecen disponibles
+    para recuperar el panel sin borrar ni modificar datos existentes.
+
+    El nombre de la función se conserva por compatibilidad con el registro global
+    existente en ``backend/server.py``.
     """
     if request.method.upper() not in WRITE_METHODS:
         return
@@ -92,11 +102,19 @@ async def enforce_trial_write_access(request: Request, db: AsyncSession = Depend
         return
 
     info = await get_license(db)
-    if info.get("status") != "trial_expired":
+    status = str(info.get("status") or "").strip().lower()
+    if status not in BLOCKED_LICENSE_STATUSES:
         return
+
+    if status == "trial_expired":
+        code = TRIAL_EXPIRED_CODE
+        message = TRIAL_EXPIRED_MESSAGE
+    else:
+        code = LICENSE_REQUIRED_CODE
+        message = LICENSE_REQUIRED_MESSAGE
 
     raise HTTPException(
         status_code=403,
-        detail=f"{TRIAL_EXPIRED_CODE}: {TRIAL_EXPIRED_MESSAGE}",
-        headers={"X-ZHub-Error-Code": TRIAL_EXPIRED_CODE},
+        detail=f"{code}: {message}",
+        headers={"X-ZHub-Error-Code": code},
     )

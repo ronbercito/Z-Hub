@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Infinity as InfinityIcon, KeyRound, MessageCircle, RefreshCw, Server, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Infinity as InfinityIcon, KeyRound, LockKeyhole, MessageCircle, RefreshCw, Server, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./license-settings.css";
 
@@ -35,7 +35,7 @@ const sourceLabel = (source) => ({
   local: "Licencia local",
 }[source] || source || "No disponible");
 
-export default function LicenseSettings() {
+export default function LicenseSettings({ locked = false }) {
   const { API, token, user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -70,9 +70,10 @@ export default function LicenseSettings() {
   const available = data?.available_clients == null ? null : Number(data.available_clients);
   const remainingDays = Number(data?.trial_days_remaining ?? 0);
   const isExpired = data?.status === "trial_expired" || Boolean(data?.read_only);
+  const requiresReplacement = ["invalid", "missing", "trial_expired"].includes(String(data?.status || "").toLowerCase()) || Boolean(data?.read_only);
   const percent = useMemo(() => max && max > 0 ? Math.min(100, Math.max(0, Math.round((usage / max) * 100))) : 0, [usage, max]);
   const whatsappDigits = String(data?.sales_whatsapp || "").replace(/\D/g, "");
-  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hola, mi Trial de Z-Hub finalizó y deseo adquirir una licencia pagada. ¿Me pueden ayudar con los planes y el pago?")}` : "";
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hola, necesito activar o renovar una licencia Z-Hub. ¿Me pueden ayudar con los planes y el pago?")}` : "";
   const paymentUrl = String(data?.payment_url || "").trim();
   const remoteEnabled = Boolean(data?.license_server_enabled);
   const serverOnline = data?.license_server_online;
@@ -80,7 +81,7 @@ export default function LicenseSettings() {
   const activateLicense = async (event) => {
     event.preventDefault();
     const key = activationKey.trim();
-    if (!key) return setActivationMessage("Ingresa la nueva licencia pagada.");
+    if (!key) return setActivationMessage("Ingresa una licencia válida.");
     setActivating(true);
     setActivationMessage("");
     try {
@@ -91,7 +92,7 @@ export default function LicenseSettings() {
       window.dispatchEvent(new CustomEvent("zhub-license-updated"));
       if (!response.data?.license) await load();
     } catch (err) {
-      setActivationMessage(err.response?.data?.detail || "No se pudo activar la licencia.");
+      setActivationMessage(err.response?.data?.detail || "No se pudo activar la licencia. Verifica la clave e inténtalo nuevamente.");
     } finally {
       setActivating(false);
     }
@@ -107,6 +108,14 @@ export default function LicenseSettings() {
       <div className="license-brand"><span className="license-logo"><ShieldCheck/></span><div><h2>Licencia Z-Hub</h2><p>Estado, capacidad y validación de esta instalación.</p></div></div>
       <button type="button" className="license-refresh" onClick={load}><RefreshCw/>Actualizar</button>
     </header>
+
+    {requiresReplacement && <section className="license-recovery-lock">
+      <div className="recovery-lock-icon"><LockKeyhole/></div>
+      <div>
+        <b>{data?.status === "trial_expired" ? "Licencia requerida para continuar" : "Esta instalación necesita una nueva licencia"}</b>
+        <p>{data?.status === "trial_expired" ? "El período de prueba terminó. Ingresa una licencia pagada activa para volver a operar normalmente." : "La licencia actual falta, fue rechazada, suspendida, revocada o eliminada. El panel queda bloqueado en esta ventana hasta activar una licencia válida. Tus datos no se eliminan."}</p>
+      </div>
+    </section>}
 
     <section className="license-hero">
       <div>
@@ -147,7 +156,7 @@ export default function LicenseSettings() {
         <AlertTriangle/>
         <div>
           <b>{isExpired ? "Período de prueba finalizado" : remainingDays <= 7 ? "Tu Trial está próximo a finalizar" : "Trial de 30 días activo"}</b>
-          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está en modo consulta. Para continuar operando, activa una licencia pagada o adquiere una desde las opciones comerciales de esta pantalla." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. El Trial mantiene una capacidad máxima de 20 abonados hasta su vencimiento.` : "Durante el Trial tienes acceso a las funciones del panel con una capacidad máxima de 20 abonados."}</p>
+          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está bloqueado para modificaciones hasta activar una licencia pagada." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. El Trial mantiene una capacidad máxima de 20 abonados hasta su vencimiento.` : "Durante el Trial tienes acceso a las funciones del panel con una capacidad máxima de 20 abonados."}</p>
         </div>
       </section>
     </>}
@@ -163,7 +172,7 @@ export default function LicenseSettings() {
       <div><span>Validación</span><b>{sourceLabel(data?.validation_source)}</b></div>
     </section>
 
-    {isExpired && <section className="license-commercial">
+    {requiresReplacement && <section className="license-commercial">
       <div className="commercial-title"><CreditCard/><div><b>Comprar o renovar licencia</b><span>Elige pago directo o contacto comercial por WhatsApp.</span></div></div>
       <div className="commercial-actions">
         <button type="button" className="pay" disabled={!paymentUrl} onClick={() => paymentUrl && window.open(paymentUrl, "_blank", "noopener,noreferrer")}><CreditCard/>Pagar licencia</button>
@@ -172,9 +181,9 @@ export default function LicenseSettings() {
       {(!paymentUrl || !whatsappUrl) && <p className="commercial-hint">Las opciones comerciales se habilitan al configurar ZHUB_LICENSE_PAYMENT_URL y ZHUB_LICENSE_WHATSAPP en el servidor.</p>}
     </section>}
 
-    {user?.role === "admin" && <form className="license-activation" onSubmit={activateLicense}>
-      <div className="activation-title"><KeyRound/><div><b>{isTrial ? "Activar licencia pagada" : "Cambiar licencia"}</b><span>{isTrial ? "Puedes convertir el Trial en una licencia pagada sin perder ningún dato." : "Usa una clave activa para cambiar el plan de esta instalación."}</span></div></div>
-      <div className="activation-row"><input value={activationKey} onChange={(event)=>setActivationKey(event.target.value)} placeholder="Ingresa la clave de licencia" autoComplete="off"/><button type="submit" disabled={activating}>{activating ? "Validando…" : "Activar"}</button></div>
+    {user?.role === "admin" && <form className={`license-activation ${locked || requiresReplacement ? "recovery" : ""}`} onSubmit={activateLicense}>
+      <div className="activation-title"><KeyRound/><div><b>{requiresReplacement ? "Activar nueva licencia" : isTrial ? "Activar licencia pagada" : "Cambiar licencia"}</b><span>{requiresReplacement ? "Ingresa una clave pagada válida y activa. Si la clave es incorrecta o está desactivada, esta ventana permanecerá bloqueada." : isTrial ? "Puedes convertir el Trial en una licencia pagada sin perder ningún dato." : "Usa una clave activa para cambiar el plan de esta instalación."}</span></div></div>
+      <div className="activation-row"><input value={activationKey} onChange={(event)=>setActivationKey(event.target.value)} placeholder="Ingresa la nueva clave de licencia" autoComplete="off"/><button type="submit" disabled={activating}>{activating ? "Validando…" : "Activar"}</button></div>
       {activationMessage && <p className="activation-message">{activationMessage}</p>}
     </form>}
 

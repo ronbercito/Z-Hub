@@ -27,16 +27,18 @@ def test_legacy_snapshot_keeps_explicit_blocking_semantics():
     assert "if _has_persisted_snapshot(data):" in manager
 
 
-def test_trial_expiry_blocks_writes_but_keeps_recovery_paths():
+def test_license_recovery_blocks_writes_but_keeps_recovery_paths():
     guard = read("backend/app/core/license_guard.py")
     assert 'TRIAL_EXPIRED_CODE = "TRIAL_EXPIRED"' in guard
+    assert 'LICENSE_REQUIRED_CODE = "LICENSE_REQUIRED"' in guard
+    assert 'BLOCKED_LICENSE_STATUSES = {"trial_expired", "invalid", "missing"}' in guard
     assert 'WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}' in guard
     assert '"/api/auth/login"' in guard
     assert '"/api/auth/logout"' in guard
     assert '"/api/license/activate"' in guard
     assert '"/api/system-update"' in guard
     assert "async def enforce_trial_write_access(" in guard
-    assert 'info.get("status") != "trial_expired"' in guard
+    assert "status not in BLOCKED_LICENSE_STATUSES" in guard
     assert "status_code=403" in guard
 
 
@@ -62,7 +64,7 @@ def test_license_ui_shows_trial_dates_warnings_and_paid_activation():
     assert "Inicio Trial" in view
     assert "Fin Trial" in view
     assert "trial_warning_level" in view
-    assert "modo consulta" in view
+    assert "bloqueado" in view
     assert 'axios.post(`${API}/license/activate`' in view
     assert 'user?.role === "admin"' in view
 

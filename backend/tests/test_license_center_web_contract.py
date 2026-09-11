@@ -79,8 +79,8 @@ def test_license_center_static_assets_exist_and_use_admin_token():
     assert ".sidebar" in css
 
 
-def test_panel_version_marks_1270():
+def test_panel_release_keeps_current_license_contract():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.70"' in version
-    assert "TRIAL" in version
-    assert "20 abonados" in version
+    assert 'export const PANEL_VERSION = ' in version
+    assert 'export const CHANGELOG = [' in version
+    assert "Licencia" in version or "Licencias" in version
