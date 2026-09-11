@@ -19,12 +19,14 @@ jobs:
       - name: Append canonical continuity entry once
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('docs/CONTINUIDAD_Z-HUB.md')
-          marker = '### 1.2.76 — 2026-09-11 — Vencimiento TRIAL central y cierre operativo de Etapa 6'
-          entry = r'''
+          set -euo pipefail
+          FILE='docs/CONTINUIDAD_Z-HUB.md'
+          MARKER='### 1.2.76 — 2026-09-11 — Vencimiento TRIAL central y cierre operativo de Etapa 6'
+          if grep -Fq "$MARKER" "$FILE"; then
+            echo 'Continuity entry already present; nothing to commit.'
+            exit 0
+          fi
+          cat >> "$FILE" <<'EOF'
 
 ---
 
@@ -51,17 +53,9 @@ jobs:
 - **Backup previo:** `backup/pre-remote-trial-dates-1.2.76-20260911`.
 - **Resultado:** Etapa 6 queda operativa de extremo a extremo. El pendiente de infraestructura indicado en 1.2.75 queda cerrado por esta validación.
 - **Pendiente posterior:** instalar 1.2.76 en `z2` mediante el actualizador del panel y comprobar que la fecha/días restantes mostrados provienen de `expires_at` central.
-'''
-          text = path.read_text(encoding='utf-8')
-          if marker not in text:
-              path.write_text(text.rstrip() + entry + '\n', encoding='utf-8')
-          PY
-          if git diff --quiet -- docs/CONTINUIDAD_Z-HUB.md; then
-            echo 'Continuity entry already present; nothing to commit.'
-            exit 0
-          fi
+EOF
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/CONTINUIDAD_Z-HUB.md
+          git add "$FILE"
           git commit -m 'docs: cerrar Etapa 6 y documentar 1.2.76'
           git push origin HEAD:work/remote-trial-dates-1.2.76
