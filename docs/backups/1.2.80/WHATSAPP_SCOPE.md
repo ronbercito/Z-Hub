@@ -1,0 +1,1 @@
+Scope: backend API client, protected configuration, history, and isolated frontend components.
