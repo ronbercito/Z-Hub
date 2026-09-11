@@ -47,7 +47,7 @@ def test_legacy_paid_licenses_remain_unlimited_but_trial_is_limited():
 def test_setup_uses_license_manager_instead_of_own_parser():
     setup = read("backend/app/routers/setup/router.py")
     assert "from app.core.license_manager import" in setup
-    assert "get_license_record" in setup
+    assert "resolve_license_record" in setup
     assert "apply_license_metadata" in setup
     assert "REPO_LICENSE_FILE" not in setup
     assert "PRIVATE_LICENSE_FILE" not in setup
