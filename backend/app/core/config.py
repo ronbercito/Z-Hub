@@ -28,3 +28,8 @@ CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(","
 
 MIKROTIK_TIMEOUT = float(os.environ.get("MIKROTIK_TIMEOUT", "6"))
 MIKROTIK_CUT_LIST = os.environ.get("MIKROTIK_CUT_LIST", "morosos")
+
+# Contacto comercial de licencias. La Etapa 6 podrá reemplazar estos valores por
+# información entregada por el License Server sin cambiar el frontend.
+ZHUB_LICENSE_WHATSAPP = os.environ.get("ZHUB_LICENSE_WHATSAPP", "").strip()
+ZHUB_LICENSE_PAYMENT_URL = os.environ.get("ZHUB_LICENSE_PAYMENT_URL", "").strip()
