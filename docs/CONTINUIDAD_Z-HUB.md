@@ -3070,3 +3070,21 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Pruebas realizadas:** revisión estática del flujo React → API → SQLAlchemy; verificación del puente existente hacia Nuevo abonado; revisión de autenticación/ID del usuario; revisión del registro del router y creación automática de la tabla al arrancar.
 - **Pruebas pendientes en servidor:** build React, arranque/compilación Python real, pruebas GET/POST/DELETE contra la base de datos, GPS en HTTPS y recorrido completo Registrar instalación → tarjeta → Dar de alta cliente → crear abonado → desaparición de pendiente.
 - **Resultado:** código y documentación publicados en `main`; la validación operativa real queda pendiente hasta instalar 1.2.17 y probar el flujo en el servidor.
+---
+
+### 1.2.72 — 2026-09-11 — Estado del License Server visible en el panel
+- Ajustes → Licencia Z-Hub muestra estado del License Server, fuente de validación, ID de instalación y período de gracia cuando existe.
+- La pantalla TRIAL se alineó con el límite real de 20 abonados y muestra usados, capacidad y disponibles.
+- La actualización no activa ni reemplaza automáticamente la licencia local vigente.
+- Backup previo: `backup/pre-license-panel-1.2.72-20260911`.
+
+### 1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia
+- **Causa:** una licencia eliminada, suspendida, revocada, inválida o ausente podía dejar al usuario dentro del panel sin un flujo obligatorio para ingresar una nueva clave.
+- **Solución UI:** `Layout.jsx` consulta `/api/license/info`; para `invalid`, `missing`, `trial_expired` o `read_only` abre Ajustes → Licencia y bloquea esa ventana hasta recuperar una licencia válida.
+- **Modal:** `SettingsModal.jsx` no permite cerrar con X, Escape ni clic fuera mientras la recuperación de licencia está bloqueada.
+- **Pantalla de licencia:** `LicenseSettings.jsx` muestra una advertencia explícita y el formulario **Activar nueva licencia**. Una clave incorrecta o desactivada conserva la ventana bloqueada; una clave válida dispara `zhub-license-updated` y libera el panel.
+- **Backend:** `license_guard.py` bloquea escrituras para Trial vencido, licencia inválida o ausencia de licencia; se mantienen login/logout, `/api/license/activate`, setup y actualizaciones como rutas de recuperación.
+- **Protección de datos:** no se borran clientes, facturas, configuración ni datos por un problema de licencia.
+- **Pruebas:** contratos de licencias actualizados; compilación Python, pruebas backend y build React validados por GitHub Actions en la rama de trabajo.
+- **Backup previo:** `backup/pre-license-lock-1.2.73-20260911`.
+- **Pendiente:** activar el License Server remoto solo después de migrar/autorizar la licencia productiva y distribuir CA + clave pública de forma segura.
