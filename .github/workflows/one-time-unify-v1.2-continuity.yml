@@ -1,0 +1,41 @@
+name: One-time unify v1.2 continuity
+
+on:
+  push:
+    branches:
+      - work/unify-v1.2-continuity
+
+permissions:
+  contents: write
+
+jobs:
+  unify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/unify-v1.2-continuity
+          fetch-depth: 0
+      - name: Unificar bitacoras v1.2
+        run: python .github/scripts/unify_v1_2_continuity.py
+      - name: Validar resultado documental
+        run: |
+          test -f docs/CONTINUIDAD_Z-HUB-v1.2.md
+          test -f docs/CONTINUIDAD_Z-HUB.md
+          if find docs -maxdepth 1 -type f \( -name 'CONTINUIDAD_Z-HUB-1.2*.md' -o -name 'CONTINUIDAD_Z-HUB-v1.2.*.md' \) | grep -v 'CONTINUIDAD_Z-HUB-v1.2.md' | grep -q .; then
+            echo 'Quedaron bitacoras v1.2 separadas'
+            exit 1
+          fi
+          grep -q 'ANEXOS CONSOLIDADOS DE BITÁCORAS v1.2.x' docs/CONTINUIDAD_Z-HUB-v1.2.md
+          grep -q 'Consolidación documental de continuidad v1.2' docs/CONTINUIDAD_Z-HUB.md
+      - name: Commit unificacion
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A docs
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'docs: unificar continuidad v1.2 en un solo archivo'
+          git push origin HEAD:work/unify-v1.2-continuity
