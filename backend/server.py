@@ -108,7 +108,7 @@ for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_
 for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
-api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients")])
+api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
 # Integración aislada de WhatsApp: mantiene su propia configuración, historial y endpoints.
 api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
