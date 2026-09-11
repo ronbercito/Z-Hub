@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Infinity as InfinityIcon, KeyRound, MessageCircle, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, CreditCard, Infinity as InfinityIcon, KeyRound, MessageCircle, RefreshCw, Server, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./license-settings.css";
 
@@ -18,11 +18,22 @@ const planLabel = (plan, maxClients) => {
   return match ? `Plan ${match[1]}` : (plan || "Licencia pagada");
 };
 
-const dateLabel = (value) => {
+const dateLabel = (value, withTime = false) => {
   if (!value) return "—";
-  try { return new Date(value).toLocaleDateString("es-PE", { day:"2-digit", month:"2-digit", year:"numeric" }); }
-  catch (_) { return "—"; }
+  try {
+    const options = withTime
+      ? { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" }
+      : { day:"2-digit", month:"2-digit", year:"numeric" };
+    return new Date(value).toLocaleString("es-PE", options);
+  } catch (_) { return "—"; }
 };
+
+const sourceLabel = (source) => ({
+  remote: "Servidor remoto",
+  cache: "Caché firmado",
+  "local-transition": "Compatibilidad local",
+  local: "Licencia local",
+}[source] || source || "No disponible");
 
 export default function LicenseSettings() {
   const { API, token, user } = useAuth();
@@ -63,6 +74,8 @@ export default function LicenseSettings() {
   const whatsappDigits = String(data?.sales_whatsapp || "").replace(/\D/g, "");
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hola, mi Trial de Z-Hub finalizó y deseo adquirir una licencia pagada. ¿Me pueden ayudar con los planes y el pago?")}` : "";
   const paymentUrl = String(data?.payment_url || "").trim();
+  const remoteEnabled = Boolean(data?.license_server_enabled);
+  const serverOnline = data?.license_server_online;
 
   const activateLicense = async (event) => {
     event.preventDefault();
@@ -91,7 +104,7 @@ export default function LicenseSettings() {
 
   return <div className="license-settings">
     <header className="license-head">
-      <div className="license-brand"><span className="license-logo"><ShieldCheck/></span><div><h2>Licencia Z-Hub</h2><p>Estado y capacidad autorizada para esta instalación.</p></div></div>
+      <div className="license-brand"><span className="license-logo"><ShieldCheck/></span><div><h2>Licencia Z-Hub</h2><p>Estado, capacidad y validación de esta instalación.</p></div></div>
       <button type="button" className="license-refresh" onClick={load}><RefreshCw/>Actualizar</button>
     </header>
 
@@ -99,34 +112,44 @@ export default function LicenseSettings() {
       <div>
         <span className={`license-status ${status.tone}`}><StatusIcon/>{statusLabel}</span>
         <h3>{isTrial ? "Z-Hub Trial" : `Z-Hub ${planLabel(data?.plan, max)}`}</h3>
-        <p>{isTrial ? "Acceso completo durante el período de prueba." : "Licencia pagada sin fecha de vencimiento."}</p>
+        <p>{isTrial ? "Prueba de 30 días con capacidad máxima de 20 abonados." : "Licencia pagada según la capacidad autorizada."}</p>
       </div>
       <div className="license-key"><span>Licencia</span><b>{data?.license_key_masked || "No disponible"}</b></div>
     </section>
 
-    {isTrial ? <>
+    <section className={`license-server-card ${remoteEnabled ? (serverOnline === false ? "offline" : "online") : "local"}`}>
+      <div className="server-status-icon">{remoteEnabled ? (serverOnline === false ? <WifiOff/> : <Wifi/>) : <Server/>}</div>
+      <div className="server-status-copy">
+        <span>License Server</span>
+        <strong>{remoteEnabled ? (serverOnline === false ? "Temporalmente sin conexión" : serverOnline === true ? "Conectado" : "Configurado") : "Modo local"}</strong>
+        <p>Fuente de validación: {sourceLabel(data?.validation_source)}{data?.grace_until ? ` · Gracia hasta ${dateLabel(data.grace_until, true)}` : ""}</p>
+      </div>
+    </section>
+
+    <section className="license-metrics">
+      <article><span><Users/>Abonados usados</span><strong>{usage}</strong></article>
+      <article><span>{unlimited ? <InfinityIcon/> : <ShieldCheck/>}Capacidad</span><strong>{unlimited ? "Ilimitada" : (max ?? "—")}</strong></article>
+      <article><span><CheckCircle2/>Disponibles</span><strong>{unlimited ? "Sin límite" : (available ?? "—")}</strong></article>
+    </section>
+
+    {!unlimited && max != null && <section className="license-capacity">
+      <div className="capacity-row"><b>Uso de licencia</b><span>{usage} / {max} abonados · {percent}%</span></div>
+      <div className="capacity-track" aria-label={`Uso de licencia ${percent}%`}><span style={{width:`${percent}%`}} /></div>
+      <p>{available > 0 ? `Puedes registrar ${available} abonado${available === 1 ? "" : "s"} adicional${available === 1 ? "" : "es"}.` : "Has alcanzado la capacidad autorizada. Los abonados actuales siguen administrándose normalmente."}</p>
+    </section>}
+
+    {isTrial && <>
       <section className={`license-trial-card ${isExpired ? "expired" : ""}`}>
         <div className="trial-icon"><Clock3/></div>
-        <div><span>Tiempo de prueba restante</span><strong>{remainingDays} días</strong><p>El Trial tiene todas las funciones de Z-Hub y no está limitado por cantidad de abonados.</p></div>
+        <div><span>Tiempo de prueba restante</span><strong>{remainingDays} días</strong><p>El Trial permite hasta 20 abonados durante un máximo de 30 días.</p></div>
       </section>
       <section className={`license-trial-alert level-${data?.trial_warning_level || "normal"}`}>
         <AlertTriangle/>
         <div>
           <b>{isExpired ? "Período de prueba finalizado" : remainingDays <= 7 ? "Tu Trial está próximo a finalizar" : "Trial de 30 días activo"}</b>
-          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está en modo consulta. Para continuar operando, activa una licencia pagada o adquiere una desde las opciones comerciales de esta pantalla." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. Activa una licencia pagada antes del vencimiento para continuar operando sin interrupción.` : "Durante los 30 días tienes acceso a todas las funciones del panel sin límite de abonados."}</p>
+          <p>{isExpired ? "Tus datos permanecen intactos. Z-Hub está en modo consulta. Para continuar operando, activa una licencia pagada o adquiere una desde las opciones comerciales de esta pantalla." : remainingDays <= 7 ? `Quedan ${remainingDays} día${remainingDays === 1 ? "" : "s"}. El Trial mantiene una capacidad máxima de 20 abonados hasta su vencimiento.` : "Durante el Trial tienes acceso a las funciones del panel con una capacidad máxima de 20 abonados."}</p>
         </div>
       </section>
-    </> : <>
-      <section className="license-metrics">
-        <article><span><Users/>Abonados usados</span><strong>{usage}</strong></article>
-        <article><span>{unlimited ? <InfinityIcon/> : <ShieldCheck/>}Capacidad</span><strong>{unlimited ? "Ilimitada" : max}</strong></article>
-        <article><span><CheckCircle2/>Disponibles</span><strong>{unlimited ? "Sin límite" : available}</strong></article>
-      </section>
-      {!unlimited && <section className="license-capacity">
-        <div className="capacity-row"><b>Uso de licencia</b><span>{usage} / {max} abonados · {percent}%</span></div>
-        <div className="capacity-track" aria-label={`Uso de licencia ${percent}%`}><span style={{width:`${percent}%`}} /></div>
-        <p>{available > 0 ? `Puedes registrar ${available} abonado${available === 1 ? "" : "s"} adicional${available === 1 ? "" : "es"}.` : "Has alcanzado la capacidad contratada. Los abonados actuales siguen administrándose normalmente."}</p>
-      </section>}
     </>}
 
     <section className="license-details">
@@ -136,6 +159,8 @@ export default function LicenseSettings() {
       {isTrial && <div><span>Fin Trial</span><b>{dateLabel(data?.trial_expires_at)}</b></div>}
       {data?.owner && <div><span>Titular</span><b>{data.owner}</b></div>}
       {data?.email && <div><span>Correo</span><b>{data.email}</b></div>}
+      <div><span>Instalación</span><b className="license-installation-id">{data?.installation_id || "—"}</b></div>
+      <div><span>Validación</span><b>{sourceLabel(data?.validation_source)}</b></div>
     </section>
 
     {isExpired && <section className="license-commercial">
