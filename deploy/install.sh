@@ -18,6 +18,7 @@ DB_USER="zhub"
 LOG_FILE="/var/log/zhub_install.log"
 LICENSE_DIR="/etc/zhub/licencia"
 LICENSE_FILE="$LICENSE_DIR/licencias.txt"
+SUPERVISOR_CONF="/etc/supervisor/conf.d/zhub_backend.conf"
 STEP="inicio"
 START_TIME="$(date +%s)"
 
@@ -206,8 +207,38 @@ ok "Configuración de seguridad aplicada"
 STEP="Activando el sistema"
 section "[6/7] Activando el sistema"
 cd "$APP_DIR"
-export APP_DIR WEB_ROOT
-envsubst < "$DEPLOY_DIR/supervisor/zhub_backend.conf.template" | tee /etc/supervisor/conf.d/zhub_backend.conf >/dev/null
+
+# Las variables del License Server viven en Supervisor y no forman parte del
+# repositorio. Antes de regenerar la configuración preservamos las que ya están
+# activas para que una actualización no devuelva Z-Hub a "Modo local".
+CURRENT_SUPERVISOR_ENV=""
+if [ -f "$SUPERVISOR_CONF" ]; then
+  CURRENT_SUPERVISOR_ENV="$(grep '^environment=' "$SUPERVISOR_CONF" | tail -n 1 || true)"
+fi
+
+LICENSE_SERVER_URL="${ZHUB_LICENSE_SERVER_URL:-}"
+LICENSE_SERVER_PUBLIC_KEY_FILE="${ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE:-}"
+if [ -z "$LICENSE_SERVER_URL" ] && [ -n "$CURRENT_SUPERVISOR_ENV" ]; then
+  LICENSE_SERVER_URL="$(printf '%s\n' "$CURRENT_SUPERVISOR_ENV" | sed -n 's/.*ZHUB_LICENSE_SERVER_URL="\([^"]*\)".*/\1/p')"
+fi
+if [ -z "$LICENSE_SERVER_PUBLIC_KEY_FILE" ] && [ -n "$CURRENT_SUPERVISOR_ENV" ]; then
+  LICENSE_SERVER_PUBLIC_KEY_FILE="$(printf '%s\n' "$CURRENT_SUPERVISOR_ENV" | sed -n 's/.*ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE="\([^"]*\)".*/\1/p')"
+fi
+
+ZHUB_SUPERVISOR_LICENSE_ENV=""
+if [ -n "$LICENSE_SERVER_URL" ]; then
+  ZHUB_SUPERVISOR_LICENSE_ENV="${ZHUB_SUPERVISOR_LICENSE_ENV},ZHUB_LICENSE_SERVER_URL=\"${LICENSE_SERVER_URL}\""
+fi
+if [ -n "$LICENSE_SERVER_PUBLIC_KEY_FILE" ]; then
+  ZHUB_SUPERVISOR_LICENSE_ENV="${ZHUB_SUPERVISOR_LICENSE_ENV},ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE=\"${LICENSE_SERVER_PUBLIC_KEY_FILE}\""
+fi
+export APP_DIR WEB_ROOT ZHUB_SUPERVISOR_LICENSE_ENV
+
+if [ -n "$ZHUB_SUPERVISOR_LICENSE_ENV" ]; then
+  info "Configuración remota de licencias detectada: se conservará durante la actualización"
+fi
+
+envsubst < "$DEPLOY_DIR/supervisor/zhub_backend.conf.template" | tee "$SUPERVISOR_CONF" >/dev/null
 run_visual "Actualizando configuración de servicios" bash -c 'supervisorctl reread'
 run_visual "Aplicando configuración" bash -c 'supervisorctl update'
 run_visual "Reiniciando componentes" bash -c 'supervisorctl restart zhub_backend'

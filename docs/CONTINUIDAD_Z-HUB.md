@@ -3137,3 +3137,18 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Resultado:** Etapa 6 queda operativa de extremo a extremo. El pendiente de infraestructura indicado en 1.2.75 queda cerrado por esta validación.
 - **Pendiente posterior:** instalar 1.2.76 en `z2` mediante el actualizador del panel y comprobar que la fecha/días restantes mostrados provienen de `expires_at` central.
 
+---
+
+### 1.2.77 — 2026-09-11 — Persistencia del License Server durante actualizaciones
+- **Causa:** al instalar 1.2.76, `deploy/install.sh` regeneró `/etc/supervisor/conf.d/zhub_backend.conf` desde la plantilla y reemplazó la línea `environment` por `PYTHONUNBUFFERED=1`; esto eliminó `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`, por lo que el backend volvió a `Modo local` aunque la CA y la clave pública RSA seguían instaladas.
+- **Corrección:** antes de regenerar Supervisor, el instalador lee la configuración `environment=` existente y conserva los valores de `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`. También respeta valores ya exportados en el entorno de instalación.
+- **Plantilla:** `deploy/supervisor/zhub_backend.conf.template` incorpora `${ZHUB_SUPERVISOR_LICENSE_ENV}` después de `PYTHONUNBUFFERED=1`; si no hay configuración remota, la expansión queda vacía y el comportamiento local anterior se conserva.
+- **Portabilidad:** no se fija `192.168.10.240`, dominios, rutas privadas ni credenciales en el repositorio. Cada instalación conserva sus propios valores.
+- **Seguridad:** no se copian claves privadas ni tokens administrativos. La clave pública y la CA continúan fuera del repositorio en las rutas configuradas por la instalación.
+- **Regresión cubierta:** `backend/tests/test_license_stage6_contract.py` verifica que el instalador preserve ambas variables y que no exista una IP de laboratorio incrustada.
+- **Archivos:** `deploy/install.sh`, `deploy/supervisor/zhub_backend.conf.template`, `backend/tests/test_license_stage6_contract.py`, `frontend/src/modules/system-update/version.js`.
+- **Backup previo:** `backup/pre-license-env-persistence-1.2.77-20260911`.
+- **Prueba operativa previa al cambio:** después de restaurar manualmente las variables en `z2`, el panel volvió a mostrar `TRIAL ACTIVO`, License Server `Conectado`, fuente `Servidor remoto`, capacidad 20 y período de gracia.
+- **Validación pendiente de despliegue:** instalar 1.2.77 sobre `z2` y confirmar que, tras el reinicio del backend, las dos variables siguen presentes en `/proc/<pid>/environ` y el panel continúa en `Servidor remoto` sin intervención manual.
+- **Estado de etapas:** Etapa 6 queda funcionalmente cerrada; este 1.2.77 es un hotfix de persistencia de despliegue. Después de validarlo corresponde continuar con la Etapa 7 (Centro de Licencias / gestión comercial por GUI).
+

@@ -9,4 +9,4 @@ startretries=5
 stderr_logfile=/var/log/zhub_backend.err.log
 stdout_logfile=/var/log/zhub_backend.out.log
 user=root
-environment=PYTHONUNBUFFERED=1
+environment=PYTHONUNBUFFERED=1${ZHUB_SUPERVISOR_LICENSE_ENV}
