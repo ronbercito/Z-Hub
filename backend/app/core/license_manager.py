@@ -41,6 +41,7 @@ PLAN_LIMITS: dict[str, int | None] = {
     "UNLIMITED": None,
 }
 TRIAL_DAYS = 30
+TRIAL_MAX_CLIENTS = 20
 NON_COUNTING_CLIENT_STATUSES = {"retired"}
 
 ACTIVE_LICENSE_STATUSES = {"ACTIVA", "ACTIVO", "ACTIVE", "VALIDA", "VÁLIDA"}
@@ -89,7 +90,7 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
     plan = current.get("plan", "").strip().upper()
     if license_type == "TRIAL":
         plan = plan or "TRIAL"
-        max_clients = None
+        max_clients = TRIAL_MAX_CLIENTS
     else:
         plan = plan or "UNLIMITED"
         max_clients = _normalize_max_clients(current.get("max_clients"), plan)
@@ -264,7 +265,7 @@ def get_status(data: dict[str, Any]) -> str:
 
 def get_client_limit(data: dict[str, Any]) -> int | None:
     if is_trial(data):
-        return None
+        return TRIAL_MAX_CLIENTS
     value = data.get("license_max_clients")
     if value in (None, "", "unlimited", "UNLIMITED"):
         return None
@@ -284,7 +285,7 @@ def apply_license_metadata(data: dict[str, Any], record: dict[str, Any], *, now:
     result["license_key"] = record["key"]
     result["license_type"] = record["type"]
     result["license_plan"] = record["plan"]
-    result["license_max_clients"] = record["max_clients"]
+    result["license_max_clients"] = TRIAL_MAX_CLIENTS if record["type"] == "TRIAL" else record["max_clients"]
     if record["type"] == "TRIAL" and not result.get("license_activated_at"):
         current = now or datetime.now(timezone.utc)
         result["license_activated_at"] = current.astimezone(timezone.utc).isoformat()
@@ -377,8 +378,6 @@ async def can_create_client(db: AsyncSession) -> bool:
     info = await get_license(db)
     if info.get("status") != "active":
         return False
-    if str(info.get("type", "")).upper() == "TRIAL":
-        return True
     limit = info.get("max_clients")
     if limit is None:
         return True
