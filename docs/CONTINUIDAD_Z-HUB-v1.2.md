@@ -341,3 +341,295 @@ Insertar inmediatamente debajo de `HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO`: ver
 - Serie cubierta: **1.2.00 → 1.2.38**.
 - Orden: **descendente; versión más reciente primero**.
 - Próxima versión funcional: **1.2.39**, encima de 1.2.38.
+
+---
+
+# ANEXOS CONSOLIDADOS DE BITÁCORAS v1.2.x
+
+Esta sección conserva íntegramente las bitácoras v1.2.x que antes estaban separadas. Desde esta consolidación, `docs/CONTINUIDAD_Z-HUB-v1.2.md` es el único archivo de continuidad específico de la rama v1.2.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.17-PENDIENTE.md`
+
+TEMPORAL: entrada preparada para integrar al final de docs/CONTINUIDAD_Z-HUB.md una vez verificado el cierre de 1.2.17.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.65.md`
+
+# Z-Hub — Continuidad 1.2.65
+
+**Fecha:** 2026-09-10
+**Versión:** 1.2.65
+**Estado:** hotfix publicado en `main`, pendiente validación visual/operativa en servidor real.
+
+## Punto exacto de continuidad
+Se corrigió la causa por la que una licencia pagada/ilimitada podía seguir apareciendo como `LICENCIA NO VÁLIDA` después de 1.2.63 y 1.2.64.
+
+El fallback anterior estaba ubicado en `licencia/licencias.txt`, pero `deploy/install.sh` elimina ese directorio durante la instalación. Por eso el motor podía quedarse únicamente con el registro privado y perder la fuente de compatibilidad.
+
+Desde 1.2.65 el fallback runtime es:
+
+`backend/app/core/license_fallback.txt`
+
+`backend/app/core/license_manager.py` lo combina con `/etc/zhub/licencia/licencias.txt`; el registro privado mantiene prioridad para suspensiones/revocaciones explícitas.
+
+## Backup
+`backup/pre-license-runtime-fallback-1.2.65-20260910`
+
+## Informe detallado
+`docs/INFORME_HOTFIX_RUNTIME_LICENCIA_1.2.65.md`
+
+## Próximo paso obligatorio
+Actualizar un servidor de prueba/producción de 1.2.64 a 1.2.65 y comprobar:
+1. `Ajustes → Licencia Z-Hub`.
+2. La clave terminada en `002` debe aparecer como `LICENCIA ACTIVA` si no está suspendida/inactiva en el registro privado.
+3. Reinicio/backend y build deben finalizar correctamente.
+4. Solo después de cerrar esta validación continuar con Etapa 6/7 (License Server).
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.66.md`
+
+# Continuidad Z-Hub 1.2.66
+
+Estado: Etapa 6/7 implementada a nivel de código y preparada para despliegue real en VPS.
+
+## Último punto estable
+- Versión anterior validada visualmente: 1.2.65.
+- Backup previo: `backup/pre-license-stage6-1.2.65-20260910`.
+
+## Cambios 1.2.66
+- Cliente remoto de License Server con HTTPS.
+- Autorizaciones RS256 verificadas con clave pública.
+- Caché firmada para continuidad temporal.
+- `license_installation_id` persistente por instalación.
+- License Server independiente bajo `license_server/` con SQLite, historial, licencias e instalaciones autorizadas.
+- Plantillas de systemd/Nginx y generación de claves.
+- Setup y cambio de licencia usan la fuente unificada de Etapa 6.
+
+## Regla de transición
+No retirar todavía `license_fallback.txt` ni el registro privado local. Solo deben dejar de ser mecanismo productivo después de desplegar y validar el VPS real.
+
+## Próximo paso
+Desplegar `license_server/` en el VPS, definir dominio/subdominio, habilitar HTTPS, generar claves, copiar `public.pem` a Z-Hub, configurar `ZHUB_LICENSE_SERVER_URL`, registrar la licencia e instalación actual y validar online + caída simulada dentro del período de gracia.
+
+Documento detallado: `docs/INFORME_LICENCIAS_ETAPA6_1.2.66.md`.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.67.md`
+
+# Continuidad Z-Hub 1.2.67
+
+Estado: License Server Etapa 6/7 operativo a nivel de código y ampliado con una primera interfaz web de administración central.
+
+## Base estable previa
+- Z-Hub 1.2.66.
+- Backup creado antes de modificar: `backup/pre-license-center-web-1.2.67-20260910`.
+- El contenedor de laboratorio Debian 13 usa IP `192.168.10.240` y ya respondió `GET /health` con HTTP 200 antes de esta ampliación.
+
+## Cambios 1.2.67
+- Nuevo `/admin-ui` en el License Server.
+- Dashboard: clientes/ISP, licencias activas, instalaciones activas y validaciones de 24 h.
+- Gestión de clientes/ISP: empresa, contacto, correo, teléfono, RUC/DNI y estado.
+- Gestión de licencias: crear/editar/eliminar, cliente asociado, tipo, plan, `max_clients`, activar/suspender.
+- Gestión de instalaciones: autorizar/editar/eliminar, nombre descriptivo y estado.
+- Historial de validaciones visible desde la web.
+- Migración SQLite no destructiva: crea `customers` y agrega columnas faltantes a bases 1.0 existentes.
+- License Server `APP_VERSION=1.1.0`.
+- Z-Hub `PANEL_VERSION=1.2.67`.
+
+## Seguridad
+- El License Center usa `ZHUB_LICENSE_ADMIN_TOKEN` para `/admin/*`.
+- El navegador conserva el token únicamente en `sessionStorage` durante la sesión.
+- Para Internet se debe habilitar HTTPS antes de usar la interfaz administrativa remotamente.
+- `private.pem` permanece exclusivamente en el servidor de licencias.
+- Z-Hub local seguirá recibiendo únicamente `public.pem`.
+- No se envían datos MikroTik/OLT ni la base operativa de abonados al License Server.
+
+## Archivos principales
+- `license_server/app/main.py`
+- `license_server/static/index.html`
+- `license_server/static/styles.css`
+- `license_server/static/app.js`
+- `license_server/README.md`
+- `backend/tests/test_license_center_web_contract.py`
+- `.github/workflows/quality.yml`
+- `frontend/src/modules/system-update/version.js`
+- `docs/INFORME_LICENSE_CENTER_WEB_1.2.67.md`
+
+## Prueba siguiente en laboratorio
+En `web-licencia`:
+1. detener el Uvicorn manual actual si sigue corriendo;
+2. `cd /opt/zhub-license-src && git pull origin main`;
+3. arrancar otra vez Uvicorn con `server.env` cargado;
+4. comprobar `GET /health` y versión `1.1.0`;
+5. abrir `http://192.168.10.240:8090/admin-ui` temporalmente para prueba LAN;
+6. ingresar con el token administrativo rotado;
+7. crear Cliente/ISP → Licencia → Instalación;
+8. probar `/v1/licenses/validate` y comprobar autorización RS256;
+9. suspender/reactivar desde la web y verificar el comportamiento.
+
+## Pendiente antes de producción
+- convertir Uvicorn a servicio systemd;
+- colocar Nginx delante del backend;
+- asignar dominio/subdominio;
+- habilitar HTTPS válido;
+- copiar solo `public.pem` a Z-Hub;
+- configurar Z-Hub 1.2.67 con la URL HTTPS final;
+- retirar el fallback local solo después de validar el flujo remoto completo.
+
+## Próximo punto
+No iniciar todavía funciones adicionales de Etapa 7 avanzada. Primero validar visual y funcionalmente este License Center inicial en el contenedor Debian 13 y cerrar la Etapa 6 con HTTPS + conexión real de Z-Hub.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.68.md`
+
+# Continuidad Z-Hub 1.2.68
+
+Fecha: 2026-09-10
+Estado: mejora funcional del Z-Hub License Center publicada en `main` para prueba en laboratorio.
+
+## Objetivo
+Reducir errores al crear licencias desde la web y automatizar clave, datos del cliente, capacidad por plan y vencimiento TRIAL.
+
+## Cambios
+- El License Server pasa a `APP_VERSION = 1.2.0`.
+- Nueva generación de clave desde servidor con `GET /admin/licenses/generate-key`.
+- Formato de clave: `ZHUB-AAAA-XXXXXXXX`, usando aleatoriedad criptográfica y comprobación contra SQLite antes de devolverla.
+- La clave queda de solo lectura en el formulario y puede regenerarse antes de guardar.
+- Al seleccionar Cliente / ISP se completan Titular y Correo desde la ficha del cliente; siguen siendo editables.
+- Planes comerciales normalizados: `PLAN_100`, `PLAN_300`, `PLAN_500`, `PLAN_1000`, `ILIMITADO`.
+- La capacidad se deriva en backend del plan: 100, 300, 500, 1000 o `NULL` para ilimitado. La web refleja el mismo valor y bloquea edición manual de capacidad.
+- Tipos de licencia: `PAID` y `TRIAL`.
+- Una licencia TRIAL nueva recibe `expires_at` automáticamente a 30 días. El número de días es configurable mediante `ZHUB_LICENSE_TRIAL_DAYS`, con 30 por defecto.
+- La validación remota rechaza TRIAL vencidas con `TRIAL_EXPIRED`.
+- El JWT de una TRIAL no puede extender su `grace_until` más allá de `expires_at`.
+- Estados comerciales visibles de licencia: `ACTIVA`, `SUSPENDIDA`, `REVOCADA`.
+- El listado de licencias muestra tipo y vencimiento.
+- Migración no destructiva: se agrega `licenses.expires_at` si no existe; no se borra ni reinicializa SQLite.
+
+## Archivos principales
+- `license_server/app/main.py`
+- `license_server/static/app.js`
+- `license_server/env.example`
+- `backend/tests/test_license_center_web_contract.py`
+- `frontend/src/modules/system-update/version.js`
+- `docs/CONTINUIDAD_Z-HUB-1.2.68.md`
+
+## Backup previo
+Rama: `backup/pre-license-center-automation-1.2.68-20260910`.
+
+## Pruebas locales realizadas antes de publicar
+- `python3 -m py_compile` sobre la versión preparada de `license_server/app/main.py`: OK.
+- `node --check` sobre la versión preparada de `license_server/static/app.js`: OK.
+
+## Pruebas automáticas
+GitHub Actions debe validar compilación Python, contratos pytest y build React sobre el HEAD final de esta entrega. No declarar CI aprobada hasta comprobar conclusión `success`.
+
+## Prueba de laboratorio pendiente
+En `web-licencia`:
+1. `git pull origin main`.
+2. Reiniciar Uvicorn/servicio.
+3. Confirmar `/health` con License Server `1.2.0`.
+4. Abrir `/admin-ui`.
+5. Crear una licencia PAID comprobando clave automática, autocompletado del cliente y capacidad por plan.
+6. Crear una licencia TRIAL y confirmar `expires_at`.
+7. Autorizar una instalación y validar el flujo `/v1/licenses/validate`.
+8. Probar suspensión, reactivación y revocación.
+
+## Compatibilidad y seguridad
+- No se modifica la clave privada RS256 ni se publica en GitHub.
+- El token administrativo sigue fuera del repositorio.
+- MikroTik, OLT y operación ISP siguen locales; el VPS administra únicamente licenciamiento.
+- La base existente se conserva.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.69.md`
+
+# Z-Hub 1.2.69 — Continuidad License Center
+
+Fecha: 2026-09-10
+
+## Cambio
+Se reemplaza para nuevas licencias el sufijo corto de 8 caracteres hexadecimales por un identificador aleatorio de 48 caracteres hexadecimales (24 bytes / 192 bits).
+
+Formato oficial:
+`ZHUB-AAAA-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+
+Ejemplo de forma (no reutilizar como licencia):
+`ZHUB-2026-8F3A7C91D2E64B80A1F94C7752B3D8E69A41F271C6E84353`
+
+## Implementación
+- `license_server/static/key192.js`: usa `crypto.getRandomValues()` con 24 bytes y los representa como 48 HEX mayúsculas.
+- `license_server/static/index.html`: carga el generador 192-bit después de `app.js`, reemplazando el generador de UI anterior.
+- SQLite mantiene `license_key` como PRIMARY KEY, por lo que una colisión no puede guardarse como licencia duplicada.
+- No se usan `#`, `$`, `%` ni otros caracteres especiales para evitar problemas de transporte/escape.
+- Las licencias existentes no se modifican ni migran; el formato se aplica a claves nuevas/regeneradas.
+
+## Backup
+`backup/pre-license-key-192bit-1.2.69-20260910`
+
+## Riesgo / pendiente
+El endpoint legado `/admin/licenses/generate-key` continúa existiendo para compatibilidad, pero la interfaz 1.2.69 genera las nuevas claves de 192 bits con Web Crypto. En una revisión futura puede alinearse también ese endpoint sin romper consumidores existentes.
+
+## Prueba operativa pendiente
+Actualizar el contenedor `web-licencia`, recargar `/admin-ui` sin caché y confirmar visualmente que Nueva licencia muestre 48 caracteres HEX después de `ZHUB-2026-` y que `Generar otra` produzca una clave distinta.
+
+
+---
+
+## Fuente consolidada: `CONTINUIDAD_Z-HUB-1.2.70.md`
+
+# Continuidad Z-Hub 1.2.70
+
+Fecha: 2026-09-10
+
+## Objetivo
+Corregir el comportamiento de las licencias TRIAL del License Center para que no hereden la capacidad del plan comercial seleccionado.
+
+## Cambios
+- Toda licencia `TRIAL` queda limitada a **20 abonados**.
+- El límite se aplica en la interfaz y también en el backend; no depende del valor enviado por el navegador.
+- Al seleccionar `TRIAL`, el plan pasa automáticamente a `TRIAL` y el selector comercial queda bloqueado.
+- La interfaz muestra el mensaje: `TRIAL: máximo 20 abonados y vencimiento automático a los 30 días.`
+- El vencimiento sigue siendo automático a los 30 días mediante `expires_at`.
+- Las licencias `PAID` continúan usando `PLAN_100`, `PLAN_300`, `PLAN_500`, `PLAN_1000` e `ILIMITADO`.
+- El generador del backend queda alineado con el formato largo de 192 bits usando `secrets.token_hex(24)`.
+- License Server pasa a versión interna `1.2.1`.
+- Panel Z-Hub pasa a `1.2.70`.
+
+## Seguridad
+El servidor fuerza `max_clients=20` para `TRIAL`, por lo que una petición manual a la API no puede elevar la capacidad de prueba indicando otro plan o otro máximo.
+
+## Compatibilidad
+No se borra ni reinicializa SQLite. Las licencias existentes permanecen almacenadas. El cambio afecta la creación/edición de licencias TRIAL y las nuevas claves generadas.
+
+## Backup previo
+`backup/pre-trial-limit-1.2.70-20260910`
+
+## Archivos principales
+- `license_server/app/main.py`
+- `license_server/static/app.js`
+- `backend/tests/test_license_center_web_contract.py`
+- `frontend/src/modules/system-update/version.js`
+
+## Pruebas
+Se actualizaron los contratos para verificar:
+- `TRIAL_MAX_CLIENTS = 20`;
+- servidor fuerza plan/capacidad TRIAL;
+- UI contiene `TRIAL:20` y el texto de máximo 20 abonados;
+- generador usa 24 bytes aleatorios / 48 caracteres hexadecimales;
+- versión `1.2.70`.
+
+La ejecución completa de GitHub Actions debe verificarse antes de considerar cerrada la validación automática.

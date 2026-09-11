@@ -3181,3 +3181,12 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - Se retira `docs/CONTINUIDAD_Z-HUB-1.2.71.md`; la única bitácora maestra vigente es `docs/CONTINUIDAD_Z-HUB.md`.
 - Backup previo: `backup/pre-stage7-hardening-1.2.79-20260911`.
 - Validación requerida para cierre: contrato License Center, sintaxis JS/Python, CI backend y build frontend en verde; despliegue final de 1.2.79 en `z2` y actualización del License Server desde `main`.
+
+
+## 2026-09-11 — Consolidación documental de continuidad v1.2
+
+- Se consolidaron todas las bitácoras `CONTINUIDAD_Z-HUB-1.2.x.md` y variantes equivalentes dentro de `docs/CONTINUIDAD_Z-HUB-v1.2.md`.
+- Los archivos individuales absorbidos se eliminaron para evitar divergencias.
+- `docs/CONTINUIDAD_Z-HUB-v1.2.md` queda como única bitácora específica de la serie 1.2; `docs/CONTINUIDAD_Z-HUB.md` se conserva como bitácora maestra general del proyecto.
+- Los documentos `INFORME_*` y `docs/backups/` no forman parte de esta consolidación y se conservan.
+- Cambio exclusivamente documental: no incrementa `PANEL_VERSION`.
