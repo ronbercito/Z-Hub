@@ -1,4 +1,4 @@
-# Z-Hub License Server — Etapa 6/7
+# Z-Hub License Server — Etapa 6/7 + License Center web
 
 Servicio privado para centralizar el licenciamiento de instalaciones Z-Hub Self-Hosted sin mover la operación del ISP al VPS.
 
@@ -12,6 +12,24 @@ Servicio privado para centralizar el licenciamiento de instalaciones Z-Hub Self-
 
 El VPS no recibe tráfico MikroTik/OLT ni datos operativos del ISP. Solo responde consultas de licencia.
 
+## License Center web
+
+Desde la versión Z-Hub 1.2.67 el License Server incorpora una interfaz web inicial en:
+
+`/admin-ui`
+
+La interfaz solicita el mismo `ZHUB_LICENSE_ADMIN_TOKEN` usado por `/admin/*` y permite:
+
+- dashboard con clientes/ISP, licencias activas, instalaciones activas y validaciones de 24 h;
+- crear, editar y eliminar clientes/ISP;
+- crear, editar, activar, suspender y eliminar licencias;
+- asignar una licencia a un cliente/ISP;
+- definir plan y `max_clients`;
+- autorizar, editar, suspender, reactivar y eliminar instalaciones;
+- revisar historial de validaciones.
+
+El token se conserva únicamente en `sessionStorage` del navegador y debe utilizarse siempre detrás de HTTPS cuando el servidor sea accesible fuera de la LAN.
+
 ## Continuidad ante caída del VPS
 
 Cada validación correcta devuelve una autorización JWT RS256 firmada. La instalación local guarda esa autorización y puede continuar usándola hasta su `grace_until`. El valor por defecto es 72 horas (`ZHUB_LICENSE_GRACE_HOURS`). Un rechazo explícito del servidor no usa una autorización antigua.
@@ -21,7 +39,7 @@ Durante la migración inicial, si el License Server está configurado pero todav
 ## VPS — instalación base
 
 1. Crear un usuario de sistema `zhub-license`.
-2. Copiar `license_server/` a `/opt/zhub-license-server`.
+2. Copiar `license_server/` a `/opt/zhub-license-server` o ejecutar desde el checkout de Z-Hub.
 3. Crear un entorno virtual e instalar `requirements.txt`.
 4. Crear `/etc/zhub-license-server/server.env` desde `env.example` y sustituir el token administrativo por uno aleatorio largo.
 5. Ejecutar `scripts/generate_keys.sh /etc/zhub-license-server`.
@@ -55,19 +73,26 @@ Respuesta válida:
 {
   "valid": true,
   "authorization": "<JWT-RS256>",
-  "grace_until": "<fecha ISO>"
+  "grace_until": "<fecha ISO>",
+  "plan": "UNLIMITED",
+  "max_clients": null
 }
 ```
 
-### Administración temporal previa a Etapa 7
+### Administración
 
 Los endpoints `/admin/*` requieren `Authorization: Bearer <ZHUB_LICENSE_ADMIN_TOKEN>`.
 
-- `PUT /admin/licenses/{license_key}` crea o actualiza una licencia.
-- `PUT /admin/licenses/{license_key}/installations/{installation_id}` autoriza/suspende una instalación.
-- `GET /admin/validations` devuelve historial reciente.
+Principales rutas:
 
-Estos endpoints son operativos para Etapa 6. La interfaz gráfica para administrarlos corresponde a la Etapa 7 — Z-Hub License Center.
+- `GET /admin/dashboard`
+- `GET|POST /admin/customers`
+- `PUT|DELETE /admin/customers/{customer_id}`
+- `GET /admin/licenses`
+- `PUT|DELETE /admin/licenses/{license_key}`
+- `GET /admin/installations`
+- `PUT|DELETE /admin/licenses/{license_key}/installations/{installation_id}`
+- `GET /admin/validations`
 
 ## Regla de seguridad
 
