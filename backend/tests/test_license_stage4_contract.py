@@ -20,14 +20,19 @@ def test_settings_modal_uses_dedicated_license_view():
     assert 'section === "license" ? <LicenseSettings />' in modal
 
 
-def test_license_view_shows_capacity_and_trial_without_paid_expiry():
+def test_license_view_shows_capacity_trial_and_remote_validation_state():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     assert '/license/info' in view
     assert 'Abonados usados' in view
     assert 'Capacidad' in view
     assert 'Disponibles' in view
     assert 'trial_days_remaining' in view
-    assert 'Licencia pagada sin fecha de vencimiento.' in view
+    assert 'capacidad máxima de 20 abonados' in view
+    assert 'license_server_enabled' in view
+    assert 'license_server_online' in view
+    assert 'validation_source' in view
+    assert 'installation_id' in view
+    assert 'grace_until' in view
     assert 'capacity-track' in view
 
 
