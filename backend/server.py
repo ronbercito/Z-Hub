@@ -59,6 +59,7 @@ from app.modules.client_workspace.router import router as client_workspace_route
 from app.routers.setup.router import router as setup_router
 from app.routers.whatsapp_automatizadovip.router import router as whatsapp_automatizadovip_router
 from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
+from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fibraz.server")
@@ -69,15 +70,19 @@ async def lifespan(_: FastAPI):
     await seed_initial_data()
     pause_task = asyncio.create_task(pause_worker())
     suspension_alert_task = asyncio.create_task(suspension_alert_worker())
+    whatsapp_automatizadovip_task = asyncio.create_task(whatsapp_automatizadovip_worker())
     try:
         yield
     finally:
         pause_task.cancel()
         suspension_alert_task.cancel()
+        whatsapp_automatizadovip_task.cancel()
         with suppress(asyncio.CancelledError):
             await pause_task
         with suppress(asyncio.CancelledError):
             await suspension_alert_task
+        with suppress(asyncio.CancelledError):
+            await whatsapp_automatizadovip_task
         await database.engine.dispose()
 
 app = FastAPI(title="Z-Hub ISP API", version="3.0.0", lifespan=lifespan)
@@ -108,7 +113,7 @@ for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_
 for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
-api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
+api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients")])
 
 # Integración aislada de WhatsApp: mantiene su propia configuración, historial y endpoints.
 api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
