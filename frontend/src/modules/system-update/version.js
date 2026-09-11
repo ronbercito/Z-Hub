@@ -1,8 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.83";
+export const PANEL_VERSION = "1.2.84";
 export const CHANGELOG = [
-  { type: "Corrección", text: "El botón principal de envío manual en Mensajería ahora utiliza AutomatizadoVIP directamente en lugar de abrir WhatsApp Web/Móvil." },
-  { type: "Mejora", text: "WhatsApp Web/Móvil queda disponible como alternativa explícita y separada para evitar confusión entre ambos métodos." },
-  { type: "Corrección", text: "Las automatizaciones reconocen fechas ISO de pago y también facturas con estado VENCIDO para los avisos de corte." },
-  { type: "Pruebas", text: "Se prepara el flujo de validación: recordatorio de pago, aviso de vencimiento/corte, confirmación de pago, historial y activación controlada del worker." },
+  { type: "Mejora", text: "Se agrega una prueba controlada con facturas reales para validar las automatizaciones de AutomatizadoVIP antes de activar el worker." },
+  { type: "Prueba", text: "El panel permite comprobar Recordatorio de pago, Aviso de corte y Confirmación de pago, calculando la condición real y mostrando el mensaje antes del envío." },
+  { type: "Seguridad", text: "El envío de prueba requiere pasarela activa, automatización correspondiente habilitada y confirmación explícita antes de enviar el WhatsApp real." },
 ];
