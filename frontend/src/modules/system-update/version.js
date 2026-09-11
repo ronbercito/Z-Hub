@@ -1,9 +1,10 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.69";
+export const PANEL_VERSION = "1.2.70";
 export const CHANGELOG = [
-  { type: "Claves 192-bit", text: "El License Center genera nuevas claves con 24 bytes aleatorios criptográficamente seguros: 48 caracteres hexadecimales después del prefijo ZHUB-AAAA-." },
-  { type: "Formato", text: "El formato oficial queda ZHUB-AAAA-<48 HEX>, sin símbolos especiales para mantener compatibilidad con API, JSON, terminales y base de datos." },
-  { type: "Unicidad", text: "La clave se genera con Web Crypto CSPRNG y la clave primaria de SQLite impide guardar una licencia duplicada." },
-  { type: "Compatibilidad", text: "Las licencias existentes conservan su clave; el nuevo formato se aplica solamente a claves nuevas o regeneradas antes de guardar." },
-  { type: "Backup", text: "Se creó backup/pre-license-key-192bit-1.2.69-20260910 antes del cambio." },
+  { type: "TRIAL", text: "Las licencias de prueba quedan limitadas obligatoriamente a 20 abonados y 30 días, tanto en la web como en el servidor." },
+  { type: "Plan TRIAL", text: "Al seleccionar TRIAL el License Center cambia automáticamente el plan a TRIAL, bloquea el selector comercial y muestra capacidad máxima de 20 abonados." },
+  { type: "Seguridad", text: "El backend ignora cualquier capacidad enviada por el navegador para una licencia TRIAL y fuerza max_clients=20, evitando alterar el límite desde la API." },
+  { type: "Claves", text: "El generador del servidor queda alineado con el formato oficial de 192 bits: ZHUB-AAAA seguido de 48 caracteres hexadecimales aleatorios." },
+  { type: "Compatibilidad", text: "Las licencias PAID conservan PLAN_100, PLAN_300, PLAN_500, PLAN_1000 e ILIMITADO; las licencias existentes no se eliminan ni reinicializan." },
+  { type: "Backup", text: "Se creó backup/pre-trial-limit-1.2.70-20260910 antes de aplicar esta corrección." },
 ];
