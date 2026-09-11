@@ -59,6 +59,7 @@ from app.modules.client_workspace.router import router as client_workspace_route
 from app.routers.setup.router import router as setup_router
 from app.routers.whatsapp_automatizadovip.router import router as whatsapp_automatizadovip_router
 from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
+from app.routers.whatsapp_automatizadovip.automation_test import router as whatsapp_automatizadovip_automation_test_router
 from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -117,6 +118,7 @@ api.include_router(client_workspace_router, dependencies=[Depends(require_permis
 
 api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
 api.include_router(whatsapp_automatizadovip_logs_router, dependencies=[Depends(require_permission("messaging"))])
+api.include_router(whatsapp_automatizadovip_automation_test_router, dependencies=[Depends(require_permission("messaging"))])
 
 for router, module in (
     (inicio_router, "dashboard"),
