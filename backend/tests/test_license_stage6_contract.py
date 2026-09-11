@@ -50,7 +50,8 @@ def test_license_server_validates_authorized_installation_and_signs_rs256():
     assert 'algorithm="RS256"' in server
     assert '"grace_until"' in server
     assert "validations" in server
-    assert '@app.put("/admin/licenses/{license_key}")' in server
+    assert '"/admin/licenses/{license_key}"' in server
+    assert "def upsert_license(" in server
 
 
 def test_stage6_deployment_assets_exist():
