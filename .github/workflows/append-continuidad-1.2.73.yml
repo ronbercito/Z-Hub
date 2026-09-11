@@ -1,0 +1,53 @@
+name: Append continuidad 1.2.73
+
+on:
+  push:
+    branches: [work/license-lock-1.2.73]
+
+permissions:
+  contents: write
+
+jobs:
+  append-continuidad:
+    if: github.event.head_commit.message != 'docs: registrar continuidad Z-Hub 1.2.73'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/license-lock-1.2.73
+      - name: Append master continuity entry
+        shell: bash
+        run: |
+          if grep -q '1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia' docs/CONTINUIDAD_Z-HUB.md; then
+            exit 0
+          fi
+          cat >> docs/CONTINUIDAD_Z-HUB.md <<'EOF'
+
+---
+
+### 1.2.72 — 2026-09-11 — Estado del License Server visible en el panel
+- Ajustes → Licencia Z-Hub muestra estado del License Server, fuente de validación, ID de instalación y período de gracia cuando existe.
+- La pantalla TRIAL se alineó con el límite real de 20 abonados y muestra usados, capacidad y disponibles.
+- La actualización no activa ni reemplaza automáticamente la licencia local vigente.
+- Backup previo: `backup/pre-license-panel-1.2.72-20260911`.
+
+### 1.2.73 — 2026-09-11 — Recuperación obligatoria de licencia
+- **Causa:** una licencia eliminada, suspendida, revocada, inválida o ausente podía dejar al usuario dentro del panel sin un flujo obligatorio para ingresar una nueva clave.
+- **Solución UI:** `Layout.jsx` consulta `/api/license/info`; para `invalid`, `missing`, `trial_expired` o `read_only` abre Ajustes → Licencia y bloquea esa ventana hasta recuperar una licencia válida.
+- **Modal:** `SettingsModal.jsx` no permite cerrar con X, Escape ni clic fuera mientras la recuperación de licencia está bloqueada.
+- **Pantalla de licencia:** `LicenseSettings.jsx` muestra una advertencia explícita y el formulario **Activar nueva licencia**. Una clave incorrecta/desactivada conserva la ventana bloqueada; una clave válida dispara `zhub-license-updated` y libera el panel.
+- **Backend:** `license_guard.py` bloquea escrituras para Trial vencido, licencia inválida o ausencia de licencia; se mantienen login/logout, `/api/license/activate`, setup y actualizaciones como rutas de recuperación.
+- **Protección de datos:** no se borran clientes, facturas, configuración ni datos por un problema de licencia.
+- **Archivos:** `backend/app/core/license_guard.py`, `frontend/src/components/layout/Layout.jsx`, `frontend/src/modules/ajustes/SettingsModal.jsx`, `frontend/src/modules/ajustes/LicenseSettings.jsx`, `frontend/src/modules/ajustes/license-settings.css`, pruebas contractuales y `version.js`.
+- **Pruebas:** contratos actualizados para bloqueo global, modal no cerrable y recuperación mediante activación; build/compile se validan por GitHub Actions antes de publicar en `main`.
+- **Backup previo:** `backup/pre-license-lock-1.2.73-20260911`.
+- **Pendiente:** activar el License Server remoto solo después de migrar/autorizar la licencia productiva y distribuir CA + clave pública de forma segura.
+EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/CONTINUIDAD_Z-HUB.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'docs: registrar continuidad Z-Hub 1.2.73'
+          git push origin HEAD:work/license-lock-1.2.73
