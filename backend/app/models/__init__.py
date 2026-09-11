@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/__init__.py
-Actualización: 2026-09-10 — registra recuperación y equipos asignados de clientes.
+Actualización: 2026-09-11 — registra historial de WhatsApp AutomatizadoVIP.
 Función: registra todos los modelos (tablas SQL) para que SQLAlchemy los conozca al crear la base de datos.
 Trabaja con: backend/app/core/database.py y backend/app/models/*.py
 """
@@ -26,8 +26,9 @@ from .client_equipment import ClientEquipment
 from .hotspot import HotspotVoucher
 from .task import Task
 from .setting import Setting
+from .whatsapp_automatizadovip_log import WhatsAppAutomatizadoVIPLog
 
 __all__ = [
     "User", "Plan", "Router", "Client", "ClientService", "Installation", "Invoice", "ClientBalance", "Ticket",
-    "InventoryItem", "EquipmentRecovery", "ClientEquipment", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity",
+    "InventoryItem", "EquipmentRecovery", "ClientEquipment", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity", "WhatsAppAutomatizadoVIPLog",
 ]
