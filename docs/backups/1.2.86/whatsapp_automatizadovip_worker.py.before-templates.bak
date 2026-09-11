@@ -1,0 +1,4 @@
+"""Backup del worker previo a centralizar las plantillas en Ajustes → Plantillas configuración.
+Archivo original en main antes del cambio: backend/app/services/whatsapp_automatizadovip_worker.py
+SHA previo: no modificar este respaldo.
+"""
