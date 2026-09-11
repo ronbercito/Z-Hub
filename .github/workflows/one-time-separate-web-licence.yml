@@ -1,0 +1,108 @@
+name: One-time separate Web-Licence
+
+on:
+  push:
+    branches: [work/separate-web-licence]
+
+permissions:
+  contents: write
+
+jobs:
+  separate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/separate-web-licence
+          fetch-depth: 0
+      - name: Separar servidor de licencias
+        run: |
+          set -euo pipefail
+          rm -rf license_server
+          rm -f backend/tests/test_license_center_web_contract.py
+          rm -f docs/INFORME_LICENSE*.md docs/INFORME_LICENCIAS*.md
+
+          cat > backend/tests/test_license_stage6_contract.py <<'PY'
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[2]
+
+          def read(path):
+              return (ROOT / path).read_text(encoding="utf-8")
+
+          def test_remote_client_uses_signed_authorization_and_cache():
+              remote = read("backend/app/core/license_remote.py")
+              assert 'algorithms=["RS256"]' in remote
+              assert '"/v1/licenses/validate"' in remote
+              assert "ZHUB_LICENSE_CACHE_FILE" in remote
+              assert "LicenseServerRejected" in remote
+              assert "LicenseServerUnavailable" in remote
+              assert "_write_cache(token)" in remote
+              assert "_read_cache()" in remote
+
+          def test_remote_rejection_does_not_use_cache():
+              remote = read("backend/app/core/license_remote.py")
+              assert "except LicenseServerRejected:" in remote
+              assert "raise" in remote
+              assert "Rechazo explícito" in remote
+
+          def test_license_manager_prefers_remote_when_configured_and_keeps_transition():
+              manager = read("backend/app/core/license_manager.py")
+              assert "async def resolve_license_record(" in manager
+              assert "remote_enabled()" in manager
+              assert "resolve_remote_license" in manager
+              assert '"source": "local-transition"' in manager
+              assert '"license_installation_id"' in manager
+              assert '"validation_source"' in manager
+              assert '"license_server_online"' in manager
+
+          def test_setup_and_paid_activation_use_unified_remote_resolution():
+              setup = read("backend/app/routers/setup/router.py")
+              license_router = read("backend/app/routers/license/router.py")
+              assert "await resolve_license_record(db" in setup
+              assert "await resolve_license_record(db" in license_router
+
+          def test_installer_preserves_remote_license_environment():
+              deploy = read("deploy/install.sh")
+              template = read("deploy/supervisor/zhub_backend.conf.template")
+              assert 'SUPERVISOR_CONF="/etc/supervisor/conf.d/zhub_backend.conf"' in deploy
+              assert "CURRENT_SUPERVISOR_ENV" in deploy
+              assert "ZHUB_SUPERVISOR_LICENSE_ENV" in deploy
+              assert "ZHUB_LICENSE_SERVER_URL" in deploy
+              assert "ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE" in deploy
+              assert 'environment=PYTHONUNBUFFERED=1${ZHUB_SUPERVISOR_LICENSE_ENV}' in template
+              assert "192.168.10.240" not in deploy
+              assert "192.168.10.240" not in template
+
+          def test_web_licence_is_external_repository():
+              assert not (ROOT / "license_server").exists()
+          PY
+
+          python - <<'PY'
+          from pathlib import Path
+
+          quality = Path('.github/workflows/quality.yml')
+          text = quality.read_text(encoding='utf-8')
+          text = text.replace(' backend/app/modules/system_update/run_update.sh license_server/scripts/generate_keys.sh', ' backend/app/modules/system_update/run_update.sh')
+          text = text.replace(' backend/server.py license_server/app', ' backend/server.py')
+          text = text.replace(' backend/tests/test_license_stage6_contract.py backend/tests/test_license_center_web_contract.py', ' backend/tests/test_license_stage6_contract.py')
+          quality.write_text(text, encoding='utf-8')
+
+          note = '''## 2026-09-11 — Web-Licence separado a repositorio privado\n\n- El servidor central de licencias y su License Center fueron migrados a `ronbercito/web-licence` (repositorio privado).\n- Z-Hub ya no contiene el código del servidor (`license_server/`) ni sus pruebas/UI específicas.\n- Z-Hub conserva únicamente el cliente de licenciamiento remoto, cache/JWT, activación y enforcement necesarios para comunicarse con Web-Licence.\n- Los informes históricos `INFORME_LICENSE*` / `INFORME_LICENCIAS*` se migraron al nuevo repositorio antes de retirarlos de Z-Hub.\n- No se movieron ni versionaron secretos, Admin Token, claves privadas, certificados privados ni SQLite productivo.\n- Repo Web-Licence: `ronbercito/web-licence`.\n- Backup previo de Z-Hub: `backup/pre-separate-web-licence-20260911`.\n- Este cambio es estructural/documental; no altera el contrato remoto `/v1/licenses/validate` usado por el panel.\n\n'''
+          for filename in ['docs/CONTINUIDAD_Z-HUB-v1.2.md', 'docs/CONTINUIDAD_Z-HUB.md']:
+              p = Path(filename)
+              s = p.read_text(encoding='utf-8')
+              if 'Web-Licence separado a repositorio privado' not in s:
+                  marker = '# HISTORIAL 1.2.xx — MÁS NUEVO PRIMERO' if filename.endswith('v1.2.md') else None
+                  if marker and marker in s:
+                      s = s.replace(marker, marker + '\n\n' + note, 1)
+                  else:
+                      s = note + '\n' + s
+                  p.write_text(s, encoding='utf-8')
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'refactor: separar Web-Licence del repositorio Z-Hub'
+          git push origin HEAD:work/separate-web-licence
