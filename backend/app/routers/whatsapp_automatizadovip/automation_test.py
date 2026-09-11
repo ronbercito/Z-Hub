@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
-from decimal import Decimal
+from datetime import date, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -41,6 +40,7 @@ Kind = Literal["reminder", "cut", "payment"]
 class TestInvoiceRequest(BaseModel):
     kind: Kind
     invoice_id: str = Field(min_length=1)
+    force_test: bool = False
 
 
 def _root_config(setting: Setting | None) -> dict[str, Any]:
@@ -62,10 +62,6 @@ def _parse_date(value: str | None) -> date | None:
         except ValueError:
             continue
     return None
-
-
-def _money(value: Any) -> str:
-    return f"{Decimal(str(value or 0)):.2f}"
 
 
 def _eligibility(kind: Kind, invoice: Invoice, client: Client, automation: dict[str, Any], today: date) -> tuple[bool, str, int | None]:
@@ -179,14 +175,7 @@ async def preview(data: TestInvoiceRequest, db: AsyncSession = Depends(get_db)):
         "today": date.today().isoformat(),
         "days_remaining": days_remaining,
         "configured_days_before": cfg["automation"].get("reminder_days_before", 3),
-        "invoice": {
-            "id": invoice.id,
-            "number": invoice.invoice_number,
-            "amount": invoice.amount,
-            "status": invoice.status,
-            "due_date": invoice.due_date,
-            "payment_date": invoice.payment_date,
-        },
+        "invoice": {"id": invoice.id, "number": invoice.invoice_number, "amount": invoice.amount, "status": invoice.status, "due_date": invoice.due_date, "payment_date": invoice.payment_date},
         "client": {"id": client.id, "name": client.full_name, "phone": client.phone or invoice.client_phone},
         "message": message,
     }
@@ -205,8 +194,8 @@ async def send_test(data: TestInvoiceRequest, db: AsyncSession = Depends(get_db)
         raise HTTPException(status_code=409, detail="Esta automatización está desactivada en la configuración")
 
     eligible, reason, days_remaining = _eligibility(data.kind, invoice, client, cfg["automation"], date.today())
-    if not eligible:
-        raise HTTPException(status_code=409, detail=f"La factura no cumple la condición automática: {reason}")
+    if not eligible and not data.force_test:
+        raise HTTPException(status_code=409, detail=f"La factura no cumple la condición automática: {reason}. Para una prueba controlada puede usar 'Enviar prueba real'.")
 
     message = _message(data.kind, setting, client, invoice)
     phone = client.phone or invoice.client_phone
@@ -232,6 +221,7 @@ async def send_test(data: TestInvoiceRequest, db: AsyncSession = Depends(get_db)
         "invoice_id": invoice.id,
         "client_name": client.full_name,
         "days_remaining": days_remaining,
+        "forced_test": bool(data.force_test and not eligible),
         "message": message,
         "gateway_response": result.response,
     }
