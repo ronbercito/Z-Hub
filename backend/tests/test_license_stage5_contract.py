@@ -49,17 +49,17 @@ def test_trial_write_guard_is_global_api_dependency():
     assert "license_router" in server
 
 
-def test_paid_activation_requires_admin_and_preserves_data_path():
+def test_license_activation_requires_admin_and_accepts_paid_or_trial():
     router = read("backend/app/routers/license/router.py")
     assert 'APIRouter(prefix="/license"' in router
     assert '@router.get("/info")' in router
     assert '@router.post("/activate", dependencies=[Depends(require_role("admin"))])' in router
-    assert 'record.get("type") != "PAID"' in router
+    assert 'license_type not in {"PAID", "TRIAL"}' in router
     assert "apply_license_metadata" in router
     assert "await db.commit()" in router
 
 
-def test_license_ui_shows_trial_dates_warnings_and_paid_activation():
+def test_license_ui_shows_trial_dates_warnings_and_activation():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     assert "Inicio Trial" in view
     assert "Fin Trial" in view
