@@ -1,4 +1,4 @@
-"""Z-Hub License Server — Etapa 6/7 + inicio de License Center web.
+"""Z-Hub License Server — Etapa 6/7 + License Center web.
 
 Servicio independiente para desplegar en VPS. Mantiene clientes/ISP, licencias e
 instalaciones autorizadas en SQLite, registra validaciones y emite autorizaciones
@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
+import secrets
 import sqlite3
 from typing import Any
 
@@ -18,7 +19,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 DB_PATH = Path(os.environ.get("ZHUB_LICENSE_DB", "/var/lib/zhub-license-server/licenses.db"))
@@ -27,6 +28,14 @@ ADMIN_TOKEN = os.environ.get("ZHUB_LICENSE_ADMIN_TOKEN", "").strip()
 ISSUER = os.environ.get("ZHUB_LICENSE_SERVER_ISSUER", "zhub-license-server").strip()
 AUDIENCE = os.environ.get("ZHUB_LICENSE_SERVER_AUDIENCE", "zhub-installation").strip()
 GRACE_HOURS = max(1, int(os.environ.get("ZHUB_LICENSE_GRACE_HOURS", "72")))
+TRIAL_DAYS = max(1, int(os.environ.get("ZHUB_LICENSE_TRIAL_DAYS", "30")))
+PLAN_LIMITS: dict[str, int | None] = {
+    "PLAN_100": 100,
+    "PLAN_300": 300,
+    "PLAN_500": 500,
+    "PLAN_1000": 1000,
+    "ILIMITADO": None,
+}
 
 app = FastAPI(title="Z-Hub License Server", version=APP_VERSION)
 if STATIC_DIR.exists():
@@ -54,7 +63,7 @@ class LicenseIn(BaseModel):
     email: str = ""
     status: str = "ACTIVA"
     type: str = "PAID"
-    plan: str = "UNLIMITED"
+    plan: str = "PLAN_100"
     max_clients: int | None = None
 
 
@@ -103,8 +112,9 @@ def _init_db() -> None:
                 email TEXT NOT NULL DEFAULT '',
                 status TEXT NOT NULL DEFAULT 'ACTIVA',
                 type TEXT NOT NULL DEFAULT 'PAID',
-                plan TEXT NOT NULL DEFAULT 'UNLIMITED',
+                plan TEXT NOT NULL DEFAULT 'PLAN_100',
                 max_clients INTEGER NULL,
+                expires_at TEXT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
             );
@@ -129,6 +139,7 @@ def _init_db() -> None:
             """
         )
         _ensure_column(db, "licenses", "customer_id", "INTEGER NULL")
+        _ensure_column(db, "licenses", "expires_at", "TEXT NULL")
         _ensure_column(db, "installations", "installation_name", "TEXT NOT NULL DEFAULT ''")
 
 
@@ -144,8 +155,7 @@ def _now() -> datetime:
 def _admin(authorization: str | None = Header(default=None)) -> None:
     if not ADMIN_TOKEN:
         raise HTTPException(status_code=503, detail="Administración no configurada")
-    expected = f"Bearer {ADMIN_TOKEN}"
-    if authorization != expected:
+    if authorization != f"Bearer {ADMIN_TOKEN}":
         raise HTTPException(status_code=401, detail="No autorizado")
 
 
@@ -185,6 +195,41 @@ def _normalize_status(value: str) -> str:
     return status
 
 
+def _normalize_license_status(value: str) -> str:
+    status = str(value or "").strip().upper()
+    if status not in {"ACTIVA", "SUSPENDIDA", "REVOCADA"}:
+        raise HTTPException(status_code=422, detail="Estado de licencia no permitido")
+    return status
+
+
+def _normalize_plan(value: str) -> tuple[str, int | None]:
+    plan = str(value or "").strip().upper()
+    aliases = {"UNLIMITED": "ILIMITADO"}
+    plan = aliases.get(plan, plan)
+    if plan not in PLAN_LIMITS:
+        raise HTTPException(status_code=422, detail="Plan no permitido")
+    return plan, PLAN_LIMITS[plan]
+
+
+def _trial_expired(row: sqlite3.Row) -> bool:
+    if str(row["type"]).upper() != "TRIAL" or not row["expires_at"]:
+        return False
+    try:
+        return datetime.fromisoformat(str(row["expires_at"])) <= _now()
+    except ValueError:
+        return True
+
+
+def _generate_license_key() -> str:
+    year = _now().year
+    with _connect() as db:
+        for _ in range(64):
+            key = f"ZHUB-{year}-{secrets.token_hex(4).upper()}"
+            if not db.execute("SELECT 1 FROM licenses WHERE license_key=?", (key,)).fetchone():
+                return key
+    raise HTTPException(status_code=503, detail="No se pudo generar una clave única")
+
+
 @app.get("/")
 def root() -> dict[str, Any]:
     return {"ok": True, "service": "zhub-license-server", "version": APP_VERSION, "admin": "/admin-ui"}
@@ -211,15 +256,25 @@ def validate_license(payload: ValidateIn) -> dict[str, Any]:
     if not row:
         _log_validation(key, installation_id, "LICENSE_NOT_FOUND")
         raise HTTPException(status_code=404, detail="Licencia no registrada")
+    if _trial_expired(row):
+        _log_validation(key, installation_id, "TRIAL_EXPIRED")
+        raise HTTPException(status_code=403, detail="Licencia TRIAL vencida")
     if str(row["status"]).upper() != "ACTIVA":
         _log_validation(key, installation_id, "LICENSE_BLOCKED")
-        raise HTTPException(status_code=403, detail="Licencia inactiva o suspendida")
+        raise HTTPException(status_code=403, detail="Licencia suspendida o revocada")
     if not _installation_allowed(key, installation_id):
         _log_validation(key, installation_id, "INSTALLATION_NOT_AUTHORIZED")
         raise HTTPException(status_code=403, detail="Instalación no autorizada para esta licencia")
 
     now = _now()
     grace_until = now + timedelta(hours=GRACE_HOURS)
+    if row["expires_at"]:
+        try:
+            trial_end = datetime.fromisoformat(str(row["expires_at"]))
+            if trial_end < grace_until:
+                grace_until = trial_end
+        except ValueError:
+            pass
     claims = {
         "iss": ISSUER,
         "aud": AUDIENCE,
@@ -234,7 +289,8 @@ def validate_license(payload: ValidateIn) -> dict[str, Any]:
         "max_clients": row["max_clients"],
         "name": row["name"],
         "email": row["email"],
-        "trial_days": 30 if str(row["type"]).upper() == "TRIAL" else None,
+        "expires_at": row["expires_at"],
+        "trial_days": TRIAL_DAYS if str(row["type"]).upper() == "TRIAL" else None,
     }
     token = jwt.encode(claims, _private_key(), algorithm="RS256")
     _log_validation(key, installation_id, "AUTHORIZED")
@@ -246,6 +302,7 @@ def validate_license(payload: ValidateIn) -> dict[str, Any]:
         "max_clients": claims["max_clients"],
         "type": claims["type"],
         "status": claims["status"],
+        "expires_at": claims["expires_at"],
     }
 
 
@@ -323,32 +380,44 @@ def list_licenses() -> dict[str, Any]:
     return {"rows": [dict(row) for row in rows]}
 
 
+@app.get("/admin/licenses/generate-key", dependencies=[Depends(_admin)])
+def generate_license_key() -> dict[str, Any]:
+    return {"license_key": _generate_license_key()}
+
+
 @app.put("/admin/licenses/{license_key}", dependencies=[Depends(_admin)])
 def upsert_license(license_key: str, payload: LicenseIn) -> dict[str, Any]:
     key = license_key.strip().upper()
     if key != payload.license_key.strip().upper():
         raise HTTPException(status_code=422, detail="La clave de la ruta y del cuerpo no coinciden")
-    status = _normalize_status(payload.status)
+    status = _normalize_license_status(payload.status)
     license_type = payload.type.strip().upper()
-    plan = payload.plan.strip().upper()
     if license_type not in {"PAID", "TRIAL"}:
         raise HTTPException(status_code=422, detail="Tipo no permitido")
-    if payload.max_clients is not None and payload.max_clients < 0:
-        raise HTTPException(status_code=422, detail="max_clients no puede ser negativo")
+    plan, plan_limit = _normalize_plan(payload.plan)
     if payload.customer_id is not None:
         with _connect() as db:
             if not db.execute("SELECT 1 FROM customers WHERE id=?", (payload.customer_id,)).fetchone():
                 raise HTTPException(status_code=404, detail="Cliente/ISP no encontrado")
+
     with _connect() as db:
+        current = db.execute("SELECT type, expires_at FROM licenses WHERE license_key=?", (key,)).fetchone()
+        expires_at = None
+        if license_type == "TRIAL":
+            if current and str(current["type"]).upper() == "TRIAL" and current["expires_at"]:
+                expires_at = current["expires_at"]
+            else:
+                expires_at = (_now() + timedelta(days=TRIAL_DAYS)).isoformat()
         db.execute(
-            """INSERT INTO licenses (license_key,customer_id,name,email,status,type,plan,max_clients,updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?)
+            """INSERT INTO licenses (license_key,customer_id,name,email,status,type,plan,max_clients,expires_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(license_key) DO UPDATE SET
                customer_id=excluded.customer_id,name=excluded.name,email=excluded.email,status=excluded.status,
-               type=excluded.type,plan=excluded.plan,max_clients=excluded.max_clients,updated_at=excluded.updated_at""",
-            (key, payload.customer_id, payload.name.strip(), payload.email.strip().lower(), status, license_type, plan, payload.max_clients, _now().isoformat()),
+               type=excluded.type,plan=excluded.plan,max_clients=excluded.max_clients,
+               expires_at=excluded.expires_at,updated_at=excluded.updated_at""",
+            (key, payload.customer_id, payload.name.strip(), payload.email.strip().lower(), status, license_type, plan, plan_limit, expires_at, _now().isoformat()),
         )
-    return {"ok": True, "license_key": key}
+    return {"ok": True, "license_key": key, "plan": plan, "max_clients": plan_limit, "expires_at": expires_at}
 
 
 @app.delete("/admin/licenses/{license_key}", dependencies=[Depends(_admin)])
