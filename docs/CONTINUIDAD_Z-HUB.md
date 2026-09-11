@@ -3088,3 +3088,15 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Pruebas:** contratos de licencias actualizados; compilación Python, pruebas backend y build React validados por GitHub Actions en la rama de trabajo.
 - **Backup previo:** `backup/pre-license-lock-1.2.73-20260911`.
 - **Pendiente:** activar el License Server remoto solo después de migrar/autorizar la licencia productiva y distribuir CA + clave pública de forma segura.
+
+---
+
+### 1.2.74 — 2026-09-11 — Retiro de licencias DEMO como autorización
+- **Causa:** `backend/app/core/license_fallback.txt` todavía contenía licencias DEMO activas, incluida `ZHUB-2026-DEMO-002`. Además, `license_manager.py` consideraba suficiente un snapshot persistido en `system_config` para devolver estado `active`. Por eso una instalación podía seguir mostrando **Licencia activa** aunque esa licencia ya no fuera válida para producción.
+- **Solución:** el catálogo DEMO empaquetado deja de participar en la autorización local y queda solo como archivo histórico sin claves activas.
+- **Validación local:** durante la transición únicamente `/etc/zhub/licencia/licencias.txt` puede autorizar una licencia local. Si la clave no existe allí y tampoco hay validación remota/caché firmada, el estado es `invalid`.
+- **Snapshot:** `license_key`, `license_type`, `license_plan` y demás metadatos guardados sirven como información histórica, pero ya no constituyen autorización.
+- **Recuperación UI:** al recibir `invalid`, `missing` o `trial_expired`, Z-Hub mantiene bloqueada la ventana de Licencia hasta activar una clave válida, sin borrar datos.
+- **Read only:** `/api/license/info` marca `read_only` también para `invalid` y `missing`.
+- **Backup previo:** `backup/pre-remove-demo-license-1.2.74-20260911`.
+- **Pendiente de infraestructura:** para aceptar claves emitidas por el License Server central, la instalación debe tener configurados `ZHUB_LICENSE_SERVER_URL`, la CA de confianza y la clave pública del servidor. No se deben incrustar esas credenciales o materiales privados en el repositorio.

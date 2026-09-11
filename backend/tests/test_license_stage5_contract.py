@@ -16,15 +16,15 @@ def test_trial_contract_is_30_days_and_exposes_dates_warning_and_read_only():
     assert '"trial_started_at"' in manager
     assert '"trial_expires_at"' in manager
     assert '"trial_warning_level"' in manager
-    assert '"read_only": status == "trial_expired"' in manager
+    assert '"read_only": status in {"invalid", "missing", "trial_expired"}' in manager
 
 
-def test_legacy_snapshot_keeps_explicit_blocking_semantics():
+def test_persisted_snapshot_no_longer_authorizes_by_itself():
     manager = read("backend/app/core/license_manager.py")
-    assert "def _has_persisted_snapshot(" in manager
+    assert "_has_persisted_snapshot" not in manager
     assert "BLOCKED_LICENSE_STATUSES" in manager
     assert '_is_blocked_license_status(row.get("status"))' in manager
-    assert "if _has_persisted_snapshot(data):" in manager
+    assert 'return "invalid"' in manager
 
 
 def test_license_recovery_blocks_writes_but_keeps_recovery_paths():
