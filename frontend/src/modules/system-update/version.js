@@ -1,11 +1,11 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.67";
+export const PANEL_VERSION = "1.2.68";
 export const CHANGELOG = [
-  { type: "License Center", text: "Se agrega una interfaz web administrativa al License Server para gestionar clientes/ISP, licencias, instalaciones autorizadas y validaciones." },
-  { type: "Clientes", text: "El servidor central incorpora registro de empresas/ISP con contacto, correo, teléfono, RUC/DNI y estado comercial." },
-  { type: "Licencias", text: "Desde la web se pueden crear, editar, activar, suspender y eliminar licencias, asignarlas a un cliente y definir tipo, plan y max_clients." },
-  { type: "Instalaciones", text: "Se pueden autorizar, editar, suspender, reactivar y eliminar installation_id vinculados a una licencia." },
-  { type: "Dashboard", text: "Se agrega resumen de clientes, licencias activas, instalaciones activas y validaciones de las últimas 24 horas, más historial reciente." },
-  { type: "Seguridad", text: "La interfaz administrativa reutiliza el token administrativo existente y mantiene la API de validación RS256 separada de la operación del ISP." },
-  { type: "Backup", text: "Se creó backup/pre-license-center-web-1.2.67-20260910 antes de iniciar esta ampliación." },
+  { type: "Claves automáticas", text: "El License Center genera claves únicas con formato ZHUB-AAAA-XXXXXXXX desde el servidor y permite regenerarlas antes de guardar." },
+  { type: "Clientes", text: "Al seleccionar Cliente / ISP, Titular y Correo se completan automáticamente desde la ficha del cliente y siguen siendo editables." },
+  { type: "Planes", text: "Los planes comerciales quedan normalizados a PLAN_100, PLAN_300, PLAN_500, PLAN_1000 e ILIMITADO; la capacidad se completa y valida automáticamente en servidor y web." },
+  { type: "TRIAL", text: "Las licencias TRIAL reciben vencimiento automático de 30 días, se bloquean al vencer y el JWT nunca extiende la gracia más allá del vencimiento." },
+  { type: "Estados", text: "Las licencias incorporan estado REVOCADA además de ACTIVA y SUSPENDIDA para control comercial desde el License Center." },
+  { type: "Compatibilidad", text: "La base SQLite existente se conserva; expires_at se agrega mediante migración no destructiva al iniciar el License Server." },
+  { type: "Backup", text: "Se creó backup/pre-license-center-automation-1.2.68-20260910 antes de aplicar estas mejoras." },
 ];
