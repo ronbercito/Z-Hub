@@ -16,6 +16,7 @@ from app.core.license_guard import enforce_client_capacity, enforce_trial_write_
 from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
 from app.models.client import Client
+from app.models.whatsapp_automatizadovip_log import WhatsAppAutomatizadoVIPLog  # noqa: F401
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
 from app.routers.ajustes.staff.router import router as staff_router
 from app.routers.almacen.router import router as almacen_router
@@ -56,6 +57,8 @@ from app.routers.tickets.router import router as tickets_router
 from app.modules.system_update.router import router as system_update_router
 from app.modules.client_workspace.router import router as client_workspace_router
 from app.routers.setup.router import router as setup_router
+from app.routers.whatsapp_automatizadovip.router import router as whatsapp_automatizadovip_router
+from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fibraz.server")
@@ -105,7 +108,11 @@ for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_
 for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
-api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
+api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients")])
+
+# Integración aislada de WhatsApp: mantiene su propia configuración, historial y endpoints.
+api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
+api.include_router(whatsapp_automatizadovip_logs_router, dependencies=[Depends(require_permission("messaging"))])
 
 # Importante: registrar primero las rutas estáticas/especializadas de Clientes.
 # El CRUD principal contiene /clients/{client_id}; si se registra antes puede capturar
