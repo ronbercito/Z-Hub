@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.93";
+export const PANEL_VERSION = "1.2.94";
 export const CHANGELOG = [
-  { type: "Mensajería", text: "Las plantillas de WhatsApp adoptan variables compatibles con la sintaxis de WispHub: {{variable}} y marcadores %vip%." },
-  { type: "Automatización", text: "Recordatorios, avisos de corte y confirmaciones usan el mismo renderizador antes del envío por AutomatizadoVIP." },
-  { type: "Compatibilidad", text: "Se conserva soporte para plantillas antiguas con {variable}, mientras las nuevas plantillas pueden usar formato WhatsApp como *negrita*." },
+  { type: "Fix", text: "Se corrige la acumulación de líneas vacías en los mensajes WhatsApp compatibles con WispHub." },
+  { type: "Mensajería", text: "Los marcadores %vip% y los saltos de línea se normalizan para conservar separación de párrafos sin espacios excesivos." },
+  { type: "UI", text: "La vista previa del Centro de Plantillas utiliza la misma normalización de espaciado que el renderizador de envíos." },
 ];
