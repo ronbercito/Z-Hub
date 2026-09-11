@@ -1,5 +1,6 @@
 from app.services.whatsapp_automatizadovip import build_payload, normalize_phone
 from app.services.whatsapp_automatizadovip_automation import cut_warning, payment_confirmation, payment_reminder
+from app.services.whatsapp_template_renderer import render_whatsapp_template
 
 
 def test_normalize_phone_adds_peru_country_code():
@@ -18,6 +19,17 @@ def test_message_templates_render_expected_variables():
     assert payment_reminder("Hola {cliente}, S/. {monto}, {plan}, vence {vencimiento}", "Ana", 50, "Fibra", "2026-09-15") == "Hola Ana, S/. 50.00, Fibra, vence 2026-09-15"
     assert cut_warning("{cliente} deuda {monto}", "Ana", 75) == "Ana deuda 75.00"
     assert payment_confirmation("{cliente} {monto} {recibo}", "Ana", 80, "REC-1") == "Ana 80.00 REC-1"
+
+
+def test_renderer_supports_wisp_and_legacy_syntax_without_visible_braces():
+    template = "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}*\nDeuda: *{{total}}*\nSoporte: {telefono}"
+    values = {"cliente_nombre": "Ana", "cliente_apellidos": "Pérez", "total": "S/.75.00", "telefono": "941932971"}
+    assert render_whatsapp_template(template, values) == "Estimado(a): *Ana Pérez*\nDeuda: *S/.75.00*\nSoporte: 941932971"
+
+
+def test_renderer_replaces_all_repeated_variables():
+    template = "{cliente} / {cliente} / {{cliente}}"
+    assert render_whatsapp_template(template, {"cliente": "Ana"}) == "Ana / Ana / Ana"
 
 
 def test_message_limit_is_enforced():
