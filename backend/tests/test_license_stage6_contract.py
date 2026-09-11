@@ -60,7 +60,9 @@ def test_stage6_deployment_assets_exist():
     assert (ROOT / "license_server/README.md").exists()
 
 
-def test_stage6_release_is_versioned():
+def test_stage6_release_remains_present_after_future_versions():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.66"' in version
-    assert "Etapa 6" in version
+    assert "PANEL_VERSION" in version
+    server = read("license_server/app/main.py")
+    assert "Z-Hub License Server" in server
+    assert "GRACE_HOURS" in server
