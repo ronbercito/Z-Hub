@@ -40,7 +40,8 @@ def test_existing_frontend_displays_string_detail_from_limit_error():
     assert 'typeof e.response?.data?.detail==="string"?e.response.data.detail' in clients
 
 
-def test_stage3_does_not_apply_trial_expiry_policy():
+def test_stage3_capacity_rule_remains_scoped_to_active_finite_licenses():
     guard = read("backend/app/core/license_guard.py")
     assert 'license_info.get("status") != "active"' in guard
-    assert "Etapa 5" in guard
+    assert 'if limit is None:' in guard
+    assert 'if usage < int(limit):' in guard
