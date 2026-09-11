@@ -1,0 +1,77 @@
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { AlertTriangle, BellRing, Check, CircleCheck, Eye, FileText, MessageSquareText, RotateCcw, Save, Settings2, ShieldAlert, Smartphone, Wrench } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../../context/AuthContext";
+
+const ORDER = ["payment_reminder", "cut_warning", "payment_confirmation", "maintenance"];
+const FLOW = {
+  payment_reminder: { step: "01", title: "Recordatorio de pago", short: "Antes del vencimiento", description: "Primer contacto preventivo para recordar al abonado que su factura está próxima a vencer.", icon: BellRing, tone: "emerald", trigger: "Preventivo" },
+  cut_warning: { step: "02", title: "Aviso de corte", short: "Deuda vencida", description: "Mensaje de cobranza cuando la factura supera la fecha de vencimiento.", icon: ShieldAlert, tone: "amber", trigger: "Cobranza" },
+  payment_confirmation: { step: "03", title: "Confirmación de pago", short: "Pago registrado", description: "Confirma al cliente que el sistema detectó su pago.", icon: CircleCheck, tone: "blue", trigger: "Confirmación" },
+  maintenance: { step: "04", title: "Aviso de mantenimiento", short: "Servicio / operación", description: "Plantilla para comunicaciones operativas y avisos de mantenimiento.", icon: Wrench, tone: "violet", trigger: "Operativo" },
+};
+const TONES = { emerald: "border-emerald-500/25 bg-emerald-500/5 text-emerald-300", amber: "border-amber-500/25 bg-amber-500/5 text-amber-300", blue: "border-blue-500/25 bg-blue-500/5 text-blue-300", violet: "border-violet-500/25 bg-violet-500/5 text-violet-300" };
+const DEMO = { empresa: "Z-Hub ISP", cliente: "Juan Pérez", cliente_nombre: "Juan", cliente_apellidos: "Pérez", total: "S/.50.00", monto: "50.00", plan: "Plan Hogar 100 Mbps", vencimiento: "21/09/2026", fecha_pago: "21/09/2026", fecha_vencimiento: "21/09/2026", fecha_corte: "21/09/2026", factura: "F001-00001234", recibo: "F001-00001234", yape: "999 111 222", telefono: "999 111 222", titular_pago: "Segundo R. Juarez S.", fecha: "21/09/2026", hora_inicio: "08:00", hora_fin: "10:00" };
+
+function renderPreview(text) {
+  let value = String(text || "");
+  Object.entries(DEMO).forEach(([key, replacement]) => {
+    value = value.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), replacement);
+    value = value.split(`{${key}}`).join(replacement);
+  });
+  return value
+    .replace(/%vip%/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export default function MessageTemplatesSettings() {
+  const { API, token } = useAuth();
+  const [templates, setTemplates] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState("");
+  const [previewKey, setPreviewKey] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await axios.get(`${API}/settings/message-templates/whatsapp`, { headers: { Authorization: `Bearer ${token}` } });
+        if (active) setTemplates(res.data?.templates || {});
+      } catch (e) {
+        toast.error(e?.response?.data?.detail || "No se pudieron cargar las plantillas");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [API, token]);
+
+  const save = async (key) => {
+    setSaving(key);
+    try {
+      const res = await axios.put(`${API}/settings/message-templates/whatsapp/${key}`, { text: templates[key].text }, { headers: { Authorization: `Bearer ${token}` } });
+      setTemplates((current) => ({ ...current, [key]: res.data.template }));
+      toast.success("Plantilla guardada");
+    } catch (e) { toast.error(e?.response?.data?.detail || "No se pudo guardar la plantilla"); }
+    finally { setSaving(""); }
+  };
+
+  const reset = async (key) => {
+    setSaving(key);
+    try {
+      const res = await axios.post(`${API}/settings/message-templates/whatsapp/reset/${key}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setTemplates((current) => ({ ...current, [key]: res.data.template }));
+      toast.success("Plantilla restaurada");
+    } catch (e) { toast.error(e?.response?.data?.detail || "No se pudo restaurar la plantilla"); }
+    finally { setSaving(""); }
+  };
+
+  const preview = useMemo(() => previewKey && templates[previewKey] ? renderPreview(templates[previewKey].text) : "", [previewKey, templates]);
+  if (loading) return <div className="text-xs text-slate-400">Cargando plantillas...</div>;
+
+  return <div className="space-y-6">...</div>;
+}
