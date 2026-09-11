@@ -3,6 +3,7 @@ import axios from "axios";
 import { CheckCircle2, MessageCircle, Save, Send, ShieldCheck, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
+import WhatsAppAutomatizadoVIPAutomationTests from "./WhatsAppAutomatizadoVIPAutomationTests";
 
 const DEFAULT_AUTOMATION = {
   enabled: false,
@@ -102,6 +103,8 @@ export default function WhatsAppAutomatizadoVIPSettings() {
           <p className="text-[10px] text-slate-500">Los envíos automáticos están apagados por defecto y el worker evita repetir el mismo mensaje al mismo cliente durante el día.</p>
         </div>
       </div>
+
+      <WhatsAppAutomatizadoVIPAutomationTests gatewayEnabled={Boolean(config.enabled)} automation={automation} />
 
       <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/50 space-y-4">
         <div><h4 className="text-xs font-bold text-slate-200">Prueba de envío</h4><p className="text-[11px] text-slate-500 mt-1">Usa un número real y envía un mensaje real a través de AutomatizadoVIP.</p></div>
