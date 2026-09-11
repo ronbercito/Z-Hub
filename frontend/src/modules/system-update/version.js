@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.87";
+export const PANEL_VERSION = "1.2.88";
 export const CHANGELOG = [
-  { type: "UI", text: "Centro de Plantillas rediseñado con flujo visual de envío, numeración, iconos y categorías para identificar cada comunicación." },
-  { type: "UX", text: "Cada plantilla muestra propósito, evento asociado, variables disponibles, contador de caracteres y acciones de guardar/restaurar." },
-  { type: "Orden", text: "Las plantillas se presentan en el orden lógico del ciclo de comunicación: preventivo, cobranza, confirmación y operativo." },
+  { type: "UI", text: "Centro de Plantillas incorpora una vista previa visual estilo WhatsApp para cada mensaje." },
+  { type: "UX", text: "La vista previa reemplaza variables con datos de demostración y permite revisar el mensaje final antes de guardarlo." },
+  { type: "Seguridad", text: "La vista previa es local y no realiza ningún envío real de WhatsApp." },
 ];
