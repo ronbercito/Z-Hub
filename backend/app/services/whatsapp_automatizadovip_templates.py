@@ -1,26 +1,31 @@
-"""Plantillas editables de mensajes para automatizaciones de WhatsApp."""
+"""Plantillas editables de mensajes para automatizaciones de WhatsApp.
+
+Las plantillas usan la sintaxis compatible con WispHub: {{variable}}, %vip% y
+formato WhatsApp con *negritas*. El renderizador común se encarga de convertirlas
+en el texto final antes de enviarlas por cualquier pasarela.
+"""
 from __future__ import annotations
 
 DEFAULT_TEMPLATES = {
     "payment_reminder": {
         "name": "Recordatorio de pago",
-        "text": "Hola {cliente}, le saludamos de {empresa}. Le recordamos que su recibo por S/. {monto} del plan {plan} vence el {vencimiento}. Puede pagar por Yape/Plin al {yape} o transferencia bancaria. ¡Gracias por preferirnos!",
-        "variables": ["cliente", "empresa", "monto", "plan", "vencimiento", "yape"],
+        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nSu recibo ya se encuentra disponible.\n%vip%%vip%\nTotal a pagar *{{total}}*.\n%vip%%vip%\nFecha de Vencimiento *{{fecha_pago}}*\n%vip%\nDia de Corte: *{{fecha_corte}}*\n%vip%%vip%\n*¿DÓNDE PAGAR?*\n%vip%\n*YAPE/PLIN*\n%vip%\n{{yape}}\n%vip%\n({{titular_pago}})\n%vip%%vip%\nSi ya pago, omita este mensaje.\n%vip%%vip%\n*Enviar captura de pantalla de deposito para su validacion*",
+        "variables": ["cliente_nombre", "cliente_apellidos", "total", "fecha_pago", "fecha_corte", "yape", "titular_pago"],
     },
     "cut_warning": {
         "name": "Aviso de corte por deuda vencida",
-        "text": "Estimado(a) {cliente}, {empresa} le informa que su servicio presenta facturas vencidas por S/. {monto}. Para evitar el corte automático, regularice su pago hoy. Soporte: {telefono}.",
-        "variables": ["cliente", "empresa", "monto", "telefono"],
+        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nSu servicio presenta una deuda vencida por *{{total}}*.\n%vip%%vip%\nFecha de Vencimiento: *{{fecha_pago}}*\n%vip%%vip%\n*Evite el corte regularizando su pago.*\n%vip%%vip%\nSoporte: {{telefono}}",
+        "variables": ["cliente_nombre", "cliente_apellidos", "total", "fecha_pago", "telefono"],
     },
     "payment_confirmation": {
         "name": "Confirmación de pago",
-        "text": "¡Pago recibido! Estimado(a) {cliente}, {empresa} confirma el cobro de S/. {monto} con comprobante {recibo}. Su servicio se encuentra ACTIVO. Gracias por su puntualidad.",
-        "variables": ["cliente", "empresa", "monto", "recibo"],
+        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nHemos recibido su pago por *{{total}}*.\n%vip%%vip%\nComprobante: *{{factura}}*\n%vip%%vip%\nSu servicio se encuentra *ACTIVO*.\n%vip%%vip%\nGracias por su pago.",
+        "variables": ["cliente_nombre", "cliente_apellidos", "total", "factura"],
     },
     "maintenance": {
         "name": "Aviso de mantenimiento",
-        "text": "Estimado cliente de {empresa}: realizaremos trabajos de mantenimiento en la red el día {fecha} de {hora_inicio} a {hora_fin}. Agradecemos su comprensión.",
-        "variables": ["empresa", "fecha", "hora_inicio", "hora_fin"],
+        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\n{{empresa}} informa que se realizará mantenimiento de red el *{{fecha}}* de *{{hora_inicio}}* a *{{hora_fin}}*.\n%vip%%vip%\nAgradecemos su comprensión.",
+        "variables": ["cliente_nombre", "cliente_apellidos", "empresa", "fecha", "hora_inicio", "hora_fin"],
     },
 }
 
