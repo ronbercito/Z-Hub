@@ -1,9 +1,7 @@
 """Cliente aislado para el gateway WhatsApp de AutomatizadoVIP.
 
 Este módulo no modifica el flujo existente de WhatsApp Web. Expone una capa
-pequeña y testeable para enviar uno o varios contactos mediante el contrato V2.
-La API Key se recibe desde configuración en tiempo de ejecución y nunca se
-incluye en código fuente, logs ni excepciones.
+testeable para enviar uno o varios contactos mediante el contrato V2.
 """
 
 from __future__ import annotations
@@ -35,7 +33,6 @@ def normalize_phone(phone: str, country_code: str = "51") -> str:
     digits = "".join(ch for ch in str(phone or "") if ch.isdigit())
     if not digits:
         raise ValueError("El número de WhatsApp está vacío")
-
     code = "".join(ch for ch in str(country_code or "") if ch.isdigit())
     if code and not digits.startswith(code):
         digits = f"{code}{digits}"
@@ -51,18 +48,18 @@ def _clean_message(message: str) -> str:
     return text
 
 
-def build_payload(contacts: Iterable[dict[str, str]], country_code: str = "51") -> dict[str, list[dict[str, str]]]:
+def build_payload(contacts: Iterable[dict[str, str]], country_code: str = "51", verify: bool = True) -> dict[str, Any]:
     prepared: list[dict[str, str]] = []
     for item in contacts:
-        prepared.append(
-            {
-                "message": _clean_message(item.get("message", "")),
-                "number": normalize_phone(item.get("number", ""), country_code),
-            }
-        )
+        prepared.append({
+            "message": _clean_message(item.get("message", "")),
+            "number": normalize_phone(item.get("number", ""), country_code),
+        })
     if not prepared:
         raise ValueError("Debe existir al menos un destinatario")
-    return {"contact": prepared}
+    # En WispHub/AutomatizadoVIP, "Parámetros extra" forma parte del JSON enviado,
+    # por lo que verify debe viajar en el body y no como query string.
+    return {"contact": prepared, "verify": bool(verify)}
 
 
 async def send_messages(
@@ -79,16 +76,12 @@ async def send_messages(
     if not key:
         raise WhatsAppGatewayError("La API Key de AutomatizadoVIP no está configurada")
 
-    payload = build_payload(contacts, country_code=country_code)
-    headers = {
-        "Content-Type": "application/json",
-        "Api-key": key,
-    }
-    params = {"verify": "true" if verify else "false"}
+    payload = build_payload(contacts, country_code=country_code, verify=verify)
+    headers = {"Content-Type": "application/json", "Api-key": key}
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(gateway_url, headers=headers, json=payload, params=params)
+            response = await client.post(gateway_url, headers=headers, json=payload)
     except httpx.HTTPError as exc:
         raise WhatsAppGatewayError(f"No fue posible conectar con AutomatizadoVIP: {exc}") from exc
 
@@ -98,8 +91,6 @@ async def send_messages(
         response_data = response.text[:2000]
 
     if response.status_code >= 400:
-        raise WhatsAppGatewayError(
-            f"AutomatizadoVIP respondió HTTP {response.status_code}: {response_data}"
-        )
+        raise WhatsAppGatewayError(f"AutomatizadoVIP respondió HTTP {response.status_code}: {response_data}")
 
     return WhatsAppSendResult(ok=True, status_code=response.status_code, response=response_data)
