@@ -6,10 +6,8 @@ import asyncio
 import logging
 import re
 from contextlib import asynccontextmanager, suppress
-
 from fastapi import APIRouter, Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
 from app.core.database import init_db
 from app.core import database
 from app.core.license_guard import enforce_client_capacity, enforce_trial_write_access
@@ -18,6 +16,7 @@ from app.core.seed import seed_initial_data
 from app.models.client import Client
 from app.models.whatsapp_automatizadovip_log import WhatsAppAutomatizadoVIPLog  # noqa: F401
 from app.routers.ajustes.router import router as ajustes_router, public_router as ajustes_public_router
+from app.routers.ajustes.message_templates import router as message_templates_router
 from app.routers.ajustes.staff.router import router as staff_router
 from app.routers.almacen.router import router as almacen_router
 from app.routers.auth.router import router as auth_router
@@ -61,84 +60,46 @@ from app.routers.whatsapp_automatizadovip.router import router as whatsapp_autom
 from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
 from app.routers.whatsapp_automatizadovip.automation_test import router as whatsapp_automatizadovip_automation_test_router
 from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fibraz.server")
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await init_db()
-    await seed_initial_data()
-    pause_task = asyncio.create_task(pause_worker())
-    suspension_alert_task = asyncio.create_task(suspension_alert_worker())
-    whatsapp_automatizadovip_task = asyncio.create_task(whatsapp_automatizadovip_worker())
-    try:
-        yield
+    await init_db(); await seed_initial_data()
+    pause_task=asyncio.create_task(pause_worker()); suspension_alert_task=asyncio.create_task(suspension_alert_worker()); whatsapp_automatizadovip_task=asyncio.create_task(whatsapp_automatizadovip_worker())
+    try: yield
     finally:
-        pause_task.cancel()
-        suspension_alert_task.cancel()
-        whatsapp_automatizadovip_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await pause_task
-        with suppress(asyncio.CancelledError):
-            await suspension_alert_task
-        with suppress(asyncio.CancelledError):
-            await whatsapp_automatizadovip_task
+        pause_task.cancel(); suspension_alert_task.cancel(); whatsapp_automatizadovip_task.cancel()
+        with suppress(asyncio.CancelledError): await pause_task
+        with suppress(asyncio.CancelledError): await suspension_alert_task
+        with suppress(asyncio.CancelledError): await whatsapp_automatizadovip_task
         await database.engine.dispose()
-
-app = FastAPI(title="Z-Hub ISP API", version="3.0.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_credentials="*" not in CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
-
+app=FastAPI(title="Z-Hub ISP API",version="3.0.0",lifespan=lifespan)
+app.add_middleware(CORSMiddleware,allow_origins=CORS_ORIGINS,allow_credentials="*" not in CORS_ORIGINS,allow_methods=["*"],allow_headers=["*"])
 @app.middleware("http")
-async def sync_summary_identity(request, call_next):
-    match = re.fullmatch(r"/api/clients/([^/]+)/summary", request.url.path) if request.method == "PATCH" else None
-    previous = None
+async def sync_summary_identity(request,call_next):
+    match=re.fullmatch(r"/api/clients/([^/]+)/summary",request.url.path) if request.method=="PATCH" else None; previous=None
     if match:
         async with database.SessionLocal() as db:
-            client = await db.get(Client, match.group(1))
-            if client:
-                previous = (client.dni_ruc or "", client.full_name or "")
-    response = await call_next(request)
-    if match and previous and 200 <= response.status_code < 300:
+            client=await db.get(Client,match.group(1))
+            if client: previous=(client.dni_ruc or "",client.full_name or "")
+    response=await call_next(request)
+    if match and previous and 200<=response.status_code<300:
         async with database.SessionLocal() as db:
-            client = await db.get(Client, match.group(1))
+            client=await db.get(Client,match.group(1))
             if client:
-                result = await sync_client_identity(db, client, previous[0], previous[1])
-                if not result["ok"]:
-                    logger.warning("%s %s", result["message"], result["routers"])
+                result=await sync_client_identity(db,client,previous[0],previous[1])
+                if not result["ok"]: logger.warning("%s %s",result["message"],result["routers"])
     return response
-
-api = APIRouter(prefix="/api", dependencies=[Depends(enforce_trial_write_access)])
-for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_onu_descriptions_router, olt_onu_summary_router, olt_onu_inventory_router):
-    api.include_router(router, prefix="/routers", dependencies=[Depends(require_permission("olt"))])
-for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
-    api.include_router(router)
-api.include_router(red_router, dependencies=[Depends(require_router_access)])
-api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
-
-api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
-api.include_router(whatsapp_automatizadovip_logs_router, dependencies=[Depends(require_permission("messaging"))])
-api.include_router(whatsapp_automatizadovip_automation_test_router, dependencies=[Depends(require_permission("messaging"))])
-
-for router, module in (
-    (inicio_router, "dashboard"),
-    (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"),
-    (client_registration_settings_router, "clients"), (equipment_recoveries_router, "clients"), (client_equipment_router, "clients"), (installations_router, "clients"),
-    (client_service_delete_audit_router, "clients"), (client_services_router, "clients"),
-    (client_deletion_summary_router, "clients"), (zones_router, "clients"),
-    (clientes_router, "clients"),
-    (planes_router, "plans"), (ipv4_networks_router, "network"), (nap_boxes_router, "network"),
-    (monitoring_router, "monitoring"), (facturacion_router, "billing"), (client_balances_router, "billing"), (invoice_actions_router, "billing"),
-    (tickets_router, "tickets"), (almacen_router, "inventory"), (hotspot_router, "hotspot"),
-    (tareas_router, "tasks"), (mensajeria_router, "messaging"), (ajustes_router, "settings"), (staff_router, "staff"),
-):
-    dependencies = [Depends(require_permission(module))]
-    if router is clientes_router:
-        dependencies.append(Depends(enforce_client_capacity))
-    api.include_router(router, dependencies=dependencies)
-
+api=APIRouter(prefix="/api",dependencies=[Depends(enforce_trial_write_access)])
+for router in (olt_traffic_router,olt_onu_power_router,olt_onu_v2_router,olt_onu_descriptions_router,olt_onu_summary_router,olt_onu_inventory_router): api.include_router(router,prefix="/routers",dependencies=[Depends(require_permission("olt"))])
+for router in (ajustes_public_router,auth_router,system_update_router,setup_router,license_router): api.include_router(router)
+api.include_router(red_router,dependencies=[Depends(require_router_access)]); api.include_router(client_workspace_router,dependencies=[Depends(require_permission("clients"))])
+api.include_router(message_templates_router,dependencies=[Depends(require_permission("messaging"))])
+api.include_router(whatsapp_automatizadovip_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_logs_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_automation_test_router,dependencies=[Depends(require_permission("messaging"))])
+for router,module in ((inicio_router,"dashboard"),(retired_clients_router,"clients"),(pause_clients_router,"clients"),(suspension_alerts_router,"clients"),(client_registration_settings_router,"clients"),(equipment_recoveries_router,"clients"),(client_equipment_router,"clients"),(installations_router,"clients"),(client_service_delete_audit_router,"clients"),(client_services_router,"clients"),(client_deletion_summary_router,"clients"),(zones_router,"clients"),(clientes_router,"clients"),(planes_router,"plans"),(ipv4_networks_router,"network"),(nap_boxes_router,"network"),(monitoring_router,"monitoring"),(facturacion_router,"billing"),(client_balances_router,"billing"),(invoice_actions_router,"billing"),(tickets_router,"tickets"),(almacen_router,"inventory"),(hotspot_router,"hotspot"),(tareas_router,"tasks"),(mensajeria_router,"messaging"),(ajustes_router,"settings"),(staff_router,"staff")):
+    dependencies=[Depends(require_permission(module))]
+    if router is clientes_router: dependencies.append(Depends(enforce_client_capacity))
+    api.include_router(router,dependencies=dependencies)
 @api.get("/health")
-async def health():
-    return {"status": "ok"}
-
+async def health(): return {"status":"ok"}
 app.include_router(api)
