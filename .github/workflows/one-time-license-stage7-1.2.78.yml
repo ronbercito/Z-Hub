@@ -1,0 +1,37 @@
+name: One-time License Stage 7 1.2.78
+
+on:
+  push:
+    branches:
+      - work/license-stage7-1.2.78
+
+permissions:
+  contents: write
+
+jobs:
+  apply-stage7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/license-stage7-1.2.78
+          fetch-depth: 0
+      - name: Apply Stage 7
+        run: python .github/scripts/apply_stage7_1_2_78.py
+      - name: Validate changed files
+        run: |
+          bash -n deploy/install.sh
+          python -m compileall -q license_server/app backend
+          python -m pip install -q pytest
+          pytest -q backend/tests/test_license_center_web_contract.py
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add license_server/app/main.py license_server/static/index.html license_server/static/app.js license_server/static/styles.css license_server/README.md backend/tests/test_license_center_web_contract.py frontend/src/modules/system-update/version.js docs/CONTINUIDAD_Z-HUB.md
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'feat: completar License Center Etapa 7/7 1.2.78'
+          git push origin HEAD:work/license-stage7-1.2.78
