@@ -1,0 +1,67 @@
+name: One-time continuity 1.2.76
+
+on:
+  push:
+    branches:
+      - work/remote-trial-dates-1.2.76
+
+permissions:
+  contents: write
+
+jobs:
+  append-continuity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/remote-trial-dates-1.2.76
+          fetch-depth: 0
+      - name: Append canonical continuity entry once
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/CONTINUIDAD_Z-HUB.md')
+          marker = '### 1.2.76 — 2026-09-11 — Vencimiento TRIAL central y cierre operativo de Etapa 6'
+          entry = r'''
+
+---
+
+### 1.2.76 — 2026-09-11 — Vencimiento TRIAL central y cierre operativo de Etapa 6
+- **Causa:** el License Server ya emitía `expires_at` dentro del JWT RS256, pero Z-Hub no lo conservaba; el cliente calculaba el vencimiento como `license_activated_at + 30 días`, por lo que la instalación local podía construir una fecha distinta de la autoridad central.
+- **Solución:** `backend/app/core/license_remote.py` conserva `expires_at`; `backend/app/core/license_manager.py` persiste `license_expires_at` y lo prioriza para `trial_expires_at`, `trial_days_remaining` y el bloqueo `trial_expired`.
+- **Compatibilidad:** los Trials locales o históricos que no tengan `license_expires_at` siguen usando `license_activated_at + 30 días`. No se rompe el modo local de transición.
+- **Persistencia:** `settings.data` incorpora `license_expires_at`; al ser JSON existente no requiere migración SQL ni elimina datos.
+- **Etapa 6 validada extremo a extremo en `z2`:**
+  - License Server `web-licencia` accesible por HTTPS en `192.168.10.240`;
+  - CA privada corregida con `CA:TRUE` y Key Usage de firma de certificados/CRL; certificado TLS del servidor con `CA:FALSE`, `serverAuth` y SAN para `license.zhub.local` y `192.168.10.240`;
+  - CA pública instalada en la confianza del sistema de `z2`;
+  - clave pública RSA del License Server instalada en `/etc/zhub/licencia/server-public.pem`; las claves privadas permanecen exclusivamente en `web-licencia`;
+  - Supervisor carga `ZHUB_LICENSE_SERVER_URL=https://192.168.10.240` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE=/etc/zhub/licencia/server-public.pem` en el backend real;
+  - `curl` y el Python del venv de Z-Hub validan HTTPS sin `-k`;
+  - `POST /v1/licenses/validate` devuelve HTTP 200 para la instalación autorizada, con licencia TRIAL ACTIVA y capacidad de 20 abonados;
+  - Z-Hub valida correctamente JWT RS256, issuer, audience, licencia e installation ID;
+  - el panel muestra `TRIAL ACTIVO`, License Server `Conectado`, fuente `Servidor remoto`, capacidad 20 y período de gracia;
+  - el flujo de recuperación de 1.2.75 fue probado y desbloqueó el panel sin pérdida de datos.
+- **Caché/gracia:** se conserva la autorización JWT firmada para indisponibilidad temporal; un rechazo explícito del servidor nunca se sustituye por caché anterior.
+- **Seguridad:** no se usa `-k` en el mecanismo productivo; no se distribuyen claves privadas ni token administrativo.
+- **Archivos funcionales:** `backend/app/core/license_remote.py`, `backend/app/core/license_manager.py`, `backend/app/models/setting.py`, `backend/tests/test_license_stage2_contract.py` y `frontend/src/modules/system-update/version.js`.
+- **Pruebas:** sintaxis/compilación Python correcta; build frontend correcto; contratos backend correctos; GitHub Actions `Z-Hub Quality` quedó verde después de ajustar el contrato de changelog; validación real HTTPS/API/JWT/panel realizada en `z2`.
+- **Backup previo:** `backup/pre-remote-trial-dates-1.2.76-20260911`.
+- **Resultado:** Etapa 6 queda operativa de extremo a extremo. El pendiente de infraestructura indicado en 1.2.75 queda cerrado por esta validación.
+- **Pendiente posterior:** instalar 1.2.76 en `z2` mediante el actualizador del panel y comprobar que la fecha/días restantes mostrados provienen de `expires_at` central.
+'''
+          text = path.read_text(encoding='utf-8')
+          if marker not in text:
+              path.write_text(text.rstrip() + entry + '\n', encoding='utf-8')
+          PY
+          if git diff --quiet -- docs/CONTINUIDAD_Z-HUB.md; then
+            echo 'Continuity entry already present; nothing to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/CONTINUIDAD_Z-HUB.md
+          git commit -m 'docs: cerrar Etapa 6 y documentar 1.2.76'
+          git push origin HEAD:work/remote-trial-dates-1.2.76
