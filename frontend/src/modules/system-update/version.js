@@ -1,6 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.96";
+export const PANEL_VERSION = "1.2.97";
 export const CHANGELOG = [
+  { type: "Fix", text: "Se corrige la numeración de la entrega de plantillas amigables de WhatsApp: la versión oficial pasa de 1.2.96 a 1.2.97." },
   { type: "WhatsApp", text: "Las plantillas de AutomatizadoVIP adoptan un tono más amigable y visual, con saludo personalizado, bloques claros y llamados a la acción más fáciles de identificar." },
   { type: "WhatsApp", text: "El recordatorio de pago destaca total, vencimiento, YAPE/PLIN, transferencia y comprobante sin mostrar el día de corte mientras no exista una fuente independiente confiable para ese dato." },
   { type: "WhatsApp", text: "El aviso de deuda vencida y la confirmación de pago reciben mensajes más humanos, preventivos y positivos, manteniendo las variables del renderer común." },
