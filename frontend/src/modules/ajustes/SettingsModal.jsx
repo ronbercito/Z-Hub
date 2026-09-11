@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import Settings from "./Settings";
 import ClientSettings from "./clientes/ClientSettings";
 import LicenseSettings from "./LicenseSettings";
+import WhatsAppAutomatizadoVIPSettings from "./WhatsAppAutomatizadoVIPSettings";
 import "./settings-modal.css";
 
 export default function SettingsModal({ section, onClose, locked = false }) {
@@ -28,13 +29,13 @@ export default function SettingsModal({ section, onClose, locked = false }) {
   }, [section, onClose, locked]);
 
   if (!section) return null;
-  const title = section === "clients" ? "Configuración clientes" : section === "license" ? "Licencia Z-Hub" : null;
+  const title = section === "clients" ? "Configuración clientes" : section === "license" ? "Licencia Z-Hub" : section === "whatsapp_automatizadovip" ? "WhatsApp AutomatizadoVIP" : null;
 
   return <div className="settings-modal-backdrop" onMouseDown={locked ? undefined : onClose} role="presentation">
     <section className="settings-modal-panel" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={title || "Configuración"}>
       {!locked && <button type="button" className="settings-modal-close" onClick={onClose} aria-label="Cerrar"><X /></button>}
       <div className="settings-modal-scroll">
-        {section === "clients" ? <ClientSettings compact /> : section === "license" ? <LicenseSettings locked={locked} /> : <Settings section={section} compact />}
+        {section === "clients" ? <ClientSettings compact /> : section === "license" ? <LicenseSettings locked={locked} /> : section === "whatsapp_automatizadovip" ? <WhatsAppAutomatizadoVIPSettings /> : <Settings section={section} compact />}
       </div>
     </section>
   </div>;
