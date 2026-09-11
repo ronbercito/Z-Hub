@@ -2,6 +2,7 @@
 export const PANEL_VERSION = "1.2.96";
 export const CHANGELOG = [
   { type: "Fix", text: "Mensajería manual resuelve correctamente variables WhatsApp con {{variable}} y {variable}, incluyendo todas sus apariciones en cada plantilla." },
-  { type: "Fix", text: "El renderizado manual ya no deja valores vacíos entre asteriscos ni llaves alrededor del teléfono, monto, nombre, fecha o comprobante." },
+  { type: "Fix", text: "Las variables globales de empresa, Yape/Plin, soporte y titular también se resuelven en las cuatro plantillas antes de mostrarlas o enviarlas." },
+  { type: "Fix", text: "El renderizado ya no deja valores vacíos entre asteriscos ni llaves alrededor del teléfono, monto, nombre, fecha o comprobante." },
   { type: "QA", text: "Se agregan pruebas para sintaxis doble, sintaxis heredada y variables repetidas antes del envío a AutomatizadoVIP." },
 ];
