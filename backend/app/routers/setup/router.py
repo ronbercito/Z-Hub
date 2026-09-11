@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.license_manager import apply_license_metadata, get_license_record, get_setting_data
+from app.core.license_manager import apply_license_metadata, get_setting_data, resolve_license_record
 from app.core.security import hash_password
 from app.models.user import User
 from .schemas import AdminSetupRequest, LicenseRequest, SetupCompleteRequest
@@ -15,11 +15,11 @@ router = APIRouter(prefix="/setup", tags=["Configuración inicial"])
 @router.get("/status")
 async def setup_status(db: AsyncSession = Depends(get_db)):
     _, data = await get_setting_data(db)
-    record = get_license_record(data.get("license_key"))
-    await db.commit()
+    record, validation = await resolve_license_record(db, data.get("license_key"))
     return {
         "setup_required": not bool(data.get("initial_setup_completed", False)),
         "license_valid": bool(record),
+        "validation_source": validation.get("source"),
     }
 
 
@@ -30,9 +30,9 @@ async def validate_license(req: LicenseRequest, db: AsyncSession = Depends(get_d
         raise HTTPException(status_code=409, detail="La configuración inicial ya fue completada")
 
     key = req.license_key.strip().upper()
-    license_data = get_license_record(key)
+    license_data, validation = await resolve_license_record(db, key)
     if not license_data:
-        raise HTTPException(status_code=400, detail="La licencia no es válida")
+        raise HTTPException(status_code=400, detail=validation.get("message") or "La licencia no es válida")
 
     setting.data = apply_license_metadata(data, license_data)
     await db.commit()
@@ -44,6 +44,7 @@ async def validate_license(req: LicenseRequest, db: AsyncSession = Depends(get_d
         "type": license_data["type"],
         "plan": license_data["plan"],
         "max_clients": license_data["max_clients"],
+        "validation_source": validation.get("source"),
     }
 
 
@@ -52,7 +53,8 @@ async def create_initial_admin(req: AdminSetupRequest, db: AsyncSession = Depend
     _, data = await get_setting_data(db)
     if data.get("initial_setup_completed"):
         raise HTTPException(status_code=409, detail="La configuración inicial ya fue completada")
-    if not get_license_record(data.get("license_key")):
+    record, _ = await resolve_license_record(db, data.get("license_key"))
+    if not record:
         raise HTTPException(status_code=400, detail="Primero debe validar una licencia válida")
     if req.password != req.password_confirmation:
         raise HTTPException(status_code=400, detail="Las contraseñas no coinciden")
@@ -80,7 +82,8 @@ async def complete_setup(req: SetupCompleteRequest, db: AsyncSession = Depends(g
         return {"completed": True}
 
     key = req.license_key.strip().upper()
-    if key != data.get("license_key") or not get_license_record(key):
+    record, _ = await resolve_license_record(db, key)
+    if key != data.get("license_key") or not record:
         raise HTTPException(status_code=400, detail="La licencia no está validada")
 
     admin = (await db.execute(select(User).where(User.role == "admin"))).scalars().first()
