@@ -60,6 +60,17 @@ def test_settings_store_normalized_license_snapshot():
     assert '"license_plan": ""' in settings
     assert '"license_max_clients": None' in settings
     assert '"license_activated_at": ""' in settings
+    assert '"license_expires_at": ""' in settings
+
+
+def test_remote_trial_expiration_is_preserved_and_authoritative():
+    remote = read("backend/app/core/license_remote.py")
+    manager = read("backend/app/core/license_manager.py")
+    assert '"expires_at": payload.get("expires_at")' in remote
+    assert 'remote_expires = _parse_datetime(data.get("license_expires_at"))' in manager
+    assert 'result["license_expires_at"] = remote_expires.isoformat()' in manager
+    assert 'return remote_expires' in manager
+    assert 'started + timedelta(days=TRIAL_DAYS)' in manager
 
 
 def test_stage2_keeps_capacity_decision_out_of_client_crud_implementation():
