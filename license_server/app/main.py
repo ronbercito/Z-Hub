@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.2.1"
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 DB_PATH = Path(os.environ.get("ZHUB_LICENSE_DB", "/var/lib/zhub-license-server/licenses.db"))
@@ -29,6 +29,7 @@ ISSUER = os.environ.get("ZHUB_LICENSE_SERVER_ISSUER", "zhub-license-server").str
 AUDIENCE = os.environ.get("ZHUB_LICENSE_SERVER_AUDIENCE", "zhub-installation").strip()
 GRACE_HOURS = max(1, int(os.environ.get("ZHUB_LICENSE_GRACE_HOURS", "72")))
 TRIAL_DAYS = max(1, int(os.environ.get("ZHUB_LICENSE_TRIAL_DAYS", "30")))
+TRIAL_MAX_CLIENTS = 20
 PLAN_LIMITS: dict[str, int | None] = {
     "PLAN_100": 100,
     "PLAN_300": 300,
@@ -224,7 +225,7 @@ def _generate_license_key() -> str:
     year = _now().year
     with _connect() as db:
         for _ in range(64):
-            key = f"ZHUB-{year}-{secrets.token_hex(4).upper()}"
+            key = f"ZHUB-{year}-{secrets.token_hex(24).upper()}"
             if not db.execute("SELECT 1 FROM licenses WHERE license_key=?", (key,)).fetchone():
                 return key
     raise HTTPException(status_code=503, detail="No se pudo generar una clave única")
@@ -394,7 +395,10 @@ def upsert_license(license_key: str, payload: LicenseIn) -> dict[str, Any]:
     license_type = payload.type.strip().upper()
     if license_type not in {"PAID", "TRIAL"}:
         raise HTTPException(status_code=422, detail="Tipo no permitido")
-    plan, plan_limit = _normalize_plan(payload.plan)
+    if license_type == "TRIAL":
+        plan, plan_limit = "TRIAL", TRIAL_MAX_CLIENTS
+    else:
+        plan, plan_limit = _normalize_plan(payload.plan)
     if payload.customer_id is not None:
         with _connect() as db:
             if not db.execute("SELECT 1 FROM customers WHERE id=?", (payload.customer_id,)).fetchone():
