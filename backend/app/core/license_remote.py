@@ -89,6 +89,7 @@ def _payload_to_record(payload: dict[str, Any]) -> dict[str, Any] | None:
         "plan": plan,
         "max_clients": max_clients,
         "trial_days": payload.get("trial_days"),
+        "expires_at": payload.get("expires_at"),
     }
 
 

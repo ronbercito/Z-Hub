@@ -72,6 +72,7 @@ DEFAULT_SETTINGS = {
     "license_plan": "",
     "license_max_clients": None,
     "license_activated_at": "",
+    "license_expires_at": "",
 }
 
 
