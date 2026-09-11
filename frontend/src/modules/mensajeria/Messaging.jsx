@@ -10,6 +10,26 @@ import { MessageSquare, Send, Copy, Check, MessageCircle, Globe } from "lucide-r
 import { toast } from "sonner";
 import AutomatizadoVIPHistory from "./AutomatizadoVIPHistory";
 
+const replaceTemplateVariable = (text, key, value) => {
+  const safe = value == null ? "" : String(value);
+  const double = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g");
+  const single = new RegExp(`(?<!\\{)\\{\\s*${key}\\s*\\}(?!\\})`, "g");
+  return String(text || "").replace(double, safe).replace(single, safe);
+};
+
+const renderTemplate = (text, values) => {
+  let value = String(text || "");
+  Object.entries(values).forEach(([key, replacement]) => {
+    value = replaceTemplateVariable(value, key, replacement);
+  });
+  return value
+    .replace(/%vip%/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 export default function Messaging() {
   const { API, token } = useAuth();
   const [templates, setTemplates] = useState([]);
@@ -50,15 +70,24 @@ export default function Messaging() {
   }, [API, token]);
 
   useEffect(() => {
-    if (selectedTemplate && selectedClient) {
-      let txt = selectedTemplate.text;
-      txt = txt.replace("{cliente}", selectedClient.full_name || "Estimado cliente");
-      txt = txt.replace("{monto}", Number(selectedClient.balance_due || selectedClient.plan_price || 70).toFixed(2));
-      txt = txt.replace("{plan}", selectedClient.plan_name || "Fibra Óptica");
-      txt = txt.replace("{vencimiento}", "10 de este mes");
-      txt = txt.replace("{recibo}", "REC-202606-0001");
-      setCustomMessage(txt);
-    }
+    if (!selectedTemplate || !selectedClient) return;
+    const fullName = selectedClient.full_name || "Estimado cliente";
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    const values = {
+      cliente: fullName,
+      cliente_nombre: parts[0] || fullName,
+      cliente_apellidos: parts.slice(1).join(" "),
+      monto: Number(selectedClient.balance_due || selectedClient.plan_price || 70).toFixed(2),
+      total: `S/.${Number(selectedClient.balance_due || selectedClient.plan_price || 70).toFixed(2)}`,
+      plan: selectedClient.plan_name || "Fibra Óptica",
+      vencimiento: "10 de este mes",
+      fecha_pago: "10 de este mes",
+      fecha_vencimiento: "10 de este mes",
+      fecha_corte: "10 de este mes",
+      recibo: "REC-202606-0001",
+      factura: "REC-202606-0001",
+    };
+    setCustomMessage(renderTemplate(selectedTemplate.text, values));
   }, [selectedTemplate, selectedClient]);
 
   const handleCopy = () => {
