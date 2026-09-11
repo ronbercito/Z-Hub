@@ -113,15 +113,11 @@ for router in (olt_traffic_router, olt_onu_power_router, olt_onu_v2_router, olt_
 for router in (ajustes_public_router, auth_router, system_update_router, setup_router, license_router):
     api.include_router(router)
 api.include_router(red_router, dependencies=[Depends(require_router_access)])
-api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients")])
+api.include_router(client_workspace_router, dependencies=[Depends(require_permission("clients"))])
 
-# Integración aislada de WhatsApp: mantiene su propia configuración, historial y endpoints.
 api.include_router(whatsapp_automatizadovip_router, dependencies=[Depends(require_permission("messaging"))])
 api.include_router(whatsapp_automatizadovip_logs_router, dependencies=[Depends(require_permission("messaging"))])
 
-# Importante: registrar primero las rutas estáticas/especializadas de Clientes.
-# El CRUD principal contiene /clients/{client_id}; si se registra antes puede capturar
-# rutas como /clients/pause-policy o /clients/retirement-policy como si fueran IDs.
 for router, module in (
     (inicio_router, "dashboard"),
     (retired_clients_router, "clients"), (pause_clients_router, "clients"), (suspension_alerts_router, "clients"),
