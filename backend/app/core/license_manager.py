@@ -22,7 +22,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.client import Client
 from app.models.setting import DEFAULT_SETTINGS, Setting
 
-REPO_LICENSE_FILE = Path(__file__).resolve().parents[3] / "licencia" / "licencias.txt"
+# Fallback empaquetado dentro del backend. A diferencia del antiguo
+# `<repo>/licencia/licencias.txt`, este archivo no es eliminado por deploy/install.sh
+# y por tanto sigue disponible después de cada actualización del servidor.
+REPO_LICENSE_FILE = Path(__file__).resolve().parent / "license_fallback.txt"
 PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licencia/licencias.txt"))
 
 PLAN_LIMITS: dict[str, int | None] = {
@@ -162,12 +165,12 @@ def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def licenses() -> dict[str, dict[str, Any]]:
-    """Combina fallback del repositorio con el registro privado del servidor.
+    """Combina fallback empaquetado con el registro privado del servidor.
 
     El registro privado tiene prioridad cuando define la misma clave, por lo que
     un ESTADO=INACTIVA/SUSPENDIDA privado nunca puede ser reactivado por el fallback.
     Si el archivo privado existe pero no contiene una licencia histórica, el
-    fallback del repositorio sigue disponible durante la transición a Etapa 6.
+    fallback empaquetado sigue disponible durante la transición a Etapa 6.
     """
     rows = _parse_license_file(REPO_LICENSE_FILE)
     rows.update(_parse_license_file(PRIVATE_LICENSE_FILE))
