@@ -204,6 +204,11 @@ def trial_started_at(data: dict[str, Any]) -> datetime | None:
 
 
 def trial_expires_at(data: dict[str, Any]) -> datetime | None:
+    if not is_trial(data):
+        return None
+    remote_expires = _parse_datetime(data.get("license_expires_at"))
+    if remote_expires:
+        return remote_expires
     started = trial_started_at(data)
     return started + timedelta(days=TRIAL_DAYS) if started else None
 
@@ -280,11 +285,16 @@ def apply_license_metadata(data: dict[str, Any], record: dict[str, Any], *, now:
     result["license_type"] = record["type"]
     result["license_plan"] = record["plan"]
     result["license_max_clients"] = TRIAL_MAX_CLIENTS if record["type"] == "TRIAL" else record["max_clients"]
-    if record["type"] == "TRIAL" and not result.get("license_activated_at"):
-        current = now or datetime.now(timezone.utc)
-        result["license_activated_at"] = current.astimezone(timezone.utc).isoformat()
-    elif record["type"] != "TRIAL":
+    if record["type"] == "TRIAL":
+        remote_expires = _parse_datetime(record.get("expires_at"))
+        if remote_expires:
+            result["license_expires_at"] = remote_expires.isoformat()
+        if not result.get("license_activated_at"):
+            current = now or datetime.now(timezone.utc)
+            result["license_activated_at"] = current.astimezone(timezone.utc).isoformat()
+    else:
         result["license_activated_at"] = ""
+        result["license_expires_at"] = ""
     return result
 
 
