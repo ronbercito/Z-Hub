@@ -39,7 +39,14 @@ def _cfg(setting: Setting | None) -> dict[str, Any]:
 
 
 def _parse_date(value: str | None) -> date | None:
+    """Acepta fechas simples y timestamps ISO usados por facturación/pagos."""
     text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+    except ValueError:
+        pass
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
         try:
             return datetime.strptime(text, fmt).date()
@@ -97,7 +104,8 @@ async def run_automation_cycle() -> int:
         today = date.today()
         max_batch = max(1, min(int(automation.get("max_batch", 50)), 200))
 
-        invoices = (await db.execute(select(Invoice).where(Invoice.status.in_(["unpaid", "pending"])).limit(500))).scalars().all()
+        # Incluye facturas vencidas: Z-Hub utiliza también el estado "overdue".
+        invoices = (await db.execute(select(Invoice).where(Invoice.status.in_(["unpaid", "pending", "overdue"])).limit(500))).scalars().all()
         clients = (await db.execute(select(Client))).scalars().all()
         clients_by_id = {c.id: c for c in clients}
 
