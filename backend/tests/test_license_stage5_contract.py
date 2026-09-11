@@ -19,10 +19,11 @@ def test_trial_contract_is_30_days_and_exposes_dates_warning_and_read_only():
     assert '"read_only": status == "trial_expired"' in manager
 
 
-def test_legacy_snapshot_fixes_false_invalid_without_ignoring_explicit_inactive_row():
+def test_legacy_snapshot_keeps_explicit_blocking_semantics():
     manager = read("backend/app/core/license_manager.py")
     assert "def _has_persisted_snapshot(" in manager
-    assert 'row is not None and row.get("status") != "ACTIVA"' in manager
+    assert "BLOCKED_LICENSE_STATUSES" in manager
+    assert '_is_blocked_license_status(row.get("status"))' in manager
     assert "if _has_persisted_snapshot(data):" in manager
 
 
