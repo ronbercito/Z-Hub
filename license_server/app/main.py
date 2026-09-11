@@ -1,8 +1,8 @@
-"""Z-Hub License Server — Etapa 6/7.
+"""Z-Hub License Server — Etapa 6/7 + inicio de License Center web.
 
-Servicio independiente para desplegar en VPS. Mantiene licencias e instalaciones
-autorizadas en SQLite, registra validaciones y emite autorizaciones RS256 que las
-instalaciones Self-Hosted pueden cachear durante el período de gracia.
+Servicio independiente para desplegar en VPS. Mantiene clientes/ISP, licencias e
+instalaciones autorizadas en SQLite, registra validaciones y emite autorizaciones
+RS256 que las instalaciones Self-Hosted pueden cachear durante el período de gracia.
 """
 from __future__ import annotations
 
@@ -14,9 +14,13 @@ from typing import Any
 
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
+BASE_DIR = Path(__file__).resolve().parents[1]
+STATIC_DIR = BASE_DIR / "static"
 DB_PATH = Path(os.environ.get("ZHUB_LICENSE_DB", "/var/lib/zhub-license-server/licenses.db"))
 PRIVATE_KEY_FILE = Path(os.environ.get("ZHUB_LICENSE_PRIVATE_KEY_FILE", "/etc/zhub-license-server/private.pem"))
 ADMIN_TOKEN = os.environ.get("ZHUB_LICENSE_ADMIN_TOKEN", "").strip()
@@ -25,6 +29,8 @@ AUDIENCE = os.environ.get("ZHUB_LICENSE_SERVER_AUDIENCE", "zhub-installation").s
 GRACE_HOURS = max(1, int(os.environ.get("ZHUB_LICENSE_GRACE_HOURS", "72")))
 
 app = FastAPI(title="Z-Hub License Server", version=APP_VERSION)
+if STATIC_DIR.exists():
+    app.mount("/admin-static", StaticFiles(directory=STATIC_DIR), name="admin-static")
 
 
 class ValidateIn(BaseModel):
@@ -32,8 +38,18 @@ class ValidateIn(BaseModel):
     installation_id: str = Field(min_length=8, max_length=160)
 
 
+class CustomerIn(BaseModel):
+    company_name: str = Field(min_length=2, max_length=180)
+    contact_name: str = ""
+    email: str = ""
+    phone: str = ""
+    tax_id: str = ""
+    status: str = "ACTIVA"
+
+
 class LicenseIn(BaseModel):
     license_key: str = Field(min_length=4, max_length=160)
+    customer_id: int | None = None
     name: str = ""
     email: str = ""
     status: str = "ACTIVA"
@@ -44,6 +60,7 @@ class LicenseIn(BaseModel):
 
 class InstallationIn(BaseModel):
     installation_id: str = Field(min_length=8, max_length=160)
+    installation_name: str = ""
     status: str = "ACTIVA"
 
 
@@ -51,30 +68,54 @@ def _connect() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys=ON")
     return conn
+
+
+def _columns(db: sqlite3.Connection, table: str) -> set[str]:
+    return {str(row["name"]) for row in db.execute(f"PRAGMA table_info({table})").fetchall()}
+
+
+def _ensure_column(db: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    if column not in _columns(db, table):
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def _init_db() -> None:
     with _connect() as db:
         db.executescript(
             """
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                company_name TEXT NOT NULL,
+                contact_name TEXT NOT NULL DEFAULT '',
+                email TEXT NOT NULL DEFAULT '',
+                phone TEXT NOT NULL DEFAULT '',
+                tax_id TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'ACTIVA',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS licenses (
                 license_key TEXT PRIMARY KEY,
+                customer_id INTEGER NULL,
                 name TEXT NOT NULL DEFAULT '',
                 email TEXT NOT NULL DEFAULT '',
                 status TEXT NOT NULL DEFAULT 'ACTIVA',
                 type TEXT NOT NULL DEFAULT 'PAID',
                 plan TEXT NOT NULL DEFAULT 'UNLIMITED',
                 max_clients INTEGER NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
             );
             CREATE TABLE IF NOT EXISTS installations (
                 license_key TEXT NOT NULL,
                 installation_id TEXT NOT NULL,
+                installation_name TEXT NOT NULL DEFAULT '',
                 status TEXT NOT NULL DEFAULT 'ACTIVA',
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (license_key, installation_id),
-                FOREIGN KEY (license_key) REFERENCES licenses(license_key)
+                FOREIGN KEY (license_key) REFERENCES licenses(license_key) ON DELETE CASCADE
             );
             CREATE TABLE IF NOT EXISTS validations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,8 +124,12 @@ def _init_db() -> None:
                 result TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_validations_created_at ON validations(created_at);
+            CREATE INDEX IF NOT EXISTS idx_installations_license ON installations(license_key);
             """
         )
+        _ensure_column(db, "licenses", "customer_id", "INTEGER NULL")
+        _ensure_column(db, "installations", "installation_name", "TEXT NOT NULL DEFAULT ''")
 
 
 @app.on_event("startup")
@@ -133,9 +178,29 @@ def _installation_allowed(key: str, installation_id: str) -> bool:
     return bool(row and str(row["status"]).upper() == "ACTIVA")
 
 
+def _normalize_status(value: str) -> str:
+    status = str(value or "").strip().upper()
+    if status not in {"ACTIVA", "INACTIVA", "SUSPENDIDA"}:
+        raise HTTPException(status_code=422, detail="Estado no permitido")
+    return status
+
+
+@app.get("/")
+def root() -> dict[str, Any]:
+    return {"ok": True, "service": "zhub-license-server", "version": APP_VERSION, "admin": "/admin-ui"}
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {"ok": True, "service": "zhub-license-server", "version": APP_VERSION}
+
+
+@app.get("/admin-ui", include_in_schema=False)
+def admin_ui():
+    index = STATIC_DIR / "index.html"
+    if not index.exists():
+        raise HTTPException(status_code=404, detail="Interfaz administrativa no instalada")
+    return FileResponse(index)
 
 
 @app.post("/v1/licenses/validate")
@@ -173,7 +238,89 @@ def validate_license(payload: ValidateIn) -> dict[str, Any]:
     }
     token = jwt.encode(claims, _private_key(), algorithm="RS256")
     _log_validation(key, installation_id, "AUTHORIZED")
-    return {"valid": True, "authorization": token, "grace_until": grace_until.isoformat()}
+    return {
+        "valid": True,
+        "authorization": token,
+        "grace_until": grace_until.isoformat(),
+        "plan": claims["plan"],
+        "max_clients": claims["max_clients"],
+        "type": claims["type"],
+        "status": claims["status"],
+    }
+
+
+@app.get("/admin/dashboard", dependencies=[Depends(_admin)])
+def admin_dashboard() -> dict[str, Any]:
+    since = (_now() - timedelta(hours=24)).isoformat()
+    with _connect() as db:
+        customers = db.execute("SELECT COUNT(*) AS n FROM customers").fetchone()["n"]
+        active_licenses = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status='ACTIVA'").fetchone()["n"]
+        active_installations = db.execute("SELECT COUNT(*) AS n FROM installations WHERE status='ACTIVA'").fetchone()["n"]
+        validations_24h = db.execute("SELECT COUNT(*) AS n FROM validations WHERE created_at >= ?", (since,)).fetchone()["n"]
+    return {"customers": customers, "active_licenses": active_licenses, "active_installations": active_installations, "validations_24h": validations_24h}
+
+
+@app.get("/admin/customers", dependencies=[Depends(_admin)])
+def list_customers() -> dict[str, Any]:
+    with _connect() as db:
+        rows = db.execute(
+            """SELECT c.*, COUNT(l.license_key) AS license_count
+               FROM customers c LEFT JOIN licenses l ON l.customer_id=c.id
+               GROUP BY c.id ORDER BY c.company_name COLLATE NOCASE"""
+        ).fetchall()
+    return {"rows": [dict(row) for row in rows]}
+
+
+@app.post("/admin/customers", dependencies=[Depends(_admin)])
+def create_customer(payload: CustomerIn) -> dict[str, Any]:
+    status = _normalize_status(payload.status)
+    now = _now().isoformat()
+    with _connect() as db:
+        cur = db.execute(
+            """INSERT INTO customers (company_name,contact_name,email,phone,tax_id,status,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (payload.company_name.strip(), payload.contact_name.strip(), payload.email.strip().lower(), payload.phone.strip(), payload.tax_id.strip(), status, now, now),
+        )
+        customer_id = int(cur.lastrowid)
+    return {"ok": True, "id": customer_id}
+
+
+@app.put("/admin/customers/{customer_id}", dependencies=[Depends(_admin)])
+def update_customer(customer_id: int, payload: CustomerIn) -> dict[str, Any]:
+    status = _normalize_status(payload.status)
+    with _connect() as db:
+        cur = db.execute(
+            """UPDATE customers SET company_name=?,contact_name=?,email=?,phone=?,tax_id=?,status=?,updated_at=? WHERE id=?""",
+            (payload.company_name.strip(), payload.contact_name.strip(), payload.email.strip().lower(), payload.phone.strip(), payload.tax_id.strip(), status, _now().isoformat(), customer_id),
+        )
+        if not cur.rowcount:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return {"ok": True, "id": customer_id}
+
+
+@app.delete("/admin/customers/{customer_id}", dependencies=[Depends(_admin)])
+def delete_customer(customer_id: int) -> dict[str, Any]:
+    with _connect() as db:
+        count = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE customer_id=?", (customer_id,)).fetchone()["n"]
+        if count:
+            raise HTTPException(status_code=409, detail="El cliente tiene licencias asociadas; reasígnelas o elimínelas primero")
+        cur = db.execute("DELETE FROM customers WHERE id=?", (customer_id,))
+        if not cur.rowcount:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return {"ok": True}
+
+
+@app.get("/admin/licenses", dependencies=[Depends(_admin)])
+def list_licenses() -> dict[str, Any]:
+    with _connect() as db:
+        rows = db.execute(
+            """SELECT l.*, c.company_name, COUNT(i.installation_id) AS installation_count
+               FROM licenses l
+               LEFT JOIN customers c ON c.id=l.customer_id
+               LEFT JOIN installations i ON i.license_key=l.license_key
+               GROUP BY l.license_key ORDER BY l.updated_at DESC"""
+        ).fetchall()
+    return {"rows": [dict(row) for row in rows]}
 
 
 @app.put("/admin/licenses/{license_key}", dependencies=[Depends(_admin)])
@@ -181,24 +328,51 @@ def upsert_license(license_key: str, payload: LicenseIn) -> dict[str, Any]:
     key = license_key.strip().upper()
     if key != payload.license_key.strip().upper():
         raise HTTPException(status_code=422, detail="La clave de la ruta y del cuerpo no coinciden")
-    status = payload.status.strip().upper()
+    status = _normalize_status(payload.status)
     license_type = payload.type.strip().upper()
     plan = payload.plan.strip().upper()
-    if status not in {"ACTIVA", "INACTIVA", "SUSPENDIDA"}:
-        raise HTTPException(status_code=422, detail="Estado no permitido")
     if license_type not in {"PAID", "TRIAL"}:
         raise HTTPException(status_code=422, detail="Tipo no permitido")
+    if payload.max_clients is not None and payload.max_clients < 0:
+        raise HTTPException(status_code=422, detail="max_clients no puede ser negativo")
+    if payload.customer_id is not None:
+        with _connect() as db:
+            if not db.execute("SELECT 1 FROM customers WHERE id=?", (payload.customer_id,)).fetchone():
+                raise HTTPException(status_code=404, detail="Cliente/ISP no encontrado")
     with _connect() as db:
         db.execute(
-            """INSERT INTO licenses (license_key,name,email,status,type,plan,max_clients,updated_at)
-               VALUES (?,?,?,?,?,?,?,?)
+            """INSERT INTO licenses (license_key,customer_id,name,email,status,type,plan,max_clients,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?)
                ON CONFLICT(license_key) DO UPDATE SET
-               name=excluded.name,email=excluded.email,status=excluded.status,type=excluded.type,
-               plan=excluded.plan,max_clients=excluded.max_clients,updated_at=excluded.updated_at""",
-            (key, payload.name.strip(), payload.email.strip().lower(), status, license_type, plan,
-             payload.max_clients, _now().isoformat()),
+               customer_id=excluded.customer_id,name=excluded.name,email=excluded.email,status=excluded.status,
+               type=excluded.type,plan=excluded.plan,max_clients=excluded.max_clients,updated_at=excluded.updated_at""",
+            (key, payload.customer_id, payload.name.strip(), payload.email.strip().lower(), status, license_type, plan, payload.max_clients, _now().isoformat()),
         )
     return {"ok": True, "license_key": key}
+
+
+@app.delete("/admin/licenses/{license_key}", dependencies=[Depends(_admin)])
+def delete_license(license_key: str) -> dict[str, Any]:
+    key = license_key.strip().upper()
+    with _connect() as db:
+        db.execute("DELETE FROM installations WHERE license_key=?", (key,))
+        cur = db.execute("DELETE FROM licenses WHERE license_key=?", (key,))
+        if not cur.rowcount:
+            raise HTTPException(status_code=404, detail="Licencia no encontrada")
+    return {"ok": True}
+
+
+@app.get("/admin/installations", dependencies=[Depends(_admin)])
+def list_installations() -> dict[str, Any]:
+    with _connect() as db:
+        rows = db.execute(
+            """SELECT i.*, c.company_name
+               FROM installations i
+               JOIN licenses l ON l.license_key=i.license_key
+               LEFT JOIN customers c ON c.id=l.customer_id
+               ORDER BY i.updated_at DESC"""
+        ).fetchall()
+    return {"rows": [dict(row) for row in rows]}
 
 
 @app.put("/admin/licenses/{license_key}/installations/{installation_id}", dependencies=[Depends(_admin)])
@@ -209,18 +383,28 @@ def authorize_installation(license_key: str, installation_id: str, payload: Inst
         raise HTTPException(status_code=422, detail="La instalación de la ruta y del cuerpo no coincide")
     if not _license_row(key):
         raise HTTPException(status_code=404, detail="Licencia no registrada")
-    status = payload.status.strip().upper()
-    if status not in {"ACTIVA", "INACTIVA", "SUSPENDIDA"}:
-        raise HTTPException(status_code=422, detail="Estado no permitido")
+    status = _normalize_status(payload.status)
     with _connect() as db:
         db.execute(
-            """INSERT INTO installations (license_key,installation_id,status,updated_at)
-               VALUES (?,?,?,?)
+            """INSERT INTO installations (license_key,installation_id,installation_name,status,updated_at)
+               VALUES (?,?,?,?,?)
                ON CONFLICT(license_key,installation_id) DO UPDATE SET
-               status=excluded.status,updated_at=excluded.updated_at""",
-            (key, install_id, status, _now().isoformat()),
+               installation_name=excluded.installation_name,status=excluded.status,updated_at=excluded.updated_at""",
+            (key, install_id, payload.installation_name.strip(), status, _now().isoformat()),
         )
     return {"ok": True, "license_key": key, "installation_id": install_id, "status": status}
+
+
+@app.delete("/admin/licenses/{license_key}/installations/{installation_id}", dependencies=[Depends(_admin)])
+def delete_installation(license_key: str, installation_id: str) -> dict[str, Any]:
+    with _connect() as db:
+        cur = db.execute(
+            "DELETE FROM installations WHERE license_key=? AND installation_id=?",
+            (license_key.strip().upper(), installation_id.strip()),
+        )
+        if not cur.rowcount:
+            raise HTTPException(status_code=404, detail="Instalación no encontrada")
+    return {"ok": True}
 
 
 @app.get("/admin/validations", dependencies=[Depends(_admin)])
