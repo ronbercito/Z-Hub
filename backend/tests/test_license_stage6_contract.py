@@ -67,3 +67,17 @@ def test_stage6_release_remains_present_after_future_versions():
     server = read("license_server/app/main.py")
     assert "Z-Hub License Server" in server
     assert "GRACE_HOURS" in server
+
+
+def test_installer_preserves_remote_license_environment():
+    deploy = read("deploy/install.sh")
+    template = read("deploy/supervisor/zhub_backend.conf.template")
+    assert 'SUPERVISOR_CONF="/etc/supervisor/conf.d/zhub_backend.conf"' in deploy
+    assert "CURRENT_SUPERVISOR_ENV" in deploy
+    assert "ZHUB_SUPERVISOR_LICENSE_ENV" in deploy
+    assert "ZHUB_LICENSE_SERVER_URL" in deploy
+    assert "ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE" in deploy
+    assert 'environment=PYTHONUNBUFFERED=1${ZHUB_SUPERVISOR_LICENSE_ENV}' in template
+    assert "192.168.10.240" not in deploy
+    assert "192.168.10.240" not in template
+
