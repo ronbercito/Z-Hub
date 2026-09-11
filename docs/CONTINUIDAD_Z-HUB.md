@@ -3100,3 +3100,13 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Read only:** `/api/license/info` marca `read_only` también para `invalid` y `missing`.
 - **Backup previo:** `backup/pre-remove-demo-license-1.2.74-20260911`.
 - **Pendiente de infraestructura:** para aceptar claves emitidas por el License Server central, la instalación debe tener configurados `ZHUB_LICENSE_SERVER_URL`, la CA de confianza y la clave pública del servidor. No se deben incrustar esas credenciales o materiales privados en el repositorio.
+
+---
+
+### 1.2.75 — 2026-09-11 — Activación remota PAID y TRIAL
+- La recuperación de licencia acepta licencias `PAID` y `TRIAL` siempre que la validación unificada las marque como activas.
+- La activación sigue requiriendo rol administrador, instalación autorizada y validación del License Server cuando el modo remoto está habilitado.
+- Una clave rechazada no reemplaza la licencia almacenada ni borra datos.
+- Se mantiene validación RS256, caché firmada y período de gracia definidos en Etapa 6.
+- Backup previo: `backup/pre-remote-license-1.2.75-20260911`.
+- Infraestructura de laboratorio validada: Z-Hub `z2` alcanza por HTTPS el License Server en `192.168.10.240`; queda pendiente instalar en `z2` la CA pública, la clave pública RSA y activar `ZHUB_LICENSE_SERVER_URL` antes de probar la licencia central.

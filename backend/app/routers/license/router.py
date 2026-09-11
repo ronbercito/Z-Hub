@@ -45,21 +45,24 @@ async def license_info(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/activate", dependencies=[Depends(require_role("admin"))])
-async def activate_paid_license(payload: LicenseActivationIn, db: AsyncSession = Depends(get_db)):
+async def activate_license(payload: LicenseActivationIn, db: AsyncSession = Depends(get_db)):
     key = payload.license_key.strip().upper()
     record, validation = await resolve_license_record(db, key)
     if not record:
         detail = validation.get("message") or "La licencia ingresada no es válida o no está activa."
         raise HTTPException(status_code=400, detail=detail)
-    if record.get("type") != "PAID":
-        raise HTTPException(status_code=422, detail="Desde esta pantalla solo puede activarse una licencia pagada.")
+
+    license_type = str(record.get("type") or "").upper()
+    if license_type not in {"PAID", "TRIAL"}:
+        raise HTTPException(status_code=422, detail="Tipo de licencia no permitido para esta instalación.")
 
     setting, data = await get_setting_data(db)
     setting.data = apply_license_metadata(data, record)
     await db.commit()
+    label = "Trial" if license_type == "TRIAL" else "Licencia pagada"
     return {
         "ok": True,
-        "message": "Licencia pagada activada correctamente.",
+        "message": f"{label} activada correctamente.",
         "validation_source": validation.get("source"),
         "license": await _public_info(db),
     }
