@@ -9,23 +9,23 @@ from __future__ import annotations
 DEFAULT_TEMPLATES = {
     "payment_reminder": {
         "name": "Recordatorio de pago",
-        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nSu recibo ya se encuentra disponible.\n%vip%%vip%\nTotal a pagar *{{total}}*.\n%vip%%vip%\nFecha de Vencimiento *{{fecha_pago}}*\n%vip%\nDia de Corte: *{{fecha_corte}}*\n%vip%%vip%\n*¿DÓNDE PAGAR?*\n%vip%\n*YAPE/PLIN*\n%vip%\n{{yape}}\n%vip%\n({{titular_pago}})\n%vip%%vip%\nSi ya pago, omita este mensaje.\n%vip%%vip%\n*Enviar captura de pantalla de deposito para su validacion*",
-        "variables": ["cliente_nombre", "cliente_apellidos", "total", "fecha_pago", "fecha_corte", "yape", "titular_pago"],
+        "text": "👋 *¡Hola, {{cliente_nombre}}!*\n\n💙 Somos *{{empresa}}* y queremos avisarte que tu recibo de internet ya está disponible.\n\n💰 *Total a pagar:* {{total}}\n📅 *Fecha de vencimiento:* {{fecha_pago}}\n\n💳 *Puedes realizar tu pago por:*\n\n📱 *YAPE / PLIN*\n👉 {{yape}}\n{{titular_pago}}\n\n🏦 *Transferencia bancaria*\n\n📸 Si realizas una transferencia o depósito, envíanos una *captura del comprobante* para validar tu pago.\n\n✅ *Si ya realizaste el pago, puedes ignorar este mensaje.*\n\n🙏 *¡Gracias por seguir confiando en {{empresa}}!*",
+        "variables": ["cliente_nombre", "empresa", "total", "fecha_pago", "yape", "titular_pago"],
     },
     "cut_warning": {
         "name": "Aviso de corte por deuda vencida",
-        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nSu servicio presenta una deuda vencida por *{{total}}*.\n%vip%%vip%\nFecha de Vencimiento: *{{fecha_pago}}*\n%vip%%vip%\n*Evite el corte regularizando su pago.*\n%vip%%vip%\nSoporte: {{telefono}}",
-        "variables": ["cliente_nombre", "cliente_apellidos", "total", "fecha_pago", "telefono"],
+        "text": "👋 *Hola, {{cliente_nombre}}*\n\n⚠️ Queremos ayudarte a mantener tu servicio de *{{empresa}}* activo.\n\n💰 *Saldo pendiente:* {{total}}\n📅 *Vencimiento:* {{fecha_pago}}\n\n⏰ Tu pago se encuentra vencido. Para evitar una interrupción del servicio, te recomendamos regularizarlo lo antes posible.\n\n📱 *YAPE / PLIN:* {{yape}}\n📞 *Soporte:* {{telefono}}\n\n📸 Después de realizar el pago, envíanos tu comprobante para validarlo.\n\n💙 *Gracias por tu atención y por seguir con {{empresa}}.*",
+        "variables": ["cliente_nombre", "empresa", "total", "fecha_pago", "yape", "telefono"],
     },
     "payment_confirmation": {
         "name": "Confirmación de pago",
-        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\nHemos recibido su pago por *{{total}}*.\n%vip%%vip%\nComprobante: *{{factura}}*\n%vip%%vip%\nSu servicio se encuentra *ACTIVO*.\n%vip%%vip%\nGracias por su pago.",
-        "variables": ["cliente_nombre", "cliente_apellidos", "total", "factura"],
+        "text": "🎉 *¡Pago recibido, {{cliente_nombre}}!*\n\n💙 *{{empresa}}* confirma que hemos recibido tu pago.\n\n💰 *Monto:* {{total}}\n🧾 *Comprobante:* {{factura}}\n\n✅ *Tu servicio se encuentra ACTIVO.*\n\n🙏 ¡Gracias por realizar tu pago y por seguir confiando en nosotros!",
+        "variables": ["cliente_nombre", "empresa", "total", "factura"],
     },
     "maintenance": {
         "name": "Aviso de mantenimiento",
-        "text": "Estimado(a): *{{cliente_nombre}} {{cliente_apellidos}}* .\n%vip%%vip%\n{{empresa}} informa que se realizará mantenimiento de red el *{{fecha}}* de *{{hora_inicio}}* a *{{hora_fin}}*.\n%vip%%vip%\nAgradecemos su comprensión.",
-        "variables": ["cliente_nombre", "cliente_apellidos", "empresa", "fecha", "hora_inicio", "hora_fin"],
+        "text": "🔧 *Aviso importante, {{cliente_nombre}}*\n\n💙 *{{empresa}}* realizará un mantenimiento de red.\n\n📅 *Fecha:* {{fecha}}\n🕐 *Horario:* {{hora_inicio}} a {{hora_fin}}\n\nDurante este periodo podrías experimentar una interrupción temporal del servicio.\n\n🙏 Agradecemos tu comprensión y paciencia.\n\n💙 *{{empresa}}*",
+        "variables": ["cliente_nombre", "empresa", "fecha", "hora_inicio", "hora_fin"],
     },
 }
 
