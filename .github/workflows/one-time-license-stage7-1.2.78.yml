@@ -22,7 +22,7 @@ jobs:
         run: |
           bash -n deploy/install.sh
           python -m compileall -q license_server/app backend
-          python -m pip install -q pytest
+          python -m pip install -q pytest pytest-xdist
           pytest -q backend/tests/test_license_center_web_contract.py
       - name: Commit changes
         run: |
