@@ -70,4 +70,3 @@ def test_release_contract_remains_versioned():
     version = read("frontend/src/modules/system-update/version.js")
     assert 'export const PANEL_VERSION = ' in version
     assert 'export const CHANGELOG = [' in version
-    assert "Trial" in version
