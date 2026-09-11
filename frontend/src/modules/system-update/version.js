@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.92";
+export const PANEL_VERSION = "1.2.93";
 export const CHANGELOG = [
-  { type: "UI", text: "Centro de Plantillas adaptado visualmente al tema oscuro y al tema Z-Hub Claro Suave." },
-  { type: "UI", text: "Se equilibran superficies, bordes, textos y acentos para mantener contraste y jerarquía en ambos temas." },
-  { type: "Arquitectura", text: "Los estilos del Centro de Plantillas quedan aislados en una hoja visual independiente para evitar afectar otros módulos." },
+  { type: "Mensajería", text: "Las plantillas de WhatsApp adoptan variables compatibles con la sintaxis de WispHub: {{variable}} y marcadores %vip%." },
+  { type: "Automatización", text: "Recordatorios, avisos de corte y confirmaciones usan el mismo renderizador antes del envío por AutomatizadoVIP." },
+  { type: "Compatibilidad", text: "Se conserva soporte para plantillas antiguas con {variable}, mientras las nuevas plantillas pueden usar formato WhatsApp como *negrita*." },
 ];
