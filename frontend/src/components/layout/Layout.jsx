@@ -30,6 +30,8 @@ import SettingsModal from "../../modules/ajustes/SettingsModal";
 import { PANEL_VERSION } from "../../modules/system-update/version";
 import { applyPanelTheme } from "../../modules/appearance/panelThemes";
 
+const LOCKED_LICENSE_STATUSES = new Set(["trial_expired", "invalid", "missing"]);
+
 export default function Layout() {
   const { API, token } = useAuth();
   const storedTab = localStorage.getItem("fibraz_active_tab") || "inicio";
@@ -39,6 +41,7 @@ export default function Layout() {
   const [activeTab, setActiveTab] = useState(() => legacySettingsSection ? "ajustes" : storedTab);
   const [settingsModalSection, setSettingsModalSection] = useState(legacySettingsSection);
   const [sidebarOpen, setSidebarOpen] = useState(() => localStorage.getItem("fibraz_sidebar_open") !== "false");
+  const [licenseLocked, setLicenseLocked] = useState(false);
 
   useEffect(() => { localStorage.setItem("fibraz_active_tab", activeTab); }, [activeTab]);
   useEffect(() => { localStorage.setItem("fibraz_sidebar_open", String(sidebarOpen)); }, [sidebarOpen]);
@@ -60,7 +63,10 @@ export default function Layout() {
     const checkLicense = async () => {
       try {
         const response = await axios.get(`${API}/license/info`, { headers: token ? { Authorization:`Bearer ${token}` } : {} });
-        if (response.data?.status === "trial_expired" || response.data?.read_only) {
+        const status = String(response.data?.status || "").toLowerCase();
+        const blocked = LOCKED_LICENSE_STATUSES.has(status) || Boolean(response.data?.read_only);
+        setLicenseLocked(blocked);
+        if (blocked) {
           setActiveTab("ajustes");
           setSettingsModalSection("license");
         }
@@ -87,7 +93,10 @@ export default function Layout() {
   useEffect(() => { document.title = `${companyName} · Z-Hub`; }, [companyName]);
 
   const openSettingsSection = (section) => setSettingsModalSection(section);
-  const closeSettingsModal = () => setSettingsModalSection(null);
+  const closeSettingsModal = () => {
+    if (licenseLocked && settingsModalSection === "license") return;
+    setSettingsModalSection(null);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -118,13 +127,13 @@ export default function Layout() {
 
   return (
     <div className="app-shell min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={(tab) => { closeSettingsModal(); setActiveTab(tab); }} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
+      <Sidebar activeTab={activeTab} setActiveTab={(tab) => { if (licenseLocked) return; closeSettingsModal(); setActiveTab(tab); }} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} companyName={companyName} logoData={logoData} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-        <Navbar setActiveTab={(tab) => { closeSettingsModal(); setActiveTab(tab); }} />
+        <Navbar setActiveTab={(tab) => { if (licenseLocked) return; closeSettingsModal(); setActiveTab(tab); }} />
         <main className="flex-1 w-full max-w-none px-4 py-4 sm:px-6 sm:py-6 lg:px-6 lg:py-7">{renderContent()}</main>
         <footer className="panel-footer mt-auto border-t px-6 py-3 text-center text-sm font-bold tracking-wide text-slate-600">Panel Z-Hub · v{PANEL_VERSION}</footer>
       </div>
-      {activeTab === "ajustes" && <SettingsModal section={settingsModalSection} onClose={closeSettingsModal} />}
+      {activeTab === "ajustes" && <SettingsModal section={settingsModalSection} onClose={closeSettingsModal} locked={licenseLocked && settingsModalSection === "license"} />}
     </div>
   );
 }
