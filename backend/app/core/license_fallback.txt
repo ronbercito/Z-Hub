@@ -1,13 +1,8 @@
-# LICENCIAS Z-HUB — fallback empaquetado para transición a Etapa 6
-# Este archivo viaja con el backend y NO se elimina durante install/update.
-# El registro privado /etc/zhub/licencia/licencias.txt mantiene prioridad.
-
-LICENCIA: ZHUB-2026-DEMO-001
-NOMBRE: Empresa Demo SAC
-CORREO: admin@empresademo.com
-ESTADO: ACTIVA
-
-LICENCIA: ZHUB-2026-DEMO-002
-NOMBRE: Juan Pérez
-CORREO: juan@ejemplo.com
-ESTADO: ACTIVA
+# LICENCIAS Z-HUB — archivo histórico de transición
+#
+# Desde Z-Hub 1.2.74 este archivo NO autoriza instalaciones y no contiene
+# licencias activas de demostración. La autorización válida debe provenir de:
+#   1) License Server remoto + autorización/caché firmada; o
+#   2) registro privado local /etc/zhub/licencia/licencias.txt durante transición.
+#
+# No agregar aquí claves productivas ni de demostración activas.
