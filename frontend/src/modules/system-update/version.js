@@ -1,9 +1,9 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.2.63";
+export const PANEL_VERSION = "1.2.64";
 export const CHANGELOG = [
-  { type: "Licencia", text: "Se corrige el falso estado LICENCIA NO VÁLIDA cuando existe un archivo privado de licencias pero la clave histórica válida solo está presente en el fallback de compatibilidad." },
-  { type: "Prioridad", text: "El registro privado y el fallback se combinan temporalmente; si una misma clave existe en ambos, el registro privado siempre tiene prioridad." },
-  { type: "Seguridad", text: "Una licencia marcada INACTIVA o SUSPENDIDA en el registro privado no puede quedar activa por una copia antigua del fallback." },
-  { type: "Compatibilidad", text: "Las instalaciones antiguas que aún conservan claves válidas del registro incluido pueden seguir mostrando LICENCIA ACTIVA mientras se completa la migración al License Server." },
-  { type: "Backup", text: "Se creó backup/pre-license-status-hotfix-1.2.62-20260910 antes de aplicar la corrección." },
+  { type: "Licencia", text: "Se corrige el falso estado LICENCIA NO VÁLIDA en instalaciones pagadas que ya conservan un snapshot válido de licencia y reciben un estado histórico/legado no reconocido desde el registro local." },
+  { type: "Compatibilidad", text: "Los estados activos históricos ACTIVA, ACTIVO, ACTIVE, VALIDA y VÁLIDA se normalizan como licencia activa durante la transición al License Server." },
+  { type: "Seguridad", text: "INACTIVA, SUSPENDIDA y estados equivalentes continúan teniendo prioridad y bloquean la licencia aunque exista un snapshot anterior." },
+  { type: "Persistencia", text: "Un estado legado desconocido ya no invalida una licencia pagada previamente activada; sin snapshot persistido, ese mismo registro no permite una activación nueva." },
+  { type: "Backup", text: "Se creó backup/pre-license-status-hotfix-1.2.64-20260910 antes de modificar el motor de licencias." },
 ];
