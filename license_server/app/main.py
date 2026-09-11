@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.3.0"
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 DB_PATH = Path(os.environ.get("ZHUB_LICENSE_DB", "/var/lib/zhub-license-server/licenses.db"))
@@ -72,6 +72,10 @@ class InstallationIn(BaseModel):
     installation_id: str = Field(min_length=8, max_length=160)
     installation_name: str = ""
     status: str = "ACTIVA"
+
+
+class TrialRenewIn(BaseModel):
+    days: int = Field(default=TRIAL_DAYS, ge=1, le=365)
 
 
 def _connect() -> sqlite3.Connection:
@@ -310,12 +314,29 @@ def validate_license(payload: ValidateIn) -> dict[str, Any]:
 @app.get("/admin/dashboard", dependencies=[Depends(_admin)])
 def admin_dashboard() -> dict[str, Any]:
     since = (_now() - timedelta(hours=24)).isoformat()
+    next_7d = (_now() + timedelta(days=7)).isoformat()
+    now = _now().isoformat()
     with _connect() as db:
         customers = db.execute("SELECT COUNT(*) AS n FROM customers").fetchone()["n"]
         active_licenses = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status='ACTIVA'").fetchone()["n"]
         active_installations = db.execute("SELECT COUNT(*) AS n FROM installations WHERE status='ACTIVA'").fetchone()["n"]
         validations_24h = db.execute("SELECT COUNT(*) AS n FROM validations WHERE created_at >= ?", (since,)).fetchone()["n"]
-    return {"customers": customers, "active_licenses": active_licenses, "active_installations": active_installations, "validations_24h": validations_24h}
+        paid_active = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status='ACTIVA' AND type='PAID'").fetchone()["n"]
+        trial_active = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status='ACTIVA' AND type='TRIAL' AND (expires_at IS NULL OR expires_at > ?)", (now,)).fetchone()["n"]
+        suspended_licenses = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status IN ('SUSPENDIDA','REVOCADA')").fetchone()["n"]
+        expiring_trials_7d = db.execute("SELECT COUNT(*) AS n FROM licenses WHERE status='ACTIVA' AND type='TRIAL' AND expires_at IS NOT NULL AND expires_at > ? AND expires_at <= ?", (now, next_7d)).fetchone()["n"]
+        rejected_validations_24h = db.execute("SELECT COUNT(*) AS n FROM validations WHERE created_at >= ? AND result <> 'AUTHORIZED'", (since,)).fetchone()["n"]
+    return {
+        "customers": customers,
+        "active_licenses": active_licenses,
+        "active_installations": active_installations,
+        "validations_24h": validations_24h,
+        "paid_active": paid_active,
+        "trial_active": trial_active,
+        "suspended_licenses": suspended_licenses,
+        "expiring_trials_7d": expiring_trials_7d,
+        "rejected_validations_24h": rejected_validations_24h,
+    }
 
 
 @app.get("/admin/customers", dependencies=[Depends(_admin)])
@@ -424,6 +445,23 @@ def upsert_license(license_key: str, payload: LicenseIn) -> dict[str, Any]:
     return {"ok": True, "license_key": key, "plan": plan, "max_clients": plan_limit, "expires_at": expires_at}
 
 
+@app.post("/admin/licenses/{license_key}/renew-trial", dependencies=[Depends(_admin)])
+def renew_trial(license_key: str, payload: TrialRenewIn) -> dict[str, Any]:
+    key = license_key.strip().upper()
+    with _connect() as db:
+        row = db.execute("SELECT type FROM licenses WHERE license_key=?", (key,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Licencia no encontrada")
+        if str(row["type"]).upper() != "TRIAL":
+            raise HTTPException(status_code=409, detail="Solo las licencias TRIAL pueden renovar su período de prueba")
+        expires_at = (_now() + timedelta(days=payload.days)).isoformat()
+        db.execute(
+            "UPDATE licenses SET expires_at=?, status='ACTIVA', updated_at=? WHERE license_key=?",
+            (expires_at, _now().isoformat(), key),
+        )
+    return {"ok": True, "license_key": key, "expires_at": expires_at, "days": payload.days}
+
+
 @app.delete("/admin/licenses/{license_key}", dependencies=[Depends(_admin)])
 def delete_license(license_key: str) -> dict[str, Any]:
     key = license_key.strip().upper()
@@ -485,7 +523,11 @@ def validation_history(limit: int = 100) -> dict[str, Any]:
     size = min(500, max(1, int(limit)))
     with _connect() as db:
         rows = db.execute(
-            "SELECT license_key, installation_id, result, created_at FROM validations ORDER BY id DESC LIMIT ?",
+            """SELECT v.license_key, v.installation_id, v.result, v.created_at, c.company_name
+               FROM validations v
+               LEFT JOIN licenses l ON l.license_key=v.license_key
+               LEFT JOIN customers c ON c.id=l.customer_id
+               ORDER BY v.id DESC LIMIT ?""",
             (size,),
         ).fetchall()
     return {"rows": [dict(row) for row in rows]}

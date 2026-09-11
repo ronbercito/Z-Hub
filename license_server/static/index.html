@@ -11,7 +11,7 @@
     <div class="login-card">
       <div class="brand-mark">Z</div>
       <h1>Z-Hub License Center</h1>
-      <p>Administración central de clientes, licencias e instalaciones.</p>
+      <p>Administración central de clientes, licencias e instalaciones.</p><small class="secure-note">Use este centro únicamente mediante HTTPS.</small>
       <label>Token administrativo</label>
       <input id="tokenInput" type="password" autocomplete="off" placeholder="Ingrese el token del servidor" />
       <button id="loginBtn" class="btn primary">Ingresar</button>
@@ -46,26 +46,26 @@
       <section id="customers" class="view hidden">
         <div class="panel">
           <div class="panel-head"><div><h3>Clientes / ISP</h3><p>Empresas que utilizan Z-Hub</p></div><button class="btn primary" onclick="openCustomerModal()">Nuevo cliente</button></div>
-          <div id="customersTable"></div>
+          <div class="filters"><input id="customerSearch" placeholder="Buscar empresa, contacto, correo o documento"><select id="customerStatus"><option value="">Todos los estados</option><option>ACTIVA</option><option>INACTIVA</option><option>SUSPENDIDA</option></select></div><div id="customersTable"></div>
         </div>
       </section>
 
       <section id="licenses" class="view hidden">
         <div class="panel">
           <div class="panel-head"><div><h3>Licencias</h3><p>Planes, capacidad y estado comercial</p></div><button class="btn primary" onclick="openLicenseModal()">Nueva licencia</button></div>
-          <div id="licensesTable"></div>
+          <div class="filters"><input id="licenseSearch" placeholder="Buscar clave, cliente, titular o correo"><select id="licenseType"><option value="">Todos los tipos</option><option>PAID</option><option>TRIAL</option></select><select id="licenseStatus"><option value="">Todos los estados</option><option>ACTIVA</option><option>SUSPENDIDA</option><option>REVOCADA</option></select><select id="licensePlan"><option value="">Todos los planes</option><option>TRIAL</option><option>PLAN_100</option><option>PLAN_300</option><option>PLAN_500</option><option>PLAN_1000</option><option>ILIMITADO</option></select></div><div id="licensesTable"></div>
         </div>
       </section>
 
       <section id="installations" class="view hidden">
         <div class="panel">
           <div class="panel-head"><div><h3>Instalaciones autorizadas</h3><p>Servidores Z-Hub vinculados a cada licencia</p></div><button class="btn primary" onclick="openInstallationModal()">Autorizar instalación</button></div>
-          <div id="installationsTable"></div>
+          <div class="filters"><input id="installationSearch" placeholder="Buscar ID, nombre, licencia o cliente"><select id="installationStatus"><option value="">Todos los estados</option><option>ACTIVA</option><option>INACTIVA</option><option>SUSPENDIDA</option></select></div><div id="installationsTable"></div>
         </div>
       </section>
 
       <section id="validations" class="view hidden">
-        <div class="panel"><div class="panel-head"><div><h3>Historial de validaciones</h3><p>Resultado de las consultas de licencia</p></div></div><div id="validationsTable"></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Historial de validaciones</h3><p>Resultado de las consultas de licencia</p></div></div><div class="filters"><input id="validationSearch" placeholder="Buscar licencia, instalación, cliente o resultado"><select id="validationResult"><option value="">Todos los resultados</option><option>AUTHORIZED</option><option>LICENSE_NOT_FOUND</option><option>TRIAL_EXPIRED</option><option>LICENSE_BLOCKED</option><option>INSTALLATION_NOT_AUTHORIZED</option></select></div><div id="validationsTable"></div></div>
       </section>
     </main>
   </div>

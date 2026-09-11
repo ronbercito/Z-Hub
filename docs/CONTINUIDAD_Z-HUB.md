@@ -3152,3 +3152,20 @@ Cada nueva versión debe reemplazar `CHANGELOG` por las entradas de esa versión
 - **Validación pendiente de despliegue:** instalar 1.2.77 sobre `z2` y confirmar que, tras el reinicio del backend, las dos variables siguen presentes en `/proc/<pid>/environ` y el panel continúa en `Servidor remoto` sin intervención manual.
 - **Estado de etapas:** Etapa 6 queda funcionalmente cerrada; este 1.2.77 es un hotfix de persistencia de despliegue. Después de validarlo corresponde continuar con la Etapa 7 (Centro de Licencias / gestión comercial por GUI).
 
+---
+
+### 1.2.78 — 2026-09-11 — Etapa 7/7 cerrada: License Center comercial
+- **Punto de partida:** Etapa 6 quedó validada de extremo a extremo en `z2` con 1.2.77: Supervisor y el proceso real conservaron `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`, y el panel permaneció en `TRIAL ACTIVO` / `Servidor remoto` después de actualizar.
+- **Objetivo Etapa 7/7:** completar la administración comercial desde `/admin-ui` sin depender de SQLite manual ni llamadas directas a `/admin/*` para la operación normal.
+- **Dashboard comercial:** el License Server expone y la GUI muestra clientes, licencias activas, PAID activas, TRIAL activas, instalaciones activas, validaciones 24 h, rechazos 24 h y Trials que vencen en los próximos 7 días.
+- **Licencias:** se mantienen alta/edición/plan/capacidad/estado; la GUI agrega búsqueda/filtros, copia de clave, suspensión/reactivación, revocación explícita y renovación de TRIAL por 1–365 días. La renovación vuelve el TRIAL a `ACTIVA` y calcula un nuevo `expires_at` desde el servidor central.
+- **Clientes / ISP:** CRUD existente más búsqueda por empresa, contacto, correo, teléfono o documento y filtro de estado.
+- **Instalaciones:** autorización/edición/suspensión/reactivación/eliminación existentes más búsqueda, filtro y copia de `installation_id`.
+- **Validaciones:** el historial ahora adjunta `company_name` cuando existe y permite búsqueda/filtro por licencia, instalación, cliente o resultado.
+- **Seguridad:** `/admin/*` sigue protegido por `ZHUB_LICENSE_ADMIN_TOKEN`; el token permanece únicamente en `sessionStorage`; la GUI recuerda usar HTTPS; no se exponen ni copian claves privadas.
+- **License Server:** `APP_VERSION` pasa de `1.2.1` a `1.3.0` para identificar el cierre de Etapa 7. El contrato `/v1/licenses/validate` y JWT RS256 de Etapa 6 se mantienen.
+- **Archivos:** `license_server/app/main.py`, `license_server/static/index.html`, `license_server/static/app.js`, `license_server/static/styles.css`, `license_server/README.md`, `backend/tests/test_license_center_web_contract.py`, `frontend/src/modules/system-update/version.js`.
+- **Backup previo:** `backup/pre-license-stage7-1.2.78-20260911`.
+- **Validación requerida después del merge:** desplegar el nuevo `license_server/` en `web-licencia`, reiniciar `zhub-license-server`, confirmar `/health` versión `1.3.0`, entrar a `/admin-ui`, comprobar filtros/métricas/renovación y verificar desde `z2` que la licencia remota continúa validando.
+- **Estado de etapas:** **7/7 completadas en código**. Después de la validación operativa del VPS, el sistema de licenciamiento queda cerrado y pasa a mantenimiento/hardening incremental, no a una nueva etapa numerada.
+

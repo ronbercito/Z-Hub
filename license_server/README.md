@@ -1,4 +1,4 @@
-# Z-Hub License Server — Etapa 6/7 + License Center web
+# Z-Hub License Server — Etapa 7/7 + License Center comercial
 
 Servicio privado para centralizar el licenciamiento de instalaciones Z-Hub Self-Hosted sin mover la operación del ISP al VPS.
 
@@ -14,19 +14,20 @@ El VPS no recibe tráfico MikroTik/OLT ni datos operativos del ISP. Solo respond
 
 ## License Center web
 
-Desde la versión Z-Hub 1.2.67 el License Server incorpora una interfaz web inicial en:
+Desde Z-Hub 1.2.78 el License Center queda consolidado como interfaz comercial de la Etapa 7/7 en:
 
 `/admin-ui`
 
 La interfaz solicita el mismo `ZHUB_LICENSE_ADMIN_TOKEN` usado por `/admin/*` y permite:
 
-- dashboard con clientes/ISP, licencias activas, instalaciones activas y validaciones de 24 h;
-- crear, editar y eliminar clientes/ISP;
-- crear, editar, activar, suspender y eliminar licencias;
-- asignar una licencia a un cliente/ISP;
-- definir plan y `max_clients`;
-- autorizar, editar, suspender, reactivar y eliminar instalaciones;
-- revisar historial de validaciones.
+- dashboard comercial con clientes/ISP, PAID/TRIAL activas, instalaciones, validaciones, rechazos y Trials próximos a vencer;
+- crear, editar, buscar, filtrar y eliminar clientes/ISP;
+- crear, editar, activar, suspender, revocar y eliminar licencias;
+- generar claves de 192 bits, copiar claves y asignarlas a un cliente/ISP;
+- convertir TRIAL/PAID desde edición, definir plan y `max_clients` central;
+- renovar explícitamente un TRIAL entre 1 y 365 días desde la GUI;
+- autorizar, buscar, editar, suspender, reactivar y eliminar instalaciones;
+- buscar/filtrar el historial de validaciones con cliente, licencia, instalación y resultado.
 
 El token se conserva únicamente en `sessionStorage` del navegador y debe utilizarse siempre detrás de HTTPS cuando el servidor sea accesible fuera de la LAN.
 
@@ -90,6 +91,7 @@ Principales rutas:
 - `PUT|DELETE /admin/customers/{customer_id}`
 - `GET /admin/licenses`
 - `PUT|DELETE /admin/licenses/{license_key}`
+- `POST /admin/licenses/{license_key}/renew-trial`
 - `GET /admin/installations`
 - `PUT|DELETE /admin/licenses/{license_key}/installations/{installation_id}`
 - `GET /admin/validations`

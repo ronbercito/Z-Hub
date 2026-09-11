@@ -9,7 +9,7 @@ def read(path):
 
 def test_license_server_exposes_admin_web_and_customer_crud():
     main = read("license_server/app/main.py")
-    assert 'APP_VERSION = "1.2.1"' in main
+    assert 'APP_VERSION = "1.3.0"' in main
     assert 'app.mount("/admin-static"' in main
     assert '@app.get("/admin-ui"' in main
     assert 'CREATE TABLE IF NOT EXISTS customers' in main
@@ -84,3 +84,20 @@ def test_panel_release_keeps_current_license_contract():
     assert 'export const PANEL_VERSION = ' in version
     assert 'export const CHANGELOG = [' in version
     assert "Licencia" in version or "Licencias" in version
+
+
+def test_stage7_commercial_center_is_complete():
+    main = read("license_server/app/main.py")
+    html = read("license_server/static/index.html")
+    js = read("license_server/static/app.js")
+    css = read("license_server/static/styles.css")
+    assert 'APP_VERSION = "1.3.0"' in main
+    assert '@app.post("/admin/licenses/{license_key}/renew-trial"' in main
+    assert 'paid_active' in main and 'trial_active' in main
+    assert 'expiring_trials_7d' in main and 'rejected_validations_24h' in main
+    assert 'company_name' in main and 'FROM validations v' in main
+    assert 'customerSearch' in html and 'licenseSearch' in html
+    assert 'installationSearch' in html and 'validationSearch' in html
+    assert 'renewTrial' in js and 'copyText' in js
+    assert 'licenseType' in js and 'licenseStatus' in js and 'licensePlan' in js
+    assert '.filters{' in css
