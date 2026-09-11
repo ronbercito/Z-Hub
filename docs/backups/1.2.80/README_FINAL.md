@@ -1,0 +1,1 @@
+The integration work is additive. Existing messaging behavior is intentionally preserved until the real AutomatizadoVIP gateway is validated.
