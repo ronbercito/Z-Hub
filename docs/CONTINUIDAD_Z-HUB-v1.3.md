@@ -74,6 +74,15 @@ Historial preservado:
 - Solo baja/retiro definitivo libera capacidad.
 - Backup: `backup/pre-service-capacity-1.3.8-20260912`.
 
+## 1.3.7 — Mensaje comercial de WhatsApp
+- Mensaje ordenado con Installation ID, plan, capacidad y estado.
+- Backup: `backup/pre-whatsapp-message-1.3.7-20260912`.
+
+## 1.3.6 — Licencia compacta y contacto central
+- Contacto/WhatsApp sincronizado desde Web-Licence 1.4.7 mediante `GET /v1/public/contact`.
+- `ZHUB_LICENSE_WHATSAPP` permanece como fallback.
+- Backup: `backup/pre-license-contact-sync-1.3.6-20260912`.
+
 ## Marcadores históricos preservados para regresión
 - `1.3.0`.
 - `Etapa 4/7`.
