@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,9 +28,10 @@ def test_identity_styles_force_visible_text_in_light_theme():
     assert "visibility:visible!important" in css
 
 
-def test_release_1327_is_documented():
+def test_release_1327_is_documented_after_later_releases():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.27"' in version
+    match = re.search(r'PANEL_VERSION\s*=\s*"1\.3\.(\d+)"', version)
+    assert match and int(match.group(1)) >= 27
     assert "1.3.27 — Identidad MikroTik en bloque propio" in continuity
     assert "backup/pre-router-identity-panel-1.3.27-20260912" in continuity

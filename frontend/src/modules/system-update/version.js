@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.27";
+export const PANEL_VERSION = "1.3.28";
 export const CHANGELOG = [
-  { type: "Diseño", text: "La identidad del MikroTik ahora se renderiza en un bloque propio y visible entre el icono del equipo y el estado." },
-  { type: "Legibilidad", text: "Nombre, IP:puerto y modelo dejan de depender de reglas globales de h3/p y usan colores forzados incluso ante estilos heredados." },
-  { type: "Compatibilidad", text: "Se conservan métricas, selección, mapa, edición y eliminación sin agregar consultas RouterOS." },
+  { type: "Diseño", text: "Los iconos de CPU, memoria, ping, PPPoE, colas y tráfico ahora usan fondos sólidos por categoría e iconos blancos de alto contraste." },
+  { type: "Mapa", text: "El botón de ubicación adopta azul sólido con pin blanco para que sea visible en el pie de la tarjeta." },
+  { type: "Compatibilidad", text: "Se conserva la identidad 1.3.27 y no se agregan consultas RouterOS ni carga adicional." },
 ];
