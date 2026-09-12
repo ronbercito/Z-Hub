@@ -21,6 +21,28 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.32 — Registro de Tráfico · Etapa 1/5
+
+**Objetivo:** crear la base persistente y el contrato interno del futuro collector Traffic Flow sin modificar todavía la operación de ningún MikroTik.
+
+### Implementación
+- Nuevo modelo `TrafficIdentity`: conserva la vigencia histórica `cliente ↔ servicio ↔ router ↔ IP`, además de tipo de conexión y usuario PPPoE cuando exista. Una IP no se considera identidad permanente del abonado.
+- Nuevo modelo `TrafficAggregate`: preparado para descarga, subida, total, cantidad de flujos, período, origen y estado de procesamiento. La intención es guardar agregados y no flujos brutos indefinidamente.
+- Ambos modelos se registran en `app.models`, por lo que `init_db()` puede crear las tablas de forma no destructiva mediante `Base.metadata.create_all()`.
+- Se agrega `app/services/traffic_registry.py` como contrato mínimo del collector: normaliza IPv4/IPv6 y bytes, pero `collector_enabled()` permanece en `False`.
+- No se abren puertos, no se reciben datagramas y no se ejecutan comandos/configuración Traffic Flow sobre RouterOS en esta etapa.
+- Prueba de contrato `test_traffic_registry_stage1_1332_contract.py` incluida en CI.
+
+### Continuidad / rollback
+- Punto de partida confirmado: `main` 1.3.31, commit `3eb3bc6744dd21ca72652c9b2e5aa8f4e62263d1`.
+- Backup inmutable previo: `backup/pre-traffic-registry-stage1-1.3.31-20260912`.
+- Rama: `work/traffic-registry-stage1-1.3.32-20260912`.
+- `PANEL_VERSION = "1.3.32"`.
+- Etapa 2/5 queda bloqueada hasta validar CI y después validar esta base en el entorno correspondiente.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.31 — DHCP en tarjeta MikroTik
 
 **Motivo:** reemplazar la métrica `Tráfico` por un contador operativo de clientes DHCP del MikroTik.

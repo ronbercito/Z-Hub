@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/models/__init__.py
-Actualización: 2026-09-12 — registra estado operativo individual de servicios.
+Actualización: 2026-09-12 — registra base del Registro de Tráfico etapa 1/5.
 Función: registra todos los modelos (tablas SQL) para que SQLAlchemy los conozca al crear la base de datos.
 Trabaja con: backend/app/core/database.py y backend/app/models/*.py
 """
@@ -10,6 +10,7 @@ from .router import Router
 from .client import Client
 from .client_service import ClientService
 from .client_service_state import ClientServiceState
+from .traffic_registry import TrafficIdentity, TrafficAggregate
 from .installation import Installation
 from .ipv4_network import IPv4Network
 from .nap_box import NapBox
@@ -30,6 +31,6 @@ from .setting import Setting
 from .whatsapp_automatizadovip_log import WhatsAppAutomatizadoVIPLog
 
 __all__ = [
-    "User", "Plan", "Router", "Client", "ClientService", "ClientServiceState", "Installation", "Invoice", "ClientBalance", "Ticket",
+    "User", "Plan", "Router", "Client", "ClientService", "ClientServiceState", "TrafficIdentity", "TrafficAggregate", "Installation", "Invoice", "ClientBalance", "Ticket",
     "InventoryItem", "EquipmentRecovery", "ClientEquipment", "HotspotVoucher", "Task", "Setting", "ClientCommunication", "ClientDocument", "IPv4Network", "NapBox", "Zone", "MonitoringEquipment", "ClientActivity", "WhatsAppAutomatizadoVIPLog",
 ]
