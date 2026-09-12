@@ -2,7 +2,7 @@
 
 ## REGLAS PRIORITARIAS — LEER ANTES DE MODIFICAR
 
-Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x queda cerrada en `docs/CONTINUIDAD_Z-HUB-v1.2.md` como histórico.
+Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**.
 
 1. Revisar `main` y esta bitácora antes de modificar.
 2. Crear backup antes de cambios críticos.
@@ -10,284 +10,83 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 4. Mantener Web-Licence separado de Z-Hub y no versionar secretos.
 5. Probar CI y declarar por separado código integrado y despliegue real.
 6. No borrar datos para resolver problemas de licencia o UI.
+7. Si cambia el contrato Z-Hub ↔ Web-Licence, actualizar ambas bitácoras.
+
+El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTINUIDAD_Z-HUB-pre-1.3.8.md` y en el backup `backup/pre-service-capacity-1.3.8-20260912`.
 
 ---
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
-## 1.3.6 — Ventana de licencia compacta y contacto sincronizado desde Web-Licence
+## 1.3.8 — Capacidad de licencia por servicios registrados
 
-**Decisión:** la pantalla de Licencia debe caber de forma mucho más compacta en una sola ventana y el contacto comercial no se configura manualmente en cada Z-Hub; se administra centralmente en Web-Licence.
+**Decisión comercial:** la licencia deja de contar únicamente abonados con `status=active`. A partir de 1.3.8 la unidad de capacidad es el **servicio registrado que ocupa recursos de red**.
 
-### UI compacta
+### Regla definitiva
 
-- Se conserva la información esencial: estado, plan, vencimiento del TRIAL o `Sin vencimiento` en PAID, capacidad, uso, días restantes del TRIAL e Installation ID.
-- Se eliminan repeticiones visuales y se reducen espacios, paddings, tamaños de tarjetas y tipografías para disminuir el desplazamiento vertical.
-- Nuevo `frontend/src/modules/ajustes/license-settings-compact.css` cargado después del estilo base para mantener compatibilidad con los temas existentes.
-- La sección comercial queda horizontal/compacta en escritorio y vuelve a una columna en móvil.
-- La regla de capacidad no cambia: alcanzar el límite bloquea solo nuevas altas/reactivaciones, no el resto del panel.
+- El servicio principal de un abonado consume **1 cupo** cuando el abonado está `active`, `suspended` o `paused`.
+- Suspender/cortar un abonado **no libera** capacidad.
+- Pausar un abonado **no libera** capacidad.
+- Cada registro `ClientService` adicional consume **1 cupo independiente** cuando está `active`, `suspended` o `paused`.
+- Un abonado con 2 servicios consume 2 cupos; con 3 servicios consume 3 cupos.
+- Solo una **baja/retiro definitivo** deja de consumir el cupo correspondiente.
+- Registros `pending_install` no consumen hasta convertirse en un servicio registrado/operativo.
 
-### Contacto comercial central
+### Límites de planes
 
-- Web-Licence relacionado: **1.4.7**.
-- Nuevo cliente `backend/app/core/license_contact.py` consulta `GET /v1/public/contact` usando el mismo License Server y la misma validación TLS del sistema.
-- `GET /api/license/info` agrega:
-  - `sales_whatsapp`;
-  - `sales_business_name`;
-  - `sales_contact_name`;
-  - `sales_email`;
-  - `sales_contact_updated_at`;
-  - `sales_contact_source`.
-- El WhatsApp central de Web-Licence tiene prioridad.
-- `ZHUB_LICENSE_WHATSAPP` queda como **fallback de compatibilidad** si Web-Licence no tiene WhatsApp configurado o el endpoint central está temporalmente inaccesible.
-- Un fallo al consultar el contacto no impide cargar ni validar la licencia.
+- `TRIAL`: 30 días, máximo 20 servicios contabilizados.
+- `PLAN_100`: sin vencimiento, máximo 100 servicios.
+- `PLAN_300`: sin vencimiento, máximo 300 servicios.
+- `PLAN_500`: sin vencimiento, máximo 500 servicios.
+- `PLAN_1000`: sin vencimiento, máximo 1000 servicios.
+- `ILIMITADO`: sin vencimiento y sin límite de servicios.
 
-### Ventana del cliente
+### Comportamiento al alcanzar capacidad
 
-- El botón **Solicitar licencia por WhatsApp** / **Cambiar plan por WhatsApp** se habilita automáticamente cuando el administrador configura WhatsApp en Web-Licence.
-- Se muestran también, cuando existen, nombre comercial, persona de contacto y correo comercial sincronizados.
-- Si no hay WhatsApp central ni fallback local, la UI indica que el administrador debe completar el módulo **Contacto** en Web-Licence.
+- El panel **no se bloquea** globalmente.
+- Se bloquea el alta de un nuevo abonado porque crea un servicio principal.
+- Se bloquea `POST /api/clients/{client_id}/services` porque cada servicio adicional consume otro cupo.
+- Reactivar un suspendido o reanudar un pausado sigue permitido, ya que esos estados nunca liberaron el cupo.
+- Reactivar un cliente retirado requiere cupo porque el retiro sí dejó de consumir capacidad.
+- Edición, facturación, cobranza, suspensión, pausa, monitoreo, mapas, routers, OLTs, reportes, ajustes y demás funciones continúan disponibles.
 
-### Archivos / pruebas
+### Implementación
 
-- `backend/app/core/license_contact.py`.
-- `backend/app/routers/license/router.py`.
-- `frontend/src/modules/ajustes/LicenseSettings.jsx`.
-- `frontend/src/modules/ajustes/license-settings-compact.css`.
-- `backend/tests/test_license_contact_sync_136_contract.py` agregado al CI obligatorio.
-- El contrato histórico 1.3.5 se ajusta para comprobar que la funcionalidad siga existiendo sin exigir que 1.3.5 sea la versión actual.
-
-### Versionado / rollback
-
-- `PANEL_VERSION = "1.3.6"`.
-- Backup previo: `backup/pre-license-contact-sync-1.3.6-20260912`.
-- Rama: `work/license-contact-sync-1.3.6-20260912`.
-- Web-Licence relacionado: `1.4.7` / `backup/pre-contact-module-1.4.7-20260912`.
-- Despliegue real y prueba visual deben validarse después de CI/merge.
-
----
-
-## 1.3.5 — Registro integrado en Setup Wizard
-
-**Decisión:** el cliente final no necesita abrir la página pública de registro de Web-Licence. El flujo normal comienza y termina en el Setup Wizard de Z-Hub.
-
-### Flujo nuevo
-
-`Registro -> Activación -> Administrador -> Finalizar`.
-
-- El primer paso del Wizard registra/actualiza la empresa mediante `POST /api/setup/register`.
-- Z-Hub actúa como proxy hacia `POST /v1/public/customers/register`; el navegador no conoce ni consume directamente la URL central de Web-Licence.
-- Si el cliente ya tiene cuenta, el botón **Ya tengo una cuenta** omite el formulario y pasa a Activación, donde se usa el correo existente.
-- El registro sigue siendo idempotente por correo; no crea una segunda cuenta si el correo ya existe.
-- La protección anti-segundo-TRIAL permanece sin cambios: una cuenta ya vinculada a otro servidor no recibe otra prueba.
-
-### País y WhatsApp
-
-- El campo **País** aparece primero.
-- Valor por defecto: **Perú**.
-- No se solicita ciudad en el Wizard.
-- Se incluyen: Argentina, Bolivia, Brasil, Chile, Colombia, Costa Rica, Cuba, Ecuador, El Salvador, Guatemala, Haití, Honduras, México, Nicaragua, Panamá, Paraguay, Perú, República Dominicana, Uruguay y Venezuela.
-- Cada país tiene su prefijo telefónico internacional; al guardar, Z-Hub compone el WhatsApp como `+<código><número nacional>`.
-- Para Perú se usa `+51` por defecto.
-
-### Archivos / contrato
-
-- `frontend/src/modules/setup/SetupWizard.jsx`: 4 pasos, selector LATAM, prefijo automático y botón **Ya tengo una cuenta**.
-- `backend/app/routers/setup/router.py`: nuevo `POST /api/setup/register`.
-- `backend/app/routers/setup/schemas.py`: `CustomerRegistrationRequest`.
-- `backend/app/core/auto_trial.py`: cliente público para registro y Auto-TRIAL sin exponer Web-Licence al navegador.
-- `backend/tests/test_wizard_registration_135_contract.py`: contrato de regresión obligatorio en CI.
-
-### Validación real en instalación limpia — 2026-09-12
-
-- Instalación limpia validada en un contenedor nuevo con acceso por `192.168.10.235`.
-- El navegador mostró correctamente el Wizard de **4 pasos**: `1. Registro -> 2. Activación -> 3. Administrador -> 4. Finalizar`.
-- En el paso Registro se confirmó visualmente:
-  - **Perú (+51)** seleccionado por defecto.
-  - País ubicado antes de Empresa/ISP y demás datos.
-  - Campo Ciudad eliminado del Wizard.
-  - WhatsApp dividido entre prefijo automático `+51` y número nacional.
-  - Botón **Ya tengo una cuenta** disponible.
-  - Botón **Registrar y continuar** disponible para una cuenta nueva.
-- Esta prueba confirma que el registro del cliente ya puede iniciarse dentro de Z-Hub sin obligarlo a abrir el portal público de Web-Licence.
-
-### Validación real del límite TRIAL — 2026-09-12
-
-- Se activó un TRIAL real y se registraron **20 abonados activos**.
-- La pantalla de Licencia mostró correctamente **20 / 20 abonados activos · 100%** y capacidad autorizada `20`.
-- Al intentar registrar el abonado activo número **21**, el backend rechazó el alta con `CLIENT_LIMIT_REACHED`.
-- El mensaje confirmó uso actual `20 de 20` y recordó que el resto de funciones del panel permanecen disponibles.
-- Resultado funcional: **VALIDADO**. Al alcanzar la capacidad del TRIAL no se bloquea Z-Hub; únicamente se impiden nuevas altas o reactivaciones que superarían el cupo.
-- La UI de Licencia mostró correctamente el aviso: **Capacidad alcanzada: no se pueden registrar o reactivar más abonados hasta liberar un cupo o cambiar de plan.**
-- Mejora visual pendiente/no bloqueante: ocultar al usuario final el prefijo técnico `CLIENT_LIMIT_REACHED:` del toast y mostrar únicamente el mensaje comercial legible. La lógica de capacidad ya funciona correctamente.
+- Nuevo `backend/app/core/license_usage.py` con `CAPACITY_STATUSES = ("active", "suspended", "paused")`.
+- `backend/server.py` conecta el cálculo comercial de servicios al motor de licencia y aplica `enforce_client_capacity` también al router de servicios adicionales.
+- `backend/app/core/license_guard.py` agrega el control de capacidad para nuevos servicios y elimina el bloqueo incorrecto al reactivar suspendidos/pausados.
+- `frontend/src/modules/ajustes/LicenseSettings.jsx` cambia la terminología de “abonados activos” a “servicios” y explica qué estados consumen cupo.
+- El mensaje de WhatsApp informa capacidad utilizada en servicios contabilizados.
+- Contrato automático: `backend/tests/test_service_capacity_138_contract.py`.
 
 ### Versionado / rollback
 
-- `PANEL_VERSION = "1.3.5"`.
-- Backup previo: `backup/pre-wizard-registration-1.3.5-20260912`.
-- Rama: `work/wizard-registration-1.3.5-20260912`.
-- CI/merge completados; las validaciones reales anteriores confirman además el despliegue y comportamiento funcional en laboratorio.
+- `PANEL_VERSION = "1.3.8"`.
+- Backup previo: `backup/pre-service-capacity-1.3.8-20260912`.
+- Rama: `work/service-capacity-1.3.8-20260912`.
+- Contrato relacionado de Web-Licence: los límites 20/100/300/500/1000 pasan a interpretarse como **servicios**, no abonados activos. Web-Licence no necesita cambiar la estructura de licencia; sí debe documentar el nuevo significado comercial.
+- Despliegue real y prueba con activo → suspendido → pausado → servicio adicional deben validarse después de CI/merge.
 
 ---
 
-## 1.3.4 — Regla comercial definitiva: PAID sin vencimiento y límite por abonados activos
+## 1.3.7 — Mensaje comercial de WhatsApp
 
-**Decisión validada con el propietario durante la prueba Etapa 7/7:** solo el TRIAL tiene vigencia temporal. Las licencias pagadas no vencen por días y se controlan exclusivamente por la cantidad de abonados activos.
-
-### Contrato definitivo
-
-- `TRIAL`: 30 días, máximo 20 abonados activos.
-- `PLAN_100`: sin vencimiento, máximo 100 abonados activos.
-- `PLAN_300`: sin vencimiento, máximo 300 abonados activos.
-- `PLAN_500`: sin vencimiento, máximo 500 abonados activos.
-- `PLAN_1000`: sin vencimiento, máximo 1000 abonados activos.
-- `ILIMITADO`: sin vencimiento y sin límite de abonados activos.
-- El consumo de capacidad cuenta únicamente registros `Client.status == "active"`; suspendidos, pausados, retirados o pendientes no consumen cupo mientras no estén activos.
-
-### Comportamiento al alcanzar el límite
-
-- **No se bloquea el panel.** Facturación, cobranza, edición, suspensión, routers, OLTs, monitoreo, mapas, reportes, ajustes, personal y demás funciones continúan disponibles.
-- Se bloquea con HTTP `409 CLIENT_LIMIT_REACHED` únicamente una operación que incremente la cantidad de abonados activos: alta de un nuevo abonado, reactivación por `toggle-status`, reanudación de pausa y reactivación histórica de un retirado.
-- Suspender/cortar un abonado activo siempre debe seguir permitido y libera capacidad.
-- El mensaje indica el uso actual, el límite y que debe cambiarse a un plan superior para registrar/reactivar más clientes.
-- El control está en backend mediante `license_guard.py`; no depende solo del frontend.
-
-### UI / licencia
-
-- Las licencias PAID muestran `Sin vencimiento`.
-- La pantalla de Licencia se centra en `abonados activos / capacidad` y en el cambio de plan.
-- Al llegar al límite se informa que solo quedan bloqueadas nuevas altas/reactivaciones.
-- Se alinean los planes locales con Web-Licence: 100/300/500/1000/ILIMITADO.
-
-### Validación real comercial — 2026-09-12
-
-- Web-Licence mostró una licencia `PAID`, `ACTIVA`, `PLAN_100` con **Sin vencimiento · control por capacidad de abonados activos**.
-- Z-Hub reflejó la misma licencia como **Z-Hub Plan 100**, `Sin vencimiento`, capacidad `100` y mismo Installation ID.
-- Se confirmó visualmente que el panel informa: al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto continúa funcionando normalmente.
-- La prueba posterior con TRIAL 20/20 confirmó que el guard de capacidad realmente rechaza el alta que excede el límite.
-
-### Versionado / rollback
-
-- `PANEL_VERSION = "1.3.4"`.
-- Backup previo: `backup/pre-capacity-only-licensing-1.3.4-20260911`.
-- Rama: `work/capacity-only-licensing-1.3.4-20260911`.
-- Web-Licence relacionado: 1.4.6.
-- Despliegue real y comportamiento comercial validados posteriormente en laboratorio.
+- Mensaje ordenado con saludo, motivo, Installation ID, plan, capacidad y estado.
+- Diferencia solicitudes TRIAL de cambios/ampliaciones PAID.
+- Backup: `backup/pre-whatsapp-message-1.3.7-20260912`.
+- PR #19 fusionado en `main`.
 
 ---
 
-## 1.3.3 — Corrección de instalación limpia: bootstrap seguro de Web-Licence
+## 1.3.6 — Licencia compacta y contacto central
 
-**Hallazgo real durante Etapa 7/7:** una instalación nueva de Z-Hub llegó correctamente al Wizard, pero al intentar Auto-TRIAL respondió `License Server no configurado`.
-
-### Causa
-
-- `deploy/install.sh` ya conservaba `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE` cuando existían en Supervisor.
-- Una instalación desde cero no tenía configuración previa de Supervisor, por lo que ambas variables quedaban vacías.
-- El Wizard estaba correcto; el defecto estaba en el proceso de instalación limpia.
-
-### Corrección
-
-- Se agrega `deploy/license_bootstrap.sh` y el instalador raíz lo carga antes de ejecutar `deploy/install.sh`.
-- La configuración pública por defecto vive en `deploy/license/bootstrap.env` y puede sobreescribirse con variables de entorno.
-- El bootstrap instala únicamente material **público** de confianza:
-  - `deploy/license/server-public.pem` -> `/etc/zhub/licencia/server-public.pem` para verificar autorizaciones RS256.
-  - `deploy/license/zhub-lab-ca.crt` -> `/usr/local/share/ca-certificates/zhub-lab-ca.crt` y ejecuta `update-ca-certificates` para validar TLS normalmente.
-- En instalación limpia se usa como endpoint por defecto `https://192.168.10.240`; sigue siendo sobreescribible mediante `ZHUB_LICENSE_SERVER_URL`.
-- Se exportan automáticamente `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`, que luego son persistidas por la lógica existente de Supervisor.
-- No se usa `curl -k`, no se desactiva validación TLS y no se versiona ninguna clave privada.
-- Se agrega `backend/tests/test_license_bootstrap_133_contract.py` para evitar regresiones del bootstrap.
-
-### Seguridad
-
-- Permitido en repositorio: clave pública RS256 y certificado público de CA.
-- Prohibido y no agregado: `private.pem`, claves privadas TLS, CA privada, tokens o secretos del servidor Web-Licence.
-
-### Versionado / rollback
-
-- `PANEL_VERSION = "1.3.3"`.
-- Backup previo: `backup/pre-license-bootstrap-1.3.3-20260911`.
-- Rama de trabajo: `work/license-bootstrap-1.3.3-20260911`.
-
-### Validación real en laboratorio
-
-- LXC de prueba `Grupo-Pobre` actualizado correctamente a **Z-Hub 1.3.3**.
-- En la primera ejecución desde 1.3.2, `install.sh` se autoactualizó a 1.3.3 durante el mismo proceso; por ello el bootstrap nuevo no podía ejecutarse hasta la siguiente invocación del instalador ya actualizado.
-- Segunda ejecución confirmada con los artefactos públicos instalados:
-  - `/etc/zhub/licencia/server-public.pem`
-  - `/usr/local/share/ca-certificates/zhub-lab-ca.crt`
-- Supervisor confirmado con:
-  - `ZHUB_LICENSE_SERVER_URL="https://192.168.10.240"`
-  - `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE="/etc/zhub/licencia/server-public.pem"`
-- Auto-TRIAL posteriormente validado: Wizard avanzó, Installation ID quedó vinculado y otro contenedor con el mismo cliente fue rechazado para una segunda prueba.
+- Ventana de licencia compacta.
+- Contacto/WhatsApp sincronizado desde Web-Licence 1.4.7 mediante `GET /v1/public/contact`.
+- `ZHUB_LICENSE_WHATSAPP` queda como fallback.
+- Backup: `backup/pre-license-contact-sync-1.3.6-20260912`.
 
 ---
 
-## 1.3.2 — Etapa 7/7: validación integral y cierre del flujo comercial
+## Historial anterior
 
-**Objetivo histórico:** cerrar el circuito registro -> Trial automático -> reinstalación -> conversión PAID -> renovación/suspensión. La regla de vencimiento PAID definida aquí quedó **supersedida por 1.3.4**.
-
-- Mantiene el mismo `Installation ID`, HW-ID y licencia después de convertir TRIAL a PAID.
-- La clave de licencia continúa oculta y no vuelve al flujo visible.
-- Se agrega `backend/tests/test_stage7_e2e_contract.py` y pasa a formar parte obligatoria de CI.
-- Backup previo: `backup/pre-stage7-e2e-1.3.2-20260911`.
-- Rama: `work/stage7-e2e-1.3.2-20260911`.
-
----
-
-## 1.3.1 — Etapa 5/7: Licencia simplificada para el cliente
-
-**Objetivo:** retirar del panel del cliente la gestión manual de claves y los detalles técnicos internos del License Server. Web-Licence queda como fuente administrativa y comercial de la licencia.
-
-### Vista del cliente
-
-- Estado de licencia.
-- Plan actual.
-- Vencimiento disponible para TRIAL; desde 1.3.4 PAID muestra `Sin vencimiento`.
-- Días restantes cuando es TRIAL.
-- Capacidad autorizada y uso.
-- Installation ID.
-- Botón de contacto comercial por WhatsApp.
-
-### Seguridad / operación
-
-- La UI no muestra la clave ni ofrece formulario para escribir una nueva clave.
-- Si el Trial vence o la licencia queda inválida, los datos permanecen intactos.
-
-### Rollback
-
-- Backup previo: `backup/pre-license-customer-view-1.3.1-20260911`.
-- Rama de trabajo: `work/license-customer-view-1.3.1-20260911`.
-
----
-
-## 1.3.0 — Etapa 4/7: Setup Wizard con Auto-TRIAL
-
-**Objetivo:** retirar la introducción manual de claves del proceso normal de primera instalación y conectar el Wizard con el Auto-TRIAL.
-
-### Flujo
-
-`registro cliente -> instalación Z-Hub -> correo registrado -> HW-ID local -> Web-Licence -> activar/recuperar TRIAL -> validar licencia firmada -> crear admin -> finalizar`.
-
-### Backend
-
-- Nuevo `POST /api/setup/auto-trial`.
-- El endpoint obtiene/persiste `license_installation_id`, invoca `activate_auto_trial()` y Web-Licence decide por HW-ID si activa o recupera el TRIAL.
-- `/api/setup/license` queda como compatibilidad/recuperación administrativa.
-- `/api/setup/complete` usa la licencia almacenada por backend.
-
-### Frontend
-
-- El Wizard solicita el correo registrado, no una serie de licencia.
-- Si el HW-ID ya tuvo Trial, recupera el mismo registro sin reiniciar el período.
-
-### Rollback
-
-- Backup previo: `backup/pre-wizard-auto-trial-1.3.0-20260911`.
-- Rama de trabajo: `work/wizard-auto-trial-1.3.0-20260911`.
-
-### Cierre
-
-- PR #12 integrado a `main` después de CI verde.
-- Merge: `60829ef213f1f7b492bbdec1a3373a72289aa63b`.
-- Despliegue real de Z-Hub 1.3.0 confirmado desde el Centro de Actualizaciones.
+El detalle íntegro de 1.3.6 hacia atrás se conserva en `docs/history/CONTINUIDAD_Z-HUB-pre-1.3.8.md`. No borrar ese archivo: contiene decisiones, validaciones reales, instalación limpia, Auto-TRIAL, límites históricos y rollback de versiones anteriores.
