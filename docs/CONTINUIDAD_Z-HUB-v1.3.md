@@ -20,47 +20,37 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.21 — Contraste de estado/acción y selección inmediata de tarjetas
+
+**Motivo:** validación real de 1.3.20 mostró dos detalles visuales y uno de interacción: el icono de eliminar todavía tenía poco contraste, el estado OFFLINE no resaltaba suficiente y al cambiar entre tarjetas a veces era necesario insistir con varios clics.
+
+### Correcciones
+- OFFLINE pasa a rojo sólido con texto blanco, borde claro y sombra para lectura inmediata.
+- Eliminar router usa botón rojo sólido de 40 × 40 px, icono blanco más grande, borde blanco y halo rojo.
+- La tarjeta seleccionada recibe borde/halo cian o violeta más visible según tipo.
+- La selección de tarjeta se dispara en `pointerdown`, evitando depender del `click` tardío y haciendo el cambio perceptible desde la primera pulsación.
+- Acciones internas (coordenadas, eliminar, editar/controles hijos) detienen `pointerdown` para no cambiar de tarjeta accidentalmente.
+- Se agrega soporte de teclado `Enter`/espacio mediante `role="button"` y `tabIndex=0`.
+- No cambia API, carga en segundo plano, métricas ni conexión RouterOS.
+
+### Pruebas / rollback
+- Nuevo contrato: `backend/tests/test_router_card_highlight_select_1321_contract.py`.
+- `PANEL_VERSION = "1.3.21"`.
+- Backup previo: `backup/pre-router-card-highlight-select-1.3.21-20260912`.
+- Rama: `work/router-card-highlight-select-1.3.21-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.20 — Acción eliminar compacta mediante icono moderno
 
-**Motivo:** validación real de 1.3.19 confirmó que el botón rotulado **Eliminar router** era visible, pero se veía grande, tosco y rompía la composición visual de la tarjeta MikroTik.
-
-### Corrección visual
-- Se reemplaza el botón de texto por un botón cuadrado compacto de 36 × 36 px con icono `Trash2`.
-- Estilo rojo translúcido con borde, sombra suave, hover con elevación/escala y foco visible.
-- El icono conserva `title` y `aria-label` para mantener accesibilidad.
-- Durante la eliminación el icono usa una animación discreta y el botón queda deshabilitado.
-- Se conserva confirmación previa, permiso `network.delete`, timeout y `DELETE /api/routers/{id}`.
-- No cambia carga, métricas, edición ni conexión RouterOS.
-
-### Pruebas / rollback
-- Nuevo contrato: `backend/tests/test_router_delete_icon_1320_contract.py`.
-- El contrato 1.3.19 pasa a validar historial/compatibilidad y deja de exigir que 1.3.19 siga siendo la versión actual.
-- `PANEL_VERSION = "1.3.20"`.
-- Backup previo: `backup/pre-router-delete-icon-1.3.20-20260912`.
-- Rama: `work/router-delete-icon-1.3.20-20260912`.
-- No cambia el contrato Z-Hub ↔ Web-Licence.
-
----
+- Botón de texto reemplazado por icono `Trash2` compacto.
+- Conserva confirmación, permisos y `DELETE /api/routers/{id}`.
+- Backup: `backup/pre-router-delete-icon-1.3.20-20260912`.
 
 ## 1.3.19 — Botón Eliminar router realmente visible
-
-**Incidencia real:** en 1.3.18 la lógica de borrado estaba presente, pero en tarjetas MikroTik compactas el icono de papelera compartía la cabecera con coordenadas y estado ONLINE/OFFLINE. En anchos estrechos podía quedar visualmente recortado o pasar inadvertido.
-
-### Corrección
-- `RouterCard.jsx` mueve la acción de borrado fuera del grupo superior estrecho.
-- Cada MikroTik con permiso `network.delete` muestra ahora un botón rotulado **Eliminar router** dentro de la propia tarjeta.
-- El botón conserva confirmación previa y usa `DELETE /api/routers/{id}`.
-- Se mantiene manejo seguro de errores y se agrega timeout de 8 s a la eliminación.
-- El ancho de tarjeta MikroTik pasa de 290 px a 310 px para mejorar legibilidad sin volver a generar grandes separaciones.
-- No cambia la acción de borrado de OLTs.
-
-### Pruebas / rollback
-- Nuevo contrato: `backend/tests/test_router_delete_visible_1319_contract.py`.
-- Backup previo: `backup/pre-router-delete-visible-1.3.19-20260912`.
-- Rama: `work/router-delete-visible-1.3.19-20260912`.
-- No cambia el contrato Z-Hub ↔ Web-Licence.
-
----
+- Acción de borrado movida fuera de la cabecera estrecha.
+- Backup: `backup/pre-router-delete-visible-1.3.19-20260912`.
 
 ## 1.3.18 — Hotfix de carga no bloqueante en Gestión de Red
 - Las tarjetas se muestran inmediatamente después de `GET /api/routers`.
@@ -71,7 +61,6 @@ Historial preservado:
 
 ## 1.3.17 — Orden compacto de tarjetas MikroTik + eliminar por tarjeta
 - Distribución compacta desde la izquierda mediante `router-card-layout.css`.
-- Primera incorporación de borrado desde tarjeta, corregida visualmente en 1.3.19.
 - Backup: `backup/pre-router-card-order-delete-1.3.17-20260912`.
 
 ## 1.3.16 — Hotfix alta de Router MikroTik
