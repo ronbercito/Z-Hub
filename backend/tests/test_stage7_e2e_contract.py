@@ -13,7 +13,7 @@ def test_stage7_paid_is_capacity_only_without_exposing_key():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     assert '"license_expires_at": None if is_paid' in router
     assert 'Sin vencimiento' in view
-    assert 'abonados activos' in view
+    assert 'servicios' in view
     assert 'data?.license_expires_at' not in view
     assert 'license_key_masked' not in view
 
