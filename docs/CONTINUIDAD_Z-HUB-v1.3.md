@@ -46,12 +46,35 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 - `backend/app/core/auto_trial.py`: cliente público para registro y Auto-TRIAL sin exponer Web-Licence al navegador.
 - `backend/tests/test_wizard_registration_135_contract.py`: contrato de regresión obligatorio en CI.
 
+### Validación real en instalación limpia — 2026-09-12
+
+- Instalación limpia validada en un contenedor nuevo con acceso por `192.168.10.235`.
+- El navegador mostró correctamente el Wizard de **4 pasos**: `1. Registro -> 2. Activación -> 3. Administrador -> 4. Finalizar`.
+- En el paso Registro se confirmó visualmente:
+  - **Perú (+51)** seleccionado por defecto.
+  - País ubicado antes de Empresa/ISP y demás datos.
+  - Campo Ciudad eliminado del Wizard.
+  - WhatsApp dividido entre prefijo automático `+51` y número nacional.
+  - Botón **Ya tengo una cuenta** disponible.
+  - Botón **Registrar y continuar** disponible para una cuenta nueva.
+- Esta prueba confirma que el registro del cliente ya puede iniciarse dentro de Z-Hub sin obligarlo a abrir el portal público de Web-Licence.
+
+### Validación real del límite TRIAL — 2026-09-12
+
+- Se activó un TRIAL real y se registraron **20 abonados activos**.
+- La pantalla de Licencia mostró correctamente **20 / 20 abonados activos · 100%** y capacidad autorizada `20`.
+- Al intentar registrar el abonado activo número **21**, el backend rechazó el alta con `CLIENT_LIMIT_REACHED`.
+- El mensaje confirmó uso actual `20 de 20` y recordó que el resto de funciones del panel permanecen disponibles.
+- Resultado funcional: **VALIDADO**. Al alcanzar la capacidad del TRIAL no se bloquea Z-Hub; únicamente se impiden nuevas altas o reactivaciones que superarían el cupo.
+- La UI de Licencia mostró correctamente el aviso: **Capacidad alcanzada: no se pueden registrar o reactivar más abonados hasta liberar un cupo o cambiar de plan.**
+- Mejora visual pendiente/no bloqueante: ocultar al usuario final el prefijo técnico `CLIENT_LIMIT_REACHED:` del toast y mostrar únicamente el mensaje comercial legible. La lógica de capacidad ya funciona correctamente.
+
 ### Versionado / rollback
 
 - `PANEL_VERSION = "1.3.5"`.
 - Backup previo: `backup/pre-wizard-registration-1.3.5-20260912`.
 - Rama: `work/wizard-registration-1.3.5-20260912`.
-- El despliegue real y la prueba visual se validan por separado después de CI/merge.
+- CI/merge completados; las validaciones reales anteriores confirman además el despliegue y comportamiento funcional en laboratorio.
 
 ---
 
@@ -84,13 +107,20 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 - Al llegar al límite se informa que solo quedan bloqueadas nuevas altas/reactivaciones.
 - Se alinean los planes locales con Web-Licence: 100/300/500/1000/ILIMITADO.
 
+### Validación real comercial — 2026-09-12
+
+- Web-Licence mostró una licencia `PAID`, `ACTIVA`, `PLAN_100` con **Sin vencimiento · control por capacidad de abonados activos**.
+- Z-Hub reflejó la misma licencia como **Z-Hub Plan 100**, `Sin vencimiento`, capacidad `100` y mismo Installation ID.
+- Se confirmó visualmente que el panel informa: al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto continúa funcionando normalmente.
+- La prueba posterior con TRIAL 20/20 confirmó que el guard de capacidad realmente rechaza el alta que excede el límite.
+
 ### Versionado / rollback
 
 - `PANEL_VERSION = "1.3.4"`.
 - Backup previo: `backup/pre-capacity-only-licensing-1.3.4-20260911`.
 - Rama: `work/capacity-only-licensing-1.3.4-20260911`.
 - Web-Licence relacionado: 1.4.6.
-- El despliegue real se valida por separado tras CI/merge; no asumir que `main` ya está instalado.
+- Despliegue real y comportamiento comercial validados posteriormente en laboratorio.
 
 ---
 
