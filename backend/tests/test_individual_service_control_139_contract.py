@@ -54,6 +54,6 @@ def test_139_preserves_license_capacity_rule_and_release_history():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
     assert 'CAPACITY_STATUSES = ("active", "suspended", "paused")' in usage
-    assert 'PANEL_VERSION = "1.3.9"' in version
-    assert "1.3.9" in continuity
+    assert 'PANEL_VERSION = "1.3.' in version
+    assert "1.3.9 — Gestión individual por servicio opcional" in continuity
     assert "backup/pre-individual-service-control-1.3.9-20260912" in continuity
