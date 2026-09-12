@@ -9,8 +9,9 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import APIRouter, Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from app.core.database import init_db
-from app.core import database
+from app.core import database, license_manager
 from app.core.license_guard import enforce_client_capacity, enforce_trial_write_access
+from app.core.license_usage import get_service_usage
 from app.core.permissions import require_permission, require_router_access
 from app.core.seed import seed_initial_data
 from app.models.client import Client
@@ -60,6 +61,11 @@ from app.routers.whatsapp_automatizadovip.router import router as whatsapp_autom
 from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
 from app.routers.whatsapp_automatizadovip.automation_test import router as whatsapp_automatizadovip_automation_test_router
 from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
+
+# 1.3.8: el motor histórico conserva la interfaz get_client_usage(), pero el
+# cálculo comercial se sustituye por servicios que realmente ocupan recursos.
+license_manager.get_client_usage = get_service_usage
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fibraz.server")
 @asynccontextmanager
@@ -98,7 +104,7 @@ api.include_router(message_templates_router,dependencies=[Depends(require_permis
 api.include_router(whatsapp_automatizadovip_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_logs_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_automation_test_router,dependencies=[Depends(require_permission("messaging"))])
 for router,module in ((inicio_router,"dashboard"),(retired_clients_router,"clients"),(pause_clients_router,"clients"),(suspension_alerts_router,"clients"),(client_registration_settings_router,"clients"),(equipment_recoveries_router,"clients"),(client_equipment_router,"clients"),(installations_router,"clients"),(client_service_delete_audit_router,"clients"),(client_services_router,"clients"),(client_deletion_summary_router,"clients"),(zones_router,"clients"),(clientes_router,"clients"),(planes_router,"plans"),(ipv4_networks_router,"network"),(nap_boxes_router,"network"),(monitoring_router,"monitoring"),(facturacion_router,"billing"),(client_balances_router,"billing"),(invoice_actions_router,"billing"),(tickets_router,"tickets"),(almacen_router,"inventory"),(hotspot_router,"hotspot"),(tareas_router,"tasks"),(mensajeria_router,"messaging"),(ajustes_router,"settings"),(staff_router,"staff")):
     dependencies=[Depends(require_permission(module))]
-    if router is clientes_router: dependencies.append(Depends(enforce_client_capacity))
+    if router in (clientes_router, client_services_router): dependencies.append(Depends(enforce_client_capacity))
     api.include_router(router,dependencies=dependencies)
 @api.get("/health")
 async def health(): return {"status":"ok"}

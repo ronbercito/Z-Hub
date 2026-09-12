@@ -1,7 +1,7 @@
 """Aplicación de reglas comerciales de licencia de Z-Hub.
 
-1.3.4: alcanzar la capacidad NO bloquea el panel. Solo impide nuevas altas o
-reactivaciones que aumentarían la cantidad de abonados activos.
+1.3.8: la capacidad se mide por servicios registrados que ocupan recursos.
+Suspender/cortar o pausar no libera cupo; retirar definitivamente sí.
 """
 from __future__ import annotations
 
@@ -40,9 +40,9 @@ BLOCKED_LICENSE_STATUSES = {"trial_expired", "invalid", "missing"}
 
 def _limit_message(usage: int, limit: int) -> str:
     return (
-        f"Límite de licencia alcanzado. Tu plan permite hasta {limit} abonados activos. "
+        f"Límite de licencia alcanzado. Tu plan permite hasta {limit} servicios registrados. "
         f"Actualmente utilizas {usage} de {limit}. Todas las demás funciones del panel continúan disponibles; "
-        "cambia a un plan superior para registrar o reactivar más clientes."
+        "cambia a un plan superior para registrar nuevos servicios."
     )
 
 
@@ -68,33 +68,28 @@ async def _raise_if_capacity_full(db: AsyncSession) -> None:
 
 
 async def enforce_client_capacity(request: Request, db: AsyncSession = Depends(get_db)) -> None:
-    """Bloquea solo operaciones que pueden aumentar el número de abonados activos."""
+    """Bloquea únicamente operaciones que crean un nuevo servicio licenciado."""
     path = request.url.path.rstrip("/")
 
-    # El alta normal crea un abonado activo por defecto.
+    # Un abonado nuevo crea su servicio principal y consume un cupo.
     if request.method == "POST" and path == "/api/clients":
         await _raise_if_capacity_full(db)
         return
 
-    # Corte/reactivación: cortar siempre se permite; reactivar consume capacidad.
-    if request.method == "POST":
-        match = re.fullmatch(r"/api/clients/([^/]+)/toggle-status", path)
-        if match:
-            client = await db.get(Client, match.group(1))
-            if client and client.status != "active":
-                await _raise_if_capacity_full(db)
-            return
+    # Cada servicio adicional consume un cupo independiente.
+    if request.method == "POST" and re.fullmatch(r"/api/clients/[^/]+/services", path):
+        await _raise_if_capacity_full(db)
+        return
 
-        # Reanudar una pausa devuelve el servicio a active.
-        match = re.fullmatch(r"/api/clients/([^/]+)/resume-pause", path)
-        if match:
-            client = await db.get(Client, match.group(1))
-            if client and client.status != "active":
-                await _raise_if_capacity_full(db)
-            return
+    # Suspender/cortar y pausar NO liberan capacidad; por ello volver a active
+    # no aumenta el consumo y nunca debe bloquearse por cupo.
+    if request.method == "POST" and (
+        re.fullmatch(r"/api/clients/[^/]+/toggle-status", path)
+        or re.fullmatch(r"/api/clients/[^/]+/resume-pause", path)
+    ):
+        return
 
-    # La edición de clientes activos no consume otro cupo. Solo una reactivación
-    # histórica de un retirado necesita comprobar capacidad.
+    # Reactivar un cliente retirado sí vuelve a crear/ocupar su servicio principal.
     if request.method == "PUT":
         match = re.fullmatch(r"/api/clients/([^/]+)", path)
         if match:
