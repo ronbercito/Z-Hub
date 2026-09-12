@@ -23,9 +23,7 @@ def test_live_snapshot_has_timeout_and_updates_one_card_only():
     assert "current.map((row) => row.id === snapshotRouter.id" in view
 
 
-def test_release_1318_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1318_history_remains_documented_after_later_releases():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.18"' in version
     assert "1.3.18" in continuity
     assert "backup/pre-router-loading-hotfix-1.3.18-20260912" in continuity
