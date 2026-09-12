@@ -58,12 +58,26 @@ export default function LicenseSettings() {
   const whatsappDigits = String(data?.sales_whatsapp || "").replace(/\D/g, "");
   const requestLabel = isTrial ? "Solicitar licencia" : "Cambiar plan";
   const supportName = data?.sales_business_name || data?.sales_contact_name || "Soporte Z-Hub";
+  const currentPlan = planLabel(data?.plan, max);
+  const currentUsage = max == null ? `${usage} abonados activos` : `${usage} de ${max} abonados activos`;
   const whatsappMessage = [
-    `Hola, deseo ${isTrial ? "pasar mi Z-Hub Trial a una licencia pagada" : "cambiar o revisar mi plan Z-Hub"}.`,
-    `Instalación: ${data?.installation_id || "no disponible"}`,
-    `Plan actual: ${planLabel(data?.plan, max)}`,
-    `Uso: ${usage}${max == null ? "" : ` / ${max}`} abonados activos`,
-    `Estado: ${isTrial && data?.status === "active" ? "Trial activo" : status.label}`,
+    "Hola, buen día.",
+    "",
+    isTrial
+      ? "Quisiera solicitar información para cambiar mi Z-Hub Trial a un plan de pago."
+      : "Quisiera solicitar información para cambiar o ampliar mi plan de Z-Hub.",
+    "",
+    "Datos de mi instalación:",
+    `• Installation ID: ${data?.installation_id || "No disponible"}`,
+    `• Plan actual: ${currentPlan}`,
+    `• Capacidad utilizada: ${currentUsage}`,
+    `• Estado: ${isTrial && data?.status === "active" ? "Trial activo" : status.label}`,
+    "",
+    isTrial
+      ? "Agradecería información sobre los planes disponibles y el proceso para activar una licencia de pago."
+      : "Agradecería información sobre los planes disponibles para ampliar mi capacidad actual.",
+    "",
+    "Gracias.",
   ].join("\n");
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}` : "";
   const expiry = isTrial ? data?.trial_expires_at : null;
