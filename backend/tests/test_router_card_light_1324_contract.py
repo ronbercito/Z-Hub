@@ -20,7 +20,7 @@ def test_light_skin_keeps_all_card_sections_light_by_default():
     assert '.router-modern-secondary-metrics' in css
     assert '.router-modern-footer' in css
     assert 'background: #ffffff !important;' in css
-    assert 'background: #f9fbfd !important;' in css
+    assert 'background: #f8fbfe !important;' in css or 'background: #f9fbfd !important;' in css
 
 
 def test_dark_skin_only_activates_for_explicit_dark_theme():
@@ -29,9 +29,7 @@ def test_dark_skin_only_activates_for_explicit_dark_theme():
     assert 'html[data-panel-theme="zhub-dark"] .network-router-card--modern' in css
 
 
-def test_release_1324_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1324_history_is_preserved():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.24"' in version
     assert "1.3.24 — Tarjeta MikroTik completamente clara" in continuity
     assert "backup/pre-router-card-light-1.3.24-20260912" in continuity

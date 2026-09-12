@@ -20,6 +20,29 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.25 — Contraste reforzado en tarjetas MikroTik
+
+**Motivo:** la validación real de 1.3.24 confirmó que el tema claro ya era correcto, pero las etiquetas e iconos de métricas todavía se veían demasiado suaves sobre fondo blanco.
+
+### Cambios visuales
+- CPU, Memoria, Ping, PPPoE, Colas y Tráfico usan etiquetas más oscuras y con mayor peso tipográfico.
+- Los valores principales suben de contraste y peso sin aumentar de forma excesiva el tamaño.
+- Los iconos de métricas crecen ligeramente, usan trazo más grueso, borde del color correspondiente y fondos pastel más definidos.
+- Se refuerza el contraste individual de los tonos azul, verde, violeta, ámbar y cian.
+- Nombre, IP:puerto, modelo, ubicación y coordenadas reciben mayor legibilidad.
+- El icono principal del router gana profundidad y contraste en tema claro.
+- Los botones de mapa y edición reciben borde/color más visible; eliminar conserva rojo sólido.
+
+### Rendimiento / compatibilidad
+- Solo cambia CSS/presentación; no agrega API, polling ni consultas RouterOS.
+- Conserva selección completa de tarjeta, carga rápida, estados y acciones de 1.3.23–1.3.24.
+- `PANEL_VERSION = "1.3.25"`.
+- Backup previo: `backup/pre-router-card-contrast-1.3.25-20260912`.
+- Rama: `work/router-card-contrast-1.3.25-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.24 — Tarjeta MikroTik completamente clara
 
 **Motivo:** la validación real de 1.3.23 mostró que la composición moderna mejoró, pero el bloque CPU/Memoria/Ping podía verse como una franja azul/oscura incluso con el panel claro. Se alinea toda la tarjeta al estilo claro aprobado.
