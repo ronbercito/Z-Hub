@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.9";
+export const PANEL_VERSION = "1.3.15";
 export const CHANGELOG = [
-  { type: "Ajustes", text: "Configuración clientes incorpora Gestión individual por servicio, desactivada por defecto para conservar el comportamiento actual." },
-  { type: "Servicios", text: "Al activarla, el servicio principal y los servicios adicionales pueden pausarse, suspenderse/cortarse o reactivarse de forma independiente." },
-  { type: "Rendimiento", text: "Las acciones se ejecutan únicamente cuando el operador las solicita; no se agregan sondeos ni procesos permanentes por servicio y la regla de capacidad de licencia se mantiene." },
+  { type: "Restauración", text: "Se restaura el código funcional y visual de Z-Hub 1.3.9 para reemplazar los cambios visuales introducidos entre 1.3.10 y 1.3.14." },
+  { type: "Compatibilidad", text: "La gestión individual por servicio de 1.3.9 permanece disponible y la regla de capacidad por servicios de 1.3.8 se conserva sin cambios." },
+  { type: "Actualización", text: "Se publica como 1.3.15 para que instalaciones que ya estaban en 1.3.14 puedan recibir la restauración mediante el actualizador normal." },
 ];
