@@ -15,6 +15,20 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.2 — Etapa 7/7: validación integral y cierre del flujo comercial
+
+**Objetivo:** cerrar el circuito registro -> Trial automático -> reinstalación -> conversión PAID -> renovación/suspensión y asegurar que Z-Hub refleje los datos comerciales administrados por Web-Licence.
+
+- Mantiene el mismo `Installation ID`, HW-ID y licencia después de convertir TRIAL a PAID.
+- `/api/license/info` consulta el vencimiento comercial PAID en Web-Licence para mostrar la fecha real al cliente.
+- La clave de licencia continúa oculta y no vuelve al flujo visible.
+- Se agrega `backend/tests/test_stage7_e2e_contract.py` y pasa a formar parte obligatoria de CI.
+- Backup previo: `backup/pre-stage7-e2e-1.3.2-20260911`.
+- Rama: `work/stage7-e2e-1.3.2-20260911`.
+- El despliegue real se valida por separado después del merge y CI verde.
+
+---
+
 ## 1.3.1 — Etapa 5/7: Licencia simplificada para el cliente
 
 **Objetivo:** retirar del panel del cliente la gestión manual de claves y los detalles técnicos internos del License Server. Web-Licence queda como fuente administrativa y comercial de la licencia.
@@ -41,12 +55,6 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 - Backup previo: `backup/pre-license-customer-view-1.3.1-20260911`.
 - Rama de trabajo: `work/license-customer-view-1.3.1-20260911`.
-
-### Pendiente de cierre
-
-- CI verde.
-- Merge a `main` solo después de CI verde.
-- Despliegue real 1.3.1 se valida por separado.
 
 ---
 

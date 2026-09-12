@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -81,5 +82,5 @@ def test_customer_license_ui_is_read_only_and_commercial():
 
 def test_release_contract_remains_versioned():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.3.1"' in version
+    assert re.search(r'PANEL_VERSION = "1\.3\.\d+"', version)
     assert 'export const CHANGELOG = [' in version
