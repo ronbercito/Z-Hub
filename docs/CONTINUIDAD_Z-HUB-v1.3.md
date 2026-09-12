@@ -18,6 +18,37 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.18 — Hotfix de carga no bloqueante en Gestión de Red
+
+**Incidencia real:** después de publicar 1.3.17, la vista **Gestión de Red · Routers MikroTik** podía quedarse indefinidamente en `Cargando equipos...`. El listado esperaba a que terminaran todas las llamadas `POST /api/routers/{id}/test-connection` dentro de un `Promise.all`. Si un MikroTik estaba offline, filtrado o tardaba demasiado en responder, una sola prueba podía retener toda la pantalla aunque `GET /api/routers` ya hubiera devuelto el inventario.
+
+### Corrección
+
+- `frontend/src/modules/red/Network.jsx` muestra inmediatamente las tarjetas recibidas por `GET /api/routers`.
+- El estado, CPU, memoria y ping se refrescan después en segundo plano, router por router.
+- Se elimina el `Promise.all` bloqueante del arranque.
+- Cada prueba automática de conexión usa timeout de 6 segundos y su fallo no oculta las demás tarjetas.
+- La carga inicial del inventario usa timeout de 8 segundos y siempre sale del estado `loading` tanto en éxito como en error.
+- Las acciones manuales **Probar conexión** y **Ping** también tienen timeout para no dejar acciones colgadas.
+- `errMsg` evita intentar mostrar objetos de validación como texto React.
+
+### Compatibilidad
+
+- Se mantiene el layout compacto y el botón Eliminar de 1.3.17.
+- Se mantiene el hotfix de alta de MikroTik sin coordenadas de 1.3.16.
+- No cambia backend RouterOS, base de datos, licencias ni contrato Z-Hub ↔ Web-Licence.
+
+### Pruebas / rollback
+
+- Nuevo contrato: `backend/tests/test_router_loading_1318_contract.py`.
+- `test_router_cards_1317_contract.py` conserva el contrato histórico de 1.3.17 sin exigir que esa versión siga siendo la versión actual.
+- `PANEL_VERSION = "1.3.18"`.
+- Backup previo: `backup/pre-router-loading-hotfix-1.3.18-20260912`.
+- Rama: `work/router-loading-hotfix-1.3.18-20260912`.
+- Validación real pendiente: actualizar panel, abrir Gestión de Red con routers online y offline y confirmar que las tarjetas aparecen inmediatamente aunque los equipos offline sigan marcados sin respuesta.
+
+---
+
 ## 1.3.17 — Orden compacto de tarjetas MikroTik + eliminar por tarjeta
 
 **Motivo:** en la validación real de Gestión de Red, las tarjetas MikroTik quedaban distribuidas en columnas muy separadas y el cuarto equipo saltaba a una segunda fila aunque existía espacio horizontal. Además, la acción de eliminar no era visible directamente en cada tarjeta.
