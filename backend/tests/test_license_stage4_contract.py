@@ -7,6 +7,10 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def compact(text):
+    return "".join(text.split())
+
+
 def test_license_card_is_operational_in_settings_home():
     home = read("frontend/src/modules/ajustes/SettingsHome.jsx")
     assert 'id:"license"' in home
@@ -16,8 +20,9 @@ def test_license_card_is_operational_in_settings_home():
 
 def test_settings_modal_uses_dedicated_license_view():
     modal = read("frontend/src/modules/ajustes/SettingsModal.jsx")
+    dense = compact(modal)
     assert 'import LicenseSettings from "./LicenseSettings"' in modal
-    assert 'section === "license" ? <LicenseSettings locked={locked} />' in modal
+    assert 'section==="license"?<LicenseSettingslocked={locked}/>' in dense
 
 
 def test_license_view_shows_capacity_trial_and_remote_validation_state():
