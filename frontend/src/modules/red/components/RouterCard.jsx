@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-12 — 1.3.17, acción eliminar visible en cada tarjeta MikroTik.
+ * Actualización: 2026-09-12 — 1.3.19, acción Eliminar visible y rotulada en cada tarjeta MikroTik.
  * Área: Gestión de Red > tarjetas de equipos.
  * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline,
  *          IP, modelo, latencia y acciones rápidas permitidas por rol.
@@ -27,8 +27,8 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
   const moduleName = isOlt ? "olt" : "network";
   const canDelete = canPermission(user, moduleName, "delete");
   const tone = isOlt
-    ? { accent: "violet", selected: "border-violet-500 shadow-violet-500/10", icon: "bg-violet-500/10 text-violet-400 border-violet-500/20", ip: "text-violet-400", metric: "text-violet-400" }
-    : { accent: "cyan", selected: "border-cyan-500 shadow-cyan-500/10", icon: "network-router-device-icon bg-white/95 text-cyan-700 border-white shadow-sm", ip: "text-cyan-400", metric: "text-cyan-400" };
+    ? { selected: "border-violet-500 shadow-violet-500/10", icon: "bg-violet-500/10 text-violet-400 border-violet-500/20", ip: "text-violet-400", metric: "text-violet-400" }
+    : { selected: "border-cyan-500 shadow-cyan-500/10", icon: "network-router-device-icon bg-white/95 text-cyan-700 border-white shadow-sm", ip: "text-cyan-400", metric: "text-cyan-400" };
 
   const removeFromCard = async (event) => {
     event.stopPropagation();
@@ -36,7 +36,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
     if (!window.confirm(`¿Eliminar el router "${router.name}"?`)) return;
     setDeleting(true);
     try {
-      await axios.delete(`${API}/routers/${router.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/routers/${router.id}`, { headers: { Authorization: `Bearer ${token}` }, timeout: 8000 });
       toast.success("Router eliminado");
       window.location.reload();
     } catch (error) {
@@ -51,13 +51,13 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
     <div
       data-testid={`router-card-${router.id}`}
       onClick={onSelect}
-      className={`network-router-card ${isOlt ? "network-router-card--olt w-full md:w-[380px]" : "network-router-card--mikrotik w-full md:w-[290px]"} p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
+      className={`network-router-card ${isOlt ? "network-router-card--olt w-full md:w-[380px]" : "network-router-card--mikrotik w-full md:w-[310px]"} p-4 rounded-xl border cursor-pointer transition relative overflow-hidden ${
         selected ? `bg-slate-900 ${tone.selected} shadow-xl` : `bg-slate-900/60 border-slate-800 ${isOlt ? "hover:border-violet-500/60" : "hover:border-cyan-500/60"}`
       }`}
     >
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`p-2 rounded-lg ${tone.icon}`}>
+      <div className="flex justify-between items-start gap-2 mb-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className={`p-2 rounded-lg shrink-0 ${tone.icon}`}>
             {isOlt ? <Icon className="network-router-device-glyph w-5 h-5" /> : (
               <svg className="w-6 h-6" viewBox="0 0 32 32" fill="none" aria-hidden="true" stroke="#0878aa" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="5" y="5" width="16" height="7" rx="2" />
@@ -70,16 +70,11 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-slate-100 truncate">{router.name}</h3>
-            <p className={`text-[11px] font-mono ${tone.ip}`}>{router.ip_address}:{router.port}</p>
+            <p className={`text-[11px] font-mono truncate ${tone.ip}`}>{router.ip_address}:{router.port}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button type="button" onClick={(event) => { event.stopPropagation(); onCoordinates?.(router); }} title="Ver coordenadas" className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 text-cyan-300 hover:bg-slate-700"><MapPin className="h-3.5 w-3.5" /></button>
-          {!isOlt && canDelete && (
-            <button data-testid={`btn-delete-router-card-${router.id}`} type="button" disabled={deleting} onClick={removeFromCard} title="Eliminar router" className="network-router-delete-button rounded-lg border border-rose-300/50 bg-rose-500/15 p-1.5 text-rose-300 hover:bg-rose-500/25 disabled:opacity-50">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
           <span className={`network-router-status network-router-status--${router.status || "unknown"} inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] border ${st.cls}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span> {st.label}
           </span>
@@ -90,8 +85,23 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         {router.identity ? `${router.identity} · ` : ""}{router.board_name || router.model || (isOlt ? "OLT GPON" : "MikroTik RouterOS")}
       </p>
 
+      {!isOlt && canDelete && (
+        <div className="network-router-card-actions mb-3 flex justify-end" onClick={(event) => event.stopPropagation()}>
+          <button
+            data-testid={`btn-delete-router-card-${router.id}`}
+            type="button"
+            disabled={deleting}
+            onClick={removeFromCard}
+            title="Eliminar router"
+            className="network-router-delete-button inline-flex items-center gap-1.5 rounded-lg border border-rose-300/60 bg-rose-500/15 px-2.5 py-1.5 text-[11px] font-bold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> {deleting ? "Eliminando..." : "Eliminar router"}
+          </button>
+        </div>
+      )}
+
       {children && (
-        <div onClick={(event) => event.stopPropagation()} className={`mt-4 pt-4 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>
+        <div onClick={(event) => event.stopPropagation()} className={`mt-3 pt-3 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>
           {children}
         </div>
       )}
