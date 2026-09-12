@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.21";
+export const PANEL_VERSION = "1.3.22";
 export const CHANGELOG = [
-  { type: "Diseño", text: "El icono Eliminar router ahora usa rojo sólido, borde blanco y halo para resaltar mejor." },
-  { type: "Estado", text: "OFFLINE ahora se muestra con rojo sólido y texto blanco para identificarlo de inmediato." },
-  { type: "Uso", text: "La selección de tarjetas responde desde el primer clic/pulsación y resalta mejor la tarjeta activa." },
+  { type: "Uso", text: "Las tarjetas MikroTik ahora se seleccionan desde toda su superficie visible, incluido el centro." },
+  { type: "Corrección", text: "Se elimina el área invisible que interceptaba la pulsación en tarjetas no seleccionadas." },
+  { type: "Diseño", text: "La papelera mantiene rojo sólido y alto contraste también en tema claro." },
 ];
