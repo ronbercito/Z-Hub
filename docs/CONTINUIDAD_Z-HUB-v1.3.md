@@ -18,6 +18,32 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.16 — Hotfix de alta de Router MikroTik
+
+**Incidencia real:** al registrar un MikroTik sin seleccionar coordenadas, el formulario enviaba `latitude: ""` y `longitude: ""`. `RouterIn` exigía `float`, FastAPI devolvía `422 Unprocessable Content` y el frontend terminaba mostrando el detalle estructurado de validación como objeto React, provocando `Minified React error #31` y pantalla en blanco.
+
+### Corrección
+
+- `backend/app/routers/red/schemas.py` normaliza `latitude` y `longitude` vacíos o `None` a `0.0` antes de la validación Pydantic.
+- El alta de MikroTik ya no requiere seleccionar coordenadas para ser válida.
+- Se agrega `backend/tests/test_router_create_1316_contract.py` para verificar que el payload real del formulario con coordenadas vacías sea aceptado.
+- CI incorpora el nuevo contrato de regresión.
+
+### Alcance
+
+- No cambia la API RouterOS, credenciales, provisionamiento, mapas ni lógica de conexión.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+- Se conserva la base restaurada de 1.3.15 / 1.3.9.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.16"`.
+- Backup previo: `backup/pre-router-create-hotfix-1.3.16-20260912`.
+- Rama: `work/router-create-hotfix-1.3.16-20260912`.
+- Validación real pendiente después de actualizar: registrar un MikroTik dejando latitud/longitud vacías y confirmar que ya no aparece 422 ni pantalla blanca.
+
+---
+
 ## 1.3.15 — Restauración publicada del estado funcional 1.3.9
 
 **Motivo:** el panel desplegado ya estaba en 1.3.14 y el actualizador normal no aplica una versión numéricamente menor. Por eso el estado restaurado de 1.3.9 se republica como **1.3.15**, manteniendo exactamente la base funcional de 1.3.9 pero permitiendo que instalaciones en 1.3.14 reciban la restauración como actualización normal.
