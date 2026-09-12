@@ -14,9 +14,8 @@ def test_supervisor_uses_single_backend_worker_for_udp_collector():
     assert "collector UDP Traffic Flow" in supervisor
 
 
-def test_release_1334_documents_validation_hotfix():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1334_documents_validation_hotfix_history():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.34"' in version
-    assert "1.3.34" in continuity
+    assert "## 1.3.34 — Hotfix de validación Traffic Flow" in continuity
     assert "backup/pre-traffic-flow-worker-1.3.33-20260912" in continuity
+    assert "Uvicorn con `--workers 2`" in continuity

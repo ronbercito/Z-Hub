@@ -21,6 +21,40 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.35 — Registro de Tráfico · Etapa 3/5
+
+**Objetivo:** convertir los flows ya decodificados de Etapa 2 en consumo técnico persistente por cliente/servicio sin guardar flujos crudos indefinidamente.
+
+### Implementación
+- Nuevo worker `backend/app/services/traffic_aggregation.py`.
+- El exportador Traffic Flow se resuelve contra el MikroTik registrado por `Router.ip_address`; después se construye un mapa temporal `IP → cliente/servicio/router` usando el servicio principal (`clients`) y servicios adicionales (`client_services`).
+- Se mantiene la regla de identidad `cliente ↔ servicio ↔ router ↔ IP`; la IP por sí sola no se considera identidad permanente.
+- Cuando una identidad observada cambia de router/IP, el registro abierto anterior en `traffic_identities` se cierra con `valid_until` y se abre una nueva vigencia.
+- Dirección de consumo: IP del abonado como **origen = subida**; IP del abonado como **destino = bajada**.
+- Los bytes se consolidan por hora UTC en `traffic_aggregates` con `download_bytes`, `upload_bytes`, `total_bytes` y `flow_count`.
+- Antes de escribir a MariaDB los flows se reducen en memoria a buckets; la consulta de buckets existentes se realiza agrupada por período/router/cliente para evitar un `SELECT` por flow.
+- Caché de identidad por exportador: 60 s por defecto; flush de agregados: 5 s por defecto.
+- Nuevo endpoint autenticado `GET /api/routers/traffic-flow/aggregation` con estado del worker, flows procesados/asociados/no asociados, buckets persistidos y errores DB.
+
+### Activación y seguridad
+- La persistencia de Etapa 3 es **opt-in** mediante `TRAFFIC_FLOW_AGGREGATION_ENABLED=true`.
+- Cuando se activa, el backend habilita internamente `TRAFFIC_FLOW_BUFFER_FLOWS=true` para usar la cola acotada ya existente del collector; los lotes se consumen y descartan después de agregarlos.
+- No se crea una tabla de flows crudos y no se guarda payload NetFlow/IPFIX.
+- El collector UDP sigue requiriendo `TRAFFIC_FLOW_ENABLED=true`.
+- Se conserva Uvicorn con un solo worker mientras collector/agregador permanezcan embebidos en FastAPI.
+- Esta etapa no configura routers en masa ni modifica PPPoE, DHCP, Simple Queue, firewall o facturación.
+
+### Continuidad / validación
+- Punto de partida: Z-Hub 1.3.34 con Etapa 2/5 validada en tráfico real; merge documental de validación `0b5ad6886fc0a3da6c2d417e9ac022b78162540f`.
+- Backup previo: `backup/pre-traffic-registry-stage3-1.3.34-20260912`.
+- Rama: `work/traffic-registry-stage3-1.3.35-20260912`.
+- `PANEL_VERSION = "1.3.35"`.
+- Contrato CI: `test_traffic_registry_stage3_1335_contract.py`.
+- **Validación real pendiente:** desplegar 1.3.35, habilitar `TRAFFIC_FLOW_AGGREGATION_ENABLED=true` en el mismo servidor de prueba, confirmar `running=true`, `matched_flows > 0`, `db_errors=0` y verificar filas horarias en `traffic_aggregates` antes de iniciar Etapa 4/5.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.34 — Hotfix de validación Traffic Flow
 
 **Motivo:** antes de activar UDP 2055 en el entorno real se detectó que Supervisor ejecutaba Uvicorn con `--workers 2`. Como el collector de Etapa 2 vive dentro del ciclo de vida FastAPI, dos workers intentarían abrir el mismo socket UDP y además dividirían las estadísticas entre procesos.

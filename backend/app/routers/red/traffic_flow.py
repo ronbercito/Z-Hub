@@ -1,4 +1,4 @@
-"""Registro de Tráfico — Etapa 2/5: control y validación Traffic Flow."""
+"""Registro de Tráfico — control de Traffic Flow y Etapa 3/5."""
 from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +11,7 @@ from app.integrations.mikrotik import service as mt
 from app.integrations.mikrotik.client import MikroTikError
 from app.models.router import Router
 from app.services.traffic_flow_collector import traffic_flow_runtime
+from app.services.traffic_aggregation import traffic_aggregation_runtime
 
 
 router = APIRouter(prefix="/routers", tags=["Red / Traffic Flow"], dependencies=[Depends(get_current_user)])
@@ -64,8 +65,14 @@ async def _read_routeros_traffic_flow(item: Router) -> dict:
 
 @router.get("/traffic-flow/collector")
 async def collector_status():
-    """Estado en memoria para confirmar recepción sin guardar todavía flujos crudos."""
+    """Estado en memoria del receptor UDP y decoder NetFlow/IPFIX."""
     return traffic_flow_runtime.status()
+
+
+@router.get("/traffic-flow/aggregation")
+async def aggregation_status():
+    """Estado del worker que asocia servicios y persiste agregados horarios."""
+    return traffic_aggregation_runtime.status()
 
 
 @router.get("/{router_id}/traffic-flow")
