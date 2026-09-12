@@ -12,6 +12,7 @@ import smtplib
 from datetime import date
 from email.message import EmailMessage
 from typing import Any, Dict
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Depends, HTTPException
@@ -177,6 +178,15 @@ async def update_settings(data: Dict[str, Any], db: AsyncSession = Depends(get_d
     for key in PROTECTED_GENERIC_SETTINGS:
         data.pop(key, None)
     data = {key: value for key, value in data.items() if key in EDITABLE_SETTINGS}
+
+    if "app_timezone" in data:
+        timezone = str(data["app_timezone"] or "").strip()
+        try:
+            ZoneInfo(timezone)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail="Zona horaria no válida") from exc
+        data["app_timezone"] = timezone
+
     s.data = {**(s.data or {}), **data}
     await db.commit()
     return {"id": s.id, **_public_settings({**DEFAULT_SETTINGS, **s.data})}

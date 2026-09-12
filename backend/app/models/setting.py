@@ -12,6 +12,7 @@ DEFAULT_SETTINGS = {
     "company_name": "Z-Hub",
     "logo_data": "",
     "panel_theme": "dark",
+    "app_timezone": "America/Lima",
     "ruc": "",
     "phone": "",
     "email": "",

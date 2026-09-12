@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { X } from "lucide-react";
 import Settings from "./Settings";
+import SystemSettings from "./SystemSettings";
 import ClientSettings from "./clientes/ClientSettings";
 import LicenseSettings from "./LicenseSettings";
 import MessageTemplatesSettings from "./MessageTemplatesSettings";
@@ -18,8 +19,8 @@ export default function SettingsModal({ section, onClose, locked = false }) {
     const interceptor=axios.interceptors.response.use((response)=>{const method=String(response?.config?.method||"").toLowerCase();const url=String(response?.config?.url||"");const isWrite=["post","put","patch","delete"].includes(method);const isUtilityAction=/\/test(?:\?|$)/.test(url);if(isWrite&&!isUtilityAction) window.setTimeout(()=>onClose?.(),120);return response;},(error)=>Promise.reject(error));return()=>axios.interceptors.response.eject(interceptor);
   },[section,onClose,locked]);
   if(!section)return null;
-  const title=section==="clients"?"Configuración clientes":section==="license"?"Licencia Z-Hub":section==="messaging"?"Mensajería":section==="config_templates"?"Plantillas configuración":null;
+  const title=section==="clients"?"Configuración clientes":section==="license"?"Licencia Z-Hub":section==="messaging"?"Mensajería":section==="config_templates"?"Plantillas configuración":section==="system"?"Sistema":null;
   return <div className="settings-modal-backdrop" onMouseDown={locked?undefined:onClose} role="presentation"><section className="settings-modal-panel" onMouseDown={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title||"Configuración"}>{!locked&&<button type="button" className="settings-modal-close" onClick={onClose} aria-label="Cerrar"><X/></button>}<div className="settings-modal-scroll">
-    {section==="clients"?<ClientSettings compact/>:section==="license"?<LicenseSettings locked={locked}/>:section==="messaging"?<MessagingSettings/>:section==="config_templates"?<MessageTemplatesSettings/>:<Settings section={section} compact/>}
+    {section==="clients"?<ClientSettings compact/>:section==="license"?<LicenseSettings locked={locked}/>:section==="messaging"?<MessagingSettings/>:section==="config_templates"?<MessageTemplatesSettings/>:section==="system"?<SystemSettings/>:<Settings section={section} compact/>}
   </div></section></div>;
 }
