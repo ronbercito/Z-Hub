@@ -1,9 +1,9 @@
-/* Z-Hub 1.3.24 — skin clara para tarjetas MikroTik modernas.
+/* Z-Hub 1.3.25 — skin clara con contraste reforzado para tarjetas MikroTik modernas.
    La tarjeta usa superficies claras por defecto y solo entra en oscuro con un tema oscuro explícito. */
 
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern {
   background: linear-gradient(180deg,#ffffff 0%,#fbfdff 100%) !important;
-  border-color: #d7e4ef !important;
+  border-color: #b9d5ea !important;
   color: #10233f !important;
   box-shadow: 0 12px 30px rgba(30,64,175,.10),0 3px 8px rgba(15,23,42,.06) !important;
 }
@@ -14,39 +14,113 @@ html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-footer {
   background: #ffffff !important;
   background-image: none !important;
-  border-color: #e3ebf3 !important;
+  border-color: #d6e3ee !important;
 }
 
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-secondary-metrics {
-  background: #f9fbfd !important;
+  background: #f8fbfe !important;
 }
 
-html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-name-row h3,
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-name-row h3 {
+  color: #082f53 !important;
+  font-weight: 900 !important;
+}
+
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric__value {
-  color: #0f1f38 !important;
+  color: #081f3b !important;
+  font-weight: 900 !important;
+  letter-spacing: -.01em;
 }
 
-html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-address,
-html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-model,
-html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric__label,
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-address {
+  color: #1d5d8f !important;
+  font-weight: 800 !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-model {
+  color: #365e7f !important;
+  font-weight: 750 !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric__label {
+  color: #264d72 !important;
+  font-weight: 850 !important;
+  letter-spacing: .01em;
+}
+
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-location strong {
-  color: #526d91 !important;
+  color: #244c72 !important;
+  font-weight: 900 !important;
 }
 
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-location span {
-  color: #7890ad !important;
+  color: #557694 !important;
+  font-weight: 750 !important;
 }
 
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric + .router-modern-metric {
-  border-color: #e4ecf4 !important;
+  border-color: #d8e4ef !important;
 }
 
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-progress {
-  background: #e8eef5 !important;
+  background: #dfe8f1 !important;
 }
 
+/* Iconos más visibles sin perder el estilo pastel del tema claro. */
 html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric__icon {
-  box-shadow: inset 0 0 0 1px rgba(37,99,235,.05);
+  width: 29px;
+  height: 29px;
+  border: 1px solid currentColor;
+  box-shadow: 0 2px 7px rgba(15,58,95,.10) !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric__icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.6;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric--blue .router-modern-metric__icon {
+  color: #126fd0 !important;
+  background: #e5f1ff !important;
+}
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric--emerald .router-modern-metric__icon {
+  color: #06815d !important;
+  background: #e1f7ef !important;
+}
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric--violet .router-modern-metric__icon {
+  color: #6d28d9 !important;
+  background: #eee8ff !important;
+}
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric--amber .router-modern-metric__icon {
+  color: #b86d00 !important;
+  background: #fff0c7 !important;
+}
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-metric--cyan .router-modern-metric__icon {
+  color: #067b91 !important;
+  background: #def7fb !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-device-icon {
+  background: linear-gradient(145deg,#17648f,#1387ad) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.34),0 7px 16px rgba(19,100,143,.24) !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-location > svg {
+  color: #1678c8 !important;
+  stroke-width: 2.5;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .router-modern-action--map {
+  color: #0f73c9 !important;
+  background: #e7f3ff !important;
+  border-color: #8dc6f5 !important;
+}
+
+html:not([data-panel-theme="dark"]):not([data-panel-theme="zhub-dark"]) .network-router-card--modern .network-router-edit-button {
+  border-color: #0d75d7 !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg,#238eea,#126fc9) !important;
 }
 
 /* Tema oscuro solo cuando el panel lo declara de forma explícita. */
