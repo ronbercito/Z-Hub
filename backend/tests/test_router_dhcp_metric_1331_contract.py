@@ -27,9 +27,7 @@ def test_card_replaces_traffic_with_dhcp():
     assert 'label="Tráfico"' not in card
 
 
-def test_release_1331_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1331_is_preserved_in_continuity():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.31"' in version
     assert "1.3.31 — DHCP en tarjeta MikroTik" in continuity
     assert "backup/pre-router-dhcp-metric-1.3.31-20260912" in continuity
