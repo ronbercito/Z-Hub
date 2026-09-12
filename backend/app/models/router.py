@@ -72,4 +72,5 @@ class Router(Base):
         d["has_password"] = bool(self.password)
         d["has_enable_password"] = bool(self.enable_password)
         d["has_web_password"] = bool(self.web_password)
+        d["dhcp_bound_count"] = int(getattr(self, "dhcp_bound_count", 0) or 0)
         return d
