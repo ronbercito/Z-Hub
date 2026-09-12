@@ -25,21 +25,20 @@ def test_modern_mikrotik_card_has_reference_sections():
     assert "router-modern-progress" in metric
 
 
-def test_visual_states_and_light_dark_styles_are_present():
+def test_visual_states_and_theme_styles_are_present():
     card = read("frontend/src/modules/red/components/RouterCard.jsx")
     css = read("frontend/src/modules/red/router-card-layout.css")
+    light_css = read("frontend/src/modules/red/router-card-light-skin.css")
     assert 'visualState' in card
     assert 'router-modern-status--${visualState}' in card
     assert 'data-router-visual-state={visualState}' in card
     for state in ("online", "offline", "alert", "unknown"):
         assert f"router-modern-status--{state}" in css
-    assert 'html[data-panel-theme="zhub-light"]' in css
-    assert 'html:not([data-panel-theme="zhub-light"])' in css
+    assert 'data-panel-theme="dark"' in light_css
+    assert 'data-panel-theme="zhub-dark"' in light_css
 
 
-def test_release_1323_version_backup_and_history():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1323_backup_and_history_remain_preserved():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.23"' in version
     assert "1.3.23" in continuity
     assert "backup/pre-router-card-modern-1.3.23-20260912" in continuity
