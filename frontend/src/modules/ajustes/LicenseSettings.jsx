@@ -59,7 +59,7 @@ export default function LicenseSettings() {
   const requestLabel = isTrial ? "Solicitar licencia" : "Cambiar plan";
   const supportName = data?.sales_business_name || data?.sales_contact_name || "Soporte Z-Hub";
   const currentPlan = planLabel(data?.plan, max);
-  const currentUsage = max == null ? `${usage} abonados activos` : `${usage} de ${max} abonados activos`;
+  const currentUsage = max == null ? `${usage} servicios contabilizados` : `${usage} de ${max} servicios contabilizados`;
   const whatsappMessage = [
     "Hola, buen día.",
     "",
@@ -101,7 +101,7 @@ export default function LicenseSettings() {
     <section className="license-hero"><div>
       <span className={`license-status ${status.tone}`}><StatusIcon/>{statusLabel}</span>
       <h3>{isTrial ? "Z-Hub Trial" : `Z-Hub ${planLabel(data?.plan, max)}`}</h3>
-      <p>{isTrial ? "Prueba de 30 días con capacidad máxima de 20 abonados activos." : "Licencia sin vencimiento administrada por capacidad de abonados activos."}</p>
+      <p>{isTrial ? "Prueba de 30 días con capacidad máxima de 20 servicios registrados." : "Licencia sin vencimiento administrada por capacidad de servicios registrados."}</p>
     </div></section>
 
     <section className="license-metrics">
@@ -113,9 +113,9 @@ export default function LicenseSettings() {
     {isTrial && <section className={`license-trial-card ${data?.status === "trial_expired" ? "expired" : ""}`}><div className="trial-icon"><Clock3/></div><div><span>Días restantes del Trial</span><strong>{remainingDays} días</strong><p>El mismo hardware no recibe un segundo período de prueba al reinstalar Z-Hub.</p></div></section>}
 
     {!unlimited && max != null && <section className="license-capacity">
-      <div className="capacity-row"><b>Uso de capacidad</b><span>{usage} / {max} abonados activos · {percent}%</span></div>
+      <div className="capacity-row"><b>Uso de capacidad</b><span>{usage} / {max} servicios · {percent}%</span></div>
       <div className="capacity-track" aria-label={`Uso de licencia ${percent}%`}><span style={{width:`${percent}%`}} /></div>
-      <p>{available > 0 ? `${available} cupo${available === 1 ? " disponible" : "s disponibles"}.` : "Capacidad alcanzada: no se pueden registrar o reactivar más abonados hasta liberar un cupo o cambiar de plan."}</p>
+      <p>{available > 0 ? `${available} cupo${available === 1 ? " disponible" : "s disponibles"}.` : "Capacidad alcanzada: no se pueden registrar nuevos servicios ni reactivar servicios retirados hasta liberar un cupo o cambiar de plan."}</p>
     </section>}
 
     <section className="license-details">
@@ -131,6 +131,6 @@ export default function LicenseSettings() {
       {!whatsappUrl && <p className="commercial-hint">WhatsApp aún no está configurado en Web-Licence. El administrador central debe completar el módulo Contacto.</p>}
     </section>
 
-    <footer className="license-note">Al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto del panel continúa funcionando normalmente.</footer>
+    <footer className="license-note">Activo, suspendido/cortado y pausado consumen capacidad. Solo la baja definitiva libera el cupo; cada servicio adicional consume un cupo independiente.</footer>
   </div>;
 }
