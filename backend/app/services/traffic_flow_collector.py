@@ -136,8 +136,6 @@ class TrafficFlowDecoder:
                 self.templates[(exporter, version, domain_id, template_id)] = tuple(fields)
 
     def _parse_data_records(self, payload: bytes, fields: tuple[TemplateField, ...], export_epoch: int) -> list[DecodedFlow]:
-        # MikroTik usa campos de longitud fija para las direcciones y bytes que
-        # necesitamos. Los templates con longitud variable se ignoran de forma segura.
         if any(field.length == 65535 for field in fields):
             return []
         record_length = sum(field.length for field in fields)
@@ -194,8 +192,6 @@ class TrafficFlowProtocol(asyncio.DatagramProtocol):
     def datagram_received(self, data: bytes, addr) -> None:
         exporter = str(addr[0])
         now = time.monotonic()
-        # Hash del datagrama + exportador. TTL pequeño evita doble conteo por
-        # retransmisión/duplicación de red sin conservar historial bruto.
         digest = hashlib.blake2s(exporter.encode() + data, digest_size=16).digest()
         expiry = self._seen.get(digest)
         if expiry and expiry > now:
@@ -231,10 +227,15 @@ class TrafficFlowRuntime:
         self.bind = ""
         self.port = 0
         self.enabled = False
+        self.buffer_flows = False
         self.queue: asyncio.Queue[tuple[str, int, list[DecodedFlow]]] = asyncio.Queue(maxsize=512)
         self.dropped_batches = 0
 
     def _enqueue(self, exporter: str, version: int, flows: list[DecodedFlow]) -> None:
+        # Etapa 2 solo valida recepción. No retiene lotes crudos salvo que la
+        # futura Etapa 3 habilite explícitamente el buffer/consumer.
+        if not self.buffer_flows:
+            return
         try:
             self.queue.put_nowait((exporter, version, flows))
         except asyncio.QueueFull:
@@ -242,6 +243,7 @@ class TrafficFlowRuntime:
 
     async def start(self) -> bool:
         self.enabled = os.environ.get("TRAFFIC_FLOW_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+        self.buffer_flows = os.environ.get("TRAFFIC_FLOW_BUFFER_FLOWS", "false").strip().lower() in {"1", "true", "yes", "on"}
         self.bind = os.environ.get("TRAFFIC_FLOW_BIND", "0.0.0.0").strip() or "0.0.0.0"
         self.port = int(os.environ.get("TRAFFIC_FLOW_PORT", "2055"))
         if not self.enabled:
@@ -266,6 +268,7 @@ class TrafficFlowRuntime:
             "listening": bool(self.transport),
             "bind": self.bind,
             "port": self.port,
+            "buffer_flows": self.buffer_flows,
             "packets": protocol.packets if protocol else 0,
             "flows": protocol.flows if protocol else 0,
             "ipv4_flows": protocol.ipv4_flows if protocol else 0,
