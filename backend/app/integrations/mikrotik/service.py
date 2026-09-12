@@ -54,6 +54,7 @@ async def snapshot_router(router: Router) -> dict:
         router.status = "offline"
         router.last_error = str(e)[:250]
         router.last_sync = now_iso()
+        router.dhcp_bound_count = 0
         return {"ok": False, "message": str(e), "dhcp_bound_count": 0}
 
     dhcp_bound_count = sum(1 for row in leases if str(row.get("status", "")).lower() == "bound")
@@ -67,6 +68,7 @@ async def snapshot_router(router: Router) -> dict:
     router.memory_usage_pct = res["memory_used_pct"]
     router.active_pppoe_count = len(active)
     router.active_queues_count = len(queues)
+    router.dhcp_bound_count = dhcp_bound_count
     router.total_download_mbps = round(sum(i["rx_mbps"] for i in ifaces if i["type"] in ("ether", "sfp", "vlan", "bridge") and i["running"]), 2)
     router.total_upload_mbps = round(sum(i["tx_mbps"] for i in ifaces if i["type"] in ("ether", "sfp", "vlan", "bridge") and i["running"]), 2)
     router.ping_ms = latency or 0.0
