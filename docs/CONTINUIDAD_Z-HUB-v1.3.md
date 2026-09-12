@@ -21,6 +21,26 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.28 — Iconos MikroTik de alto contraste
+
+**Motivo:** la validación real de 1.3.27 confirmó que la identidad del router ya quedó visible, pero los iconos de CPU, Memoria, Ping, PPPoE, Colas, Tráfico y mapa seguían viéndose demasiado pálidos sobre el tema claro.
+
+### Corrección aplicada
+- Los seis iconos de métricas usan ahora fondos sólidos por categoría: verde, azul, violeta, ámbar y cian.
+- El glifo SVG se fuerza a blanco con `stroke:#fff`, `opacity:1` y `visibility:visible` para evitar que reglas heredadas del tema lo dejen translúcido.
+- Se aumenta ligeramente el tamaño del icono y se agrega una sombra compacta para separarlo del fondo blanco.
+- El botón de mapa usa azul sólido con pin blanco y sombra suave.
+- No cambia el diseño de identidad logrado en 1.3.27.
+
+### Rendimiento / rollback
+- Solo cambia CSS/presentación; no agrega API, polling ni consultas RouterOS.
+- `PANEL_VERSION = "1.3.28"`.
+- Backup previo: `backup/pre-router-icon-contrast-1.3.28-20260912`.
+- Rama de trabajo: `work/router-icon-contrast-1.3.28-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.27 — Identidad MikroTik en bloque propio
 
 **Motivo:** la validación real de 1.3.26 mostró que la zona superior seguía prácticamente igual: la estrella y el estado se veían, pero nombre, IP:puerto y modelo continuaban sin resaltar. La corrección por CSS sobre `h3`/`p` no fue suficiente frente a reglas heredadas del tema.
