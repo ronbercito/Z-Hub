@@ -1,9 +1,8 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.0";
+export const PANEL_VERSION = "1.3.1";
 export const CHANGELOG = [
-  { type: "Licencias", text: "El Setup Wizard activa o recupera automáticamente el TRIAL desde Web-Licence usando el HW-ID seguro del servidor." },
-  { type: "UX", text: "Se elimina del flujo normal de instalación el campo para escribir una clave de licencia; el cliente se identifica con su correo registrado." },
-  { type: "Licencias", text: "Una reinstalación sobre el mismo hardware recupera el mismo TRIAL y no reinicia el período de prueba." },
-  { type: "Seguridad", text: "La clave asignada por Web-Licence permanece en el backend y ya no se reenvía desde el navegador al finalizar el Wizard." },
-  { type: "Documentación", text: "Se inicia CONTINUIDAD_Z-HUB-v1.3.md como bitácora exclusiva de la serie 1.3.x." },
+  { type: "Licencias", text: "El apartado Licencia se simplifica para mostrar solo estado, plan, vencimiento, días restantes, capacidad e Installation ID." },
+  { type: "UX", text: "Se retira del flujo visible la activación manual por clave y el detalle técnico del License Server." },
+  { type: "Comercial", text: "Se agrega una única acción para solicitar o renovar la licencia por WhatsApp con contexto automático de la instalación." },
+  { type: "Seguridad", text: "La clave de licencia deja de mostrarse en el apartado de cliente; la administración permanece centralizada en Web-Licence." },
 ];
