@@ -10,8 +10,9 @@ def read(path: str) -> str:
 def test_delete_icon_and_offline_status_have_strong_contrast():
     card = read("frontend/src/modules/red/components/RouterCard.jsx")
     css = read("frontend/src/modules/red/router-card-layout.css")
-    assert 'router-modern-status--offline' in card
+    assert 'router-modern-status--${visualState}' in card
     assert 'router-modern-action--delete' in card
+    assert '.router-modern-status--offline' in css
     assert 'linear-gradient(135deg, #f04452, #e11d48)' in css
     assert 'linear-gradient(135deg,#ff4b57,#e92638)' in css
 
