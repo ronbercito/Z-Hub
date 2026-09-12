@@ -28,9 +28,10 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 ### Corrección
 
 - Se agrega `deploy/license_bootstrap.sh` y el instalador raíz lo carga antes de ejecutar `deploy/install.sh`.
+- La configuración pública por defecto vive en `deploy/license/bootstrap.env` y puede sobreescribirse con variables de entorno.
 - El bootstrap instala únicamente material **público** de confianza:
-  - `deploy/trust/server-public.pem` -> `/etc/zhub/licencia/server-public.pem` para verificar autorizaciones RS256.
-  - `deploy/trust/zhub-lab-ca.crt` -> `/usr/local/share/ca-certificates/zhub-lab-ca.crt` y ejecuta `update-ca-certificates` para validar TLS normalmente.
+  - `deploy/license/server-public.pem` -> `/etc/zhub/licencia/server-public.pem` para verificar autorizaciones RS256.
+  - `deploy/license/zhub-lab-ca.crt` -> `/usr/local/share/ca-certificates/zhub-lab-ca.crt` y ejecuta `update-ca-certificates` para validar TLS normalmente.
 - En instalación limpia se usa como endpoint por defecto `https://192.168.10.240`; sigue siendo sobreescribible mediante `ZHUB_LICENSE_SERVER_URL`.
 - Se exportan automáticamente `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`, que luego son persistidas por la lógica existente de Supervisor.
 - No se usa `curl -k`, no se desactiva validación TLS y no se versiona ninguna clave privada.
