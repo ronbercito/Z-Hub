@@ -15,6 +15,30 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 ---
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.14 — Clientes por etapas, etapa 1b: afinado contra referencia
+**Motivo:** la validación real de 1.3.13 confirmó que la estructura ya iba en la dirección correcta, pero `clients-theme.css` todavía imponía visualmente un fondo celeste/verde y una barra azul en búsqueda/filtros. Se corrige únicamente esa zona superior antes de avanzar a las cartillas.
+
+### Ajustes
+- La cabecera queda sobre una superficie blanca limpia, sin degradado celeste/verde heredado.
+- La antigua barra azul de búsqueda/filtros se neutraliza con selectores de mayor especificidad y `!important` solo dentro de la cabecera de Clientes.
+- Título y subtítulo quedan más compactos y alineados con la maqueta aprobada.
+- Búsqueda y filtros pasan a controles blancos con borde fino y sombra mínima.
+- Los tabs/contadores quedan como tarjetas pequeñas, claras y alineadas en una franja inferior.
+- Se reduce el espacio vertical entre cabecera y primera cartilla.
+- Las cartillas de clientes siguen congeladas; esta versión no las modifica.
+
+### Compatibilidad / rendimiento
+- No se cambia backend, API, MikroTik, facturación ni lógica de clientes.
+- No agrega consultas, polling ni procesos permanentes.
+- `clients-top-section.css` conserva propiedad visual exclusiva de la cabecera y compensa las reglas históricas de `clients-theme.css` sin eliminarlas todavía.
+
+### Versionado / rollback
+- `PANEL_VERSION = "1.3.14"`.
+- Backup: `backup/pre-clients-top-stage1b-1.3.14-20260912`.
+- Rama: `work/clients-top-stage1b-1.3.14-20260912`.
+- No modifica el contrato Z-Hub ↔ Web-Licence.
+
+---
 ## 1.3.13 — Clientes por etapas, etapa 1: cabecera superior
 **Decisión:** detener los cambios globales de toda la pantalla y rehacer Clientes por secciones. En esta etapa se modifica **solo la zona superior** marcada por el usuario: título, subtítulo, buscador, filtros y contadores. Las cartillas de clientes quedan congeladas para una etapa posterior.
 
