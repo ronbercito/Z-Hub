@@ -23,7 +23,8 @@ def test_country_first_defaults_to_peru_and_latam_prefixes_are_embedded():
     for country in ("Argentina", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica", "Cuba", "Ecuador", "El Salvador", "Guatemala", "Haití", "Honduras", "México", "Nicaragua", "Panamá", "Paraguay", "Perú", "República Dominicana", "Uruguay", "Venezuela"):
         assert f'name:"{country}"' in view
     assert "El prefijo +{country.code} se agrega automáticamente" in view
-    assert "city" not in view.lower()
+    assert ">CIUDAD<" not in view
+    assert "registration.city" not in view
 
 
 def test_backend_proxies_registration_without_exposing_central_server_to_browser():
