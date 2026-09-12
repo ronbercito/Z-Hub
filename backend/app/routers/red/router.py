@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/routers/red/router.py
-Actualización: 2026-09-08 — el corte masivo respeta los meses vencidos configurados en cada abonado.
+Actualización: 2026-09-12 — test-connection expone el conteo DHCP bound para la tarjeta MikroTik.
 Función: Gestión de equipos de red (/api/routers), lectura MikroTik/OLT y corte real por mora.
 Trabaja con: backend/app/models/client.py, invoice.py, setting.py e integraciones MikroTik/OLT.
 """
@@ -119,7 +119,10 @@ async def test_connection(router_id: str, db: AsyncSession = Depends(get_db)):
     r = await get_or_404(db, Router, router_id, "Router")
     result = await (mt.snapshot_router(r) if r.device_type == "mikrotik" else olt.snapshot_olt(r))
     await db.commit()
-    return {**result, "router": r.public_dict()}
+    router_data = r.public_dict()
+    if r.device_type == "mikrotik":
+        router_data["dhcp_bound_count"] = int(result.get("dhcp_bound_count", 0) or 0)
+    return {**result, "router": router_data}
 
 
 @router.post("/{router_id}/ping")
@@ -233,7 +236,7 @@ async def address_list_change(router_id: str, data: AddressListIn, db: AsyncSess
         if data.action == "add":
             res = await _read(db, router_id, lambda c: c.address_list_add(data.list, data.address, data.comment))
             return {"message": f"IP {data.address} {'ya estaba' if res == 'exists' else 'agregada'} en '{data.list}'"}
-        n = await _read(db, router_id, lambda c: c.address_list_remove(data.list, data.address))
+        n = await _read(db, router_id, lambda c: c.address_list_remove(data.list, data.address)
     except MikroTikError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return {"message": f"{n} entrada(s) de {data.address} eliminadas de '{data.list}'"}
