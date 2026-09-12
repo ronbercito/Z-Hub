@@ -1,12 +1,14 @@
 import importlib.util
 import socket
 import struct
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "backend/app/services/traffic_flow_collector.py"
 spec = importlib.util.spec_from_file_location("traffic_flow_collector_contract", MODULE)
 mod = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = mod
 spec.loader.exec_module(mod)
 TrafficFlowDecoder = mod.TrafficFlowDecoder
 
@@ -71,6 +73,7 @@ def test_stage2_is_bounded_and_has_duplicate_detection():
     assert "digest = hashlib.blake2s" in text
     assert "self.duplicates += 1" in text
     assert "TRAFFIC_FLOW_ENABLED" in text
+    assert "TRAFFIC_FLOW_BUFFER_FLOWS" in text
     assert '"false"' in text
 
 
