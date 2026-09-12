@@ -1,168 +1,197 @@
-/* Z-Hub 1.3.13 — Etapa 1: solo cabecera superior de Clientes.
-   Objetivo: acercar la zona superior a la referencia aprobada sin tocar las cartillas. */
+/* Z-Hub 1.3.14 — Etapa 1b: cabecera superior de Clientes.
+   Esta hoja gana prioridad sobre clients-theme.css sin tocar las cartillas. */
 
 .clients-page{position:relative}
 
-/* Unificamos visualmente título, búsqueda, filtros y contadores en una sola zona clara. */
-.clients-page .clients-header{
+/* Fondo limpio y compacto como la referencia. La alta especificidad evita
+   que clients-theme.css vuelva a pintar el bloque celeste/verde. */
+html[data-panel-theme="zhub-light"] body .clients-page.clients-page .clients-header.clients-header,
+body .clients-page.clients-page .clients-header.clients-header{
   position:relative;
-  min-height:118px;
-  padding:14px 16px 14px!important;
+  min-height:112px;
+  padding:8px 12px 10px!important;
+  margin:0!important;
   border:0!important;
+  border-left:0!important;
   border-radius:0!important;
-  background:transparent!important;
+  background:#fff!important;
+  background-image:none!important;
   box-shadow:none!important;
 }
 
-.clients-page .clients-title{
-  margin:0;
+body .clients-page.clients-page .clients-title.clients-title{
+  margin:0!important;
+  padding:0!important;
   color:#0f172a!important;
   font-size:0!important;
-  line-height:1;
+  line-height:1!important;
 }
-.clients-page .clients-title svg{display:none!important}
-.clients-page .clients-title::after{
+body .clients-page.clients-page .clients-title.clients-title svg{display:none!important}
+body .clients-page.clients-page .clients-title.clients-title::after{
   content:"Clientes";
   display:block;
-  font-size:28px;
-  line-height:1.05;
+  font-size:27px;
+  line-height:1.04;
   font-weight:900;
   letter-spacing:-.035em;
-  color:#0b1220;
+  color:#101827;
 }
 
-.clients-page .clients-subtitle{
-  margin-top:5px!important;
+body .clients-page.clients-page .clients-subtitle.clients-subtitle{
+  margin:4px 0 0!important;
+  padding:0!important;
   font-size:0!important;
   color:#334155!important;
+  font-weight:500!important;
 }
-.clients-page .clients-subtitle::after{
+body .clients-page.clients-page .clients-subtitle.clients-subtitle::after{
   content:"Gestiona tus clientes y servicios desde un solo lugar";
   display:block;
-  font-size:13px;
-  line-height:1.25;
+  font-size:12.5px;
+  line-height:1.2;
   font-weight:500;
-  color:#31517a;
+  color:#23436c;
 }
 
-/* Tarjetas resumen de la fila inferior. Conservamos los contadores reales actuales. */
-.clients-page .clients-header>div:last-child{
+/* Tabs/contadores: una franja de tarjetas claras, sin fondo contenedor. */
+body .clients-page.clients-page .clients-header.clients-header>div:last-child{
   display:grid!important;
-  grid-template-columns:repeat(3,minmax(165px,235px));
-  gap:12px!important;
-  margin-top:16px!important;
-  padding-right:44%!important;
+  grid-template-columns:repeat(3,minmax(165px,220px));
+  gap:10px!important;
+  max-width:680px;
+  margin:13px 0 0!important;
+  padding:0!important;
+  background:transparent!important;
 }
-.clients-page .clients-header>div:last-child button{
+body .clients-page.clients-page .clients-header.clients-header>div:last-child button{
   position:relative;
-  min-height:42px;
-  padding:9px 14px 9px 38px!important;
-  border-radius:8px!important;
-  border:1px solid #d7e1ef!important;
+  min-height:36px;
+  padding:7px 12px 7px 36px!important;
+  border:1px solid #d9e2ef!important;
+  border-radius:7px!important;
   background:#fff!important;
-  color:#18345a!important;
-  box-shadow:0 2px 7px rgba(15,23,42,.035)!important;
-  text-align:left;
-  font-size:11px!important;
-  font-weight:750!important;
+  background-image:none!important;
+  color:#17365c!important;
+  box-shadow:0 1px 3px rgba(15,23,42,.04)!important;
+  text-align:left!important;
+  font-size:10.5px!important;
+  font-weight:800!important;
+  line-height:1.1!important;
 }
-.clients-page .clients-header>div:last-child button::before{
+body .clients-page.clients-page .clients-header.clients-header>div:last-child button::before{
   content:"";
   position:absolute;
-  left:13px;
+  left:12px;
   top:50%;
-  width:14px;
-  height:14px;
-  border-radius:999px;
+  width:12px;
+  height:12px;
   transform:translateY(-50%);
-  background:#10b981;
-  box-shadow:0 0 0 3px rgba(16,185,129,.08);
+  border-radius:999px;
+  background:#14b86e;
+  box-shadow:0 0 0 3px rgba(20,184,110,.08);
 }
-.clients-page .clients-header>div:last-child button:nth-child(2)::before{
-  background:#f5ae00;
-  box-shadow:0 0 0 3px rgba(245,174,0,.09);
+body .clients-page.clients-page .clients-header.clients-header>div:last-child button:nth-child(2)::before{
+  background:#f5ad00;
+  box-shadow:0 0 0 3px rgba(245,173,0,.08);
 }
-.clients-page .clients-header>div:last-child button:nth-child(3)::before{
+body .clients-page.clients-page .clients-header.clients-header>div:last-child button:nth-child(3)::before{
   background:#64748b;
-  box-shadow:0 0 0 3px rgba(100,116,139,.09);
+  box-shadow:0 0 0 3px rgba(100,116,139,.08);
 }
-.clients-page .clients-header>div:last-child button:hover{
+body .clients-page.clients-page .clients-header.clients-header>div:last-child button:hover{
   transform:translateY(-1px);
-  border-color:#b8c9dd!important;
+  border-color:#c3d2e4!important;
 }
 
-/* La antigua barra oscura deja de verse como un bloque separado. */
-.clients-page .clients-controls{
-  position:absolute;
-  z-index:4;
-  top:8px;
-  right:0;
-  width:min(61%,760px);
-  min-height:56px;
-  padding:7px 12px!important;
-  gap:12px!important;
+/* Búsqueda y filtros: eliminamos de forma definitiva la barra azul heredada. */
+html[data-panel-theme="zhub-light"] body .clients-page.clients-page>.clients-controls.clients-controls,
+body .clients-page.clients-page>.clients-controls.clients-controls{
+  position:absolute!important;
+  z-index:6;
+  top:4px!important;
+  right:0!important;
+  width:min(62%,760px)!important;
+  min-height:44px!important;
+  margin:0!important;
+  padding:0 12px!important;
+  gap:10px!important;
   border:0!important;
   border-radius:0!important;
   background:transparent!important;
+  background-image:none!important;
   box-shadow:none!important;
 }
-.clients-page .clients-controls>div:first-child{
+body .clients-page.clients-page>.clients-controls.clients-controls>div:first-child{
   width:min(100%,520px)!important;
-  flex:1 1 auto;
+  max-width:520px!important;
+  flex:1 1 auto!important;
 }
-.clients-page .clients-controls input{
-  height:40px;
-  padding-left:40px!important;
-  border:1px solid #cbd8e8!important;
+body .clients-page.clients-page>.clients-controls.clients-controls input{
+  height:36px!important;
+  padding-left:38px!important;
+  border:1px solid #c9d6e6!important;
   border-radius:7px!important;
   background:#fff!important;
-  color:#18345a!important;
-  box-shadow:0 1px 3px rgba(15,23,42,.025)!important;
-  font-size:11px!important;
-}
-.clients-page .clients-controls input::placeholder{color:#58708f!important}
-.clients-page .clients-controls svg{color:#31517a!important}
-
-/* Filtros: mismo lenguaje visual de la referencia, sin barra azul oscura. */
-.clients-page .clients-controls>div:last-child{
-  display:flex!important;
-  gap:6px!important;
-  flex:0 0 auto;
-}
-.clients-page .clients-controls>div:last-child button{
-  height:40px;
-  padding:0 13px!important;
-  border:1px solid #ccd9e8!important;
-  border-radius:7px!important;
-  background:#fff!important;
-  color:#18345a!important;
-  box-shadow:0 1px 3px rgba(15,23,42,.025)!important;
+  color:#17365c!important;
+  box-shadow:0 1px 3px rgba(15,23,42,.035)!important;
   font-size:10.5px!important;
+}
+body .clients-page.clients-page>.clients-controls.clients-controls input:focus{
+  border-color:#8fb2d8!important;
+  box-shadow:0 0 0 2px rgba(37,99,235,.08)!important;
+  outline:none!important;
+}
+body .clients-page.clients-page>.clients-controls.clients-controls input::placeholder{color:#687f9d!important}
+body .clients-page.clients-page>.clients-controls.clients-controls svg{color:#35597f!important}
+body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  flex:0 0 auto!important;
+}
+body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child button{
+  height:36px!important;
+  min-width:58px;
+  padding:0 12px!important;
+  border:1px solid #ccd8e7!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  background-image:none!important;
+  color:#17365c!important;
+  box-shadow:0 1px 3px rgba(15,23,42,.035)!important;
+  font-size:10px!important;
   font-weight:800!important;
 }
-.clients-page .clients-controls>div:last-child button:nth-child(2){color:#087a50!important}
-.clients-page .clients-controls>div:last-child button:nth-child(3){color:#c42b44!important}
+body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child button:nth-child(2){color:#087a50!important}
+body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child button:nth-child(3){color:#c42b44!important}
 
-/* Eliminamos el margen artificial que Tailwind agrega entre header y controles,
-   porque visualmente forman una sola sección. */
-.clients-page>.clients-controls{margin-top:0!important}
-.clients-page>.clients-table-card{margin-top:2px!important}
+/* Menos aire entre cabecera y primera cartilla. */
+body .clients-page.clients-page>.clients-table-card{margin-top:0!important}
 
-html[data-panel-theme="zhub-light"] .clients-page .clients-header,
-html[data-panel-theme="zhub-light"] .clients-page .clients-controls{background:transparent!important}
+/* Dark: mantiene estructura idéntica sin forzar fondos claros sobre el tema. */
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page .clients-header.clients-header{background:transparent!important}
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page .clients-title.clients-title::after{color:#f8fafc}
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page .clients-subtitle.clients-subtitle::after{color:#94a3b8}
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page .clients-header.clients-header>div:last-child button,
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page>.clients-controls.clients-controls input,
+html:not([data-panel-theme="zhub-light"]) body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child button{
+  background:#111827!important;
+  border-color:#334155!important;
+  color:#e2e8f0!important;
+}
 
 @media(max-width:1180px){
-  .clients-page .clients-header{padding-bottom:78px!important}
-  .clients-page .clients-header>div:last-child{padding-right:0!important;grid-template-columns:repeat(3,minmax(0,1fr));max-width:700px}
-  .clients-page .clients-controls{top:72px;left:16px;right:16px;width:auto}
+  body .clients-page.clients-page .clients-header.clients-header{min-height:154px;padding-bottom:66px!important}
+  body .clients-page.clients-page .clients-header.clients-header>div:last-child{grid-template-columns:repeat(3,minmax(0,1fr));max-width:700px}
+  body .clients-page.clients-page>.clients-controls.clients-controls{top:64px!important;left:12px!important;right:12px!important;width:auto!important}
 }
 
 @media(max-width:760px){
-  .clients-page .clients-header{min-height:auto;padding:14px 10px!important}
-  .clients-page .clients-title::after{font-size:24px}
-  .clients-page .clients-header>div:last-child{grid-template-columns:1fr;margin-top:14px!important}
-  .clients-page .clients-controls{position:static;width:100%;padding:0 10px 10px!important;flex-direction:column!important;align-items:stretch!important}
-  .clients-page .clients-controls>div:first-child{width:100%!important;max-width:none!important}
-  .clients-page .clients-controls>div:last-child{width:100%}
-  .clients-page .clients-controls>div:last-child button{flex:1}
+  body .clients-page.clients-page .clients-header.clients-header{min-height:auto;padding:10px!important}
+  body .clients-page.clients-page .clients-title.clients-title::after{font-size:24px}
+  body .clients-page.clients-page .clients-header.clients-header>div:last-child{grid-template-columns:1fr;margin-top:12px!important;max-width:none}
+  body .clients-page.clients-page>.clients-controls.clients-controls{position:static!important;width:100%!important;padding:0 10px 10px!important;flex-direction:column!important;align-items:stretch!important}
+  body .clients-page.clients-page>.clients-controls.clients-controls>div:first-child{width:100%!important;max-width:none!important}
+  body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child{width:100%}
+  body .clients-page.clients-page>.clients-controls.clients-controls>div:last-child button{flex:1}
 }

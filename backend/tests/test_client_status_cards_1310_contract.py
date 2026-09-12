@@ -40,14 +40,18 @@ def test_clients_top_stage1_is_isolated_and_loaded():
     assert '@import "./modules/clientes/clients-top-section.css";' in index
     assert 'content:"Clientes"' in top
     assert 'Gestiona tus clientes y servicios desde un solo lugar' in top
-    assert '.clients-page .clients-controls' in top
+    assert '.clients-controls.clients-controls' in top
     assert 'background:#fff!important' in top
+    assert 'background-image:none!important' in top
+    assert 'clients-theme.css' in top
 
 
-def test_release_history_is_preserved_after_1313():
+def test_release_history_is_preserved_after_1314():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.13"' in version
+    assert 'PANEL_VERSION = "1.3.14"' in version
+    assert "1.3.13 — Clientes por etapas, etapa 1: cabecera superior" in continuity
+    assert "backup/pre-clients-top-stage1-1.3.13-20260912" in continuity
     assert "1.3.12 — Ajuste visual de cartillas contra referencia aprobada" in continuity
     assert "backup/pre-client-card-reference-1.3.12-20260912" in continuity
     assert "1.3.11 — Cartilla visual enriquecida de Clientes" in continuity
