@@ -44,6 +44,7 @@ from app.routers.license.router import router as license_router
 from app.routers.mensajeria.router import router as mensajeria_router
 from app.routers.planes.router import router as planes_router
 from app.routers.red.router import router as red_router
+from app.routers.red.traffic_flow import router as traffic_flow_router
 from app.routers.red.ipv4_networks import router as ipv4_networks_router
 from app.routers.red.nap_boxes import router as nap_boxes_router
 from app.routers.red.monitoring import router as monitoring_router
@@ -62,6 +63,7 @@ from app.routers.whatsapp_automatizadovip.router import router as whatsapp_autom
 from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automatizadovip_logs_router
 from app.routers.whatsapp_automatizadovip.automation_test import router as whatsapp_automatizadovip_automation_test_router
 from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
+from app.services.traffic_flow_collector import traffic_flow_runtime
 
 # 1.3.8: el motor histórico conserva la interfaz get_client_usage(), pero el
 # cálculo comercial se sustituye por servicios que realmente ocupan recursos.
@@ -73,8 +75,18 @@ logger = logging.getLogger("fibraz.server")
 async def lifespan(_: FastAPI):
     await init_db(); await seed_initial_data()
     pause_task=asyncio.create_task(pause_worker()); suspension_alert_task=asyncio.create_task(suspension_alert_worker()); whatsapp_automatizadovip_task=asyncio.create_task(whatsapp_automatizadovip_worker())
-    try: yield
+    try:
+        try:
+            listening = await traffic_flow_runtime.start()
+            if listening:
+                logger.info("Traffic Flow collector escuchando en %s:%s/udp", traffic_flow_runtime.bind, traffic_flow_runtime.port)
+            else:
+                logger.info("Traffic Flow collector instalado pero desactivado (TRAFFIC_FLOW_ENABLED=false)")
+        except OSError as exc:
+            logger.error("No se pudo iniciar Traffic Flow collector: %s", exc)
+        yield
     finally:
+        await traffic_flow_runtime.stop()
         pause_task.cancel(); suspension_alert_task.cancel(); whatsapp_automatizadovip_task.cancel()
         with suppress(asyncio.CancelledError): await pause_task
         with suppress(asyncio.CancelledError): await suspension_alert_task
@@ -100,7 +112,7 @@ async def sync_summary_identity(request,call_next):
 api=APIRouter(prefix="/api",dependencies=[Depends(enforce_trial_write_access)])
 for router in (olt_traffic_router,olt_onu_power_router,olt_onu_v2_router,olt_onu_descriptions_router,olt_onu_summary_router,olt_onu_inventory_router): api.include_router(router,prefix="/routers",dependencies=[Depends(require_permission("olt"))])
 for router in (ajustes_public_router,auth_router,system_update_router,setup_router,license_router): api.include_router(router)
-api.include_router(red_router,dependencies=[Depends(require_router_access)]); api.include_router(client_workspace_router,dependencies=[Depends(require_permission("clients"))])
+api.include_router(red_router,dependencies=[Depends(require_router_access)]); api.include_router(traffic_flow_router,dependencies=[Depends(require_permission("network"))]); api.include_router(client_workspace_router,dependencies=[Depends(require_permission("clients"))])
 api.include_router(message_templates_router,dependencies=[Depends(require_permission("messaging"))])
 api.include_router(whatsapp_automatizadovip_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_logs_router,dependencies=[Depends(require_permission("messaging"))]); api.include_router(whatsapp_automatizadovip_automation_test_router,dependencies=[Depends(require_permission("messaging"))])
 for router,module in ((inicio_router,"dashboard"),(retired_clients_router,"clients"),(pause_clients_router,"clients"),(suspension_alerts_router,"clients"),(client_registration_settings_router,"clients"),(equipment_recoveries_router,"clients"),(client_equipment_router,"clients"),(installations_router,"clients"),(client_service_operations_router,"clients"),(client_service_delete_audit_router,"clients"),(client_services_router,"clients"),(client_deletion_summary_router,"clients"),(zones_router,"clients"),(clientes_router,"clients"),(planes_router,"plans"),(ipv4_networks_router,"network"),(nap_boxes_router,"network"),(monitoring_router,"monitoring"),(facturacion_router,"billing"),(client_balances_router,"billing"),(invoice_actions_router,"billing"),(tickets_router,"tickets"),(almacen_router,"inventory"),(hotspot_router,"hotspot"),(tareas_router,"tasks"),(mensajeria_router,"messaging"),(ajustes_router,"settings"),(staff_router,"staff")):
