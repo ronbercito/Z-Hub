@@ -71,7 +71,9 @@ def test_customer_license_ui_is_read_only_and_commercial():
     assert "Capacidad autorizada" in view
     assert "Vencimiento" in view
     assert "Solicitar licencia" in view
-    assert "Renovar licencia" in view
+    assert "Cambiar plan" in view
+    assert "Sin vencimiento" in view
+    assert "abonados activos" in view
     assert "por WhatsApp" in view
     assert "sales_whatsapp" in view
     assert "wa.me" in view

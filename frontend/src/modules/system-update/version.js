@@ -1,8 +1,8 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.3";
+export const PANEL_VERSION = "1.3.4";
 export const CHANGELOG = [
-  { type: "Instalación", text: "Las instalaciones limpias preparan automáticamente la conexión segura con Web-Licence antes del Wizard." },
-  { type: "Licencias", text: "Se instala la clave pública RS256 y la CA TLS pública necesarias para Auto-TRIAL, sin incluir claves privadas." },
-  { type: "Seguridad", text: "La CA de Web-Licence se registra en el almacén de confianza del sistema; no se usa curl -k ni se desactiva TLS." },
-  { type: "Corrección", text: "Se evita el error 'License Server no configurado' en servidores Z-Hub recién instalados." },
+  { type: "Licencias", text: "Los planes pagados ya no vencen por tiempo; se controlan por cantidad de abonados activos." },
+  { type: "Capacidad", text: "PLAN_100, 300, 500 y 1000 cuentan solo abonados activos; ILIMITADO no tiene tope." },
+  { type: "Operación", text: "Al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto del panel sigue funcionando." },
+  { type: "Trial", text: "El Trial mantiene 30 días y capacidad máxima de 20 abonados activos." },
 ];

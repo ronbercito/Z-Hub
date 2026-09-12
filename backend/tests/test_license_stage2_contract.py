@@ -10,38 +10,32 @@ def read(path):
 def test_license_manager_centralizes_plan_and_capacity_contract():
     manager = read("backend/app/core/license_manager.py")
     assert '"PLAN_100": 100' in manager
-    assert '"PLAN_200": 200' in manager
-    assert '"PLAN_800": 800' in manager
+    assert '"PLAN_300": 300' in manager
+    assert '"PLAN_500": 500' in manager
     assert '"PLAN_1000": 1000' in manager
-    assert '"UNLIMITED": None' in manager
+    assert '"ILIMITADO": None' in manager
     assert 'TRIAL_DAYS = 30' in manager
     assert 'TRIAL_MAX_CLIENTS = 20' in manager
-    assert 'NON_COUNTING_CLIENT_STATUSES = {"retired"}' in manager
+    assert 'ACTIVE_CLIENT_STATUS = "active"' in manager
 
 
 def test_license_manager_exposes_stage2_api():
     manager = read("backend/app/core/license_manager.py")
     for name in (
-        "get_license_record",
-        "get_license",
-        "get_status",
-        "get_client_limit",
-        "get_client_usage",
-        "can_create_client",
-        "is_trial",
-        "trial_days_remaining",
+        "get_license_record", "get_license", "get_status", "get_client_limit",
+        "get_client_usage", "can_create_client", "is_trial", "trial_days_remaining",
         "apply_license_metadata",
     ):
         assert f"def {name}(" in manager or f"async def {name}(" in manager
 
 
-def test_legacy_paid_licenses_remain_unlimited_but_trial_is_limited():
+def test_paid_capacity_and_trial_limits_are_normalized():
     manager = read("backend/app/core/license_manager.py")
-    assert 'plan = plan or "UNLIMITED"' in manager
+    assert 'plan = plan or "ILIMITADO"' in manager
     assert 'if license_type == "TRIAL":' in manager
     assert 'max_clients = TRIAL_MAX_CLIENTS' in manager
     assert 'if is_trial(data):\n        return TRIAL_MAX_CLIENTS' in manager
-    assert 'if str(info.get("type", "")).upper() == "TRIAL":\n        return True' not in manager
+    assert 'Client.status == ACTIVE_CLIENT_STATUS' in manager
 
 
 def test_setup_uses_license_manager_instead_of_own_parser():

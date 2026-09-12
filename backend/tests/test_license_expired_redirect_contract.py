@@ -38,7 +38,7 @@ def test_license_view_routes_recovery_to_whatsapp_without_manual_key_entry():
     assert "Tus datos permanecen intactos" in view
     assert "Actualizar estado" in view
     assert "Solicitar licencia" in view
-    assert "Renovar licencia" in view
+    assert "Cambiar plan" in view
     assert "sales_whatsapp" in view
     assert "wa.me" in view
     assert "payment_url" not in view
