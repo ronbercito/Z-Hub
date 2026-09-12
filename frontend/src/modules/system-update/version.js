@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.33";
+export const PANEL_VERSION = "1.3.34";
 export const CHANGELOG = [
-  { type: "Tráfico", text: "Etapa 2/5: Z-Hub incorpora collector UDP para Traffic Flow con NetFlow v5, v9 e IPFIX, incluyendo IPv4 e IPv6." },
-  { type: "MikroTik", text: "Se agregan endpoints para consultar, configurar o desactivar Traffic Flow en un router seleccionado, sin cambios masivos automáticos." },
-  { type: "Validación", text: "El collector informa paquetes, flujos, IPv4/IPv6, duplicados, errores y exportadores antes de iniciar el cálculo de consumo de la Etapa 3." },
+  { type: "Tráfico", text: "Hotfix de Etapa 2/5: el backend usa una sola instancia de Uvicorn para que exista un único collector UDP Traffic Flow." },
+  { type: "Estabilidad", text: "Se evita que dos workers intenten abrir el mismo puerto 2055 o repartan estadísticas de recepción entre procesos distintos." },
+  { type: "Validación", text: "El collector continúa desactivado por defecto; la prueba real con un MikroTik se habilita únicamente de forma explícita." },
 ];
