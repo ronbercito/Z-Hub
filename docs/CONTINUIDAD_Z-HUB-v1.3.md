@@ -15,6 +15,42 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.3 — Corrección de instalación limpia: bootstrap seguro de Web-Licence
+
+**Hallazgo real durante Etapa 7/7:** una instalación nueva de Z-Hub llegó correctamente al Wizard, pero al intentar Auto-TRIAL respondió `License Server no configurado`.
+
+### Causa
+
+- `deploy/install.sh` ya conservaba `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE` cuando existían en Supervisor.
+- Una instalación desde cero no tenía configuración previa de Supervisor, por lo que ambas variables quedaban vacías.
+- El Wizard estaba correcto; el defecto estaba en el proceso de instalación limpia.
+
+### Corrección
+
+- Se agrega `deploy/license_bootstrap.sh` y el instalador raíz lo carga antes de ejecutar `deploy/install.sh`.
+- La configuración pública por defecto vive en `deploy/license/bootstrap.env` y puede sobreescribirse con variables de entorno.
+- El bootstrap instala únicamente material **público** de confianza:
+  - `deploy/license/server-public.pem` -> `/etc/zhub/licencia/server-public.pem` para verificar autorizaciones RS256.
+  - `deploy/license/zhub-lab-ca.crt` -> `/usr/local/share/ca-certificates/zhub-lab-ca.crt` y ejecuta `update-ca-certificates` para validar TLS normalmente.
+- En instalación limpia se usa como endpoint por defecto `https://192.168.10.240`; sigue siendo sobreescribible mediante `ZHUB_LICENSE_SERVER_URL`.
+- Se exportan automáticamente `ZHUB_LICENSE_SERVER_URL` y `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE`, que luego son persistidas por la lógica existente de Supervisor.
+- No se usa `curl -k`, no se desactiva validación TLS y no se versiona ninguna clave privada.
+- Se agrega `backend/tests/test_license_bootstrap_133_contract.py` para evitar regresiones del bootstrap.
+
+### Seguridad
+
+- Permitido en repositorio: clave pública RS256 y certificado público de CA.
+- Prohibido y no agregado: `private.pem`, claves privadas TLS, CA privada, tokens o secretos del servidor Web-Licence.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.3"`.
+- Backup previo: `backup/pre-license-bootstrap-1.3.3-20260911`.
+- Rama de trabajo: `work/license-bootstrap-1.3.3-20260911`.
+- El despliegue real y la repetición del Auto-TRIAL en el LXC de laboratorio deben validarse después de CI/merge; no se consideran confirmados solo por integrar código.
+
+---
+
 ## 1.3.2 — Etapa 7/7: validación integral y cierre del flujo comercial
 
 **Objetivo:** cerrar el circuito registro -> Trial automático -> reinstalación -> conversión PAID -> renovación/suspensión y asegurar que Z-Hub refleje los datos comerciales administrados por Web-Licence.

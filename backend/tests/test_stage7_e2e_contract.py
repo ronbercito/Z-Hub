@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,9 +26,11 @@ def test_stage7_keeps_auto_trial_and_customer_flow_contracts():
     assert 'SERIE DE LICENCIA' not in wizard
 
 
-def test_stage7_release_series_is_132():
+def test_stage7_contract_survives_later_13x_releases():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.2"' in version
+    match = re.search(r'PANEL_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"', version)
+    assert match, "No se encontró PANEL_VERSION semántica"
+    assert tuple(map(int, match.groups())) >= (1, 3, 2)
     assert '1.3.2' in continuity
     assert 'Etapa 7/7' in continuity

@@ -75,6 +75,10 @@ fi
 
 ui ""
 ui "  ✓ Código Z-Hub listo"
+ui "  ⟳ Preparando conexión segura con Web-Licence..."
+# Se usa source para que las variables ZHUB_LICENSE_SERVER_* queden exportadas
+# al instalador principal. El bootstrap solo instala material PUBLICO de confianza.
+source "$ROOT_DIR/deploy/license_bootstrap.sh"
 ui "  ⟳ Iniciando instalador principal..."
 ui "  • La instalación continúa; el progreso se mostrará por etapas."
 
