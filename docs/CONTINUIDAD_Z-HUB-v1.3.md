@@ -15,6 +15,58 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.6 — Ventana de licencia compacta y contacto sincronizado desde Web-Licence
+
+**Decisión:** la pantalla de Licencia debe caber de forma mucho más compacta en una sola ventana y el contacto comercial no se configura manualmente en cada Z-Hub; se administra centralmente en Web-Licence.
+
+### UI compacta
+
+- Se conserva la información esencial: estado, plan, vencimiento del TRIAL o `Sin vencimiento` en PAID, capacidad, uso, días restantes del TRIAL e Installation ID.
+- Se eliminan repeticiones visuales y se reducen espacios, paddings, tamaños de tarjetas y tipografías para disminuir el desplazamiento vertical.
+- Nuevo `frontend/src/modules/ajustes/license-settings-compact.css` cargado después del estilo base para mantener compatibilidad con los temas existentes.
+- La sección comercial queda horizontal/compacta en escritorio y vuelve a una columna en móvil.
+- La regla de capacidad no cambia: alcanzar el límite bloquea solo nuevas altas/reactivaciones, no el resto del panel.
+
+### Contacto comercial central
+
+- Web-Licence relacionado: **1.4.7**.
+- Nuevo cliente `backend/app/core/license_contact.py` consulta `GET /v1/public/contact` usando el mismo License Server y la misma validación TLS del sistema.
+- `GET /api/license/info` agrega:
+  - `sales_whatsapp`;
+  - `sales_business_name`;
+  - `sales_contact_name`;
+  - `sales_email`;
+  - `sales_contact_updated_at`;
+  - `sales_contact_source`.
+- El WhatsApp central de Web-Licence tiene prioridad.
+- `ZHUB_LICENSE_WHATSAPP` queda como **fallback de compatibilidad** si Web-Licence no tiene WhatsApp configurado o el endpoint central está temporalmente inaccesible.
+- Un fallo al consultar el contacto no impide cargar ni validar la licencia.
+
+### Ventana del cliente
+
+- El botón **Solicitar licencia por WhatsApp** / **Cambiar plan por WhatsApp** se habilita automáticamente cuando el administrador configura WhatsApp en Web-Licence.
+- Se muestran también, cuando existen, nombre comercial, persona de contacto y correo comercial sincronizados.
+- Si no hay WhatsApp central ni fallback local, la UI indica que el administrador debe completar el módulo **Contacto** en Web-Licence.
+
+### Archivos / pruebas
+
+- `backend/app/core/license_contact.py`.
+- `backend/app/routers/license/router.py`.
+- `frontend/src/modules/ajustes/LicenseSettings.jsx`.
+- `frontend/src/modules/ajustes/license-settings-compact.css`.
+- `backend/tests/test_license_contact_sync_136_contract.py` agregado al CI obligatorio.
+- El contrato histórico 1.3.5 se ajusta para comprobar que la funcionalidad siga existiendo sin exigir que 1.3.5 sea la versión actual.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.6"`.
+- Backup previo: `backup/pre-license-contact-sync-1.3.6-20260912`.
+- Rama: `work/license-contact-sync-1.3.6-20260912`.
+- Web-Licence relacionado: `1.4.7` / `backup/pre-contact-module-1.4.7-20260912`.
+- Despliegue real y prueba visual deben validarse después de CI/merge.
+
+---
+
 ## 1.3.5 — Registro integrado en Setup Wizard
 
 **Decisión:** el cliente final no necesita abrir la página pública de registro de Web-Licence. El flujo normal comienza y termina en el Setup Wizard de Z-Hub.

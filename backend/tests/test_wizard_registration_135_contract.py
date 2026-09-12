@@ -38,10 +38,8 @@ def test_backend_proxies_registration_without_exposing_central_server_to_browser
     assert "ZHUB_LICENSE_SERVER_URL" in client
 
 
-def test_release_is_135_and_continuity_documents_the_flow():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_135_remains_documented_after_newer_releases():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.5"' in version
     assert "1.3.5" in continuity
     assert "Ya tengo una cuenta" in continuity
     assert "Perú" in continuity
