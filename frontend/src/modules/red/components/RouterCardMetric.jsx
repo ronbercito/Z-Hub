@@ -1,4 +1,5 @@
 import React from "react";
+import "../router-card-light-skin.css";
 
 export default function RouterCardMetric({ icon: Icon, label, value, progress = null, tone = "cyan" }) {
   const safeProgress = progress == null ? null : Math.max(0, Math.min(100, Number(progress) || 0));
