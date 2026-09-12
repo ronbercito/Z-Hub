@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.26";
+export const PANEL_VERSION = "1.3.27";
 export const CHANGELOG = [
-  { type: "Diseño", text: "La cabecera de las tarjetas MikroTik fuerza la visibilidad y el contraste de nombre, IP:puerto y modelo." },
-  { type: "Legibilidad", text: "Se corrige la zona superior vacía observada en tema claro, con tipografía oscura, azul de red y modelo más definido." },
-  { type: "Compatibilidad", text: "Se conservan métricas, estados, selección, mapa, edición y eliminación sin agregar consultas RouterOS." },
+  { type: "Diseño", text: "La identidad del MikroTik ahora se renderiza en un bloque propio y visible entre el icono del equipo y el estado." },
+  { type: "Legibilidad", text: "Nombre, IP:puerto y modelo dejan de depender de reglas globales de h3/p y usan colores forzados incluso ante estilos heredados." },
+  { type: "Compatibilidad", text: "Se conservan métricas, selección, mapa, edición y eliminación sin agregar consultas RouterOS." },
 ];
