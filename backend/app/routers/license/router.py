@@ -1,7 +1,7 @@
 """API autenticada de licencia Z-Hub.
 
-1.3.4: TRIAL conserva sus 30 días; las licencias PAID no exponen vencimiento
-porque el contrato comercial se controla únicamente por capacidad de abonados activos.
+1.3.6: TRIAL conserva 30 días, PAID se controla por capacidad y el contacto
+comercial se sincroniza desde Web-Licence con fallback local por compatibilidad.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import ZHUB_LICENSE_PAYMENT_URL, ZHUB_LICENSE_WHATSAPP
 from app.core.database import get_db
+from app.core.license_contact import get_commercial_contact
 from app.core.license_manager import apply_license_metadata, get_license, get_setting_data, resolve_license_record
 from app.core.security import get_current_user, require_role
 
@@ -32,11 +33,18 @@ async def _public_info(db: AsyncSession) -> dict:
     info = await get_license(db)
     key = str(info.pop("key", "") or "").strip().upper()
     is_paid = str(info.get("type") or "").upper() == "PAID"
+    contact = await get_commercial_contact()
+    remote_whatsapp = str(contact.get("whatsapp") or "").strip()
     return {
         **info,
         "license_expires_at": None if is_paid else info.get("trial_expires_at"),
         "license_key_masked": _mask_license_key(key),
-        "sales_whatsapp": ZHUB_LICENSE_WHATSAPP,
+        "sales_whatsapp": remote_whatsapp or ZHUB_LICENSE_WHATSAPP,
+        "sales_business_name": contact.get("business_name") or "",
+        "sales_contact_name": contact.get("contact_name") or "",
+        "sales_email": contact.get("email") or "",
+        "sales_contact_updated_at": contact.get("updated_at") or "",
+        "sales_contact_source": "web-licence" if remote_whatsapp or contact.get("email") or contact.get("business_name") else "local-fallback",
         "payment_url": ZHUB_LICENSE_PAYMENT_URL,
     }
 
