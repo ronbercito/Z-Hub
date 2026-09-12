@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.28";
+export const PANEL_VERSION = "1.3.29";
 export const CHANGELOG = [
-  { type: "Diseño", text: "Los iconos de CPU, memoria, ping, PPPoE, colas y tráfico ahora usan fondos sólidos por categoría e iconos blancos de alto contraste." },
-  { type: "Mapa", text: "El botón de ubicación adopta azul sólido con pin blanco para que sea visible en el pie de la tarjeta." },
-  { type: "Compatibilidad", text: "Se conserva la identidad 1.3.27 y no se agregan consultas RouterOS ni carga adicional." },
+  { type: "Sistema", text: "Ajustes > Sistema incorpora una zona horaria configurable por país, con America/Lima como valor predeterminado." },
+  { type: "Fecha y hora", text: "El historial de AutomatizadoVIP interpreta los timestamps del servidor en UTC y los muestra según la zona horaria configurada en Z-Hub." },
+  { type: "Compatibilidad", text: "El servidor Debian y MariaDB pueden permanecer en UTC; la nueva preferencia se guarda en la configuración JSON existente sin migraciones destructivas." },
 ];
