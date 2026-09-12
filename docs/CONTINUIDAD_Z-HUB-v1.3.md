@@ -20,6 +20,32 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.24 — Tarjeta MikroTik completamente clara
+
+**Motivo:** la validación real de 1.3.23 mostró que la composición moderna mejoró, pero el bloque CPU/Memoria/Ping podía verse como una franja azul/oscura incluso con el panel claro. Se alinea toda la tarjeta al estilo claro aprobado.
+
+### Cambios visuales
+- Nuevo `frontend/src/modules/red/router-card-light-skin.css` cargado desde `RouterCardMetric.jsx`.
+- En tema claro, cabecera, CPU/Memoria/Ping, PPPoE/Colas/Tráfico y pie usan superficies blancas o gris muy suave.
+- Se mantienen textos oscuros, separadores claros, iconos pastel y barras de progreso con color.
+- Los estados ONLINE/OFFLINE/ALERTA/DESCONOCIDO conservan su contraste.
+- Mapa, editar y eliminar permanecen como acciones compactas.
+- La tarjeta sigue mostrando los datos de 1.3.23 y conserva selección por toda su superficie.
+
+### Corrección de tema
+- La piel clara se aplica por defecto siempre que el documento no declare explícitamente `dark` o `zhub-dark`.
+- Esto evita que una ausencia/transición temporal del atributo de tema active por error la apariencia oscura.
+- El tema oscuro sigue soportado cuando está seleccionado de forma explícita.
+
+### Rendimiento / rollback
+- Solo cambia CSS/presentación; no agrega API, polling ni consultas RouterOS.
+- `PANEL_VERSION = "1.3.24"`.
+- Backup previo: `backup/pre-router-card-light-1.3.24-20260912`.
+- Rama: `work/router-card-light-1.3.24-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.23 — Rediseño moderno de tarjetas MikroTik
 
 **Motivo:** se aprobó una maqueta visual nueva para Gestión de Red con tarjetas más claras, modernas y fáciles de leer, manteniendo intacta la lógica de carga rápida y conexión RouterOS lograda en 1.3.18–1.3.22.
