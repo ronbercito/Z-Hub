@@ -207,27 +207,36 @@ class TrafficAggregationRuntime:
             async with database.SessionLocal() as db:
                 identities = {(item.identity.client_id, item.identity.service_id): item.identity for item in pending.values()}
                 await self._sync_identities(db, identities)
-                for item in pending.values():
+
+                periods = sorted({item.period_start for item in pending.values()})
+                router_ids = sorted({item.identity.router_id for item in pending.values()})
+                client_ids = sorted({item.identity.client_id for item in pending.values()})
+                existing = (await db.execute(
+                    select(TrafficAggregate).where(
+                        TrafficAggregate.bucket_type == "hour",
+                        TrafficAggregate.period_start.in_(periods),
+                        TrafficAggregate.router_id.in_(router_ids),
+                        TrafficAggregate.client_id.in_(client_ids),
+                    )
+                )).scalars().all()
+                aggregate_map = {
+                    (row.client_id, row.service_id or "", row.router_id, row.ip_address, row.period_start): row
+                    for row in existing
+                }
+
+                stamp = now_iso()
+                for key, item in pending.items():
                     ident = item.identity
-                    aggregate = (await db.execute(
-                        select(TrafficAggregate).where(
-                            TrafficAggregate.client_id == ident.client_id,
-                            TrafficAggregate.service_id == ident.service_id,
-                            TrafficAggregate.router_id == ident.router_id,
-                            TrafficAggregate.ip_address == ident.ip_address,
-                            TrafficAggregate.bucket_type == "hour",
-                            TrafficAggregate.period_start == item.period_start,
-                        )
-                    )).scalars().first()
+                    aggregate = aggregate_map.get(key)
                     if aggregate:
                         aggregate.download_bytes += item.download_bytes
                         aggregate.upload_bytes += item.upload_bytes
                         aggregate.total_bytes = aggregate.download_bytes + aggregate.upload_bytes
                         aggregate.flow_count += item.flow_count
                         aggregate.period_end = item.period_end
-                        aggregate.updated_at = now_iso()
+                        aggregate.updated_at = stamp
                     else:
-                        db.add(TrafficAggregate(
+                        aggregate = TrafficAggregate(
                             client_id=ident.client_id,
                             service_id=ident.service_id,
                             router_id=ident.router_id,
@@ -241,7 +250,9 @@ class TrafficAggregationRuntime:
                             flow_count=item.flow_count,
                             data_source="traffic_flow",
                             processing_status="aggregated",
-                        ))
+                        )
+                        db.add(aggregate)
+                        aggregate_map[key] = aggregate
                     self.persisted_buckets += 1
                 await db.commit()
             self.last_flush_at = now_iso()
