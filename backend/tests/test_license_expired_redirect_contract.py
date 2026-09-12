@@ -7,6 +7,10 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def compact(text):
+    return "".join(text.split())
+
+
 def test_layout_locks_invalid_missing_or_expired_license_in_settings():
     layout = read("frontend/src/components/layout/Layout.jsx")
     assert '/license/info' in layout
@@ -20,11 +24,12 @@ def test_layout_locks_invalid_missing_or_expired_license_in_settings():
 
 def test_settings_modal_cannot_close_while_license_is_locked():
     modal = read("frontend/src/modules/ajustes/SettingsModal.jsx")
+    dense = compact(modal)
     assert "locked = false" in modal
     assert "if (!section || locked) return undefined" in modal
-    assert "locked ? undefined : onClose" in modal
-    assert "{!locked && <button" in modal
-    assert "<LicenseSettings locked={locked} />" in modal
+    assert 'onMouseDown={locked?undefined:onClose}' in dense
+    assert '{!locked&&<button' in dense
+    assert 'section==="license"?<LicenseSettingslocked={locked}/>' in dense
 
 
 def test_license_view_has_recovery_and_commercial_actions():
