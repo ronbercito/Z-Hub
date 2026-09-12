@@ -18,6 +18,42 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.10 — Cartillas visuales de clientes por estado
+
+**Decisión:** adaptar la vista principal de Clientes al estilo visual aprobado: cada abonado se presenta como una cartilla amplia, conservando toda la información y las acciones existentes, con identificación inmediata por color de estado.
+
+### Diseño
+
+- Cliente **activo**: tono y borde verde.
+- Cliente **pausado**: tono y borde ámbar.
+- Cliente **suspendido / cortado**: tono y borde rojo.
+- Se mantiene visible la información existente de abonado, plan, IP/usuario, contacto, deuda, estado y acciones.
+- No se elimina ni oculta funcionalidad de la vista actual; el cambio es visual y responsive.
+- Tema oscuro usa fondos tintados discretos para conservar contraste.
+- Tema **Claro Suave** usa cartillas pastel similares a la referencia aprobada.
+- En resoluciones medianas las cartillas se reorganizan en dos filas y en móviles en una columna, sin ocultar datos.
+
+### Rendimiento / datos
+
+- No se agregan nuevas consultas API, polling, workers ni lecturas por abonado.
+- Se reutiliza exactamente la información ya cargada por `GET /api/clients`.
+- Por ello el nuevo aspecto no multiplica la carga del backend ni del MikroTik.
+
+### Implementación
+
+- Nuevo `frontend/src/modules/clientes/client-status-cards.css`.
+- `frontend/src/index.css` carga el estilo global específico de Clientes.
+- La selección de color se hace por el estado ya renderizado (`active`, `paused`, `suspended`) y no modifica el dato persistido.
+- `PANEL_VERSION = "1.3.10"`.
+
+### Versionado / rollback
+
+- Backup previo: `backup/pre-client-status-cards-1.3.10-20260912`.
+- Rama: `work/client-status-cards-1.3.10-20260912`.
+- Este cambio no modifica el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.9 — Gestión individual por servicio opcional
 
 **Decisión:** incorporar en **Ajustes → Configuración clientes** una opción para administrar el estado operativo de cada servicio por separado, sin obligar a cambiar el flujo general existente del abonado.
