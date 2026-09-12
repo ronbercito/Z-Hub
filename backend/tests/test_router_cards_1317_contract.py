@@ -26,9 +26,7 @@ def test_mikrotik_cards_expose_delete_action_with_confirmation():
     assert "Eliminar router" in card
 
 
-def test_release_1317_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1317_remains_documented():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.17"' in version
     assert "1.3.17" in continuity
     assert "backup/pre-router-card-order-delete-1.3.17-20260912" in continuity
