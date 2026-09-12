@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-12 — 1.3.19, acción Eliminar visible y rotulada en cada tarjeta MikroTik.
+ * Actualización: 2026-09-12 — 1.3.20, acción eliminar compacta mediante icono moderno.
  * Área: Gestión de Red > tarjetas de equipos.
  * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline,
  *          IP, modelo, latencia y acciones rápidas permitidas por rol.
@@ -86,22 +86,23 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
       </p>
 
       {!isOlt && canDelete && (
-        <div className="network-router-card-actions mb-3 flex justify-end" onClick={(event) => event.stopPropagation()}>
+        <div className="network-router-card-actions mb-2 flex justify-end" onClick={(event) => event.stopPropagation()}>
           <button
             data-testid={`btn-delete-router-card-${router.id}`}
             type="button"
             disabled={deleting}
             onClick={removeFromCard}
-            title="Eliminar router"
-            className="network-router-delete-button inline-flex items-center gap-1.5 rounded-lg border border-rose-300/60 bg-rose-500/15 px-2.5 py-1.5 text-[11px] font-bold text-rose-300 hover:bg-rose-500/25 disabled:opacity-50"
+            title={deleting ? "Eliminando router..." : "Eliminar router"}
+            aria-label={deleting ? "Eliminando router" : "Eliminar router"}
+            className="network-router-delete-button group inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-300/70 bg-rose-500/20 text-rose-100 shadow-lg shadow-rose-950/20 transition-all duration-150 hover:-translate-y-0.5 hover:scale-105 hover:border-rose-200 hover:bg-rose-500/35 hover:text-white focus:outline-none focus:ring-2 focus:ring-rose-300/70 disabled:cursor-wait disabled:opacity-60"
           >
-            <Trash2 className="h-3.5 w-3.5" /> {deleting ? "Eliminando..." : "Eliminar router"}
+            <Trash2 className={`h-4 w-4 transition-transform duration-150 ${deleting ? "animate-pulse" : "group-hover:scale-110"}`} />
           </button>
         </div>
       )}
 
       {children && (
-        <div onClick={(event) => event.stopPropagation()} className={`mt-3 pt-3 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>
+        <div onClick={(event) => event.stopPropagation()} className={`mt-2 pt-3 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>
           {children}
         </div>
       )}
