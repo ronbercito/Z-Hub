@@ -30,7 +30,7 @@ const MODULES = [
   { id:"database", label:"Base de datos", desc:"Respaldo y datos", icon:Database, tone:"slate" },
   { id:"crontab", label:"Crontab", desc:"Tareas programadas", icon:Clock3, tone:"orange" },
   { id:"logs", label:"Logs", desc:"Registro del sistema", icon:FileText, tone:"slate" },
-  { id:"system", label:"Sistema", desc:"Preferencias técnicas", icon:Wrench, tone:"red" },
+  { id:"system", label:"Sistema", desc:"Preferencias técnicas", icon:Wrench, tone:"red", live:true },
   { id:"config_templates", label:"Plantillas configuración", desc:"Plantillas de mensajes y ajustes reutilizables", icon:LayoutTemplate, tone:"violet", live:true },
   { id:"invoice_messages", label:"Mensajes facturas", desc:"Textos de cobro", icon:Send, tone:"cyan" },
   { id:"server", label:"Servidor", desc:"Estado y servicios", icon:Server, tone:"blue" },
