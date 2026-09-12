@@ -1,6 +1,6 @@
 """
 Archivo: backend/app/integrations/mikrotik/service.py
-Actualización: 2026-09-08 — las colas de servicios adicionales se identifican por DNI, sin exponer la IP en el nombre.
+Actualización: 2026-09-12 — el snapshot incluye concesiones DHCP bound para las tarjetas MikroTik.
 Función: Capa de negocio MikroTik para aprovisionamiento, corte, restauración y limpieza.
 Trabaja con: backend/app/integrations/mikrotik/client.py, modelos de clientes/servicios/planes/routers.
 """
@@ -49,12 +49,15 @@ async def snapshot_router(router: Router) -> dict:
             active = await mt.ppp_active()
             queues = await mt.simple_queues()
             ifaces = await mt.interfaces()
+            leases = await mt.dhcp_leases()
     except MikroTikError as e:
         router.status = "offline"
         router.last_error = str(e)[:250]
         router.last_sync = now_iso()
-        return {"ok": False, "message": str(e)}
+        router.dhcp_bound_count = 0
+        return {"ok": False, "message": str(e), "dhcp_bound_count": 0}
 
+    dhcp_bound_count = sum(1 for row in leases if str(row.get("status", "")).lower() == "bound")
     router.status = "online"
     router.last_error = ""
     router.identity = res["identity"]
@@ -65,12 +68,14 @@ async def snapshot_router(router: Router) -> dict:
     router.memory_usage_pct = res["memory_used_pct"]
     router.active_pppoe_count = len(active)
     router.active_queues_count = len(queues)
+    router.dhcp_bound_count = dhcp_bound_count
     router.total_download_mbps = round(sum(i["rx_mbps"] for i in ifaces if i["type"] in ("ether", "sfp", "vlan", "bridge") and i["running"]), 2)
     router.total_upload_mbps = round(sum(i["tx_mbps"] for i in ifaces if i["type"] in ("ether", "sfp", "vlan", "bridge") and i["running"]), 2)
     router.ping_ms = latency or 0.0
     router.last_sync = now_iso()
     return {"ok": True, "message": f"Conectado a {res['identity']} (RouterOS {res['version']})",
-            "resource": res, "active_pppoe": len(active), "queues": len(queues), "interfaces": len(ifaces)}
+            "resource": res, "active_pppoe": len(active), "queues": len(queues), "interfaces": len(ifaces),
+            "dhcp_bound_count": dhcp_bound_count}
 
 
 async def provision_client(client: Client, router: Router | None, plan: Plan | None) -> dict:
