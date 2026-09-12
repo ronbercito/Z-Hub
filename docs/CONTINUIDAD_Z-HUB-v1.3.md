@@ -47,7 +47,18 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 - `PANEL_VERSION = "1.3.3"`.
 - Backup previo: `backup/pre-license-bootstrap-1.3.3-20260911`.
 - Rama de trabajo: `work/license-bootstrap-1.3.3-20260911`.
-- El despliegue real y la repetición del Auto-TRIAL en el LXC de laboratorio deben validarse después de CI/merge; no se consideran confirmados solo por integrar código.
+
+### Validación real en laboratorio
+
+- LXC de prueba `Grupo-Pobre` actualizado correctamente a **Z-Hub 1.3.3**.
+- En la primera ejecución desde 1.3.2, `install.sh` se autoactualizó a 1.3.3 durante el mismo proceso; por ello el bootstrap nuevo no podía ejecutarse hasta la siguiente invocación del instalador ya actualizado.
+- Segunda ejecución confirmada con los artefactos públicos instalados:
+  - `/etc/zhub/licencia/server-public.pem`
+  - `/usr/local/share/ca-certificates/zhub-lab-ca.crt`
+- Supervisor confirmado con:
+  - `ZHUB_LICENSE_SERVER_URL="https://192.168.10.240"`
+  - `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE="/etc/zhub/licencia/server-public.pem"`
+- Queda pendiente continuar la prueba funcional de Auto-TRIAL desde el Wizard y validar el enlace HW-ID / Installation ID en Web-Licence.
 
 ---
 
