@@ -20,6 +20,28 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.26 — Cabecera MikroTik con identidad visible
+
+**Motivo:** la validación real de 1.3.25 mostró que métricas e iconos ya resaltaban mejor, pero en la zona superior marcada por el usuario el nombre, IP:puerto y modelo del MikroTik podían quedar prácticamente invisibles, dejando un espacio blanco entre el icono principal y el estado ONLINE/OFFLINE.
+
+### Correcciones visuales
+- `router-modern-title-wrap` se fuerza como bloque flexible visible con ancho mínimo útil.
+- Nombre del router usa azul marino oscuro, peso alto y tamaño legible.
+- IP:puerto usa azul de red más fuerte y tipografía monoespaciada visible.
+- Modelo/board usa gris azulado con mayor peso.
+- Se fuerza `opacity: 1` y `visibility: visible` en la identidad de cabecera para evitar que reglas heredadas del tema la oculten.
+- La estrella de selección conserva su color ámbar y queda separada del nombre.
+- Se mantienen icono principal, estado, métricas, ubicación y acciones de 1.3.25.
+
+### Rendimiento / compatibilidad
+- Solo cambia CSS/presentación; no agrega API, polling ni consultas RouterOS.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+- `PANEL_VERSION = "1.3.26"`.
+- Backup previo: `backup/pre-router-header-contrast-1.3.26-20260912`.
+- Rama: `work/router-header-contrast-1.3.26-20260912`.
+
+---
+
 ## 1.3.25 — Contraste reforzado en tarjetas MikroTik
 
 **Motivo:** la validación real de 1.3.24 confirmó que el tema claro ya era correcto, pero las etiquetas e iconos de métricas todavía se veían demasiado suaves sobre fondo blanco.
