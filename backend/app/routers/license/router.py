@@ -1,7 +1,7 @@
 """API autenticada de licencia Z-Hub.
 
-Etapa 6/7: expone estado seguro para el panel y valida altas/cambios contra el
-License Server remoto cuando está configurado, conservando transición local segura.
+Etapa 7/7: expone estado comercial seguro, incluido el vencimiento de licencias
+PAID obtenido del License Server, sin mostrar la clave completa al cliente.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -30,9 +30,20 @@ def _mask_license_key(value: str) -> str:
 
 async def _public_info(db: AsyncSession) -> dict:
     info = await get_license(db)
-    key = info.pop("key", "")
+    key = str(info.pop("key", "") or "").strip().upper()
+
+    # get_license() mantiene enforcement/caché. Para la vista comercial PAID
+    # recuperamos además el vencimiento firmado por Web-Licence para que el
+    # cliente vea la fecha real configurada por administración.
+    license_expires_at = None
+    if key and str(info.get("type") or "").upper() == "PAID":
+        record, _ = await resolve_license_record(db, key)
+        if record:
+            license_expires_at = record.get("expires_at")
+
     return {
         **info,
+        "license_expires_at": license_expires_at,
         "license_key_masked": _mask_license_key(key),
         "sales_whatsapp": ZHUB_LICENSE_WHATSAPP,
         "payment_url": ZHUB_LICENSE_PAYMENT_URL,
