@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.18";
+export const PANEL_VERSION = "1.3.19";
 export const CHANGELOG = [
-  { type: "Red", text: "La lista de routers se muestra inmediatamente sin esperar la prueba de conexión de todos los MikroTik." },
-  { type: "Estabilidad", text: "Un router offline o lento ya no puede dejar Gestión de Red detenida en Cargando equipos." },
-  { type: "Compatibilidad", text: "Se conservan el orden compacto y el botón Eliminar de 1.3.17, además del hotfix de alta de 1.3.16." },
+  { type: "Red", text: "El botón Eliminar router ahora aparece como acción rotulada y visible dentro de cada tarjeta MikroTik." },
+  { type: "Diseño", text: "La acción de eliminar ya no comparte la cabecera estrecha con estado y coordenadas, evitando que quede recortada." },
+  { type: "Compatibilidad", text: "Se conserva la carga rápida no bloqueante de 1.3.18 y el orden compacto de tarjetas de 1.3.17." },
 ];
