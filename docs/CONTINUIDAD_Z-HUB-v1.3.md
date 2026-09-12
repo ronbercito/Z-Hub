@@ -18,6 +18,28 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.15 — Restauración publicada del estado funcional 1.3.9
+
+**Motivo:** el panel desplegado ya estaba en 1.3.14 y el actualizador normal no aplica una versión numéricamente menor. Por eso el estado restaurado de 1.3.9 se republica como **1.3.15**, manteniendo exactamente la base funcional de 1.3.9 pero permitiendo que instalaciones en 1.3.14 reciban la restauración como actualización normal.
+
+### Alcance
+
+- El código base restaurado corresponde al commit de `backup/pre-client-status-cards-1.3.10-20260912`.
+- Se descartan de la línea activa los cambios visuales de Clientes introducidos entre 1.3.10 y 1.3.14.
+- Se conserva la gestión individual por servicio de 1.3.9.
+- Se conserva la capacidad de licencia por servicios de 1.3.8.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+### Publicación / rollback
+
+- `PANEL_VERSION = "1.3.15"`.
+- Backup del estado restaurado antes de republicar: `backup/pre-restored-release-1.3.15-20260912`.
+- Backup del estado previo 1.3.14: `backup/pre-restore-to-1.3.9-20260912`.
+- Rama: `work/restored-release-1.3.15-20260912`.
+- Esta versión existe únicamente para entregar como actualización el estado estable de 1.3.9 a paneles que ya reportaban 1.3.14.
+
+---
+
 ## 1.3.9 — Gestión individual por servicio opcional
 
 **Decisión:** incorporar en **Ajustes → Configuración clientes** una opción para administrar el estado operativo de cada servicio por separado, sin obligar a cambiar el flujo general existente del abonado.
