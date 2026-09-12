@@ -28,10 +28,8 @@ def test_license_ui_is_compact_and_uses_synced_contact():
     assert ".license-commercial" in compact
 
 
-def test_release_and_continuity_are_136():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_136_history_remains_documented_after_later_releases():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.6"' in version
     assert "1.3.6" in continuity
     assert "/v1/public/contact" in continuity
     assert "backup/pre-license-contact-sync-1.3.6-20260912" in continuity
