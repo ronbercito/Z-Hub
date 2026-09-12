@@ -27,12 +27,21 @@ def test_auto_trial_client_calls_web_licence_without_curl_insecure():
     assert 'curl -k' not in client
 
 
-def test_stage3_does_not_change_wizard_yet():
+def test_stage4_wizard_uses_backend_auto_trial_without_license_key_input():
     wizard = read("frontend/src/modules/setup/SetupWizard.jsx")
-    assert 'axios.post(`${API}/setup/license`, { license_key: licenseKey })' in wizard
-    assert '/v1/public/trials/activate' not in wizard
+    router = read("backend/app/routers/setup/router.py")
+    assert 'axios.post(`${API}/setup/auto-trial`' in wizard
+    assert 'SERIE DE LICENCIA' not in wizard
+    assert 'licenseKey' not in wizard
+    assert '@router.post("/auto-trial")' in router
+    assert 'activate_auto_trial' in router
+    assert 'await axios.post(`${API}/setup/complete`, {})' in wizard
+    assert 'req.license_key' not in router[router.index('@router.post("/complete")'):]
 
 
-def test_panel_version_is_1299():
+def test_panel_version_starts_130_series():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.99"' in version
+    assert 'PANEL_VERSION = "1.3.0"' in version
+    continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
+    assert "1.3.0" in continuity
+    assert "Etapa 4/7" in continuity
