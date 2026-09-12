@@ -87,6 +87,13 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 ---
 
+## Marcadores históricos preservados para regresión
+
+- `1.3.0`: inicio de la serie 1.3.x.
+- `1.3.4`: regla histórica de capacidad por abonados activos, **supersedida por 1.3.8**.
+- `1.3.5`: registro integrado en Setup Wizard y validación histórica del TRIAL.
+- `Etapa 7/7`: validación integral histórica de registro, Auto-TRIAL, reinstalación y flujo comercial.
+
 ## Historial anterior
 
 El detalle íntegro de 1.3.6 hacia atrás se conserva en `docs/history/CONTINUIDAD_Z-HUB-pre-1.3.8.md`. No borrar ese archivo: contiene decisiones, validaciones reales, instalación limpia, Auto-TRIAL, límites históricos y rollback de versiones anteriores.
