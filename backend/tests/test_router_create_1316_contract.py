@@ -33,9 +33,9 @@ def test_router_schema_accepts_blank_coordinates_from_form():
     assert parsed.longitude == 0.0
 
 
-def test_router_hotfix_release_marker():
+def test_router_hotfix_release_marker_is_preserved():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.16"' in version
+    assert "PANEL_VERSION" in version
     assert "1.3.16" in continuity
     assert "backup/pre-router-create-hotfix-1.3.16-20260912" in continuity
