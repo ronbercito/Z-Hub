@@ -34,11 +34,21 @@ def test_richer_card_layout_keeps_reference_structure():
     assert 'grid-template-rows:auto auto' in css
 
 
-def test_release_history_is_preserved_after_1312():
+def test_clients_top_stage1_is_isolated_and_loaded():
+    index = read("frontend/src/index.css")
+    top = read("frontend/src/modules/clientes/clients-top-section.css")
+    assert '@import "./modules/clientes/clients-top-section.css";' in index
+    assert 'content:"Clientes"' in top
+    assert 'Gestiona tus clientes y servicios desde un solo lugar' in top
+    assert '.clients-page .clients-controls' in top
+    assert 'background:#fff!important' in top
+
+
+def test_release_history_is_preserved_after_1313():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.12"' in version
+    assert 'PANEL_VERSION = "1.3.13"' in version
+    assert "1.3.12 — Ajuste visual de cartillas contra referencia aprobada" in continuity
+    assert "backup/pre-client-card-reference-1.3.12-20260912" in continuity
     assert "1.3.11 — Cartilla visual enriquecida de Clientes" in continuity
-    assert "backup/pre-client-card-visual-1.3.11-20260912" in continuity
     assert "1.3.10 — Cartillas visuales de clientes por estado" in continuity
-    assert "backup/pre-client-status-cards-1.3.10-20260912" in continuity
