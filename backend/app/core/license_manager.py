@@ -1,12 +1,9 @@
 """Motor central de licencias para instalaciones locales de Z-Hub.
 
-Etapas 2-6/7:
-- mantiene compatibilidad temporal con el registro local privado;
-- normaliza plan, tipo y capacidad;
-- calcula consumo de abonados localmente;
-- controla Trial de 30 días;
-- consulta el License Server remoto cuando está configurado;
-- conserva continuidad mediante autorización firmada/caché durante caídas temporales.
+1.3.4:
+- TRIAL: 30 días y 20 abonados activos;
+- PAID: sin vencimiento y limitado únicamente por capacidad;
+- el uso de licencia cuenta solo clientes con status='active'.
 """
 from __future__ import annotations
 
@@ -34,14 +31,15 @@ PRIVATE_LICENSE_FILE = Path(os.environ.get("ZHUB_LICENSE_FILE", "/etc/zhub/licen
 
 PLAN_LIMITS: dict[str, int | None] = {
     "PLAN_100": 100,
-    "PLAN_200": 200,
-    "PLAN_800": 800,
+    "PLAN_300": 300,
+    "PLAN_500": 500,
     "PLAN_1000": 1000,
+    "ILIMITADO": None,
     "UNLIMITED": None,
 }
 TRIAL_DAYS = 30
 TRIAL_MAX_CLIENTS = 20
-NON_COUNTING_CLIENT_STATUSES = {"retired"}
+ACTIVE_CLIENT_STATUS = "active"
 
 ACTIVE_LICENSE_STATUSES = {"ACTIVA", "ACTIVO", "ACTIVE", "VALIDA", "VÁLIDA"}
 BLOCKED_LICENSE_STATUSES = {
@@ -91,7 +89,7 @@ def _normalize_license(current: dict[str, str]) -> dict[str, Any] | None:
         plan = plan or "TRIAL"
         max_clients = TRIAL_MAX_CLIENTS
     else:
-        plan = plan or "UNLIMITED"
+        plan = plan or "ILIMITADO"
         max_clients = _normalize_max_clients(current.get("max_clients"), plan)
     return {
         "key": key,
@@ -117,10 +115,12 @@ def _parse_license_file(path: Path) -> dict[str, dict[str, Any]]:
         "ESTADO": "status", "TIPO": "type", "PLAN": "plan",
         "MAX_CLIENTS": "max_clients", "LIMITE_CLIENTES": "max_clients",
     }
+
     def flush() -> None:
         row = _normalize_license(current)
         if row:
             rows[row["key"]] = row
+
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -256,9 +256,6 @@ def get_status(data: dict[str, Any]) -> str:
         return "trial_expired"
     if row is not None and _is_active_license_status(row.get("status")):
         return "active"
-    # Un snapshot guardado en la BD describe la última licencia conocida, pero
-    # no constituye una autorización. Sin registro local válido, autorización
-    # remota o caché firmada, la instalación debe pedir una nueva licencia.
     return "invalid"
 
 
@@ -266,7 +263,7 @@ def get_client_limit(data: dict[str, Any]) -> int | None:
     if is_trial(data):
         return TRIAL_MAX_CLIENTS
     value = data.get("license_max_clients")
-    if value in (None, "", "unlimited", "UNLIMITED"):
+    if value in (None, "", "unlimited", "UNLIMITED", "ILIMITADO"):
         return None
     try:
         return max(0, int(value))
@@ -275,7 +272,8 @@ def get_client_limit(data: dict[str, Any]) -> int | None:
 
 
 async def get_client_usage(db: AsyncSession) -> int:
-    query = select(func.count(Client.id)).where(Client.status.notin_(NON_COUNTING_CLIENT_STATUSES))
+    """La capacidad comercial se consume únicamente por abonados activos."""
+    query = select(func.count(Client.id)).where(Client.status == ACTIVE_CLIENT_STATUS)
     return int((await db.scalar(query)) or 0)
 
 
@@ -293,6 +291,7 @@ def apply_license_metadata(data: dict[str, Any], record: dict[str, Any], *, now:
             current = now or datetime.now(timezone.utc)
             result["license_activated_at"] = current.astimezone(timezone.utc).isoformat()
     else:
+        # PAID no consume tiempo; cualquier vencimiento histórico se descarta localmente.
         result["license_activated_at"] = ""
         result["license_expires_at"] = ""
     return result
