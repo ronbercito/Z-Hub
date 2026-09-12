@@ -4,6 +4,7 @@ Punto de entrada FastAPI de Z-Hub. Monta rutas bajo /api y aplica permisos por m
 from app.core.config import CORS_ORIGINS
 import asyncio
 import logging
+import os
 import re
 from contextlib import asynccontextmanager, suppress
 from fastapi import APIRouter, Depends, FastAPI
@@ -64,6 +65,7 @@ from app.routers.whatsapp_automatizadovip.logs import router as whatsapp_automat
 from app.routers.whatsapp_automatizadovip.automation_test import router as whatsapp_automatizadovip_automation_test_router
 from app.services.whatsapp_automatizadovip_worker import whatsapp_automatizadovip_worker
 from app.services.traffic_flow_collector import traffic_flow_runtime
+from app.services.traffic_aggregation import traffic_aggregation_runtime
 
 # 1.3.8: el motor histórico conserva la interfaz get_client_usage(), pero el
 # cálculo comercial se sustituye por servicios que realmente ocupan recursos.
@@ -75,11 +77,19 @@ logger = logging.getLogger("fibraz.server")
 async def lifespan(_: FastAPI):
     await init_db(); await seed_initial_data()
     pause_task=asyncio.create_task(pause_worker()); suspension_alert_task=asyncio.create_task(suspension_alert_worker()); whatsapp_automatizadovip_task=asyncio.create_task(whatsapp_automatizadovip_worker())
+    traffic_aggregation_task=None
+    aggregation_enabled=traffic_aggregation_runtime.configure()
+    if aggregation_enabled:
+        # Etapa 3 necesita una cola temporal acotada; no persiste flujos crudos.
+        os.environ["TRAFFIC_FLOW_BUFFER_FLOWS"]="true"
     try:
         try:
             listening = await traffic_flow_runtime.start()
             if listening:
                 logger.info("Traffic Flow collector escuchando en %s:%s/udp", traffic_flow_runtime.bind, traffic_flow_runtime.port)
+                if aggregation_enabled:
+                    traffic_aggregation_task=asyncio.create_task(traffic_aggregation_runtime.run())
+                    logger.info("Traffic Flow agregación Etapa 3 habilitada")
             else:
                 logger.info("Traffic Flow collector instalado pero desactivado (TRAFFIC_FLOW_ENABLED=false)")
         except OSError as exc:
@@ -87,6 +97,9 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         await traffic_flow_runtime.stop()
+        if traffic_aggregation_task:
+            traffic_aggregation_task.cancel()
+            with suppress(asyncio.CancelledError): await traffic_aggregation_task
         pause_task.cancel(); suspension_alert_task.cancel(); whatsapp_automatizadovip_task.cancel()
         with suppress(asyncio.CancelledError): await pause_task
         with suppress(asyncio.CancelledError): await suspension_alert_task
