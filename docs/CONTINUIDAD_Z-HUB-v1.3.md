@@ -15,6 +15,30 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 ---
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.13 — Clientes por etapas, etapa 1: cabecera superior
+**Decisión:** detener los cambios globales de toda la pantalla y rehacer Clientes por secciones. En esta etapa se modifica **solo la zona superior** marcada por el usuario: título, subtítulo, buscador, filtros y contadores. Las cartillas de clientes quedan congeladas para una etapa posterior.
+
+### Diseño de la etapa 1
+- `Control de Clientes` se presenta visualmente como **Clientes**.
+- Subtítulo: **Gestiona tus clientes y servicios desde un solo lugar**.
+- La barra oscura separada de búsqueda desaparece visualmente y el buscador pasa a superficie blanca con borde fino.
+- Los filtros dejan de verse como una barra azul independiente y pasan a botones claros compactos.
+- Los contadores/tabs se convierten en pequeños recuadros claros con indicador de color.
+- Se reduce altura, bordes innecesarios y sombras pesadas para parecerse a la referencia marcada.
+- La cabecera queda aislada en `frontend/src/modules/clientes/clients-top-section.css` para poder trabajar la pantalla por etapas.
+
+### Alcance / rendimiento
+- No se cambia backend, API, MikroTik, facturación ni lógica de clientes.
+- No se tocan las cartillas de cliente de 1.3.12 en esta etapa.
+- No agrega consultas, polling ni procesos permanentes.
+
+### Versionado / rollback
+- `PANEL_VERSION = "1.3.13"`.
+- Backup: `backup/pre-clients-top-stage1-1.3.13-20260912`.
+- Rama: `work/clients-top-stage1-1.3.13-20260912`.
+- No modifica el contrato Z-Hub ↔ Web-Licence.
+
+---
 ## 1.3.12 — Ajuste visual de cartillas contra referencia aprobada
 **Motivo:** la validación real de 1.3.11 mostró una cartilla demasiado plana y fría frente a la maqueta aprobada. Se corrige la presentación tomando como objetivo directo sus tonos, bordes, sombras, avatar, módulos y densidad visual.
 
