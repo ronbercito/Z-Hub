@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,9 +26,10 @@ def test_map_icon_is_high_contrast():
     assert ".router-modern-action--map svg" in css
 
 
-def test_release_1328_version_backup_and_history():
+def test_release_1328_version_backup_and_history_survive_later_releases():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.28"' in version
+    match = re.search(r'PANEL_VERSION\s*=\s*"1\.3\.(\d+)"', version)
+    assert match and int(match.group(1)) >= 28
     assert "1.3.28 — Iconos MikroTik de alto contraste" in continuity
     assert "backup/pre-router-icon-contrast-1.3.28-20260912" in continuity
