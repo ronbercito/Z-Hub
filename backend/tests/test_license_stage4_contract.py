@@ -30,7 +30,7 @@ def test_license_view_keeps_core_customer_information():
     assert '/license/info' in view
     assert 'Capacidad autorizada' in view
     assert 'trial_days_remaining' in view
-    assert 'capacidad máxima de 20 abonados' in view
+    assert 'capacidad máxima de 20 servicios registrados' in view
     assert 'installation_id' in view
     assert 'capacity-track' in view
     assert 'Vencimiento' in view
