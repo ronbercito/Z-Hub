@@ -9,7 +9,7 @@ def read(path: str) -> str:
 
 def test_delete_router_action_remains_available_after_later_releases():
     card = read("frontend/src/modules/red/components/RouterCard.jsx")
-    assert 'network-router-card-actions' in card
+    assert 'router-modern-actions' in card
     assert 'Eliminar router' in card
     assert 'btn-delete-router-card-' in card
     assert 'canPermission(user, moduleName, "delete")' in card

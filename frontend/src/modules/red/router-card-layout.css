@@ -1,11 +1,11 @@
-/* Z-Hub 1.3.22 — distribución compacta y contraste consistente de tarjetas de red. */
+/* Z-Hub 1.3.23 — tarjetas MikroTik modernas basadas en la maqueta aprobada. */
 
 .network-reference > div:has(> .network-router-card) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: flex-start !important;
   justify-content: flex-start !important;
-  gap: 16px !important;
+  gap: 18px !important;
 }
 
 .network-reference > div:has(> .network-router-card) > .network-router-card {
@@ -13,34 +13,214 @@
   flex: 0 0 auto !important;
 }
 
-.network-router-delete-button {
-  transition: background-color .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+.network-router-card--modern {
+  --router-accent: #16b981;
+  --router-accent-soft: rgba(22, 185, 129, .16);
+  width: min(100%, 360px) !important;
+  padding: 0 !important;
+  border-radius: 20px !important;
+  border: 1px solid #dbe5f0 !important;
+  overflow: hidden !important;
+  color: #10233f !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%) !important;
+  box-shadow: 0 12px 30px rgba(30, 64, 175, .10), 0 3px 8px rgba(15, 23, 42, .06) !important;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease !important;
 }
 
-.network-router-delete-button:hover {
-  transform: translateY(-1px) scale(1.06);
+.network-router-card--modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(30, 64, 175, .15), 0 4px 10px rgba(15, 23, 42, .07) !important;
 }
 
-/* 1.3.22: el tema claro ya no apaga la acción destructiva. */
-html[data-panel-theme="zhub-light"] .network-router-delete-button {
-  background: #dc2626 !important;
-  border-color: #ffffff !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(254, 202, 202, .75), 0 6px 14px rgba(153, 27, 27, .35) !important;
+.network-router-card--modern[data-router-visual-state="offline"] {
+  --router-accent: #ef3340;
+  --router-accent-soft: rgba(239, 51, 64, .14);
 }
 
-html[data-panel-theme="zhub-light"] .network-router-delete-button:hover {
-  background: #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(254, 202, 202, .9), 0 8px 18px rgba(153, 27, 27, .4) !important;
+.network-router-card--modern[data-router-visual-state="alert"] {
+  --router-accent: #f59e0b;
+  --router-accent-soft: rgba(245, 158, 11, .16);
 }
+
+.network-router-card--modern[data-router-visual-state="unknown"] {
+  --router-accent: #64748b;
+  --router-accent-soft: rgba(100, 116, 139, .14);
+}
+
+.network-router-card--modern.is-selected {
+  border: 2px solid var(--router-accent) !important;
+  box-shadow: 0 0 0 4px var(--router-accent-soft), 0 16px 34px rgba(15, 23, 42, .12) !important;
+}
+
+.router-modern-header {
+  min-height: 128px;
+  padding: 22px 20px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.router-modern-device {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.router-modern-device-icon {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #245b86, #1f7fa6);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 6px 14px rgba(29,78,216,.14);
+}
+
+.router-modern-device-icon svg { width: 30px; height: 30px; }
+.router-modern-title-wrap { min-width: 0; padding-top: 2px; }
+.router-modern-name-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.router-modern-name-row h3 { margin: 0; max-width: 168px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; line-height: 1.2; font-weight: 850; color: #0f1f38; }
+.router-modern-favorite { color: #fbbf24; font-size: 18px; filter: drop-shadow(0 1px 1px rgba(120,53,15,.18)); }
+.router-modern-address { margin: 6px 0 0; font: 600 13px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; color: #526d91; }
+.router-modern-model { margin: 7px 0 0; font-size: 13px; line-height: 1.25; color: #526d91; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.router-modern-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .02em;
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(15,23,42,.10);
+}
+.router-modern-status--online { background: linear-gradient(135deg, #17b75c, #0ca678); }
+.router-modern-status--offline { background: linear-gradient(135deg, #f04452, #e11d48); }
+.router-modern-status--alert { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3b2600; }
+.router-modern-status--unknown { background: linear-gradient(135deg, #64748b, #475569); }
+.router-status-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.95); box-shadow: 0 0 0 3px rgba(255,255,255,.16); }
+.router-status-dot--online { animation: routerPulse 1.8s ease-in-out infinite; }
+@keyframes routerPulse { 0%,100% { opacity: .85; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.08); } }
+
+.router-modern-primary-metrics,
+.router-modern-secondary-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+}
+.router-modern-primary-metrics { padding: 18px 18px 16px; border-bottom: 1px solid #edf2f7; }
+.router-modern-secondary-metrics { padding: 0 18px; border-bottom: 1px solid #edf2f7; background: #fbfdff; }
+
+.router-modern-metric { min-width: 0; padding: 0 12px; }
+.router-modern-metric + .router-modern-metric { border-left: 1px solid #e8eef6; }
+.router-modern-primary-metrics .router-modern-metric:first-child,
+.router-modern-secondary-metrics .router-modern-metric:first-child { padding-left: 0; }
+.router-modern-primary-metrics .router-modern-metric:last-child,
+.router-modern-secondary-metrics .router-modern-metric:last-child { padding-right: 0; }
+.router-modern-secondary-metrics .router-modern-metric { padding-top: 15px; padding-bottom: 15px; }
+.router-modern-metric__head { display: flex; align-items: center; gap: 7px; color: #526d91; }
+.router-modern-metric__icon { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; background: #eef6ff; color: #1688e8; }
+.router-modern-metric__icon svg { width: 16px; height: 16px; stroke-width: 2.2; }
+.router-modern-metric__label { font-size: 11px; font-weight: 750; white-space: nowrap; }
+.router-modern-metric__value { display: block; margin-top: 7px; font-size: 18px; line-height: 1.1; color: #0f1f38; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.router-modern-progress { height: 6px; margin-top: 11px; border-radius: 99px; background: #e7edf5; overflow: hidden; }
+.router-modern-progress span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: #12b981; }
+.router-modern-metric--blue .router-modern-metric__icon { color: #1877e8; background: #edf5ff; }
+.router-modern-metric--blue .router-modern-progress span { background: #1484ea; }
+.router-modern-metric--violet .router-modern-metric__icon { color: #7c3aed; background: #f3efff; }
+.router-modern-metric--amber .router-modern-metric__icon { color: #f59e0b; background: #fff6df; }
+.router-modern-metric--cyan .router-modern-metric__icon { color: #0891b2; background: #ecfeff; }
+
+.router-modern-footer {
+  min-height: 82px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+}
+.router-modern-location { min-width: 0; display: flex; align-items: center; gap: 10px; color: #356d9d; }
+.router-modern-location > svg { width: 24px; height: 24px; flex: 0 0 24px; }
+.router-modern-location div { min-width: 0; }
+.router-modern-location strong,
+.router-modern-location span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.router-modern-location strong { max-width: 145px; font-size: 11px; color: #526d91; }
+.router-modern-location span { max-width: 145px; margin-top: 3px; font: 600 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7890ad; }
+.router-modern-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.router-modern-extra-actions { display: flex; align-items: center; gap: 8px; }
+.router-modern-action,
+.network-router-card--modern .network-router-edit-button {
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  font-size: 0 !important;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease !important;
+}
+.router-modern-action:hover,
+.network-router-card--modern .network-router-edit-button:hover { transform: translateY(-2px) scale(1.04); }
+.router-modern-action svg,
+.network-router-card--modern .network-router-edit-button svg { width: 19px !important; height: 19px !important; margin: 0 !important; }
+.router-modern-action--map { border: 1px solid #cfe4fa; color: #1688e8; background: #eaf5ff; box-shadow: 0 5px 12px rgba(14,116,204,.10); }
+.network-router-card--modern .network-router-edit-button { border: 1px solid #147ee8 !important; color: #fff !important; background: linear-gradient(135deg,#2196f3,#147ee8) !important; box-shadow: 0 6px 14px rgba(20,126,232,.22) !important; }
+.router-modern-action--delete,
+html[data-panel-theme="zhub-light"] .router-modern-action--delete {
+  border: 1px solid #f53b48 !important;
+  color: #fff !important;
+  background: linear-gradient(135deg,#ff4b57,#e92638) !important;
+  box-shadow: 0 6px 14px rgba(220,38,38,.26) !important;
+}
+.router-modern-action--delete:hover,
+html[data-panel-theme="zhub-light"] .router-modern-action--delete:hover { background: linear-gradient(135deg,#ff5d68,#ef233c) !important; }
+
+/* Tema oscuro: conserva estructura clara pero con superficies oscuras, sin perder jerarquía. */
+html:not([data-panel-theme="zhub-light"]) .network-router-card--modern {
+  background: linear-gradient(180deg,#14253a,#102033) !important;
+  border-color: #2b425d !important;
+  color: #eef6ff !important;
+}
+html:not([data-panel-theme="zhub-light"]) .router-modern-header,
+html:not([data-panel-theme="zhub-light"]) .router-modern-primary-metrics,
+html:not([data-panel-theme="zhub-light"]) .router-modern-secondary-metrics { border-color: #2b425d; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-secondary-metrics,
+html:not([data-panel-theme="zhub-light"]) .router-modern-footer { background: #102033; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-name-row h3,
+html:not([data-panel-theme="zhub-light"]) .router-modern-metric__value { color: #f5f9ff; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-address,
+html:not([data-panel-theme="zhub-light"]) .router-modern-model,
+html:not([data-panel-theme="zhub-light"]) .router-modern-metric__label,
+html:not([data-panel-theme="zhub-light"]) .router-modern-location strong { color: #b7c8dc; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-location span { color: #8ea6bf; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-metric + .router-modern-metric { border-color: #2b425d; }
+html:not([data-panel-theme="zhub-light"]) .router-modern-progress { background: #29405a; }
 
 @media (max-width: 700px) {
-  .network-reference > div:has(> .network-router-card) {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-  }
+  .network-reference > div:has(> .network-router-card) { display: grid !important; grid-template-columns: 1fr !important; }
+  .network-reference > div:has(> .network-router-card) > .network-router-card { width: 100% !important; }
+  .network-router-card--modern { max-width: none !important; }
+}
 
-  .network-reference > div:has(> .network-router-card) > .network-router-card {
-    width: 100% !important;
-  }
+@media (max-width: 420px) {
+  .router-modern-header { padding: 18px 15px 15px; }
+  .router-modern-device-icon { width: 52px; height: 52px; flex-basis: 52px; }
+  .router-modern-name-row h3 { max-width: 125px; font-size: 16px; }
+  .router-modern-status { padding: 7px 10px; font-size: 10px; }
+  .router-modern-primary-metrics,
+  .router-modern-secondary-metrics { padding-left: 12px; padding-right: 12px; }
+  .router-modern-metric { padding-left: 8px; padding-right: 8px; }
+  .router-modern-footer { padding-left: 12px; padding-right: 12px; }
 }

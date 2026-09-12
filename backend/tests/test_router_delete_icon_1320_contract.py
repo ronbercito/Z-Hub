@@ -9,10 +9,12 @@ def read(path: str) -> str:
 
 def test_delete_action_remains_compact_icon_only():
     card = read("frontend/src/modules/red/components/RouterCard.jsx")
+    css = read("frontend/src/modules/red/router-card-layout.css")
     assert 'btn-delete-router-card-' in card
     assert 'aria-label={deleting ? "Eliminando router" : "Eliminar router"}' in card
     assert '<Trash2' in card
-    assert 'group-hover:scale-110' in card
+    assert 'router-modern-action--delete' in card
+    assert '.router-modern-action--delete' in css
     assert 'Eliminar router"}</button>' not in card
 
 

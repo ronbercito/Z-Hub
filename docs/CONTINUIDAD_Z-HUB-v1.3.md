@@ -20,6 +20,38 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.23 — Rediseño moderno de tarjetas MikroTik
+
+**Motivo:** se aprobó una maqueta visual nueva para Gestión de Red con tarjetas más claras, modernas y fáciles de leer, manteniendo intacta la lógica de carga rápida y conexión RouterOS lograda en 1.3.18–1.3.22.
+
+### Diseño implementado
+- Nueva composición blanca/clara por tarjeta MikroTik con bordes suaves, sombra y mayor separación visual.
+- Cabecera con icono circular, nombre, IP:puerto, modelo/board y estado grande.
+- Estados visuales: ONLINE verde, OFFLINE rojo, ALERTA ámbar y DESCONOCIDO gris.
+- ALERTA es solo una interpretación visual local cuando el router está online pero presenta CPU/memoria muy alta o latencia elevada; no cambia el estado persistido en backend.
+- Bloque superior de métricas: CPU, memoria y ping con barras visuales.
+- Bloque secundario: sesiones PPPoE activas, colas activas y tráfico agregado, reutilizando campos ya existentes del snapshot RouterOS.
+- Pie con ubicación/coordenadas y acciones compactas de mapa, editar y eliminar.
+- `RouterCardMetric.jsx` separa la presentación de métricas del componente principal.
+- La vista de OLT conserva su tratamiento existente para no introducir regresiones en esa sección.
+- Tema oscuro compatible mediante estilos específicos.
+
+### Rendimiento / interacción
+- No agrega polling, workers ni consultas RouterOS nuevas por tarjeta.
+- Reutiliza `cpu_usage_pct`, `memory_usage_pct`, `ping_ms`, `active_pppoe_count`, `active_queues_count`, `total_download_mbps`, `total_upload_mbps`, ubicación y coordenadas ya entregadas por `/api/routers` / snapshot.
+- Conserva selección por `pointerdown` en toda la superficie de la tarjeta y evita que mapa/editar/eliminar propaguen el evento.
+- Conserva carga no bloqueante de 1.3.18.
+
+### Pruebas / rollback
+- Nuevo contrato: `backend/tests/test_router_card_modern_1323_contract.py`.
+- Se ajustan contratos históricos 1.3.20–1.3.22 para validar semántica en lugar de clases visuales ya supersedidas.
+- `PANEL_VERSION = "1.3.23"`.
+- Backup previo: `backup/pre-router-card-modern-1.3.23-20260912`.
+- Rama: `work/router-card-modern-1.3.23-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.22 — Selección real desde toda la tarjeta + contraste de eliminar
 
 **Incidencia real:** en 1.3.21 la zona inferior CPU/Mem/Ping seleccionaba de inmediato, pero la zona central de algunas tarjetas requería varios clics. La validación mostró que `RouterCard` renderizaba un contenedor de `children` aunque sus hijos condicionales fueran `null/false`; ese contenedor vacío tenía `onPointerDown={stopPointer}` y bloqueaba la selección en el centro.
