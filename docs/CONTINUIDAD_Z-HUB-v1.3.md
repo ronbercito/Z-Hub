@@ -18,6 +18,65 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.9 — Gestión individual por servicio opcional
+
+**Decisión:** incorporar en **Ajustes → Configuración clientes** una opción para administrar el estado operativo de cada servicio por separado, sin obligar a cambiar el flujo general existente del abonado.
+
+### Configuración
+
+- Nueva opción **Gestión individual por servicio → Administrar estados por servicio**.
+- Queda **desactivada por defecto** para mantener exactamente el comportamiento anterior en instalaciones que no necesiten esta función.
+- Activar o desactivar la opción no elimina clientes, servicios, IP, NAP, ONU, facturas ni configuración técnica.
+- Si está desactivada, las acciones generales del abonado continúan funcionando como antes.
+
+### Comportamiento cuando está activada
+
+- El servicio principal y cada servicio adicional pueden administrarse individualmente.
+- Acciones disponibles: **Pausar**, **Suspender / cortar** y **Reactivar**.
+- Pausar o suspender un servicio no modifica los demás servicios del mismo abonado.
+- El estado general del cliente se conserva como control global. Si el abonado completo está suspendido o pausado, primero debe reactivarse globalmente antes de habilitar individualmente un servicio.
+- Las acciones generales del cliente siguen disponibles y tienen alcance global sobre el abonado.
+
+### MikroTik y persistencia
+
+- PPPoE: el estado individual se aplica habilitando/deshabilitando únicamente el `secret` correspondiente al servicio.
+- IP estática/DHCP administrado por IP: se agrega o retira únicamente esa IP de la `address-list` de corte configurada.
+- Primero se confirma la operación en MikroTik; si falla, no se confirma el nuevo estado local.
+- Nuevo modelo `ClientServiceState` / tabla `client_service_states` para conservar estados independientes, incluido el servicio principal, sin migrar ni romper la estructura histórica de `clients`.
+- Los servicios adicionales continúan sincronizando su campo `ClientService.status`.
+- Se registra actividad del abonado para los cambios individuales.
+
+### Rendimiento
+
+- No se crean workers nuevos, sondeos permanentes, pings ni consultas periódicas por servicio.
+- Las acciones contra MikroTik ocurren únicamente cuando el operador pulsa una acción.
+- Al abrir la pestaña Servicios se mantiene la consulta existente de servicios y se añade una sola consulta de resumen de estados para ese abonado mediante `GET /api/clients/{client_id}/service-states`.
+- La carga no crece con procesos permanentes por cada servicio.
+
+### Licencia
+
+- Se conserva sin cambios la regla validada en 1.3.8: `active`, `suspended` y `paused` continúan consumiendo cupo.
+- Pausar o suspender individualmente un servicio **no libera capacidad de licencia**.
+- Solo la baja/eliminación definitiva del servicio libera el cupo correspondiente.
+- Este cambio **no modifica el contrato Z-Hub ↔ Web-Licence**, por lo que Web-Licence permanece sin cambios.
+
+### Implementación
+
+- `backend/app/models/client_service_state.py`: persistencia de estado individual.
+- `backend/app/routers/clientes/service_operations.py`: política y acciones por servicio.
+- `frontend/src/modules/ajustes/clientes/ClientSettings.jsx`: interruptor de activación.
+- `frontend/src/modules/clientes/editor/ClientServiceEditor.jsx`: estado y menú compacto de acciones por servicio.
+- Contrato automático: `backend/tests/test_individual_service_control_139_contract.py`.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.9"`.
+- Backup previo: `backup/pre-individual-service-control-1.3.9-20260912`.
+- Rama: `work/individual-service-control-1.3.9-20260912`.
+- El despliegue real y la prueba con un abonado de varios servicios deben validarse después de CI/merge.
+
+---
+
 ## 1.3.8 — Capacidad de licencia por servicios registrados
 
 **Decisión comercial:** la licencia deja de contar únicamente abonados con `status=active`. A partir de 1.3.8 la unidad de capacidad es el **servicio registrado que ocupa recursos de red**.
