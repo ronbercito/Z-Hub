@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-12 — 1.3.23, tarjeta MikroTik moderna inspirada en la maqueta aprobada.
+ * Actualización: 2026-09-12 — 1.3.27, identidad MikroTik visible en bloque independiente.
  * Área: Gestión de Red > tarjetas de equipos.
  */
 import React, { useState } from "react";
@@ -93,6 +93,10 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
 
   const locationReady = Math.abs(num(router.latitude)) > 0.0001 || Math.abs(num(router.longitude)) > 0.0001;
   const traffic = num(router.total_download_mbps) + num(router.total_upload_mbps);
+  const routerName = String(router.name || "").trim() || "Router MikroTik";
+  const routerIp = String(router.ip_address || "").trim() || "IP no disponible";
+  const routerPort = router.port || router.cli_port || 8728;
+  const routerModel = String(router.board_name || router.model || router.identity || "MikroTik RouterOS").trim();
 
   return (
     <article
@@ -113,13 +117,13 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
               <path d="M24 18v-3m0 3 3-2m-3 2-3-2m0 6a4 4 0 1 0 6 0 4 4 0 0 0-6 0Zm3 0v3m-2-1.5h4" />
             </svg>
           </div>
-          <div className="router-modern-title-wrap">
-            <div className="router-modern-name-row">
-              <h3>{router.name}</h3>
+          <div className="router-modern-identity-panel" data-testid={`router-identity-${router.id}`}>
+            <div className="router-modern-identity-name-row">
+              <span className="router-modern-identity-name">{routerName}</span>
               {selected && <span className="router-modern-favorite" title="Router seleccionado">★</span>}
             </div>
-            <p className="router-modern-address">{router.ip_address}:{router.port}</p>
-            <p className="router-modern-model">{router.board_name || router.model || "MikroTik RouterOS"}</p>
+            <span className="router-modern-identity-address">{routerIp}:{routerPort}</span>
+            <span className="router-modern-identity-model">{routerModel}</span>
           </div>
         </div>
         <span className={`router-modern-status router-modern-status--${visualState}`}>
