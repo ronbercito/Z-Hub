@@ -1,7 +1,8 @@
 """Identidad estable del host para el flujo Auto-TRIAL de Z-Hub.
 
-Nunca expone los identificadores crudos al License Server: combina señales locales,
-normaliza los valores y devuelve únicamente SHA-256 hexadecimal.
+Nunca expone los identificadores crudos al License Server: combina señales locales
+estables y devuelve únicamente SHA-256 hexadecimal. La MAC se usa solo si no hay
+ninguna señal persistente disponible, para que cambiar una NIC no altere el HW-ID.
 """
 from __future__ import annotations
 
@@ -28,7 +29,6 @@ def _read_identity(path: Path) -> str:
 
 
 def _mac_identity() -> str:
-    """Fallback adicional; nunca es la única señal preferida."""
     node = uuid.getnode()
     return f"{node:012x}" if node else ""
 
@@ -39,10 +39,10 @@ def hardware_identity_components() -> list[str]:
         value = _read_identity(path)
         if value:
             components.append(f"{label}={value}")
+    if components:
+        return components
     mac = _mac_identity()
-    if mac:
-        components.append(f"mac={mac}")
-    return components
+    return [f"mac={mac}"] if mac else []
 
 
 def hardware_id() -> str:
