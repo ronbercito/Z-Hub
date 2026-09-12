@@ -21,6 +21,26 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.34 — Hotfix de validación Traffic Flow
+
+**Motivo:** antes de activar UDP 2055 en el entorno real se detectó que Supervisor ejecutaba Uvicorn con `--workers 2`. Como el collector de Etapa 2 vive dentro del ciclo de vida FastAPI, dos workers intentarían abrir el mismo socket UDP y además dividirían las estadísticas entre procesos.
+
+### Corrección
+- `deploy/supervisor/zhub_backend.conf.template` pasa temporalmente a `--workers 1` mientras el collector continúe embebido en FastAPI.
+- Esto garantiza una sola instancia del collector, un único bind UDP 2055 y contadores coherentes para la prueba real.
+- El collector continúa **desactivado por defecto**; esta versión no activa Traffic Flow ni modifica ningún MikroTik automáticamente.
+- Se añade contrato CI `test_traffic_flow_single_worker_1334_contract.py` para impedir que vuelva accidentalmente a múltiples workers mientras el collector sea embebido.
+
+### Continuidad / validación
+- Punto de partida: Z-Hub 1.3.33, merge `885aa1e800ff7bdca2b1c5918e32653a41e4f4ae`.
+- Backup previo: `backup/pre-traffic-flow-worker-1.3.33-20260912`.
+- Rama: `work/traffic-flow-worker-1.3.34-20260912`.
+- `PANEL_VERSION = "1.3.34"`.
+- Después de desplegar 1.3.34: primero habilitar el collector en Z-Hub y comprobar que escucha; luego configurar **un solo MikroTik de prueba** y confirmar aumento real de paquetes/flujos antes de cerrar Etapa 2/5.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.33 — Registro de Tráfico · Etapa 2/5
 
 **Objetivo:** integrar la recepción real de MikroTik Traffic Flow sin iniciar todavía el cálculo/persistencia de consumo de la Etapa 3.
