@@ -25,20 +25,17 @@ def test_settings_modal_uses_dedicated_license_view():
     assert 'section==="license"?<LicenseSettingslocked={locked}/>' in dense
 
 
-def test_license_view_shows_capacity_trial_and_remote_validation_state():
+def test_license_view_keeps_core_customer_information():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     assert '/license/info' in view
-    assert 'Abonados usados' in view
-    assert 'Capacidad' in view
-    assert 'Disponibles' in view
+    assert 'Capacidad autorizada' in view
     assert 'trial_days_remaining' in view
     assert 'capacidad máxima de 20 abonados' in view
-    assert 'license_server_enabled' in view
-    assert 'license_server_online' in view
-    assert 'validation_source' in view
     assert 'installation_id' in view
-    assert 'grace_until' in view
     assert 'capacity-track' in view
+    assert 'Vencimiento' in view
+    assert 'Estado' in view
+    assert 'Plan' in view
 
 
 def test_license_api_masks_key_and_protects_internal_metadata():
@@ -51,9 +48,10 @@ def test_license_api_masks_key_and_protects_internal_metadata():
     assert 'hidden = {"smtp_password_encrypted", *LICENSE_INTERNAL_SETTINGS}' in settings
 
 
-def test_stage4_license_state_remains_read_only_except_explicit_activation_added_later():
+def test_customer_license_state_is_read_only():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     assert 'axios.get(`${API}/license/info`' in view
+    assert 'axios.post(' not in view
     assert 'axios.put(' not in view
     assert 'axios.patch(' not in view
     assert 'axios.delete(' not in view
