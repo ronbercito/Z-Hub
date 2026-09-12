@@ -20,6 +20,28 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.20 — Acción eliminar compacta mediante icono moderno
+
+**Motivo:** validación real de 1.3.19 confirmó que el botón rotulado **Eliminar router** era visible, pero se veía grande, tosco y rompía la composición visual de la tarjeta MikroTik.
+
+### Corrección visual
+- Se reemplaza el botón de texto por un botón cuadrado compacto de 36 × 36 px con icono `Trash2`.
+- Estilo rojo translúcido con borde, sombra suave, hover con elevación/escala y foco visible.
+- El icono conserva `title` y `aria-label` para mantener accesibilidad.
+- Durante la eliminación el icono usa una animación discreta y el botón queda deshabilitado.
+- Se conserva confirmación previa, permiso `network.delete`, timeout y `DELETE /api/routers/{id}`.
+- No cambia carga, métricas, edición ni conexión RouterOS.
+
+### Pruebas / rollback
+- Nuevo contrato: `backend/tests/test_router_delete_icon_1320_contract.py`.
+- El contrato 1.3.19 pasa a validar historial/compatibilidad y deja de exigir que 1.3.19 siga siendo la versión actual.
+- `PANEL_VERSION = "1.3.20"`.
+- Backup previo: `backup/pre-router-delete-icon-1.3.20-20260912`.
+- Rama: `work/router-delete-icon-1.3.20-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.19 — Botón Eliminar router realmente visible
 
 **Incidencia real:** en 1.3.18 la lógica de borrado estaba presente, pero en tarjetas MikroTik compactas el icono de papelera compartía la cabecera con coordenadas y estado ONLINE/OFFLINE. En anchos estrechos podía quedar visualmente recortado o pasar inadvertido.
@@ -34,7 +56,6 @@ Historial preservado:
 
 ### Pruebas / rollback
 - Nuevo contrato: `backend/tests/test_router_delete_visible_1319_contract.py`.
-- `PANEL_VERSION = "1.3.19"`.
 - Backup previo: `backup/pre-router-delete-visible-1.3.19-20260912`.
 - Rama: `work/router-delete-visible-1.3.19-20260912`.
 - No cambia el contrato Z-Hub ↔ Web-Licence.
