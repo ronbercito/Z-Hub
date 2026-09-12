@@ -18,6 +18,43 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.11 — Cartilla visual enriquecida de Clientes
+
+**Motivo:** la primera presentación 1.3.10 seguía percibiéndose como una fila ancha coloreada. Se rediseña la composición para acercarla a la maqueta visual aprobada, con más jerarquía, contraste y separación interna, sin perder información ni acciones.
+
+### Diseño
+
+- La identidad del abonado ocupa una cabecera visual amplia con avatar mayor, nombre y DNI/RUC.
+- Contacto queda separado en la zona superior central.
+- Deuda y estado pasan a mostrarse como módulos propios, destacados y fáciles de leer.
+- Plan/tarifa y tecnología se agrupan en una ficha inferior **Servicio principal**.
+- IP, tipo de conexión y router se agrupan en una ficha inferior **Conexión / red**.
+- Se conservan todos los botones existentes de ficha, corte/reactivación, ONU, WhatsApp, pausa, retiro, mapa y eliminación.
+- Activo: verde más visible; pausado: ámbar; suspendido/cortado: rojo.
+- En **Claro Suave** se usan fondos pastel más intensos y cercanos a la referencia visual aprobada.
+- Responsive reorganiza la cartilla sin ocultar contenido.
+
+### Rendimiento
+
+- No se añaden consultas API, polling, workers ni lecturas por abonado.
+- Se reutiliza exactamente el mismo `GET /api/clients` y los mismos datos ya cargados en 1.3.10.
+- El cambio es únicamente de presentación, por lo que no agrega carga al MikroTik ni multiplica consultas al backend.
+
+### Implementación
+
+- `frontend/src/modules/clientes/client-status-cards.css` se rehace con una composición de cartilla en dos niveles.
+- El estado continúa detectándose desde las clases ya renderizadas mediante `:has(...)`; no se altera el valor persistido.
+- Se mantiene el contrato visual de 1.3.10 y se agrega regresión para la nueva estructura.
+- `PANEL_VERSION = "1.3.11"`.
+
+### Versionado / rollback
+
+- Backup previo: `backup/pre-client-card-visual-1.3.11-20260912`.
+- Rama: `work/client-card-visual-1.3.11-20260912`.
+- Este cambio no modifica el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.10 — Cartillas visuales de clientes por estado
 
 **Decisión:** adaptar la vista principal de Clientes al estilo visual aprobado: cada abonado se presenta como una cartilla amplia, conservando toda la información y las acciones existentes, con identificación inmediata por color de estado.

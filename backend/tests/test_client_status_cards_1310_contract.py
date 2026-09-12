@@ -25,9 +25,18 @@ def test_client_cards_preserve_existing_information_and_actions():
         assert token in view
 
 
-def test_release_is_1310_and_documented():
+def test_richer_card_layout_keeps_reference_structure():
+    css = read("frontend/src/modules/clientes/client-status-cards.css")
+    assert 'content: "Servicio principal"' in css
+    assert 'content: "Conexión / red"' in css
+    assert '.client-main-cell:nth-child(5)' in css
+    assert '.client-main-cell:nth-child(6)' in css
+    assert 'grid-template-rows: auto auto' in css
+
+
+def test_release_history_is_preserved_after_1311():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.10"' in version
+    assert 'PANEL_VERSION = "1.3.11"' in version
     assert "1.3.10 — Cartillas visuales de clientes por estado" in continuity
     assert "backup/pre-client-status-cards-1.3.10-20260912" in continuity
