@@ -3,6 +3,7 @@ import axios from "axios";
 import { AlertTriangle, CheckCircle2, Clock3, Infinity as InfinityIcon, MessageCircle, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./license-settings.css";
+import "./license-settings-compact.css";
 
 const STATUS = {
   active: { label:"Licencia activa", tone:"ok", icon:CheckCircle2 },
@@ -56,6 +57,7 @@ export default function LicenseSettings() {
   const requiresCommercialHelp = ["invalid", "missing", "trial_expired"].includes(String(data?.status || "").toLowerCase()) || Boolean(data?.read_only);
   const whatsappDigits = String(data?.sales_whatsapp || "").replace(/\D/g, "");
   const requestLabel = isTrial ? "Solicitar licencia" : "Cambiar plan";
+  const supportName = data?.sales_business_name || data?.sales_contact_name || "Soporte Z-Hub";
   const whatsappMessage = [
     `Hola, deseo ${isTrial ? "pasar mi Z-Hub Trial a una licencia pagada" : "cambiar o revisar mi plan Z-Hub"}.`,
     `Instalación: ${data?.installation_id || "no disponible"}`,
@@ -73,7 +75,7 @@ export default function LicenseSettings() {
 
   return <div className="license-settings">
     <header className="license-head">
-      <div className="license-brand"><span className="license-logo"><ShieldCheck/></span><div><h2>Licencia Z-Hub</h2><p>Información comercial de esta instalación.</p></div></div>
+      <div className="license-brand"><span className="license-logo"><ShieldCheck/></span><div><h2>Licencia Z-Hub</h2><p>Estado, capacidad y contacto comercial.</p></div></div>
       <button type="button" className="license-refresh" onClick={load}><RefreshCw/>Actualizar estado</button>
     </header>
 
@@ -103,17 +105,16 @@ export default function LicenseSettings() {
     </section>}
 
     <section className="license-details">
-      <div><span>Estado</span><b>{statusLabel}</b></div><div><span>Plan</span><b>{planLabel(data?.plan, max)}</b></div>
-      <div><span>{isTrial ? "Vencimiento" : "Vigencia"}</span><b>{isTrial ? dateLabel(expiry) : "Sin vencimiento"}</b></div>
-      {isTrial && <div><span>Días restantes</span><b>{remainingDays}</b></div>}
-      <div><span>Capacidad autorizada</span><b>{unlimited ? "Ilimitada" : (max ?? "—")}</b></div>
+      <div><span>Estado</span><b>{statusLabel}</b></div>
+      <div><span>Uso autorizado</span><b>{unlimited ? `${usage} / Ilimitado` : `${usage} / ${max ?? "—"}`}</b></div>
       <div><span>Installation ID</span><b className="license-installation-id">{data?.installation_id || "—"}</b></div>
     </section>
 
     <section className="license-commercial">
-      <div className="commercial-title"><MessageCircle/><div><b>{requestLabel}</b><span>Los planes pagados no vencen; el cambio de capacidad se gestiona directamente con soporte.</span></div></div>
+      <div className="commercial-title"><MessageCircle/><div><b>{requestLabel}</b><span>Contacto sincronizado desde Web-Licence.</span></div></div>
       <div className="commercial-actions"><button type="button" className="whatsapp" disabled={!whatsappUrl} onClick={() => whatsappUrl && window.open(whatsappUrl, "_blank", "noopener,noreferrer")}><MessageCircle/>{requestLabel} por WhatsApp</button></div>
-      {!whatsappUrl && <p className="commercial-hint">El contacto comercial se habilita al configurar ZHUB_LICENSE_WHATSAPP en el servidor.</p>}
+      {(data?.sales_business_name || data?.sales_contact_name || data?.sales_email) && <div className="commercial-contact-meta"><span><b>{supportName}</b></span>{data?.sales_contact_name && data?.sales_business_name && <span>Contacto: {data.sales_contact_name}</span>}{data?.sales_email && <span>{data.sales_email}</span>}</div>}
+      {!whatsappUrl && <p className="commercial-hint">WhatsApp aún no está configurado en Web-Licence. El administrador central debe completar el módulo Contacto.</p>}
     </section>
 
     <footer className="license-note">Al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto del panel continúa funcionando normalmente.</footer>
