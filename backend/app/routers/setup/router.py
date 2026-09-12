@@ -1,9 +1,16 @@
-"""Asistente de configuración inicial de Z-Hub: Auto-TRIAL y administrador."""
+"""Asistente de configuración inicial de Z-Hub: registro, Auto-TRIAL y administrador."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auto_trial import AutoTrialRejected, AutoTrialUnavailable, activate_auto_trial
+from app.core.auto_trial import (
+    AutoTrialRejected,
+    AutoTrialUnavailable,
+    CustomerRegistrationRejected,
+    CustomerRegistrationUnavailable,
+    activate_auto_trial,
+    register_customer,
+)
 from app.core.database import get_db
 from app.core.license_manager import (
     _ensure_installation_id,
@@ -13,7 +20,7 @@ from app.core.license_manager import (
 )
 from app.core.security import hash_password
 from app.models.user import User
-from .schemas import AdminSetupRequest, AutoTrialSetupRequest, LicenseRequest, SetupCompleteRequest
+from .schemas import AdminSetupRequest, AutoTrialSetupRequest, CustomerRegistrationRequest, LicenseRequest, SetupCompleteRequest
 
 router = APIRouter(prefix="/setup", tags=["Configuración inicial"])
 
@@ -26,6 +33,27 @@ async def setup_status(db: AsyncSession = Depends(get_db)):
         "setup_required": not bool(data.get("initial_setup_completed", False)),
         "license_valid": bool(record),
         "validation_source": validation.get("source"),
+    }
+
+
+@router.post("/register")
+async def setup_register_customer(req: CustomerRegistrationRequest, db: AsyncSession = Depends(get_db)):
+    """Registra la empresa en Web-Licence desde el Wizard sin exponer el servidor central."""
+    _, data = await get_setting_data(db)
+    if data.get("initial_setup_completed"):
+        raise HTTPException(status_code=409, detail="La configuración inicial ya fue completada")
+    try:
+        result = await register_customer(req.company_name, req.contact_name, str(req.email), req.phone, req.country)
+    except CustomerRegistrationRejected as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except CustomerRegistrationUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "email": str(req.email).strip().lower(),
+        "company_name": req.company_name.strip(),
+        "message": result.get("message") or "Registro preparado. Continúa con la activación del TRIAL.",
+        "existing": not bool(result.get("created_customer", True)),
     }
 
 
