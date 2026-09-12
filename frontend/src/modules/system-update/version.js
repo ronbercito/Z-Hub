@@ -1,8 +1,8 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.4";
+export const PANEL_VERSION = "1.3.5";
 export const CHANGELOG = [
-  { type: "Licencias", text: "Los planes pagados ya no vencen por tiempo; se controlan por cantidad de abonados activos." },
-  { type: "Capacidad", text: "PLAN_100, 300, 500 y 1000 cuentan solo abonados activos; ILIMITADO no tiene tope." },
-  { type: "Operación", text: "Al alcanzar el límite solo se bloquean nuevas altas o reactivaciones; el resto del panel sigue funcionando." },
-  { type: "Trial", text: "El Trial mantiene 30 días y capacidad máxima de 20 abonados activos." },
+  { type: "Wizard", text: "El registro de empresa se integra como primer paso de la instalación; Web-Licence queda oculto para el cliente final." },
+  { type: "Registro", text: "Si el cliente ya tiene cuenta puede omitir el registro y continuar directamente con su correo." },
+  { type: "País", text: "El país se selecciona primero, Perú es el valor por defecto y se incluyen los países latinoamericanos soportados." },
+  { type: "WhatsApp", text: "El prefijo internacional se agrega automáticamente al teléfono según el país seleccionado." },
 ];

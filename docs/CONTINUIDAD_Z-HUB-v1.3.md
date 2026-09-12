@@ -15,6 +15,46 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.5 — Registro integrado en Setup Wizard
+
+**Decisión:** el cliente final no necesita abrir la página pública de registro de Web-Licence. El flujo normal comienza y termina en el Setup Wizard de Z-Hub.
+
+### Flujo nuevo
+
+`Registro -> Activación -> Administrador -> Finalizar`.
+
+- El primer paso del Wizard registra/actualiza la empresa mediante `POST /api/setup/register`.
+- Z-Hub actúa como proxy hacia `POST /v1/public/customers/register`; el navegador no conoce ni consume directamente la URL central de Web-Licence.
+- Si el cliente ya tiene cuenta, el botón **Ya tengo una cuenta** omite el formulario y pasa a Activación, donde se usa el correo existente.
+- El registro sigue siendo idempotente por correo; no crea una segunda cuenta si el correo ya existe.
+- La protección anti-segundo-TRIAL permanece sin cambios: una cuenta ya vinculada a otro servidor no recibe otra prueba.
+
+### País y WhatsApp
+
+- El campo **País** aparece primero.
+- Valor por defecto: **Perú**.
+- No se solicita ciudad en el Wizard.
+- Se incluyen: Argentina, Bolivia, Brasil, Chile, Colombia, Costa Rica, Cuba, Ecuador, El Salvador, Guatemala, Haití, Honduras, México, Nicaragua, Panamá, Paraguay, Perú, República Dominicana, Uruguay y Venezuela.
+- Cada país tiene su prefijo telefónico internacional; al guardar, Z-Hub compone el WhatsApp como `+<código><número nacional>`.
+- Para Perú se usa `+51` por defecto.
+
+### Archivos / contrato
+
+- `frontend/src/modules/setup/SetupWizard.jsx`: 4 pasos, selector LATAM, prefijo automático y botón **Ya tengo una cuenta**.
+- `backend/app/routers/setup/router.py`: nuevo `POST /api/setup/register`.
+- `backend/app/routers/setup/schemas.py`: `CustomerRegistrationRequest`.
+- `backend/app/core/auto_trial.py`: cliente público para registro y Auto-TRIAL sin exponer Web-Licence al navegador.
+- `backend/tests/test_wizard_registration_135_contract.py`: contrato de regresión obligatorio en CI.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.5"`.
+- Backup previo: `backup/pre-wizard-registration-1.3.5-20260912`.
+- Rama: `work/wizard-registration-1.3.5-20260912`.
+- El despliegue real y la prueba visual se validan por separado después de CI/merge.
+
+---
+
 ## 1.3.4 — Regla comercial definitiva: PAID sin vencimiento y límite por abonados activos
 
 **Decisión validada con el propietario durante la prueba Etapa 7/7:** solo el TRIAL tiene vigencia temporal. Las licencias pagadas no vencen por días y se controlan exclusivamente por la cantidad de abonados activos.

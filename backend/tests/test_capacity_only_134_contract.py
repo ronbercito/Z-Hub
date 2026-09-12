@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,7 +24,7 @@ def test_full_capacity_blocks_only_new_or_reactivated_subscribers():
     assert 'resume-pause' in guard
     assert 'status_code=409' in guard
     assert 'Todas las demás funciones del panel continúan disponibles' in guard
-    assert 'WRITE_METHODS' in guard  # expiración/invalidez sigue siendo una regla distinta
+    assert 'WRITE_METHODS' in guard
 
 
 def test_paid_ui_has_no_time_renewal():
@@ -33,10 +34,12 @@ def test_paid_ui_has_no_time_renewal():
     assert 'renovar o revisar mi licencia' not in view
 
 
-def test_release_and_bitacora_are_updated():
+def test_capacity_contract_survives_later_13x_releases():
     version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.4"' in version
+    match = re.search(r'PANEL_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"', version)
+    assert match
+    assert tuple(map(int, match.groups())) >= (1, 3, 4)
     assert '1.3.4' in continuity
     assert 'abonados activos' in continuity
     assert 'backup/pre-capacity-only-licensing-1.3.4-20260911' in continuity
