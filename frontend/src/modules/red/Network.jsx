@@ -1,10 +1,10 @@
 /**
  * Archivo: frontend/src/modules/red/Network.jsx
- * Actualización: 2026-09-09 — versión 1.1.89, tarjetas MikroTik con estado real al cargar.
+ * Actualización: 2026-09-12 — Z-Hub 1.3.18, carga no bloqueante de tarjetas MikroTik.
  * Función: Página "Gestión de Red": lista de equipos MikroTik / OLT registrados, estado real
  *          leído por API RouterOS (identidad, versión, CPU, RAM, uptime, latencia), botones de
  *          probar conexión / ping / sincronizar planes / cortes masivos, y pestañas en vivo
- *          (interfaces, PPPoE, colas, DHCP, address-list, hotspot) del MikroTik seleccionado, o pestañas
+ *          (interfaces, PPPoE, colas, DHCP, address-list y hotspot) del MikroTik seleccionado, o pestañas
  *          de OLT VSOL (resumen, PON, ONUs, auto-find, óptica, consola) si el equipo es una OLT.
  * Trabaja con: modules/red/components/RouterCard.jsx, RouterForm.jsx, RouterLiveTabs.jsx, OltLiveTabs.jsx,
  *              backend/app/routers/red/router.py (/api/routers/*), context/AuthContext.js
@@ -22,10 +22,13 @@ import RouterLiveTabs from "./components/RouterLiveTabs";
 import OltLiveTabs from "./components/OltLiveTabs";
 import EquipmentMapModal from "./components/EquipmentMapModal";
 
-const errMsg = (e, fallback) => e?.response?.data?.detail || fallback;
+const errMsg = (e, fallback) => {
+  const detail = e?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  return fallback;
+};
 
 const CLIENT_METRIC_COLORS = { queues: "#197ed4", dhcp: "#7045c8", pppoe: "#129d8c", suspended: "#d8890b" };
-
 const CLIENT_METRIC_STYLES = `
   [data-router-client-metric="queues"] { background: #197ed4 !important; border-color: #197ed4 !important; }
   [data-router-client-metric="dhcp"] { background: #7045c8 !important; border-color: #7045c8 !important; }
@@ -43,44 +46,65 @@ export default function Network({ focus = "mikrotik" }) {
   const canCreateFocus = canPermission(user, moduleForFocus, "create");
   const canOperateNetwork = canPermission(user, "network", "operate");
   const headers = { Authorization: `Bearer ${token}` };
+
   const [routers, setRouters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [pingResult, setPingResult] = useState(null);
   const [clientCounts, setClientCounts] = useState(null);
-  const [formRouter, setFormRouter] = useState(null); // null = cerrado, {} = nuevo, {...} = editar
+  const [formRouter, setFormRouter] = useState(null);
   const [mapRouter, setMapRouter] = useState(null);
+
   const selectedModule = selected?.device_type === "olt" ? "olt" : "network";
   const canSelected = (action) => Boolean(selected) && canPermission(user, selectedModule, action);
 
-  const fetchRouters = useCallback(async () => {
+  const applyRouterSnapshot = useCallback((snapshotRouter) => {
+    if (!snapshotRouter?.id) return;
+    setRouters((current) => current.map((row) => row.id === snapshotRouter.id ? { ...row, ...snapshotRouter } : row));
+    setSelected((current) => current?.id === snapshotRouter.id ? { ...current, ...snapshotRouter } : current);
+  }, []);
+
+  const refreshRouterSnapshot = useCallback(async (row) => {
+    if (!row || row.device_type !== "mikrotik") return;
     try {
-      const res = await axios.get(`${API}/routers`, { headers });
+      const snapshot = await axios.post(
+        `${API}/routers/${row.id}/test-connection`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 6000 },
+      );
+      if (snapshot.data?.router) applyRouterSnapshot(snapshot.data.router);
+    } catch (e) {
+      // Un MikroTik offline/lento no debe impedir que se muestren las demás tarjetas.
+    }
+  }, [API, token, applyRouterSnapshot]);
+
+  const fetchRouters = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/routers`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 8000,
+      });
       const rows = Array.isArray(res.data) ? res.data : [];
 
-      // Las tarjetas necesitan datos de estado reales del MikroTik. El listado /routers
-      // puede contener valores históricos/default (CPU, memoria y ping). Al cargar la página
-      // sincronizamos cada MikroTik con el endpoint existente de prueba de conexión, que ya
-      // ejecuta snapshot_router() y devuelve el router actualizado. Las OLT no se modifican.
-      const refreshed = await Promise.all(rows.map(async (row) => {
-        if (row.device_type !== "mikrotik") return row;
-        try {
-          const snapshot = await axios.post(`${API}/routers/${row.id}/test-connection`, {}, { headers });
-          return snapshot.data?.router || row;
-        } catch (e) {
-          return row;
-        }
-      }));
-
-      setRouters(refreshed);
-      setSelected((prev) => (prev ? refreshed.find((r) => r.id === prev.id) || refreshed[0] || null : refreshed[0] || null));
-    } catch (e) {
-      toast.error("Error al cargar los equipos de red");
-    } finally {
+      // 1.3.18: pintar el inventario inmediatamente. Antes se esperaba Promise.all de
+      // test-connection y un solo router offline podía dejar toda la pantalla en "Cargando equipos...".
+      setRouters(rows);
+      setSelected((prev) => prev ? rows.find((r) => r.id === prev.id) || rows[0] || null : rows[0] || null);
       setLoading(false);
+
+      // Refresco de métricas/estado en segundo plano e independiente por router.
+      rows.filter((row) => row.device_type === "mikrotik").forEach((row) => {
+        void refreshRouterSnapshot(row);
+      });
+    } catch (e) {
+      setRouters([]);
+      setSelected(null);
+      setLoading(false);
+      toast.error("Error al cargar los equipos de red");
     }
-  }, [API, token]);
+  }, [API, token, refreshRouterSnapshot]);
 
   useEffect(() => { fetchRouters(); }, [fetchRouters]);
 
@@ -92,7 +116,7 @@ export default function Network({ focus = "mikrotik" }) {
     }
 
     setClientCounts(null);
-    axios.get(`${API}/routers/${selected.id}/client-counts`, { headers })
+    axios.get(`${API}/routers/${selected.id}/client-counts`, { headers, timeout: 7000 })
       .then(({ data }) => {
         if (!cancelled) setClientCounts(data?.ok ? data.counts : null);
       })
@@ -103,7 +127,6 @@ export default function Network({ focus = "mikrotik" }) {
     return () => { cancelled = true; };
   }, [API, token, selected?.id, selected?.device_type]);
 
-
   const run = async (key, fn) => {
     setBusy(key);
     try { await fn(); } finally { setBusy(""); }
@@ -111,21 +134,21 @@ export default function Network({ focus = "mikrotik" }) {
 
   const testConnection = (r) => run("test", async () => {
     try {
-      const res = await axios.post(`${API}/routers/${r.id}/test-connection`, {}, { headers });
+      const res = await axios.post(`${API}/routers/${r.id}/test-connection`, {}, { headers, timeout: 8000 });
       res.data.ok ? toast.success(res.data.message) : toast.error(res.data.message);
-      fetchRouters();
+      if (res.data?.router) applyRouterSnapshot(res.data.router);
     } catch (e) { toast.error(errMsg(e, "Error al probar la conexión")); }
   });
 
   const ping = (r) => run("ping", async () => {
     setPingResult(null);
     try {
-      const res = await axios.post(`${API}/routers/${r.id}/ping`, {}, { headers });
+      const res = await axios.post(`${API}/routers/${r.id}/ping`, {}, { headers, timeout: 8000 });
       setPingResult(res.data);
       res.data.latency_ms !== null
         ? toast.success(`Respuesta de ${res.data.ip}:${res.data.port} en ${res.data.latency_ms} ms`)
         : toast.error(`Sin respuesta de ${res.data.ip}:${res.data.port}`);
-      fetchRouters();
+      void refreshRouterSnapshot(r);
     } catch (e) { toast.error(errMsg(e, "Error al realizar ping")); }
   });
 
