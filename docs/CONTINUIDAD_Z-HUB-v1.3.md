@@ -15,6 +15,45 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.4 — Regla comercial definitiva: PAID sin vencimiento y límite por abonados activos
+
+**Decisión validada con el propietario durante la prueba Etapa 7/7:** solo el TRIAL tiene vigencia temporal. Las licencias pagadas no vencen por días y se controlan exclusivamente por la cantidad de abonados activos.
+
+### Contrato definitivo
+
+- `TRIAL`: 30 días, máximo 20 abonados activos.
+- `PLAN_100`: sin vencimiento, máximo 100 abonados activos.
+- `PLAN_300`: sin vencimiento, máximo 300 abonados activos.
+- `PLAN_500`: sin vencimiento, máximo 500 abonados activos.
+- `PLAN_1000`: sin vencimiento, máximo 1000 abonados activos.
+- `ILIMITADO`: sin vencimiento y sin límite de abonados activos.
+- El consumo de capacidad cuenta únicamente registros `Client.status == "active"`; suspendidos, pausados, retirados o pendientes no consumen cupo mientras no estén activos.
+
+### Comportamiento al alcanzar el límite
+
+- **No se bloquea el panel.** Facturación, cobranza, edición, suspensión, routers, OLTs, monitoreo, mapas, reportes, ajustes, personal y demás funciones continúan disponibles.
+- Se bloquea con HTTP `409 CLIENT_LIMIT_REACHED` únicamente una operación que incremente la cantidad de abonados activos: alta de un nuevo abonado, reactivación por `toggle-status`, reanudación de pausa y reactivación histórica de un retirado.
+- Suspender/cortar un abonado activo siempre debe seguir permitido y libera capacidad.
+- El mensaje indica el uso actual, el límite y que debe cambiarse a un plan superior para registrar/reactivar más clientes.
+- El control está en backend mediante `license_guard.py`; no depende solo del frontend.
+
+### UI / licencia
+
+- Las licencias PAID muestran `Sin vencimiento`.
+- La pantalla de Licencia se centra en `abonados activos / capacidad` y en el cambio de plan.
+- Al llegar al límite se informa que solo quedan bloqueadas nuevas altas/reactivaciones.
+- Se alinean los planes locales con Web-Licence: 100/300/500/1000/ILIMITADO.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.4"`.
+- Backup previo: `backup/pre-capacity-only-licensing-1.3.4-20260911`.
+- Rama: `work/capacity-only-licensing-1.3.4-20260911`.
+- Web-Licence relacionado: 1.4.6.
+- El despliegue real se valida por separado tras CI/merge; no asumir que `main` ya está instalado.
+
+---
+
 ## 1.3.3 — Corrección de instalación limpia: bootstrap seguro de Web-Licence
 
 **Hallazgo real durante Etapa 7/7:** una instalación nueva de Z-Hub llegó correctamente al Wizard, pero al intentar Auto-TRIAL respondió `License Server no configurado`.
@@ -58,21 +97,19 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 - Supervisor confirmado con:
   - `ZHUB_LICENSE_SERVER_URL="https://192.168.10.240"`
   - `ZHUB_LICENSE_SERVER_PUBLIC_KEY_FILE="/etc/zhub/licencia/server-public.pem"`
-- Queda pendiente continuar la prueba funcional de Auto-TRIAL desde el Wizard y validar el enlace HW-ID / Installation ID en Web-Licence.
+- Auto-TRIAL posteriormente validado: Wizard avanzó, Installation ID quedó vinculado y otro contenedor con el mismo cliente fue rechazado para una segunda prueba.
 
 ---
 
 ## 1.3.2 — Etapa 7/7: validación integral y cierre del flujo comercial
 
-**Objetivo:** cerrar el circuito registro -> Trial automático -> reinstalación -> conversión PAID -> renovación/suspensión y asegurar que Z-Hub refleje los datos comerciales administrados por Web-Licence.
+**Objetivo histórico:** cerrar el circuito registro -> Trial automático -> reinstalación -> conversión PAID -> renovación/suspensión. La regla de vencimiento PAID definida aquí quedó **supersedida por 1.3.4**.
 
 - Mantiene el mismo `Installation ID`, HW-ID y licencia después de convertir TRIAL a PAID.
-- `/api/license/info` consulta el vencimiento comercial PAID en Web-Licence para mostrar la fecha real al cliente.
 - La clave de licencia continúa oculta y no vuelve al flujo visible.
 - Se agrega `backend/tests/test_stage7_e2e_contract.py` y pasa a formar parte obligatoria de CI.
 - Backup previo: `backup/pre-stage7-e2e-1.3.2-20260911`.
 - Rama: `work/stage7-e2e-1.3.2-20260911`.
-- El despliegue real se valida por separado después del merge y CI verde.
 
 ---
 
@@ -84,19 +121,16 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 - Estado de licencia.
 - Plan actual.
-- Vencimiento disponible.
+- Vencimiento disponible para TRIAL; desde 1.3.4 PAID muestra `Sin vencimiento`.
 - Días restantes cuando es TRIAL.
 - Capacidad autorizada y uso.
 - Installation ID.
-- Botón único `Solicitar licencia por WhatsApp` para TRIAL y `Renovar licencia por WhatsApp` para licencias pagadas.
-- El mensaje de WhatsApp incluye automáticamente Installation ID, plan y estado para facilitar la atención comercial.
+- Botón de contacto comercial por WhatsApp.
 
 ### Seguridad / operación
 
-- La UI ya no muestra la clave enmascarada ni ofrece formulario para escribir una nueva clave.
-- La UI deja de exponer fuente de validación, estado técnico del License Server, caché o gracia.
-- La ruta backend `/api/license/activate` permanece temporalmente como compatibilidad administrativa, pero no forma parte del flujo visible del cliente.
-- Si el Trial vence o la licencia queda inválida, los datos permanecen intactos; el cliente contacta soporte y luego usa `Actualizar estado` después de que Web-Licence cambie la licencia.
+- La UI no muestra la clave ni ofrece formulario para escribir una nueva clave.
+- Si el Trial vence o la licencia queda inválida, los datos permanecen intactos.
 
 ### Rollback
 
@@ -107,7 +141,7 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 ## 1.3.0 — Etapa 4/7: Setup Wizard con Auto-TRIAL
 
-**Objetivo:** retirar la introducción manual de claves del proceso normal de primera instalación y conectar el Wizard con el Auto-TRIAL construido en las etapas 2/7 y 3/7.
+**Objetivo:** retirar la introducción manual de claves del proceso normal de primera instalación y conectar el Wizard con el Auto-TRIAL.
 
 ### Flujo
 
@@ -116,24 +150,14 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 ### Backend
 
 - Nuevo `POST /api/setup/auto-trial`.
-- El endpoint obtiene/persiste `license_installation_id`, invoca `activate_auto_trial()` y Web-Licence 1.4.3 decide por HW-ID si activa o recupera el TRIAL.
-- Después de recibir la asignación, Z-Hub valida la licencia por el contrato remoto existente antes de persistir metadata.
-- Rechazos comerciales se separan de indisponibilidad temporal del License Server.
-- `/api/setup/license` se conserva como compatibilidad/recuperación administrativa, pero deja de ser el flujo normal del Wizard.
-- `/api/setup/complete` ya no recibe la clave desde el navegador: utiliza y vuelve a validar la licencia almacenada por el backend.
+- El endpoint obtiene/persiste `license_installation_id`, invoca `activate_auto_trial()` y Web-Licence decide por HW-ID si activa o recupera el TRIAL.
+- `/api/setup/license` queda como compatibilidad/recuperación administrativa.
+- `/api/setup/complete` usa la licencia almacenada por backend.
 
 ### Frontend
 
-- El primer paso del Wizard solicita el correo registrado, no una serie de licencia.
-- Informa que el servidor será identificado para impedir múltiples Trials.
-- Si el HW-ID ya tuvo Trial, se recupera el mismo registro sin reiniciar el período.
-- El segundo paso crea el administrador y el tercero confirma la configuración.
-
-### Versionado
-
-- Primera versión de la nueva serie: **1.3.0**.
-- `docs/CONTINUIDAD_Z-HUB-v1.2.md` queda como histórico de 1.2.x.
-- Las siguientes 1.3.x se documentarán en este archivo, más nuevas primero.
+- El Wizard solicita el correo registrado, no una serie de licencia.
+- Si el HW-ID ya tuvo Trial, recupera el mismo registro sin reiniciar el período.
 
 ### Rollback
 
