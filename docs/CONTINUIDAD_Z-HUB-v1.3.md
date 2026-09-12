@@ -92,7 +92,7 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 - `1.3.0`: inicio de la serie 1.3.x.
 - `Etapa 4/7`: etapa histórica asociada al HW-ID/Auto-TRIAL y continuidad de la serie.
 - `1.3.4`: regla histórica de capacidad por abonados activos, **supersedida por 1.3.8**. Backup histórico: `backup/pre-capacity-only-licensing-1.3.4-20260911`.
-- `1.3.5`: registro integrado en Setup Wizard y validación histórica del TRIAL; conserva el flujo **Ya tengo una cuenta**.
+- `1.3.5`: registro integrado en Setup Wizard y validación histórica del TRIAL; conserva el flujo **Ya tengo una cuenta**, con **Perú** seleccionado por defecto y prefijo +51.
 - `Etapa 7/7`: validación integral histórica de registro, Auto-TRIAL, reinstalación y flujo comercial.
 
 ## Historial anterior
