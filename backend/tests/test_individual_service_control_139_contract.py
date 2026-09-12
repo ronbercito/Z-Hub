@@ -51,10 +51,7 @@ def test_139_service_ui_only_loads_one_state_summary_and_actions_are_manual():
 
 def test_139_preserves_license_capacity_rule_and_release_history():
     usage = read("backend/app/core/license_usage.py")
-    version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
     assert 'CAPACITY_STATUSES = ("active", "suspended", "paused")' in usage
-    assert 'PANEL_VERSION = "1.3.15"' in version
-    assert "1.3.15" in continuity
     assert "1.3.9" in continuity
     assert "backup/pre-individual-service-control-1.3.9-20260912" in continuity

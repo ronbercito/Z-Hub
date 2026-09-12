@@ -4,7 +4,7 @@ Función: Esquemas Pydantic del módulo Red: datos para registrar/editar un Mikr
          y para agregar/quitar IPs de una address-list del firewall.
 Trabaja con: backend/app/routers/red/router.py, backend/app/models/router.py
 """
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class RouterIn(BaseModel):
@@ -36,6 +36,14 @@ class RouterIn(BaseModel):
     ssh_port: int = 22
     telnet_port: int = 23
     snmp_port: int = 161
+
+    @field_validator("latitude", "longitude", mode="before")
+    @classmethod
+    def normalize_blank_coordinates(cls, value):
+        """El formulario permite dejar coordenadas vacías; Pydantic no debe responder 422."""
+        if value is None or value == "":
+            return 0.0
+        return value
 
 
 class OltOnuIn(BaseModel):
