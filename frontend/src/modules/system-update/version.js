@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.31";
+export const PANEL_VERSION = "1.3.32";
 export const CHANGELOG = [
-  { type: "Red", text: "La métrica Tráfico de las tarjetas MikroTik se reemplaza por DHCP y muestra las concesiones actualmente en estado bound." },
-  { type: "RouterOS", text: "El conteo DHCP se obtiene dentro del snapshot existente del router, sin polling adicional ni migraciones de base de datos." },
-  { type: "Compatibilidad", text: "Se conservan CPU, memoria, ping, PPPoE, colas, estados, selección, mapa, edición y eliminación de routers." },
+  { type: "Tráfico", text: "Etapa 1/5: se crea la base de datos para conservar la relación histórica cliente, servicio, IP y router." },
+  { type: "Tráfico", text: "Se prepara la estructura de agregados de descarga, subida y total sin almacenar indefinidamente flujos brutos." },
+  { type: "Seguridad", text: "El collector queda deliberadamente pasivo en esta etapa: no se configura ni modifica Traffic Flow en los MikroTik." },
 ];
