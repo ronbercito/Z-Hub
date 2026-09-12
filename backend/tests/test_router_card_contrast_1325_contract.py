@@ -14,12 +14,12 @@ def test_light_card_has_stronger_text_and_icon_contrast():
         ".router-modern-metric__value",
         ".router-modern-metric__icon",
         ".router-modern-location strong",
-        ".router-modern-location > svg",
+        ".router-modern-location>svg",
     ):
         assert token in css
-    assert "font-weight: 900 !important" in css
-    assert "stroke-width: 2.6" in css
-    assert "border: 1px solid currentColor" in css
+    assert "font-weight:900!important" in css
+    assert "stroke-width:2.6" in css
+    assert "border:1px solid currentColor" in css
     assert "#264d72" in css
 
 
@@ -29,9 +29,7 @@ def test_metric_tones_keep_distinct_visible_icons():
         assert f"router-modern-metric--{tone}" in css
 
 
-def test_release_1325_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1325_history_is_preserved():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.25"' in version
     assert "1.3.25 — Contraste reforzado en tarjetas MikroTik" in continuity
     assert "backup/pre-router-card-contrast-1.3.25-20260912" in continuity

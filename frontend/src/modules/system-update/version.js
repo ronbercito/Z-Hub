@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.25";
+export const PANEL_VERSION = "1.3.26";
 export const CHANGELOG = [
-  { type: "Diseño", text: "Las tarjetas MikroTik del tema claro refuerzan el contraste de textos, valores e iconos para una lectura más rápida." },
-  { type: "Métricas", text: "CPU, memoria, ping, PPPoE, colas y tráfico usan etiquetas más oscuras, valores más fuertes e iconos pastel con borde de color." },
-  { type: "Acciones", text: "Ubicación, mapa y edición reciben mayor contraste visual sin cambiar la lógica ni agregar consultas RouterOS." },
+  { type: "Diseño", text: "La cabecera de las tarjetas MikroTik fuerza la visibilidad y el contraste de nombre, IP:puerto y modelo." },
+  { type: "Legibilidad", text: "Se corrige la zona superior vacía observada en tema claro, con tipografía oscura, azul de red y modelo más definido." },
+  { type: "Compatibilidad", text: "Se conservan métricas, estados, selección, mapa, edición y eliminación sin agregar consultas RouterOS." },
 ];
