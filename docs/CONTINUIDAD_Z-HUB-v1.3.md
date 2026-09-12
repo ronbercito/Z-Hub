@@ -18,6 +18,41 @@ El histórico completo anterior a 1.3.8 queda preservado en `docs/history/CONTIN
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.17 — Orden compacto de tarjetas MikroTik + eliminar por tarjeta
+
+**Motivo:** en la validación real de Gestión de Red, las tarjetas MikroTik quedaban distribuidas en columnas muy separadas y el cuarto equipo saltaba a una segunda fila aunque existía espacio horizontal. Además, la acción de eliminar no era visible directamente en cada tarjeta.
+
+### Corrección visual
+
+- Nuevo `frontend/src/modules/red/router-card-layout.css`.
+- El contenedor de tarjetas usa distribución compacta desde la izquierda, con `flex-wrap` y separación fija de 16 px.
+- En pantallas amplias se aprovecha el espacio disponible y se evita la separación excesiva del antiguo `grid-cols-3`.
+- En móvil vuelve a una sola columna de ancho completo.
+- No cambia la lectura de CPU, memoria, ping, estado ni datos del router.
+
+### Acción eliminar
+
+- Cada tarjeta MikroTik muestra un botón de papelera cuando el usuario tiene permiso `network.delete`.
+- La eliminación conserva confirmación previa antes de enviar `DELETE /api/routers/{id}`.
+- Los errores estructurados del backend no se renderizan directamente en React; se muestran como mensaje seguro.
+- Tras eliminar correctamente se recarga la vista para refrescar el inventario visible.
+- Las OLT conservan su flujo de eliminación existente y no reciben un botón duplicado.
+
+### Pruebas / rendimiento
+
+- Nuevo contrato `backend/tests/test_router_cards_1317_contract.py`.
+- CI verifica layout compacto, botón de eliminación, permiso, confirmación y marcador de versión.
+- No se agregan consultas periódicas, pings ni carga adicional a RouterOS.
+
+### Versionado / rollback
+
+- `PANEL_VERSION = "1.3.17"`.
+- Backup previo: `backup/pre-router-card-order-delete-1.3.17-20260912`.
+- Rama: `work/router-card-order-delete-1.3.17-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.16 — Hotfix de alta de Router MikroTik
 
 **Incidencia real:** al registrar un MikroTik sin seleccionar coordenadas, el formulario enviaba `latitude: ""` y `longitude: ""`. `RouterIn` exigía `float`, FastAPI devolvía `422 Unprocessable Content` y el frontend terminaba mostrando el detalle estructurado de validación como objeto React, provocando `Minified React error #31` y pantalla en blanco.

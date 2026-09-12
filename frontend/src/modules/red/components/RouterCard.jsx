@@ -1,14 +1,16 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-09 — versión 1.1.76, icono y estado de router reforzados.\n * Área: Gestión de Red > tarjetas de equipos.
- * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline
- *          real, IP, modelo y latencia. En MikroTik muestra CPU; en OLT muestra puertos PON.
- * Alcance: Diferencia visualmente MikroTik (cyan) y OLT VSOL (violeta).
- * No modifica conexiones, datos, estado, acciones ni las pestañas del equipo.
- * Trabaja con: modules/red/Network.jsx, backend/app/models/router.py (campos mostrados)
+ * Actualización: 2026-09-12 — 1.3.17, acción eliminar visible en cada tarjeta MikroTik.
+ * Área: Gestión de Red > tarjetas de equipos.
+ * Función: Tarjeta resumen de un equipo de red (MikroTik u OLT) con estado online/offline,
+ *          IP, modelo, latencia y acciones rápidas permitidas por rol.
  */
-import React from "react";
-import { Server, Cpu, HardDrive, Activity, Radio, Zap, MapPin } from "lucide-react";
+import React, { useState } from "react";
+import axios from "axios";
+import { Server, Cpu, HardDrive, Activity, Radio, Zap, MapPin, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../../../context/AuthContext";
+import { canPermission } from "../../ajustes/staff/permissions";
 
 const STATUS = {
   online: { label: "ONLINE", cls: "bg-emerald-500 text-white border-emerald-300 shadow-sm shadow-emerald-950/20", dot: "bg-white animate-pulse" },
@@ -17,12 +19,33 @@ const STATUS = {
 };
 
 export default function RouterCard({ router, selected, onSelect, onCoordinates, children }) {
+  const { API, token, user } = useAuth();
+  const [deleting, setDeleting] = useState(false);
   const st = STATUS[router.status] || STATUS.unknown;
   const isOlt = router.device_type === "olt";
   const Icon = isOlt ? Radio : Server;
+  const moduleName = isOlt ? "olt" : "network";
+  const canDelete = canPermission(user, moduleName, "delete");
   const tone = isOlt
     ? { accent: "violet", selected: "border-violet-500 shadow-violet-500/10", icon: "bg-violet-500/10 text-violet-400 border-violet-500/20", ip: "text-violet-400", metric: "text-violet-400" }
     : { accent: "cyan", selected: "border-cyan-500 shadow-cyan-500/10", icon: "network-router-device-icon bg-white/95 text-cyan-700 border-white shadow-sm", ip: "text-cyan-400", metric: "text-cyan-400" };
+
+  const removeFromCard = async (event) => {
+    event.stopPropagation();
+    if (isOlt || !canDelete || deleting) return;
+    if (!window.confirm(`¿Eliminar el router "${router.name}"?`)) return;
+    setDeleting(true);
+    try {
+      await axios.delete(`${API}/routers/${router.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("Router eliminado");
+      window.location.reload();
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      const message = typeof detail === "string" ? detail : "No se pudo eliminar el router";
+      toast.error(message);
+      setDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -52,6 +75,11 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         </div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={(event) => { event.stopPropagation(); onCoordinates?.(router); }} title="Ver coordenadas" className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 text-cyan-300 hover:bg-slate-700"><MapPin className="h-3.5 w-3.5" /></button>
+          {!isOlt && canDelete && (
+            <button data-testid={`btn-delete-router-card-${router.id}`} type="button" disabled={deleting} onClick={removeFromCard} title="Eliminar router" className="network-router-delete-button rounded-lg border border-rose-300/50 bg-rose-500/15 p-1.5 text-rose-300 hover:bg-rose-500/25 disabled:opacity-50">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
           <span className={`network-router-status network-router-status--${router.status || "unknown"} inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] border ${st.cls}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span> {st.label}
           </span>

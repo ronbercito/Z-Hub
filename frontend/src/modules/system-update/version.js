@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.16";
+export const PANEL_VERSION = "1.3.17";
 export const CHANGELOG = [
-  { type: "Red", text: "Corrige el registro de routers MikroTik cuando latitud y longitud se dejan vacías." },
-  { type: "Validación", text: "El backend normaliza coordenadas vacías a 0.0 y evita la respuesta 422 que provocaba la pantalla en blanco." },
-  { type: "Compatibilidad", text: "Se mantiene intacta la base funcional restaurada de Z-Hub 1.3.15 / 1.3.9." },
+  { type: "Red", text: "Las tarjetas MikroTik ahora se agrupan de forma compacta desde la izquierda, sin grandes espacios entre columnas." },
+  { type: "Acciones", text: "Cada tarjeta MikroTik muestra un botón Eliminar para usuarios con permiso de borrado, con confirmación previa." },
+  { type: "Compatibilidad", text: "Se conserva el hotfix de alta de routers de 1.3.16 y no cambia la lógica de licencia ni Web-Licence." },
 ];
