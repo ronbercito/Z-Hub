@@ -21,6 +21,37 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.30 — DHCP en tarjeta MikroTik
+
+**Motivo:** el usuario solicitó reemplazar la métrica `Tráfico` de cada tarjeta MikroTik por un contador DHCP que indique cuántos clientes tienen actualmente una concesión activa en ese router.
+
+### Implementación
+- `snapshot_router()` consulta `dhcp_leases()` dentro de la misma sesión RouterOS utilizada para CPU, memoria, PPPoE, colas e interfaces.
+- Se cuenta únicamente una lease cuyo `status` sea `bound`, consistente con el contador operativo ya usado por `/api/routers/{id}/client-counts`.
+- `POST /api/routers/{id}/test-connection` incluye el campo transitorio `dhcp_bound_count` dentro del objeto `router`; no se agrega columna a la base de datos ni migración destructiva.
+- La tarjeta reemplaza `Tráfico` por `DHCP`, con icono Wi-Fi y el número de leases `bound`.
+- La cifra se actualiza durante el refresco de snapshot que ya se ejecuta en segundo plano al cargar Gestión de Red; no se agrega polling continuo.
+
+### Rendimiento / rollback
+- Solo se añade una lectura `/ip dhcp-server lease print` dentro de la conexión de snapshot ya abierta; no se crea una conexión separada por métrica.
+- Se conservan CPU, memoria, ping, PPPoE, colas, identidad, estados, mapa, edición y eliminación.
+- `PANEL_VERSION = "1.3.30"`.
+- Backup previo: `backup/pre-router-dhcp-metric-1.3.30-20260912`.
+- Rama de trabajo: `work/router-dhcp-metric-1.3.30-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
+## 1.3.29 — Zona horaria configurable
+
+- Ajustes > Sistema incorpora `app_timezone`, con `America/Lima` como valor predeterminado.
+- El historial de AutomatizadoVIP interpreta timestamps del servidor en UTC y los presenta según la zona horaria configurada.
+- Debian y MariaDB pueden permanecer en UTC; la preferencia se guarda en la configuración JSON existente.
+- Informe técnico: `docs/INFORME_ZONA_HORARIA_1.3.29.md`.
+- Backup previo: `backup/pre-timezone-settings-20260912`.
+
+---
+
 ## 1.3.28 — Iconos MikroTik de alto contraste
 
 **Motivo:** la validación real de 1.3.27 confirmó que la identidad del router ya quedó visible, pero los iconos de CPU, Memoria, Ping, PPPoE, Colas, Tráfico y mapa seguían viéndose demasiado pálidos sobre el tema claro.
