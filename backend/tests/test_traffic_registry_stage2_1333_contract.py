@@ -86,11 +86,9 @@ def test_stage2_routeros_control_is_explicit_and_not_mass_configuration():
     assert "router_id" in text
 
 
-def test_stage2_wired_into_server_and_release():
+def test_stage2_wired_into_server_and_preserved_in_continuity():
     server = read("backend/server.py")
-    version = read("frontend/src/modules/system-update/version.js")
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
     assert "traffic_flow_runtime.start()" in server
     assert "traffic_flow_router" in server
-    assert 'PANEL_VERSION = "1.3.33"' in version
-    assert "Registro de Tráfico · Etapa 2/5" in continuity
+    assert "1.3.33 — Registro de Tráfico · Etapa 2/5" in continuity
