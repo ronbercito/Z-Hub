@@ -15,7 +15,10 @@ def test_clean_install_sources_web_licence_bootstrap():
 
 def test_bootstrap_installs_only_public_trust_material_and_exports_remote_config():
     bootstrap = read("deploy/license_bootstrap.sh")
-    assert 'DEFAULT_LICENSE_SERVER_URL="https://192.168.10.240"' in bootstrap
+    bootstrap_env = read("deploy/license/bootstrap.env")
+    assert "ZHUB_LICENSE_SERVER_DEFAULT_URL=https://192.168.10.240" in bootstrap_env
+    assert "ZHUB_LICENSE_SERVER_DEFAULT_PUBLIC_KEY_FILE=/etc/zhub/licencia/server-public.pem" in bootstrap_env
+    assert 'source "$BOOTSTRAP_ENV"' in bootstrap
     assert 'server-public.pem' in bootstrap
     assert 'zhub-lab-ca.crt' in bootstrap
     assert 'update-ca-certificates' in bootstrap
@@ -26,8 +29,8 @@ def test_bootstrap_installs_only_public_trust_material_and_exports_remote_config
 
 
 def test_public_trust_files_are_versioned_without_private_keys():
-    public_key = read("deploy/trust/server-public.pem")
-    ca = read("deploy/trust/zhub-lab-ca.crt")
+    public_key = read("deploy/license/server-public.pem")
+    ca = read("deploy/license/zhub-lab-ca.crt")
     assert "BEGIN PUBLIC KEY" in public_key
     assert "BEGIN CERTIFICATE" in ca
     assert "BEGIN PRIVATE KEY" not in public_key
