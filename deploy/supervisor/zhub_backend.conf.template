@@ -1,8 +1,10 @@
 # Archivo: deploy/supervisor/zhub_backend.conf.template
 # Función: Servicio Supervisor que mantiene el backend FastAPI de Z-Hub corriendo.
+# 1.3.34: un solo worker garantiza una única instancia del collector UDP Traffic Flow
+# y evita que dos workers intenten enlazar el mismo puerto 2055 o dividan estadísticas.
 [program:zhub_backend]
 directory=${APP_DIR}/backend
-command=${APP_DIR}/backend/venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8001 --workers 2
+command=${APP_DIR}/backend/venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8001 --workers 1
 autostart=true
 autorestart=true
 startretries=5
