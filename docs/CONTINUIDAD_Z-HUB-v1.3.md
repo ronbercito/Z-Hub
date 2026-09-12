@@ -21,6 +21,47 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.33 — Registro de Tráfico · Etapa 2/5
+
+**Objetivo:** integrar la recepción real de MikroTik Traffic Flow sin iniciar todavía el cálculo/persistencia de consumo de la Etapa 3.
+
+### Estado de la Etapa 1
+- El usuario validó que Z-Hub 1.3.32 carga normalmente en el entorno real.
+- Por esa validación, la Etapa 1/5 se considera concluida y se habilita el avance a Etapa 2/5.
+
+### Implementación Etapa 2
+- Nuevo collector UDP `traffic_flow_collector.py` con soporte de NetFlow v5 y formatos con templates NetFlow v9/IPFIX.
+- NetFlow v9/IPFIX decodifica los campos necesarios para origen, destino y bytes en IPv4 e IPv6.
+- El decoder mantiene templates separados por exportador, versión, dominio/source-id y template-id.
+- Se agregó deduplicación temporal por hash del datagrama/exportador y cola acotada para impedir crecimiento ilimitado de memoria.
+- El estado del collector expone paquetes, flujos, IPv4, IPv6, duplicados, errores de parseo, lotes descartados, última recepción y exportadores.
+- El collector se integra al ciclo de vida de FastAPI, pero queda opt-in mediante `TRAFFIC_FLOW_ENABLED=true`; bind predeterminado `0.0.0.0`, UDP 2055.
+- Nuevo API de Red para consultar estado del collector y consultar/configurar/deshabilitar Traffic Flow en un MikroTik concreto.
+- La configuración es explícita por `router_id`; nunca se aplica en masa automáticamente.
+- Por defecto se recomienda exportación NetFlow v9 para compatibilidad RouterOS v6/v7 e IPv4/IPv6. También se acepta v5 o IPFIX cuando se seleccione expresamente.
+- El rollback operativo deshabilita `/ip traffic-flow` sin borrar los targets existentes.
+- En esta etapa los flujos recibidos se validan en memoria y NO se insertan todavía en `traffic_aggregates`; esa persistencia y cálculo pertenece a Etapa 3/5.
+
+### Seguridad / rendimiento
+- `TRAFFIC_FLOW_ENABLED=false` por defecto para no abrir UDP 2055 de forma inesperada tras una actualización.
+- Cola interna máxima: 512 lotes; dedupe en memoria con limpieza acotada.
+- No se almacenan paquetes ni flujos crudos indefinidamente.
+- No se modifica PPPoE, DHCP, Simple Queue, firewall ni aprovisionamiento de clientes.
+
+### Validación
+- Pruebas sintéticas incluidas para NetFlow v5 IPv4, NetFlow v9 IPv4 e IPFIX IPv6.
+- Contrato de CI valida receptor, deduplicación, límites, endpoints, integración FastAPI y versión.
+- La validación de entorno real requiere, después de desplegar 1.3.33, habilitar el collector en un servidor controlado y configurar **un solo MikroTik** para exportar hacia Z-Hub. No avanzar a Etapa 3/5 hasta confirmar que aumentan los contadores de paquetes/flujos sin errores relevantes.
+
+### Continuidad / rollback
+- Punto de partida funcional: Z-Hub 1.3.32, merge `09c117d443cf0431fc37a004cba6cba88a2c2df1`.
+- Backup previo: `backup/pre-traffic-registry-stage2-1.3.32-20260912`.
+- Rama: `work/traffic-registry-stage2-1.3.33-20260912`.
+- `PANEL_VERSION = "1.3.33"`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.32 — Registro de Tráfico · Etapa 1/5
 
 **Objetivo:** crear la base persistente y el contrato interno del futuro collector Traffic Flow sin modificar todavía la operación de ningún MikroTik.
@@ -29,8 +70,8 @@ Historial preservado:
 - Nuevo modelo `TrafficIdentity`: conserva la vigencia histórica `cliente ↔ servicio ↔ router ↔ IP`, además de tipo de conexión y usuario PPPoE cuando exista. Una IP no se considera identidad permanente del abonado.
 - Nuevo modelo `TrafficAggregate`: preparado para descarga, subida, total, cantidad de flujos, período, origen y estado de procesamiento. La intención es guardar agregados y no flujos brutos indefinidamente.
 - Ambos modelos se registran en `app.models`, por lo que `init_db()` puede crear las tablas de forma no destructiva mediante `Base.metadata.create_all()`.
-- Se agrega `app/services/traffic_registry.py` como contrato mínimo del collector: normaliza IPv4/IPv6 y bytes, pero `collector_enabled()` permanece en `False`.
-- No se abren puertos, no se reciben datagramas y no se ejecutan comandos/configuración Traffic Flow sobre RouterOS en esta etapa.
+- Se agrega `app/services/traffic_registry.py` como contrato mínimo del collector: normaliza IPv4/IPv6 y bytes, pero `collector_enabled()` permanece en `False` como marcador histórico de Etapa 1.
+- No se abrieron puertos ni se ejecutaron comandos/configuración Traffic Flow sobre RouterOS durante esta etapa.
 - Prueba de contrato `test_traffic_registry_stage1_1332_contract.py` incluida en CI.
 
 ### Continuidad / rollback
@@ -38,7 +79,7 @@ Historial preservado:
 - Backup inmutable previo: `backup/pre-traffic-registry-stage1-1.3.31-20260912`.
 - Rama: `work/traffic-registry-stage1-1.3.32-20260912`.
 - `PANEL_VERSION = "1.3.32"`.
-- Etapa 2/5 queda bloqueada hasta validar CI y después validar esta base en el entorno correspondiente.
+- Validación real posterior: el usuario confirmó que Z-Hub 1.3.32 carga normalmente.
 - No cambia el contrato Z-Hub ↔ Web-Licence.
 
 ---
