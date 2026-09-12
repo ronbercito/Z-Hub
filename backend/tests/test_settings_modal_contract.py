@@ -7,6 +7,10 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def compact(text):
+    return "".join(text.split())
+
+
 def test_settings_cards_open_modal_not_full_page():
     layout = read("frontend/src/components/layout/Layout.jsx")
     assert 'import SettingsModal from "../../modules/ajustes/SettingsModal"' in layout
@@ -17,13 +21,14 @@ def test_settings_cards_open_modal_not_full_page():
 
 def test_modal_closes_normally_but_supports_locked_license_recovery():
     modal = read("frontend/src/modules/ajustes/SettingsModal.jsx")
+    dense = compact(modal)
     assert 'locked = false' in modal
-    assert 'locked ? undefined : onClose' in modal
-    assert 'event.key === "Escape"' in modal
+    assert 'onMouseDown={locked?undefined:onClose}' in dense
+    assert 'event.key==="Escape"' in dense
     assert 'axios.interceptors.response.use' in modal
-    assert '["post", "put", "patch", "delete"].includes(method)' in modal
-    assert 'isWrite && !isUtilityAction' in modal
-    assert '{!locked && <button' in modal
+    assert '["post","put","patch","delete"].includes(method)' in dense
+    assert 'isWrite&&!isUtilityAction' in dense
+    assert '{!locked&&<button' in dense
 
 
 def test_modal_is_compact_and_theme_aware():
