@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -36,6 +37,6 @@ def test_persisted_snapshot_alone_is_not_authorization():
 
 def test_hotfix_contract_survives_future_releases():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.2.' in version
+    assert re.search(r'PANEL_VERSION = "\d+\.\d+\.\d+"', version)
     manager = read("backend/app/core/license_manager.py")
     assert "PRIVATE_LICENSE_FILE" in manager
