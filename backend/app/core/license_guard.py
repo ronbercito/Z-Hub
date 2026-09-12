@@ -1,4 +1,8 @@
-"""Aplicación de reglas comerciales de licencia de Z-Hub (Etapas 3, 5 y 6/7)."""
+"""Aplicación de reglas comerciales de licencia de Z-Hub.
+
+1.3.4: alcanzar la capacidad NO bloquea el panel. Solo impide nuevas altas o
+reactivaciones que aumentarían la cantidad de abonados activos.
+"""
 from __future__ import annotations
 
 import re
@@ -36,9 +40,9 @@ BLOCKED_LICENSE_STATUSES = {"trial_expired", "invalid", "missing"}
 
 def _limit_message(usage: int, limit: int) -> str:
     return (
-        f"Límite de abonados alcanzado. Tu licencia permite hasta {limit} abonados registrados. "
-        f"Actualmente utilizas {usage} de {limit}. Puedes seguir administrando tus abonados actuales, "
-        "pero necesitas ampliar tu licencia para registrar uno nuevo."
+        f"Límite de licencia alcanzado. Tu plan permite hasta {limit} abonados activos. "
+        f"Actualmente utilizas {usage} de {limit}. Todas las demás funciones del panel continúan disponibles; "
+        "cambia a un plan superior para registrar o reactivar más clientes."
     )
 
 
@@ -64,13 +68,33 @@ async def _raise_if_capacity_full(db: AsyncSession) -> None:
 
 
 async def enforce_client_capacity(request: Request, db: AsyncSession = Depends(get_db)) -> None:
-    """Protege altas nuevas y reactivación de un cliente retirado."""
+    """Bloquea solo operaciones que pueden aumentar el número de abonados activos."""
     path = request.url.path.rstrip("/")
 
+    # El alta normal crea un abonado activo por defecto.
     if request.method == "POST" and path == "/api/clients":
         await _raise_if_capacity_full(db)
         return
 
+    # Corte/reactivación: cortar siempre se permite; reactivar consume capacidad.
+    if request.method == "POST":
+        match = re.fullmatch(r"/api/clients/([^/]+)/toggle-status", path)
+        if match:
+            client = await db.get(Client, match.group(1))
+            if client and client.status != "active":
+                await _raise_if_capacity_full(db)
+            return
+
+        # Reanudar una pausa devuelve el servicio a active.
+        match = re.fullmatch(r"/api/clients/([^/]+)/resume-pause", path)
+        if match:
+            client = await db.get(Client, match.group(1))
+            if client and client.status != "active":
+                await _raise_if_capacity_full(db)
+            return
+
+    # La edición de clientes activos no consume otro cupo. Solo una reactivación
+    # histórica de un retirado necesita comprobar capacidad.
     if request.method == "PUT":
         match = re.fullmatch(r"/api/clients/([^/]+)", path)
         if match:
@@ -91,9 +115,6 @@ async def enforce_trial_write_access(request: Request, db: AsyncSession = Depend
     Aplica a Trial vencido, licencia inválida o instalación sin licencia. Login/logout,
     activación de licencia, setup y actualización del sistema permanecen disponibles
     para recuperar el panel sin borrar ni modificar datos existentes.
-
-    El nombre de la función se conserva por compatibilidad con el registro global
-    existente en ``backend/server.py``.
     """
     if request.method.upper() not in WRITE_METHODS:
         return
