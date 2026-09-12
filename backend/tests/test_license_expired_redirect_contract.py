@@ -46,8 +46,11 @@ def test_license_view_routes_recovery_to_whatsapp_without_manual_key_entry():
     assert "activationKey" not in view
 
 
-def test_backend_still_exposes_commercial_contact_without_hardcoding():
+def test_backend_exposes_central_commercial_contact_with_local_fallback():
     config = read("backend/app/core/config.py")
     router = read("backend/app/routers/license/router.py")
+    helper = read("backend/app/core/license_contact.py")
     assert 'ZHUB_LICENSE_WHATSAPP' in config
-    assert '"sales_whatsapp": ZHUB_LICENSE_WHATSAPP' in router
+    assert '"/v1/public/contact"' in helper
+    assert 'remote_whatsapp or ZHUB_LICENSE_WHATSAPP' in router
+    assert '"sales_whatsapp"' in router
