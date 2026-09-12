@@ -106,7 +106,7 @@ export default function LicenseSettings() {
 
     <section className="license-details">
       <div><span>Estado</span><b>{statusLabel}</b></div>
-      <div><span>Uso autorizado</span><b>{unlimited ? `${usage} / Ilimitado` : `${usage} / ${max ?? "—"}`}</b></div>
+      <div><span>Capacidad autorizada</span><b>{unlimited ? "Ilimitada" : (max ?? "—")}</b></div>
       <div><span>Installation ID</span><b className="license-installation-id">{data?.installation_id || "—"}</b></div>
     </section>
 
