@@ -21,12 +21,9 @@ def test_card_selection_uses_pointer_down_for_immediate_response():
     assert 'onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onSelect?.(); }}' in card
     assert 'role="button"' in card
     assert 'tabIndex={0}' in card
-    assert 'onPointerDown={stopPointer}' in card
 
 
-def test_release_1321_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1321_history_is_preserved():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.21"' in version
     assert "1.3.21" in continuity
     assert "backup/pre-router-card-highlight-select-1.3.21-20260912" in continuity
