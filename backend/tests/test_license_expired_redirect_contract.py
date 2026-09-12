@@ -32,21 +32,22 @@ def test_settings_modal_cannot_close_while_license_is_locked():
     assert 'section==="license"?<LicenseSettingslocked={locked}/>' in dense
 
 
-def test_license_view_has_recovery_and_commercial_actions():
+def test_license_view_routes_recovery_to_whatsapp_without_manual_key_entry():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
-    assert "Esta instalación necesita una nueva licencia" in view
-    assert "esta ventana permanecerá bloqueada" in view
-    assert "Pagar licencia" in view
-    assert "Contactar por WhatsApp" in view
+    assert "Esta instalación necesita una licencia activa" in view
+    assert "Tus datos permanecen intactos" in view
+    assert "Actualizar estado" in view
+    assert "Solicitar licencia" in view
+    assert "Renovar licencia" in view
     assert "sales_whatsapp" in view
-    assert "payment_url" in view
     assert "wa.me" in view
+    assert "payment_url" not in view
+    assert "Pagar licencia" not in view
+    assert "activationKey" not in view
 
 
-def test_backend_exposes_commercial_contact_without_hardcoding():
+def test_backend_still_exposes_commercial_contact_without_hardcoding():
     config = read("backend/app/core/config.py")
     router = read("backend/app/routers/license/router.py")
     assert 'ZHUB_LICENSE_WHATSAPP' in config
-    assert 'ZHUB_LICENSE_PAYMENT_URL' in config
     assert '"sales_whatsapp": ZHUB_LICENSE_WHATSAPP' in router
-    assert '"payment_url": ZHUB_LICENSE_PAYMENT_URL' in router

@@ -54,27 +54,32 @@ def test_trial_write_guard_is_global_api_dependency():
     assert "license_router" in server
 
 
-def test_license_activation_requires_admin_and_accepts_paid_or_trial():
+def test_manual_activation_endpoint_is_retained_only_as_backend_compatibility():
     router = read("backend/app/routers/license/router.py")
     assert 'APIRouter(prefix="/license"' in router
     assert '@router.get("/info")' in router
     assert '@router.post("/activate", dependencies=[Depends(require_role("admin"))])' in router
     assert 'license_type not in {"PAID", "TRIAL"}' in router
     assert "apply_license_metadata" in router
-    assert "await db.commit()" in router
 
 
-def test_license_ui_shows_trial_dates_warnings_and_activation():
+def test_customer_license_ui_is_read_only_and_commercial():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
-    assert "Inicio Trial" in view
-    assert "Fin Trial" in view
-    assert "trial_warning_level" in view
-    assert "bloqueado" in view
-    assert 'axios.post(`${API}/license/activate`' in view
-    assert 'user?.role === "admin"' in view
+    assert "Installation ID" in view
+    assert "Días restantes" in view
+    assert "Capacidad autorizada" in view
+    assert "Vencimiento" in view
+    assert "Solicitar licencia" in view
+    assert "Renovar licencia" in view
+    assert "por WhatsApp" in view
+    assert "sales_whatsapp" in view
+    assert "wa.me" in view
+    assert 'axios.post(`${API}/license/activate`' not in view
+    assert "activationKey" not in view
+    assert "license_key_masked" not in view
 
 
 def test_release_contract_remains_versioned():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'export const PANEL_VERSION = ' in version
+    assert 'PANEL_VERSION = "1.3.1"' in version
     assert 'export const CHANGELOG = [' in version

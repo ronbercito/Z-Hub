@@ -39,9 +39,9 @@ def test_stage4_wizard_uses_backend_auto_trial_without_license_key_input():
     assert 'req.license_key' not in router[router.index('@router.post("/complete")'):]
 
 
-def test_panel_version_starts_130_series():
+def test_panel_remains_in_13_series_and_preserves_stage4_history():
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.3.0"' in version
+    assert 'PANEL_VERSION = "1.3.' in version
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
     assert "1.3.0" in continuity
     assert "Etapa 4/7" in continuity

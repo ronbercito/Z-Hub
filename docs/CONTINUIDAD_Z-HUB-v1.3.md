@@ -15,6 +15,41 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.1 — Etapa 5/7: Licencia simplificada para el cliente
+
+**Objetivo:** retirar del panel del cliente la gestión manual de claves y los detalles técnicos internos del License Server. Web-Licence queda como fuente administrativa y comercial de la licencia.
+
+### Vista del cliente
+
+- Estado de licencia.
+- Plan actual.
+- Vencimiento disponible.
+- Días restantes cuando es TRIAL.
+- Capacidad autorizada y uso.
+- Installation ID.
+- Botón único `Solicitar licencia por WhatsApp` para TRIAL y `Renovar licencia por WhatsApp` para licencias pagadas.
+- El mensaje de WhatsApp incluye automáticamente Installation ID, plan y estado para facilitar la atención comercial.
+
+### Seguridad / operación
+
+- La UI ya no muestra la clave enmascarada ni ofrece formulario para escribir una nueva clave.
+- La UI deja de exponer fuente de validación, estado técnico del License Server, caché o gracia.
+- La ruta backend `/api/license/activate` permanece temporalmente como compatibilidad administrativa, pero no forma parte del flujo visible del cliente.
+- Si el Trial vence o la licencia queda inválida, los datos permanecen intactos; el cliente contacta soporte y luego usa `Actualizar estado` después de que Web-Licence cambie la licencia.
+
+### Rollback
+
+- Backup previo: `backup/pre-license-customer-view-1.3.1-20260911`.
+- Rama de trabajo: `work/license-customer-view-1.3.1-20260911`.
+
+### Pendiente de cierre
+
+- CI verde.
+- Merge a `main` solo después de CI verde.
+- Despliegue real 1.3.1 se valida por separado.
+
+---
+
 ## 1.3.0 — Etapa 4/7: Setup Wizard con Auto-TRIAL
 
 **Objetivo:** retirar la introducción manual de claves del proceso normal de primera instalación y conectar el Wizard con el Auto-TRIAL construido en las etapas 2/7 y 3/7.
@@ -50,8 +85,8 @@ Esta es la fuente activa de continuidad para **Z-Hub 1.3.x**. La serie 1.2.x que
 - Backup previo: `backup/pre-wizard-auto-trial-1.3.0-20260911`.
 - Rama de trabajo: `work/wizard-auto-trial-1.3.0-20260911`.
 
-### Pendiente de cierre
+### Cierre
 
-- CI verde del PR.
-- Merge a `main` solo después de CI verde.
-- Despliegue y prueba real del Wizard se validan por separado después del merge.
+- PR #12 integrado a `main` después de CI verde.
+- Merge: `60829ef213f1f7b492bbdec1a3373a72289aa63b`.
+- Despliegue real de Z-Hub 1.3.0 confirmado desde el Centro de Actualizaciones.
