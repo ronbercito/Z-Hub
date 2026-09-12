@@ -1,13 +1,13 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-12 — 1.3.27, identidad MikroTik visible en bloque independiente.
+ * Actualización: 2026-09-12 — 1.3.30, la métrica Tráfico se reemplaza por clientes DHCP bound.
  * Área: Gestión de Red > tarjetas de equipos.
  */
 import React, { useState } from "react";
 import axios from "axios";
 import {
   Server, Cpu, HardDrive, Activity, Radio, Zap, MapPin, Trash2,
-  Users, ListChecks, Gauge, Pencil,
+  Users, ListChecks, Wifi, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../../context/AuthContext";
@@ -92,7 +92,6 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
   }
 
   const locationReady = Math.abs(num(router.latitude)) > 0.0001 || Math.abs(num(router.longitude)) > 0.0001;
-  const traffic = num(router.total_download_mbps) + num(router.total_upload_mbps);
   const routerName = String(router.name || "").trim() || "Router MikroTik";
   const routerIp = String(router.ip_address || "").trim() || "IP no disponible";
   const routerPort = router.port || router.cli_port || 8728;
@@ -140,7 +139,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
       <section className="router-modern-secondary-metrics">
         <RouterCardMetric icon={Users} label="PPPoE" value={num(router.active_pppoe_count)} tone="violet" />
         <RouterCardMetric icon={ListChecks} label="Colas" value={num(router.active_queues_count)} tone="amber" />
-        <RouterCardMetric icon={Gauge} label="Tráfico" value={traffic ? `${traffic.toFixed(1)} M` : "0 M"} tone="cyan" />
+        <RouterCardMetric icon={Wifi} label="DHCP" value={num(router.dhcp_bound_count)} tone="cyan" />
       </section>
 
       <footer className="router-modern-footer">
