@@ -1,6 +1,6 @@
 /**
  * Archivo: frontend/src/modules/red/components/RouterCard.jsx
- * Actualización: 2026-09-12 — 1.3.21, mayor contraste visual y selección inmediata de tarjeta.
+ * Actualización: 2026-09-12 — 1.3.22, selección inmediata en toda la tarjeta.
  * Área: Gestión de Red > tarjetas de equipos.
  */
 import React, { useState } from "react";
@@ -24,6 +24,7 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
   const Icon = isOlt ? Radio : Server;
   const moduleName = isOlt ? "olt" : "network";
   const canDelete = canPermission(user, moduleName, "delete");
+  const childNodes = React.Children.toArray(children).filter(Boolean);
   const tone = isOlt
     ? { selected: "border-violet-400 shadow-violet-500/20 ring-2 ring-violet-400/30", icon: "bg-violet-500/10 text-violet-400 border-violet-500/20", ip: "text-violet-400", metric: "text-violet-400" }
     : { selected: "border-cyan-300 shadow-cyan-400/25 ring-2 ring-cyan-300/35", icon: "network-router-device-icon bg-white/95 text-cyan-700 border-white shadow-sm", ip: "text-cyan-400", metric: "text-cyan-400" };
@@ -90,7 +91,11 @@ export default function RouterCard({ router, selected, onSelect, onCoordinates, 
         </div>
       )}
 
-      {children && <div onPointerDown={stopPointer} onClick={stopPointer} className={`mt-2 pt-3 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>{children}</div>}
+      {childNodes.length > 0 && (
+        <div onPointerDown={stopPointer} onClick={stopPointer} className={`mt-2 pt-3 border-t ${isOlt ? "border-violet-500/30" : "border-cyan-500/30"}`}>
+          {childNodes}
+        </div>
+      )}
 
       <div className={`grid ${isOlt ? "grid-cols-2" : "grid-cols-3"} gap-2 text-[11px] pt-3 border-t border-slate-800`}>
         {isOlt ? <div className="flex items-center gap-1.5 text-slate-400"><Zap className={`w-3.5 h-3.5 ${tone.metric}`} /> PON: <span className="text-slate-200 font-bold">{router.pon_ports || "—"} {router.pon_type || ""}</span></div> : <div className="flex items-center gap-1.5 text-slate-400"><Cpu className="w-3.5 h-3.5 text-slate-500" /> CPU: <span className="text-slate-200 font-bold">{router.cpu_usage_pct}%</span></div>}
