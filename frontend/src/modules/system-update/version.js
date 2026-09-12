@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.9";
+export const PANEL_VERSION = "1.3.10";
 export const CHANGELOG = [
-  { type: "Ajustes", text: "Configuración clientes incorpora Gestión individual por servicio, desactivada por defecto para conservar el comportamiento actual." },
-  { type: "Servicios", text: "Al activarla, el servicio principal y los servicios adicionales pueden pausarse, suspenderse/cortarse o reactivarse de forma independiente." },
-  { type: "Rendimiento", text: "Las acciones se ejecutan únicamente cuando el operador las solicita; no se agregan sondeos ni procesos permanentes por servicio y la regla de capacidad de licencia se mantiene." },
+  { type: "Clientes", text: "Las filas de abonados pasan a cartillas visuales con tonos por estado: verde activo, ámbar pausado y rojo suspendido/cortado." },
+  { type: "Diseño", text: "La cartilla conserva nombre, plan, IP/usuario, contacto, deuda, estado y todas las acciones existentes sin eliminar información." },
+  { type: "Responsive", text: "El diseño se reorganiza en dos filas y una columna en pantallas medianas y móviles, manteniendo visibles los datos y controles." },
 ];

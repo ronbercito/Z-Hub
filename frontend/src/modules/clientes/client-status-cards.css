@@ -1,0 +1,220 @@
+/* Z-Hub 1.3.10 — cartillas visuales de clientes inspiradas en la referencia aprobada.
+   No cambia datos ni acciones: solo reorganiza visualmente la tabla existente. */
+
+.clients-page .clients-table-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.clients-page .clients-main-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.clients-page .clients-main-table thead {
+  display: none;
+}
+
+.clients-page .clients-main-table tbody {
+  display: grid;
+  gap: 16px;
+}
+
+.clients-page .client-main-row {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.35fr) minmax(130px, .8fr) minmax(130px, .85fr) minmax(180px, 1fr) minmax(110px, .65fr) minmax(125px, .7fr) minmax(250px, 1.25fr);
+  align-items: stretch;
+  border: 1px solid #334155;
+  border-left-width: 4px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(2, 8, 23, .16);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.clients-page .client-main-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(2, 8, 23, .22);
+}
+
+.clients-page .client-main-cell {
+  min-width: 0;
+  padding: 18px 14px;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: transparent !important;
+}
+
+.clients-page .client-main-cell + .client-main-cell {
+  border-left: 1px solid rgba(148, 163, 184, .12) !important;
+}
+
+/* Activo: verde suave. */
+.clients-page .client-main-row:has(.client-status-pill.is-active) {
+  background: linear-gradient(110deg, rgba(16, 185, 129, .16) 0%, rgba(5, 150, 105, .08) 52%, rgba(15, 23, 42, .78) 100%) !important;
+  border-color: rgba(34, 197, 94, .56) !important;
+  border-left-color: #22c55e !important;
+}
+.clients-page .client-main-row:has(.client-status-pill.is-active) .client-avatar {
+  color: #86efac;
+  background: rgba(22, 163, 74, .22);
+  border-color: rgba(74, 222, 128, .55);
+}
+
+/* Pausado: ámbar, no violeta. */
+.clients-page .client-main-row:has(.client-status-pill.is-paused) {
+  background: linear-gradient(110deg, rgba(245, 158, 11, .18) 0%, rgba(217, 119, 6, .08) 52%, rgba(15, 23, 42, .78) 100%) !important;
+  border-color: rgba(245, 158, 11, .66) !important;
+  border-left-color: #f59e0b !important;
+}
+.clients-page .client-main-row:has(.client-status-pill.is-paused) .client-avatar {
+  color: #fde68a;
+  background: rgba(217, 119, 6, .24);
+  border-color: rgba(251, 191, 36, .62);
+}
+.clients-page .client-status-pill.is-paused {
+  background: rgba(245, 158, 11, .20) !important;
+  color: #fbbf24 !important;
+}
+
+/* Suspendido / cortado: rojo suave. */
+.clients-page .client-main-row:has(.client-status-pill.is-suspended) {
+  background: linear-gradient(110deg, rgba(239, 68, 68, .17) 0%, rgba(190, 24, 93, .07) 52%, rgba(15, 23, 42, .78) 100%) !important;
+  border-color: rgba(248, 113, 113, .62) !important;
+  border-left-color: #ef4444 !important;
+}
+.clients-page .client-main-row:has(.client-status-pill.is-suspended) .client-avatar {
+  color: #fecaca;
+  background: rgba(220, 38, 38, .24);
+  border-color: rgba(248, 113, 113, .60);
+}
+
+.clients-page .client-main-name {
+  font-size: 14px;
+  letter-spacing: -.01em;
+}
+.clients-page .client-main-muted,
+.clients-page .client-contact-line,
+.clients-page .client-router-name,
+.clients-page .client-debt-caption,
+.clients-page .client-status-note {
+  font-size: 11px;
+}
+.clients-page .client-plan-name,
+.clients-page .client-ip-value {
+  font-size: 12px;
+}
+
+.clients-page .client-status-pill {
+  width: fit-content;
+  min-width: 88px;
+  justify-content: center;
+  padding: 7px 12px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+}
+
+.clients-page .client-actions {
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.clients-page .client-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+/* Claro Suave: reproduce el fondo pastel de la referencia. */
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-active) {
+  background: linear-gradient(105deg, #eafbf1 0%, #f5fff9 58%, #ffffff 100%) !important;
+  border-color: #3bc56d !important;
+  border-left-color: #16a34a !important;
+  box-shadow: 0 8px 22px rgba(22, 163, 74, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-paused) {
+  background: linear-gradient(105deg, #fff6dc 0%, #fffbef 58%, #ffffff 100%) !important;
+  border-color: #f3b21a !important;
+  border-left-color: #e59a00 !important;
+  box-shadow: 0 8px 22px rgba(217, 119, 6, .11) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-suspended) {
+  background: linear-gradient(105deg, #fff0f1 0%, #fff8f8 58%, #ffffff 100%) !important;
+  border-color: #f06770 !important;
+  border-left-color: #dc2626 !important;
+  box-shadow: 0 8px 22px rgba(220, 38, 38, .10) !important;
+}
+
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row .client-main-cell + .client-main-cell {
+  border-left-color: rgba(71, 85, 105, .10) !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-active) .client-avatar {
+  color: #15803d !important;
+  background: #d8f7e3 !important;
+  border-color: #82d99f !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-paused) .client-avatar {
+  color: #a16207 !important;
+  background: #ffedbd !important;
+  border-color: #f1c255 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-main-row:has(.client-status-pill.is-suspended) .client-avatar {
+  color: #c81e1e !important;
+  background: #ffe0e2 !important;
+  border-color: #f2a0a6 !important;
+}
+html[data-panel-theme="zhub-light"] .clients-page .client-status-pill.is-paused {
+  background: #ffe7a3 !important;
+  color: #9a6100 !important;
+}
+
+/* En pantallas medianas la cartilla pasa a dos filas sin ocultar datos. */
+@media (max-width: 1280px) {
+  .clients-page .client-main-row {
+    grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(130px, 1fr));
+  }
+  .clients-page .client-main-cell:nth-child(5),
+  .clients-page .client-main-cell:nth-child(6),
+  .clients-page .client-main-cell:nth-child(7) {
+    border-top: 1px solid rgba(148, 163, 184, .12) !important;
+  }
+  .clients-page .client-main-cell:nth-child(7) {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 820px) {
+  .clients-page .client-main-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .clients-page .client-main-cell {
+    padding: 13px 14px;
+    border-top: 1px solid rgba(148, 163, 184, .12) !important;
+  }
+  .clients-page .client-main-cell:first-child {
+    grid-column: 1 / -1;
+    border-top: 0 !important;
+  }
+  .clients-page .client-main-cell:nth-child(7) {
+    grid-column: 1 / -1;
+  }
+  .clients-page .client-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .clients-page .client-main-row {
+    grid-template-columns: 1fr;
+  }
+  .clients-page .client-main-cell,
+  .clients-page .client-main-cell:nth-child(7) {
+    grid-column: 1;
+  }
+}
