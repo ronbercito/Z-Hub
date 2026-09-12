@@ -25,7 +25,11 @@ def test_communications_do_not_claim_external_delivery():
     text=source("backend/app/routers/clientes/router.py"); assert 'status="registered"' in text; assert '"sent": False' in text; assert 'status="sent"' not in text
 
 def test_generic_settings_are_whitelisted():
-    text=source("backend/app/routers/ajustes/router.py"); assert "EDITABLE_SETTINGS = set(DEFAULT_SETTINGS) - PROTECTED_GENERIC_SETTINGS" in text; assert "unknown = sorted(set(data) - EDITABLE_SETTINGS)" in text; assert 'data.pop("license_key", None)' not in text
+    text=source("backend/app/routers/ajustes/router.py")
+    assert "EDITABLE_SETTINGS = set(DEFAULT_SETTINGS) - PROTECTED_GENERIC_SETTINGS" in text
+    assert "for key in PROTECTED_GENERIC_SETTINGS:" in text
+    assert "data = {key: value for key, value in data.items() if key in EDITABLE_SETTINGS}" in text
+    assert 'data.pop("license_key", None)' not in text
 
 def test_auth_token_is_not_persisted_in_local_storage():
     text=source("frontend/src/context/AuthContext.js"); assert 'localStorage.setItem("fibraz_token"' not in text; assert "axios.defaults.withCredentials = true" in text

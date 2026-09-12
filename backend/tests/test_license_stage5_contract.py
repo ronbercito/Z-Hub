@@ -7,6 +7,10 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def compact(text):
+    return "".join(text.split())
+
+
 def test_trial_contract_is_30_days_and_exposes_dates_warning_and_read_only():
     manager = read("backend/app/core/license_manager.py")
     assert "TRIAL_DAYS = 30" in manager
@@ -44,8 +48,9 @@ def test_license_recovery_blocks_writes_but_keeps_recovery_paths():
 
 def test_trial_write_guard_is_global_api_dependency():
     server = read("backend/server.py")
+    dense = compact(server)
     assert "enforce_trial_write_access" in server
-    assert 'APIRouter(prefix="/api", dependencies=[Depends(enforce_trial_write_access)])' in server
+    assert 'APIRouter(prefix="/api",dependencies=[Depends(enforce_trial_write_access)])' in dense
     assert "license_router" in server
 
 
