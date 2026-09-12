@@ -7,7 +7,7 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_delete_router_action_is_labeled_and_not_in_header_cluster():
+def test_delete_router_action_remains_available_after_later_releases():
     card = read("frontend/src/modules/red/components/RouterCard.jsx")
     assert 'network-router-card-actions' in card
     assert 'Eliminar router' in card
@@ -17,9 +17,7 @@ def test_delete_router_action_is_labeled_and_not_in_header_cluster():
     assert 'axios.delete' in card
 
 
-def test_release_1319_is_documented():
-    version = read("frontend/src/modules/system-update/version.js")
+def test_release_1319_history_remains_documented():
     continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
-    assert 'PANEL_VERSION = "1.3.19"' in version
     assert "1.3.19" in continuity
     assert "backup/pre-router-delete-visible-1.3.19-20260912" in continuity

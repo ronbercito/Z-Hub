@@ -1,7 +1,7 @@
 /** Z-Hub panel version — changelog contains only the current release. */
-export const PANEL_VERSION = "1.3.19";
+export const PANEL_VERSION = "1.3.20";
 export const CHANGELOG = [
-  { type: "Red", text: "El botón Eliminar router ahora aparece como acción rotulada y visible dentro de cada tarjeta MikroTik." },
-  { type: "Diseño", text: "La acción de eliminar ya no comparte la cabecera estrecha con estado y coordenadas, evitando que quede recortada." },
-  { type: "Compatibilidad", text: "Se conserva la carga rápida no bloqueante de 1.3.18 y el orden compacto de tarjetas de 1.3.17." },
+  { type: "Diseño", text: "La acción Eliminar router ahora usa un icono compacto y moderno en lugar de un botón de texto." },
+  { type: "Red", text: "El icono conserva confirmación, permisos y la eliminación existente sin ocupar espacio visual innecesario." },
+  { type: "Compatibilidad", text: "Se conservan la carga rápida de 1.3.18 y el orden compacto de tarjetas." },
 ];
