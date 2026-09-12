@@ -20,6 +20,28 @@ Historial preservado:
 
 # HISTORIAL 1.3.xx — MÁS NUEVO PRIMERO
 
+## 1.3.22 — Selección real desde toda la tarjeta + contraste de eliminar
+
+**Incidencia real:** en 1.3.21 la zona inferior CPU/Mem/Ping seleccionaba de inmediato, pero la zona central de algunas tarjetas requería varios clics. La validación mostró que `RouterCard` renderizaba un contenedor de `children` aunque sus hijos condicionales fueran `null/false`; ese contenedor vacío tenía `onPointerDown={stopPointer}` y bloqueaba la selección en el centro.
+
+### Correcciones
+- `RouterCard.jsx` normaliza `children` con `React.Children.toArray(children).filter(Boolean)`.
+- El bloque interno que detiene propagación solo se renderiza cuando existen controles/hijos reales.
+- Las tarjetas no seleccionadas ya no tienen una zona central invisible que intercepte `pointerdown`.
+- Se conserva selección inmediata por `pointerdown`, teclado y protección de acciones internas.
+- `router-card-layout.css` corrige la regla antigua del tema claro que dejaba la papelera rosada/pálida: ahora usa rojo sólido, icono blanco, borde blanco y halo visible.
+- OFFLINE conserva el rojo sólido de 1.3.21.
+- No cambia API, consultas RouterOS, métricas ni carga en segundo plano.
+
+### Pruebas / rollback
+- Nuevo contrato: `backend/tests/test_router_card_center_click_1322_contract.py`.
+- `PANEL_VERSION = "1.3.22"`.
+- Backup previo: `backup/pre-router-card-center-click-1.3.22-20260912`.
+- Rama: `work/router-card-center-click-1.3.22-20260912`.
+- No cambia el contrato Z-Hub ↔ Web-Licence.
+
+---
+
 ## 1.3.21 — Contraste de estado/acción y selección inmediata de tarjetas
 
 **Motivo:** validación real de 1.3.20 mostró dos detalles visuales y uno de interacción: el icono de eliminar todavía tenía poco contraste, el estado OFFLINE no resaltaba suficiente y al cambiar entre tarjetas a veces era necesario insistir con varios clics.
