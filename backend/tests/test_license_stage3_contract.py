@@ -28,10 +28,10 @@ def test_retired_reactivation_is_guarded_but_regular_edits_are_not():
     assert "if client and client.status" in guard
 
 
-def test_client_router_registers_capacity_dependency():
+def test_client_and_service_routers_register_capacity_dependency():
     server = read("backend/server.py")
     assert "from app.core.license_guard import enforce_client_capacity" in server
-    assert "if router is clientes_router:" in server
+    assert "if router in (clientes_router, client_services_router):" in server
     assert "dependencies.append(Depends(enforce_client_capacity))" in server
 
 
