@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -24,10 +25,14 @@ def test_guard_blocks_new_additional_service_not_resume():
     assert "volver a active" in guard
 
 
-def test_ui_and_release_use_service_capacity_language():
+def test_ui_and_release_keep_138_service_capacity_contract_after_later_releases():
     view = read("frontend/src/modules/ajustes/LicenseSettings.jsx")
     version = read("frontend/src/modules/system-update/version.js")
-    assert 'PANEL_VERSION = "1.3.8"' in version
+    continuity = read("docs/CONTINUIDAD_Z-HUB-v1.3.md")
+    match = re.search(r'PANEL_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"', version)
+    assert match
+    assert tuple(map(int, match.groups())) >= (1, 3, 8)
+    assert "1.3.8" in continuity
     assert "servicios contabilizados" in view
     assert "suspendido/cortado" in view
     assert "servicio adicional consume un cupo" in view
