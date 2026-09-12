@@ -53,7 +53,7 @@ async def setup_register_customer(req: CustomerRegistrationRequest, db: AsyncSes
         "email": str(req.email).strip().lower(),
         "company_name": req.company_name.strip(),
         "message": result.get("message") or "Registro preparado. Continúa con la activación del TRIAL.",
-        "existing": not bool(result.get("created_customer", True)),
+        "existing": not bool(result.get("customer_created", True)),
     }
 
 
