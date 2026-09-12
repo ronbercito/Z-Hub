@@ -22,7 +22,7 @@ def test_netflow_v5_ipv4_is_decoded():
     record = (
         socket.inet_aton("192.0.2.10") + socket.inet_aton("198.51.100.20") + socket.inet_aton("0.0.0.0")
         + struct.pack("!HHII", 1, 2, 10, 123456)
-        + b"\x00" * 20
+        + b"\x00" * 24
     )
     version, flows = TrafficFlowDecoder().decode(header + record, "10.0.0.1")
     assert version == 5
