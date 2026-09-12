@@ -36,7 +36,12 @@ Historial preservado:
 - Backup previo: `backup/pre-traffic-flow-worker-1.3.33-20260912`.
 - Rama: `work/traffic-flow-worker-1.3.34-20260912`.
 - `PANEL_VERSION = "1.3.34"`.
-- Después de desplegar 1.3.34: primero habilitar el collector en Z-Hub y comprobar que escucha; luego configurar **un solo MikroTik de prueba** y confirmar aumento real de paquetes/flujos antes de cerrar Etapa 2/5.
+- **Validación real de Etapa 2/5 completada el 2026-09-12:** Z-Hub `192.168.10.250` con collector activo en `0.0.0.0:2055/udp`; MikroTik de prueba `192.168.10.1` exportando NetFlow v9 al target `192.168.10.250:2055`.
+- Captura en servidor: paquetes UDP recibidos desde `192.168.10.1:2055` hacia `192.168.10.250:2055`, sin pérdida del kernel en la muestra (`20 captured`, `0 dropped by kernel`).
+- Estado autenticado del collector durante la prueba: `enabled=true`, `listening=true`, `packets=22850`, `flows=326330`, `ipv4_flows=326145`, `ipv6_flows=185`, `duplicates=0`, `parse_errors=0`, `dropped_batches=0`, `queued_batches=0`; exportador `192.168.10.1`, `last_version=9`.
+- Se confirma recepción y decodificación real IPv4/IPv6 sin errores de parseo relevantes; **Etapa 2/5 queda cerrada y habilita el avance a Etapa 3/5**.
+- Los seis targets NetFlow v5 preexistentes hacia `138.68.208.5:62310` permanecieron intactos; la prueba añadió únicamente el target independiente de Z-Hub.
+- Esta anotación es documental/operativa y no cambia `PANEL_VERSION`.
 - No cambia el contrato Z-Hub ↔ Web-Licence.
 
 ---
